@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 
 export default function Home() {
-  const [selectedItem, setSelectedItem] = useState('T4_MAIN_ROCKET_DEPRECATED') // domyślnie np. sztabka/przedmiot (zmień na popularne ID, np. T4_BAG)
+  const [selectedItem, setSelectedItem] = useState('T4_BAG')  
   const [selectedCity, setSelectedCity] = useState('Martlock')
   const [isFetchingApi, setIsFetchingApi] = useState(false)
   const [user, setUser] = useState(null)
@@ -357,8 +357,9 @@ const fetchLivePrices = async () => {
                             <option value="T4_BAG">Torba T4 (Pospolita)</option>
                             <option value="T5_BAG">Torba T5 (Pospolita)</option>
                             <option value="T6_BAG">Torba T6 (Pospolita)</option>
-                            <option value="T4_ARMOR_PLATE_SET1">Jacket Żołnierza T4</option>
-                            <option value="T6_ARMOR_PLATE_SET1">Jacket Żołnierza T6</option>
+                            <option value="T4_ARMOR_PLATE_SET1">Kurtka Żołnierza T4</option>
+                            <option value="T6_ARMOR_PLATE_SET1">Kurtka Żołnierza T6</option>
+                            <option value="T4_CAPE">Peleryna T4</option>
                           </select>
                         </div>
                         <div>
@@ -374,7 +375,7 @@ const fetchLivePrices = async () => {
                       </div>
 
                       <button type="button" onClick={fetchLivePrices} disabled={isFetchingApi} className="w-full bg-[#1b1b22] hover:bg-[#282833] text-[#c59b27] border border-[#c59b27]/30 py-1.5 px-4 uppercase tracking-wider text-[10px] font-bold transition disabled:opacity-50">
-                        {isFetchingApi ? '📡 POBIERANIE DANYCH...' : '🔄 POBIERZ CENY LIVE Z ALBIONA'}
+                        {isFetchingApi ? '📡 POBIERANIE DANYCH...' : '🔄 POBIERZ CENY LIVE Z ALBIONA (NIEDOSTĘPNE)'}
                       </button>
 
                       <div className="border-t border-[#23232c] my-2 pt-2">
