@@ -363,17 +363,17 @@ export default function Home() {
                       </div>
 
                       <button type="button" onClick={fetchLivePrices} disabled={isFetchingApi} className="w-full bg-[#1b1b22] hover:bg-[#282833] text-[#c59b27] border border-[#c59b27]/30 py-1.5 px-4 uppercase tracking-wider text-[10px] font-bold transition disabled:opacity-50">
-                        {isFetchingApi ? '📡 POBIERANIE DANYCH...' : '🔄 POBIERZ CENY LIVE Z API'}
+                        {isFetchingApi ? '📡 POBIERANIE DANYCH...' : '🔄 POBIERZ CENY LIVE Z ALBIONA'}
                       </button>
 
                       <div className="border-t border-[#23232c] my-2 pt-2">
                         <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Cena Zakupu w mieście</label>
-                        <input type="number" required placeholder="Wpisz lub pobierz z API" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
+                        <input type="number" required placeholder="Wpisz lub pobierz cenę live" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
                       </div>
                       
                       <div>
                         <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Cena skupu na Czarnym Rynku</label>
-                        <input type="number" required placeholder="Wpisz lub pobierz z API" value={blackMarketPrice} onChange={e => setBlackMarketPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
+                        <input type="number" required placeholder="Wpisz lub pobierz cenę live" value={blackMarketPrice} onChange={e => setBlackMarketPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
                       </div>
 
                       <div>
