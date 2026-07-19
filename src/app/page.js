@@ -148,15 +148,15 @@ export default function Home() {
 const fetchLivePrices = async () => {
     setIsFetchingApi(true)
     try {
-      // Zapytanie do naszego lokalnego API Route
       const res = await fetch(`/api/prices?item=${selectedItem}&city=${selectedCity}`)
       const data = await res.json()
 
       console.log("Odpowiedź przetworzona przez serwer proxy:", data)
 
       if (data && data.length > 0 && !data.error) {
-        const cityData = data.find(p => p.location.toLowerCase() === selectedCity.toLowerCase())
-        const blackMarketData = data.find(p => p.location.toLowerCase() === 'caerleon')
+        // ZMIANA: Bezpieczne szukanie z użyciem ?.location na wypadek uszkodzonych obiektów w API
+        const cityData = data.find(p => p?.location && p.location.toLowerCase() === selectedCity.toLowerCase())
+        const blackMarketData = data.find(p => p?.location && p.location.toLowerCase() === 'caerleon')
 
         let updated = false
 
@@ -178,7 +178,7 @@ const fetchLivePrices = async () => {
       }
     } catch (err) {
       console.error("Błąd pobierania cen:", err)
-      alert("Nie udało się nawiązać połączenia z serwerem danych rynkowych.")
+      alert("Nie udało się przetworzyć danych rynkowych.")
     } finally {
       setIsFetchingApi(false)
     }
