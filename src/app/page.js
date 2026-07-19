@@ -4,6 +4,9 @@ import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 
 export default function Home() {
+  const [selectedItem, setSelectedItem] = useState('T4_MAIN_ROCKET_DEPRECATED') // domyślnie np. sztabka/przedmiot (zmień na popularne ID, np. T4_BAG)
+  const [selectedCity, setSelectedCity] = useState('Martlock')
+  const [isFetchingApi, setIsFetchingApi] = useState(false)
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -142,7 +145,34 @@ export default function Home() {
 
     if (!error) setNewMessage('')
   }
+  const fetchLivePrices = async () => {
+    setIsFetchingApi(true)
+    try {
+      // Zapytanie do publicznego API Albion Data Project o ceny w wybranym mieście i Caerleon
+      const res = await fetch(
+        `https://west.albion-online-data.com/api/v2/stats/prices/${selectedItem}?locations=${selectedCity},Caerleon`
+      )
+      const data = await res.json()
 
+      if (data && data.length > 0) {
+        // Szukamy wpisu dla miasta królewskiego i Czarnego Rynku (Caerleon)
+        const cityData = data.find(p => p.location === selectedCity)
+        const blackMarketData = data.find(p => p.location === 'Caerleon')
+
+        if (cityData && cityData.sell_price_min > 0) {
+          setBuyPrice(cityData.sell_price_min.toString())
+        }
+        if (blackMarketData && blackMarketData.buy_price_max > 0) {
+          setBlackMarketPrice(blackMarketData.buy_price_max.toString())
+        }
+      }
+    } catch (err) {
+      console.error("Błąd pobierania cen z API Albiona:", err)
+      alert("Nie udało się pobrać aktualnych cen. Spróbuj ponownie za chwilę.")
+    } finally {
+      setIsFetchingApi(false)
+    }
+  }
   const handleCalculateFlip = (e) => {
     e.preventDefault()
     const cost = parseFloat(buyPrice) || 0
@@ -309,14 +339,43 @@ export default function Home() {
                 {rightTab === 'ECONOMY' && (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start text-xs animate-fade-in">
                     <form onSubmit={handleCalculateFlip} className="md:col-span-6 space-y-3">
-                      <div>
-                        <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Cena Zakupu w Mieście Królewskim</label>
-                        <input type="number" required placeholder="Np. 120000" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Przedmiot (ID)</label>
+                          <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-bold cursor-pointer focus:border-[#c59b27] focus:outline-none text-[11px]">
+                            <option value="T4_BAG">Torba T4 (Pospolita)</option>
+                            <option value="T5_BAG">Torba T5 (Pospolita)</option>
+                            <option value="T6_BAG">Torba T6 (Pospolita)</option>
+                            <option value="T4_ARMOR_PLATE_SET1">Jacket Żołnierza T4</option>
+                            <option value="T6_ARMOR_PLATE_SET1">Jacket Żołnierza T6</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Miasto Zakupu</label>
+                          <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-bold cursor-pointer focus:border-[#c59b27] focus:outline-none text-[11px]">
+                            <option value="Martlock">Martlock</option>
+                            <option value="Lymhurst">Lymhurst</option>
+                            <option value="FortSterling">Fort Sterling</option>
+                            <option value="Bridgewatch">Bridgewatch</option>
+                            <option value="Thetford">Thetford</option>
+                          </select>
+                        </div>
                       </div>
+
+                      <button type="button" onClick={fetchLivePrices} disabled={isFetchingApi} className="w-full bg-[#1b1b22] hover:bg-[#282833] text-[#c59b27] border border-[#c59b27]/30 py-1.5 px-4 uppercase tracking-wider text-[10px] font-bold transition disabled:opacity-50">
+                        {isFetchingApi ? '📡 POBIERANIE DANYCH...' : '🔄 POBIERZ CENY LIVE Z API'}
+                      </button>
+
+                      <div className="border-t border-[#23232c] my-2 pt-2">
+                        <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Cena Zakupu w mieście</label>
+                        <input type="number" required placeholder="Wpisz lub pobierz z API" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
+                      </div>
+                      
                       <div>
                         <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Cena skupu na Czarnym Rynku</label>
-                        <input type="number" required placeholder="Np. 195000" value={blackMarketPrice} onChange={e => setBlackMarketPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
+                        <input type="number" required placeholder="Wpisz lub pobierz z API" value={blackMarketPrice} onChange={e => setBlackMarketPrice(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:border-[#c59b27] focus:outline-none" />
                       </div>
+
                       <div>
                         <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Podatek w Caerleon</label>
                         <select value={marketTax} onChange={e => setMarketTax(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-bold cursor-pointer focus:border-[#c59b27] focus:outline-none">
@@ -325,6 +384,7 @@ export default function Home() {
                           <option value="15">15% (Bez Premium / Oferta)</option>
                         </select>
                       </div>
+                      
                       <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] text-black font-black py-2.5 px-4 uppercase tracking-widest border border-[#4a3a1d] transition font-albion-title transform active:scale-95">Analizuj Marżę</button>
                     </form>
 
