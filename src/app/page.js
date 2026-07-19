@@ -148,31 +148,50 @@ export default function Home() {
   const fetchLivePrices = async () => {
     setIsFetchingApi(true)
     try {
-      // Zapytanie do publicznego API Albion Data Project o ceny w wybranym mieście i Caerleon
+      // Zapytanie do publicznego API Albion Data Project z uwzględnieniem serwera Europe
       const res = await fetch(
-        `https://west.albion-online-data.com/api/v2/stats/prices/${selectedItem}?locations=${selectedCity},Caerleon`
+        `https://europe.albion-online-data.com/api/v2/stats/prices/${selectedItem}?locations=${selectedCity},Caerleon`
       )
       const data = await res.json()
 
+      // Podgląd odpowiedzi w konsoli (F12) na wypadek gdyby ceny wynosiły 0
+      console.log("Odpowiedź z API Albiona:", data)
+
       if (data && data.length > 0) {
-        // Szukamy wpisu dla miasta królewskiego i Czarnego Rynku (Caerleon)
-        const cityData = data.find(p => p.location === selectedCity)
-        const blackMarketData = data.find(p => p.location === 'Caerleon')
+        // Szukamy wpisów dla wybranych lokalizacji (ignorując wielkość liter)
+        const cityData = data.find(p => p.location.toLowerCase() === selectedCity.toLowerCase())
+        const blackMarketData = data.find(p => p.location.toLowerCase() === 'caerleon')
+
+        let updated = false
 
         if (cityData && cityData.sell_price_min > 0) {
           setBuyPrice(cityData.sell_price_min.toString())
+          updated = true
+        } else {
+          console.log(`Brak aktualnych ofert sprzedaży dla miasta: ${selectedCity}`);
         }
+
         if (blackMarketData && blackMarketData.buy_price_max > 0) {
           setBlackMarketPrice(blackMarketData.buy_price_max.toString())
+          updated = true
+        } else {
+          console.log("Brak aktualnych ofert skupu na Czarnym Rynku w Caerleon");
         }
+
+        if (!updated) {
+          alert("Baza API nie posiada aktualnych, niezerowych cen dla tego przedmiotu. Wpisz ceny ręcznie.")
+        }
+      } else {
+        alert("Brak danych w bazie API dla tego przedmiotu. Spróbuj wybrać inny z listy.")
       }
     } catch (err) {
       console.error("Błąd pobierania cen z API Albiona:", err)
-      alert("Nie udało się pobrać aktualnych cen. Spróbuj ponownie za chwilę.")
+      alert("Nie udało się nawiązać połączenia z serwerem danych rynkowych.")
     } finally {
       setIsFetchingApi(false)
     }
   }
+  
   const handleCalculateFlip = (e) => {
     e.preventDefault()
     const cost = parseFloat(buyPrice) || 0
