@@ -182,31 +182,87 @@ export default function Buildy() {
               {!user ? (
                 <p className="text-gray-500 text-xs italic bg-[#0b0b0d] p-4 border border-[#23232c]">Brama autoryzacji zamknięta. Zaloguj się na panelu głównym.</p>
               ) : (
-                <form onSubmit={handleSendChatMessage} className="mt-2.5 pt-2 border-t border-[#1c1916] flex flex-col sm:flex-row gap-2">
-                {/* Kontener na tag kanału oraz pole wpisywania wiadomości */}
-                <div className="flex flex-1 gap-2">
-                    <div className="bg-[#0b0b0d] px-2 py-1 border border-[#23232c] text-[10px] font-bold text-[#c59b27] flex items-center shrink-0">
-                    {activeChannel === 'SYSTEM' ? 'GLOBALNY' : activeChannel}
+                <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+                  {formMessage && (
+                    <div className={`p-2 border text-center font-bold font-mono text-[10px] uppercase ${formMessage.startsWith('SUKCES') ? 'text-emerald-400 border-emerald-950 bg-emerald-950/20' : 'text-red-400 border-red-950 bg-red-950/20'}`}>
+                      {formMessage}
                     </div>
-                    <input
-                    type="text"
-                    maxLength="120"
-                    disabled={activeChannel === 'SYSTEM'}
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={activeChannel === 'SYSTEM' ? 'Kanał zablokowany...' : 'Napisz wiadomość...'}
-                    className="flex-1 bg-[#0b0b0d] border border-[#23232c] p-1.5 text-xs text-white focus:outline-none focus:border-[#c59b27] disabled:opacity-40 min-w-0"
-                    />
-                </div>
-                
-                {/* Przycisk dostosowujący się do wielkości ekranu */}
-                <button 
-                    type="submit" 
-                    disabled={activeChannel === 'SYSTEM'} 
-                    className="bg-[#201c18] hover:bg-[#c59b27] border border-[#3a3128] hover:text-black text-gray-300 px-4 py-1.5 sm:py-1 text-xs font-bold uppercase transition disabled:hidden w-full sm:w-auto shrink-0"
-                >
-                    Wyślij
-                </button>
+                  )}
+
+                  <div>
+                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Nazwa Konfiguracji (Min. 3 znaki)</label>
+                    <input type="text" name="title" required value={formData.title} onChange={handleInputChange} placeholder="np. Carving Solo PvP" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Aktywność</label>
+                      <select name="activity_type" value={formData.activity_type} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none cursor-pointer">
+                        <option value="PvP">PvP / Ganking</option>
+                        <option value="ZvZ">ZvZ</option>
+                        <option value="PvE / HCE">PvE / HCE</option>
+                        <option value="Solo">Solo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Serwer</label>
+                      <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-[#c59b27] font-bold focus:border-[#c59b27] focus:outline-none cursor-pointer">
+                        <option value="Europa">Europa</option>
+                        <option value="Ameryka">Ameryka</option>
+                        <option value="Azja">Azja</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-[#23232c] my-2 pt-2 grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Broń Główna</label>
+                      <input type="text" name="slot_weapon" required value={formData.slot_weapon} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Druga Ręka (Offhand)</label>
+                      <input type="text" name="slot_offhand" value={formData.slot_offhand} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Głowa</label>
+                      <input type="text" name="slot_head" value={formData.slot_head} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Klatka</label>
+                      <input type="text" name="slot_chest" value={formData.slot_chest} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Buty</label>
+                      <input type="text" name="slot_shoes" value={formData.slot_shoes} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Peleryna</label>
+                      <input type="text" name="slot_cape" value={formData.slot_cape} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Jedzenie</label>
+                      <input type="text" name="slot_food" value={formData.slot_food} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Mikstura</label>
+                      <input type="text" name="slot_potion" value={formData.slot_potion} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Opis Strategii / Uwagi Taktyczne</label>
+                    <textarea name="description" rows="3" value={formData.description} onChange={handleInputChange} placeholder="Opisz rotację skilli, sytuacje taktyczne..." className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none font-sans resize-none" />
+                  </div>
+
+                  <button type="submit" disabled={isSubmitting} className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-2 px-4 uppercase tracking-widest border border-[#4a3a1d] transition transform active:scale-95 font-albion-title disabled:opacity-50">
+                    {isSubmitting ? 'KUŹNIA PRACUJE...' : 'ZAPISZ PROJEKT W ZBROJOWNI'}
+                  </button>
                 </form>
               )}
             </div>
