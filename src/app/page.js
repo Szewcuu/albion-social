@@ -277,7 +277,8 @@ export default function Home() {
           100% { background-position: 0% 50%; }
         }
         .animate-bg-drift {
-          background: linear-gradient(-45deg, #020203, #080706, #140f0a, #040405);
+          /* Zastąpiliśmy skrajną czerń jaśniejszymi tonami RPG: grafit, ciemny szary i głęboki brąz */
+          background: linear-gradient(-45deg, #121216, #1a191f, #221c15, #16151a);
           background-size: 300% 300%;
           animation: bgDrift 35s ease infinite;
         }
@@ -314,7 +315,27 @@ export default function Home() {
         <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_15px_40px_rgba(0,0,0,0.8)] mt-36 z-10">
           <h1 className="text-3xl font-black mb-1 text-[#c59b27] tracking-widest font-albion-title">ALBION ONLINE POLSKA</h1>
           <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold border-b border-[#23232b] pb-3 mb-6">Polski Węzeł Społeczności</p>
-          <button onClick={loginWithDiscord} className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-6 border border-[#4a3a1d] tracking-wider text-xs uppercase transition font-albion-title">Zaloguj przez Discord</button>
+          
+          <div className="space-y-3">
+            {/* AKTYWNE LOGOWANIE DISCORD */}
+            <button 
+              onClick={loginWithDiscord} 
+              className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-6 border border-[#4a3a1d] tracking-wider text-xs uppercase transition font-albion-title active:scale-95"
+            >
+              Zaloguj przez Discord
+            </button>
+
+            {/* ZABLOKOWANE LOGOWANIE GOOGLE (WKRÓTCE) */}
+            <button 
+              disabled 
+              className="w-full bg-[#16161c]/50 text-gray-600 font-black py-3 px-6 border border-[#2c2c3b]/50 tracking-wider text-xs uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
+            >
+              <span>Zaloguj przez Google</span>
+              <span className="text-[8px] bg-[#f0b73a] text-black px-1.5 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
+                Wkrótce
+              </span>
+            </button>
+          </div>
         </div>
       ) : (
         
