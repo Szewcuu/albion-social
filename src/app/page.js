@@ -16,6 +16,7 @@ export default function Home() {
   const [myGuilds, setMyGuilds] = useState([])
   const [myMarketPosts, setMyMarketPosts] = useState([])
   const [globalStats, setGlobalStats] = useState({ guilds: 0, market: 0 })
+  const [albionNews, setAlbionNews] = useState([])
   const [recentGlobalPosts, setRecentGlobalPosts] = useState([])
 
   // Stany Admina
@@ -51,6 +52,7 @@ export default function Home() {
       setUser(currentUser)
       fetchGlobalData()
       fetchInitialChat()
+      fetchAlbionNews()
       if (currentUser) fetchUserDataAndRole(currentUser.id)
       else setLoading(false)
     })
@@ -99,6 +101,16 @@ export default function Home() {
       setChatMessages(data)
     } else {
       setChatMessages([{ id: 'init', channel: 'SYSTEM', username: 'System', text: 'Połączono z węzłem miejskim Albion Online Polska Portal. Czat aktywny.' }])
+    }
+  }
+
+  const fetchAlbionNews = async () => {
+    try {
+      const res = await fetch('/api/news')
+      const data = await res.json()
+      if (data && !data.error) setAlbionNews(data)
+    } catch (err) {
+      console.error("Błąd ładowania wiadomości:", err)
     }
   }
 
@@ -325,6 +337,32 @@ const fetchLivePrices = async () => {
 
               <div className="bg-[#141419] border border-[#23232c] p-4 shadow-xl">
                 <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 font-albion-title border-b border-[#1f1f26] pb-1">Czas i Statystyki</h2>
+                {/* KRONIKI KRÓLEWSKIE - AUTOMATYCZNE WIADOMOŚCI */}
+                <div className="bg-[#141419] border border-[#23232c] p-4 shadow-xl space-y-3">
+                  <h2 className="text-[10px] font-black text-[#c59b27] uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-1">
+                    📜 Goniec Królewski (Oficjalne Newsy)
+                  </h2>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 text-xs scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
+                    {albionNews.length === 0 ? (
+                      <p className="text-gray-600 italic animate-pulse">Wyglądasz okna... brak kurierów na horyzoncie.</p>
+                    ) : (
+                      albionNews.map((news, idx) => (
+                        <div key={idx} className="border-b border-[#1f1f26]/60 pb-2 last:border-none last:pb-0">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-[8px] font-mono text-gray-500 font-bold">{news.pubDate}</span>
+                            <span className="text-[8px] bg-amber-500/10 text-amber-500 border border-amber-500/20 px-1 font-bold">OFFICIAL</span>
+                          </div>
+                          <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-[#gray-200] hover:text-[#c59b27] font-bold block transition leading-tight mb-1">
+                            {news.title}
+                          </a>
+                          <p className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed">
+                            {news.contentSnippet}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
                 <div className="bg-[#0b0b0d] border border-[#1f1f26] p-3 text-center mb-3 shadow-inner">
                   <span className="text-[8px] text-gray-600 font-bold tracking-widest block uppercase font-mono">SERVER TIME (UTC)</span>
                   <span className="text-2xl font-mono font-black text-[#c59b27] tracking-widest">{utcTime || '00:00:00'}</span>
