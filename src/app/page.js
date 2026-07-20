@@ -33,10 +33,11 @@ export default function Home() {
   const [marketTax, setMarketTax] = useState('8')
   const [calcResult, setCalcResult] = useState(null)
 
-  // JAWNIE ZDEFINIOWANE STANY DLA CZATU (Naprawia ReferenceError)
+  // Stany dla czatu
   const [chatMessages, setChatMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [activeChannel, setActiveChannel] = useState('GLOBALNY')
+  const chatLoading = chatMessages.length === 0
   const chatEndRef = useRef(null)
 
   useEffect(() => {
@@ -90,7 +91,6 @@ export default function Home() {
     }
   }, [])
 
-  // Bezpieczne przewijanie czatu (nie zjeżdża z całą stroną w dół)
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
   }, [chatMessages])
@@ -119,27 +119,33 @@ export default function Home() {
     setRecentGlobalPosts(recent || [])
     const { count: gCount } = await supabase.from('guilds').select('*', { count: 'exact', head: true })
     const { count: mCount } = await supabase.from('market_posts').select('*', { count: 'exact', head: true })
-    setGlobalStats({ guilds: gCount || 0, market: mCount || 0 })
+    setGlobalStats({ marketOffersCount: mCount || 0, guildsCount: gCount || 0 })
   }
 
   const fetchUserDataAndRole = async (userId) => {
-    const { data: profile } = await supabase.from('profiles').select('is_admin, username').eq('id', userId).single()
-    const adminStatus = profile?.is_admin ?? false
-    setIsAdmin(adminStatus)
+    try {
+      const { data: profile } = await supabase.from('profiles').select('is_admin, username').eq('id', userId).single()
+      const adminStatus = profile?.is_admin ?? false
+      setIsAdmin(adminStatus)
 
-    const { data: guilds } = await supabase.from('guilds').select('*').eq('user_id', userId)
-    const { data: market = [] } = await supabase.from('market_posts').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+      const { data: guilds } = await supabase.from('guilds').select('*').eq('user_id', userId)
+      const { data: market = [] } = await supabase.from('market_posts').select('*').eq('user_id', userId).order('created_at', { ascending: false })
 
-    setMyGuilds(guilds || [])
-    setMyMarketPosts(market || [])
+      setMyGuilds(guilds || [])
+      setMyMarketPosts(market || [])
 
-    if (adminStatus) {
-      const { data: allG } = await supabase.from('guilds').select('*, profiles(username)').order('created_at', { ascending: false })
-      const { data: allM } = await supabase.from('market_posts').select('*, profiles(username)').order('created_at', { ascending: false })
-      setAllGuilds(allG || [])
-      setAllMarketPosts(allM || [])
+      if (adminStatus) {
+        const { data: allG } = await supabase.from('guilds').select('*, profiles(username)').order('created_at', { ascending: false })
+        const { data: allM } = await supabase.from('market_posts').select('*, profiles(username)').order('created_at', { ascending: false })
+        setAllGuilds(allG || [])
+        setAllMarketPosts(allM || [])
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      // POPRAWKA: Przełączamy loading dopiero po tym, jak WSZYSTKIE dane z bazy spłyną do stanów
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleSendChatMessage = async (e) => {
@@ -157,16 +163,14 @@ export default function Home() {
 
     if (!error) setNewMessage('')
   }
-const fetchLivePrices = async () => {
+
+  const fetchLivePrices = async () => {
     setIsFetchingApi(true)
     try {
       const res = await fetch(`/api/prices?item=${selectedItem}&city=${selectedCity}`)
       const data = await res.json()
 
-      console.log("Odpowiedź przetworzona przez serwer proxy:", data)
-
       if (data && data.length > 0 && !data.error) {
-        // ZMIANA: Bezpieczne szukanie z użyciem ?.location na wypadek uszkodzonych obiektów w API
         const cityData = data.find(p => p?.location && p.location.toLowerCase() === selectedCity.toLowerCase())
         const blackMarketData = data.find(p => p?.location && p.location.toLowerCase() === 'caerleon')
 
@@ -267,6 +271,13 @@ const fetchLivePrices = async () => {
           background-size: 300% 300%;
           animation: bgDrift 35s ease infinite;
         }
+        .animate-pulse-fast {
+          animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .4; }
+        }
         @keyframes floatEmber {
           0% { transform: translateY(105vh) translateX(0px) scale(0.6); opacity: 0; }
           15% { opacity: 0.35; filter: blur(1px); }
@@ -297,7 +308,7 @@ const fetchLivePrices = async () => {
         </div>
       ) : (
         
-        <div className="max-w-7xl w-full space-y-5 animate-fade-in z-10">
+        <div className="max-w-7xl w-full space-y-5 z-10">
           
           {/* NAGŁÓWEK MIEJSKI */}
           <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141419] border-2 border-[#c59b27] p-4 shadow-2xl relative">
@@ -335,16 +346,31 @@ const fetchLivePrices = async () => {
                 </div>
               </div>
 
-              <div className="bg-[#141419] border border-[#23232c] p-4 shadow-xl">
-                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 font-albion-title border-b border-[#1f1f26] pb-1">Czas i Statystyki</h2>
-                {/* KRONIKI KRÓLEWSKIE - AUTOMATYCZNE WIADOMOŚCI */}
-                <div className="bg-[#141419] border border-[#23232c] p-4 shadow-xl space-y-3">
-                  <h2 className="text-[10px] font-black text-[#c59b27] uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-1">
+              <div className="bg-[#141419] border border-[#23232c] p-4 shadow-xl space-y-3">
+                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-1">Czas i Statystyki</h2>
+                
+                {/* GONIEC KRÓLEWSKI */}
+                <div className="bg-[#0b0b0d] border border-[#1f1f26] p-3 shadow-xl space-y-3">
+                  <h3 className="text-[10px] font-black text-[#c59b27] uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-1">
                     📜 Goniec Królewski (Oficjalne Newsy)
-                  </h2>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 text-xs scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
+                  </h3>
+                  <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 text-xs scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
                     {albionNews.length === 0 ? (
-                      <p className="text-gray-600 italic animate-pulse">Wyglądasz okna... brak kurierów na horyzoncie.</p>
+                      <div className="space-y-4 animate-pulse-fast">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="border-b border-[#1f1f26]/60 pb-2 last:border-none last:pb-0 space-y-2">
+                            <div className="flex justify-between">
+                              <div className="h-2 w-12 bg-[#1f1f26] rounded"></div>
+                              <div className="h-2 w-10 bg-[#1f1f26] rounded"></div>
+                            </div>
+                            <div className="h-3 w-3/4 bg-[#1f1f26] rounded"></div>
+                            <div className="space-y-1">
+                              <div className="h-2 w-full bg-[#1f1f26] rounded"></div>
+                              <div className="h-2 w-5/6 bg-[#1f1f26] rounded"></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
                       albionNews.map((news, idx) => (
                         <div key={idx} className="border-b border-[#1f1f26]/60 pb-2 last:border-none last:pb-0">
@@ -352,7 +378,7 @@ const fetchLivePrices = async () => {
                             <span className="text-[8px] font-mono text-gray-500 font-bold">{news.pubDate}</span>
                             <span className="text-[8px] bg-amber-500/10 text-amber-500 border border-amber-500/20 px-1 font-bold">OFFICIAL</span>
                           </div>
-                          <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-[#gray-200] hover:text-[#c59b27] font-bold block transition leading-tight mb-1">
+                          <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-gray-200 hover:text-[#c59b27] font-bold block transition leading-tight mb-1">
                             {news.title}
                           </a>
                           <p className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed">
@@ -363,13 +389,30 @@ const fetchLivePrices = async () => {
                     )}
                   </div>
                 </div>
-                <div className="bg-[#0b0b0d] border border-[#1f1f26] p-3 text-center mb-3 shadow-inner">
+
+                <div className="bg-[#0b0b0d] border border-[#1f1f26] p-3 text-center shadow-inner">
                   <span className="text-[8px] text-gray-600 font-bold tracking-widest block uppercase font-mono">SERVER TIME (UTC)</span>
                   <span className="text-2xl font-mono font-black text-[#c59b27] tracking-widest">{utcTime || '00:00:00'}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2 text-center text-xs font-mono">
-                  <div className="bg-[#1d1d24] p-2 border border-[#232333]"><span className="text-gray-500 block text-[8px] font-sans font-bold uppercase">Oferty Rynku</span><span className="text-amber-500 font-bold text-sm">{globalStats.market}</span></div>
-                  <div className="bg-[#1d1d24] p-2 border border-[#232333]"><span className="text-gray-500 block text-[8px] font-sans font-bold uppercase">Polskie Gildie</span><span className="text-emerald-500 font-bold text-sm">{globalStats.guilds}</span></div>
+
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="bg-[#0b0b0d] p-3 border border-[#1f1f26]">
+                    <span className="text-gray-500 block text-[8px] uppercase font-bold tracking-wider mb-1">Oferty Rynku</span>
+                    {loading ? (
+                      <div className="h-4 w-8 bg-[#1f1f26] rounded animate-pulse-fast mx-auto my-0.5"></div>
+                    ) : (
+                      <span className="text-sm font-mono font-black text-amber-500">{globalStats?.marketOffersCount || 0}</span>
+                    )}
+                  </div>
+
+                  <div className="bg-[#0b0b0d] p-3 border border-[#1f1f26]">
+                    <span className="text-gray-500 block text-[8px] uppercase font-bold tracking-wider mb-1">Polskie Gildie</span>
+                    {loading ? (
+                      <div className="h-4 w-8 bg-[#1f1f26] rounded animate-pulse-fast mx-auto my-0.5"></div>
+                    ) : (
+                      <span className="text-sm font-mono font-black text-emerald-500">{globalStats?.guildsCount || 0}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -386,7 +429,7 @@ const fetchLivePrices = async () => {
                 </div>
 
                 {rightTab === 'ECONOMY' && (
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start text-xs animate-fade-in">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start text-xs">
                     <form onSubmit={handleCalculateFlip} className="md:col-span-6 space-y-3">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
@@ -438,7 +481,7 @@ const fetchLivePrices = async () => {
                       <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] text-black font-black py-2.5 px-4 uppercase tracking-widest border border-[#4a3a1d] transition font-albion-title transform active:scale-95">Analizuj Marżę</button>
                     </form>
 
-                    <div className="md:col-span-6 h-full flex flex-col justify-between">
+                    <div className="md:col-span-6 h-full flex flex-col justify-between space-y-4">
                       <div className="bg-[#0b0b0d] border border-[#23232c] p-4 rounded-sm space-y-2.5 min-h-[165px] flex flex-col justify-center shadow-inner">
                         {calcResult ? (
                           <div className="space-y-2">
@@ -450,12 +493,32 @@ const fetchLivePrices = async () => {
                           <p className="text-gray-600 italic text-center text-[11px]">Wprowadź wartości cenowe po lewej stronie, aby sprawdzić rentowność transportu.</p>
                         )}
                       </div>
+
+                      {/* OSTATNIE KONTRAKTY Z BAZY (DODATKOWY SKELETON) */}
+                      <div className="bg-[#0b0b0d] border border-[#23232c] p-3 rounded-sm space-y-2">
+                        <span className="text-[8px] text-gray-500 font-bold uppercase tracking-wider block border-b border-[#1f1f26] pb-1">Ostatnie ogłoszenia z tablicy</span>
+                        {loading ? (
+                          <div className="space-y-2 animate-pulse-fast">
+                            <div className="h-3 bg-[#1f1f26] rounded w-full"></div>
+                            <div className="h-3 bg-[#1f1f26] rounded w-5/6"></div>
+                          </div>
+                        ) : recentGlobalPosts.length === 0 ? (
+                          <p className="text-[10px] text-gray-600 italic">Brak nowych zleceń kupna/sprzedaży.</p>
+                        ) : (
+                          recentGlobalPosts.map(post => (
+                            <div key={post.id} className="text-[10px] flex justify-between border-b border-[#1f1f26]/40 pb-1 last:border-none last:pb-0">
+                              <span className="text-gray-400 font-mono">[{post.server}] {post.item_name}</span>
+                              <span className="text-[#c59b27] font-bold font-mono">{post.price.toLocaleString()} Silver</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {rightTab === 'ADMIN' && isAdmin && (
-                  <div className="space-y-4 animate-fade-in text-xs">
+                  <div className="space-y-4 text-xs">
                     <div className="flex justify-between items-center bg-[#0b0b0d] p-2 border border-red-950/40">
                       <span className="text-red-400 font-bold uppercase text-[9px] tracking-wider">Panel Kontrolny Wyższego Inkwizytora</span>
                       <div className="flex gap-1 bg-[#141419] p-0.5 border border-[#23232c]">
@@ -480,7 +543,7 @@ const fetchLivePrices = async () => {
                 )}
               </div>
 
-              {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY LIVE Z RANGAMI */}
+              {/* CZAT Z NOWYMI SKELETONAMI */}
               <div className="bg-[#060608] border border-[#23232c] rounded-sm p-3 shadow-2xl h-[250px] flex flex-col justify-between">
                 
                 <div className="flex gap-2 border-b border-[#1c1916] pb-1.5 mb-2 text-[9px] font-black uppercase tracking-wider">
@@ -492,35 +555,42 @@ const fetchLivePrices = async () => {
                 </div>
 
                 <div className="space-y-1.5 overflow-y-auto max-h-[140px] flex-1 pr-1 text-[11px] font-medium leading-relaxed select-text">
-                  {chatMessages
-                    .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
-                    .map((msg) => (
-                      <div key={msg.id} className="animate-fade-in flex items-start gap-1.5">
-                        
-                        {/* ODZNACZENIA RANG DLA KANAŁÓW GRACZY */}
-                        {msg.channel !== 'SYSTEM' && (
-                          <span className={`font-black uppercase text-[8px] tracking-widest px-1.5 py-0.5 rounded-sm shrink-0 mt-0.5 ${
-                            msg.role === 'ADMIN' ? 'bg-red-950 text-red-400 border border-red-900/40' : 'bg-[#1a1a24] text-gray-500 border border-[#23232c]'
-                          }`}>
-                            {msg.role === 'ADMIN' ? 'Inkwizytor' : 'Wojownik'}
-                          </span>
-                        )}
+                  {chatLoading ? (
+                    /* SKELETON LOADER DLA CZATU ZAMIAST PUSTKI */
+                    <div className="space-y-2.5 animate-pulse-fast">
+                      <div className="flex gap-2 items-center"><div className="h-4 w-14 bg-[#1f1f26] rounded-sm"></div><div className="h-3 w-1/3 bg-[#1f1f26] rounded"></div></div>
+                      <div className="flex gap-2 items-center"><div className="h-4 w-14 bg-[#1f1f26] rounded-sm"></div><div className="h-3 w-1/2 bg-[#1f1f26] rounded"></div></div>
+                      <div className="flex gap-2 items-center"><div className="h-4 w-14 bg-[#1f1f26] rounded-sm"></div><div className="h-3 w-1/4 bg-[#1f1f26] rounded"></div></div>
+                    </div>
+                  ) : (
+                    chatMessages
+                      .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
+                      .map((msg) => (
+                        <div key={msg.id} className="flex items-start gap-1.5">
+                          {msg.channel !== 'SYSTEM' && (
+                            <span className={`font-black uppercase text-[8px] tracking-widest px-1.5 py-0.5 rounded-sm shrink-0 mt-0.5 ${
+                              msg.role === 'ADMIN' ? 'bg-red-950 text-red-400 border border-red-900/40' : 'bg-[#1a1a24] text-gray-500 border border-[#23232c]'
+                            }`}>
+                              {msg.role === 'ADMIN' ? 'Inkwizytor' : 'Wojownik'}
+                            </span>
+                          )}
 
-                        <div>
-                          <span className={`font-bold mr-1.5 ${
-                            msg.channel === 'HANDEL' ? 'text-amber-500' :
-                            msg.channel === 'REKRUTACJA' ? 'text-purple-400' :
-                            msg.channel === 'SYSTEM' ? 'text-gray-500 font-mono text-[10px]' : 
-                            msg.role === 'ADMIN' ? 'text-[#c59b27]' : 'text-sky-400'
-                          }`}>
-                            [{msg.channel}] {msg.username ? `${msg.username}:` : ''}
-                          </span>
-                          <span className={msg.channel === 'SYSTEM' ? 'text-gray-500 italic' : msg.role === 'ADMIN' ? 'text-gray-100 font-medium' : 'text-gray-300'}>
-                            {msg.text}
-                          </span>
+                          <div>
+                            <span className={`font-bold mr-1.5 ${
+                              msg.channel === 'HANDEL' ? 'text-amber-500' :
+                              msg.channel === 'REKRUTACJA' ? 'text-purple-400' :
+                              msg.channel === 'SYSTEM' ? 'text-gray-500 font-mono text-[10px]' : 
+                              msg.role === 'ADMIN' ? 'text-[#c59b27]' : 'text-sky-400'
+                            }`}>
+                              [{msg.channel}] {msg.username ? `${msg.username}:` : ''}
+                            </span>
+                            <span className={msg.channel === 'SYSTEM' ? 'text-gray-500 italic' : msg.role === 'ADMIN' ? 'text-gray-100 font-medium' : 'text-gray-300'}>
+                              {msg.text}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                  )}
                   <div ref={chatEndRef} />
                 </div>
 
