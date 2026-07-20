@@ -1,26 +1,79 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 
 export default function Home() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  
+  // Stan dla czatu na żywo
+  const [messages, setMessages] = useState([])
+  const [newMessage, setNewMessage] = useState('')
+  const chatBottomRef = useRef(null)
+
+  // Stan dla oficjalnych wiadomości / newsów
+  const [news, setNews] = useState([])
 
   useEffect(() => {
-    // Sprawdzenie obecnej sesji użytkownika przy załadowaniu strony
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
-    // Nasłuchiwanie na zmiany stanu autoryzacji (zalogowanie/wylogowanie)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
     })
 
-    return () => subscription.unsubscribe()
+    // Pobieranie wiadomości czatu oraz newsów
+    fetchMessages()
+    fetchNews()
+
+    // Realtime dla czatu
+    const chatChannel = supabase
+      .channel('public-chat')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        setMessages((prev) => [...prev, payload.new])
+      })
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+      supabase.removeChannel(chatChannel)
+    }
   }, [])
+
+  const fetchMessages = async () => {
+    const { data } = await supabase
+      .from('messages')
+      .select('*, profiles(username)')
+      .order('created_at', { ascending: true })
+      .limit(50)
+    if (data) setMessages(data)
+  }
+
+  const fetchNews = async () => {
+    setNews([
+      { id: 1, title: 'Aktualizacja sezonowa: Nowe terytoria i zmiany w Caerleon', date: '2026-07-15' },
+      { id: 2, title: 'Wdrożenie Królewskiej Zbrojowni i systemu głosowania buildów', date: '2026-07-18' }
+    ])
+  }
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault()
+    if (!newMessage.trim() || !user) return
+
+    const { error } = await supabase.from('messages').insert([
+      {
+        user_id: user.id,
+        content: newMessage.trim()
+      }
+    ])
+
+    if (!error) {
+      setNewMessage('')
+    }
+  }
 
   const loginWithDiscord = async () => {
     await supabase.auth.signInWithOAuth({
@@ -35,16 +88,15 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#121216] text-gray-400 flex items-center justify-center font-mono text-base animate-pulse">
+      <div className="min-h-screen bg-[#121216] text-gray-400 flex items-center justify-center font-mono text-lg animate-pulse">
         Wczytywanie zwojów miejskich...
       </div>
     )
   }
 
   return (
-    <main className="min-h-screen bg-[#121216] text-gray-200 antialiased relative overflow-hidden flex flex-col items-center justify-center px-4 font-sans">
+    <main className="min-h-screen bg-[#121216] text-gray-200 antialiased relative overflow-hidden flex flex-col items-center px-4 py-8 font-sans">
       
-      {/* DEKLARACJA CZCIONEK I ANIMACJI RPG */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;900&display=swap');
         .font-albion-title { font-family: 'Cinzel', serif; }
@@ -61,111 +113,203 @@ export default function Home() {
         }
       `}</style>
 
-      {/* ROZJAŚNIONE DYNAMICZNE TŁO I WIĘKSZA WINIETA */}
+      {/* Tło i winieta */}
       <div className="absolute inset-0 animate-bg-drift opacity-90 z-0"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
 
-      {/* 1. EKRAN DLA NIEZALOGOWANYCH GOŚCI */}
+      {/* 1. WERSJA DLA GOŚCI (EKSPOZYCJA + LOGOWANIE Z GOOGLE WKRÓTCE) */}
       {!user ? (
-        <div className="flex flex-col items-center justify-center min-h-screen w-full max-w-5xl mx-auto z-10 space-y-12 px-6 py-16">
+        <div className="flex flex-col items-center justify-center min-h-[90vh] w-full max-w-6xl mx-auto z-10 space-y-12 px-4 py-8">
           
-          {/* NAGŁÓWEK POWITALNY */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl sm:text-5xl font-black text-[#c59b27] tracking-widest font-albion-title drop-shadow-[0_5px_15px_rgba(0,0,0,0.6)]">
+            <h1 className="text-4xl sm:text-6xl font-black text-[#c59b27] tracking-widest font-albion-title drop-shadow-[0_5px_15px_rgba(0,0,0,0.6)]">
               ALBION ONLINE POLSKA
             </h1>
-            <p className="text-base sm:text-lg text-gray-300 uppercase tracking-widest font-bold max-w-2xl mx-auto leading-relaxed">
-              Polski węzeł społecznościowy: kalkulatory handlowe, zbrojownia taktyczna oraz rejestr gildii
+            <p className="text-base sm:text-xl text-gray-300 uppercase tracking-widest font-bold max-w-3xl mx-auto leading-relaxed">
+              Centralny węzeł społecznościowy: kalkulatory handlowe, zbrojownia taktyczna, czat na żywo oraz rejestr gildii
             </p>
           </div>
 
-          {/* GŁÓWNY PANEL LOGOWANIA */}
-          <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-sm">
-            <span className="text-xs text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-4">BRAMA DO KRONIK MIEJSKICH</span>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full items-start">
             
-            <div className="space-y-4">
-              {/* LOGOWANIE DISCORD */}
-              <button 
-                onClick={loginWithDiscord} 
-                className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-4 px-8 border border-[#4a3a1d] tracking-wider text-sm uppercase transition font-albion-title active:scale-95 shadow-md"
-              >
-                Zaloguj przez Discord
-              </button>
+            {/* LEWA STRONA: OPISY FUNKCJI */}
+            <div className="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
+                <div className="text-3xl">📊</div>
+                <h3 className="font-bold text-[#c59b27] font-albion-title text-base tracking-wide uppercase">Kalkulator Caerleon</h3>
+                <p className="text-gray-300 leading-relaxed text-sm">
+                  Analizuj marże transportowe i zyski ze skupu na Czarnym Rynku. Sprawdzaj rentowność flipów przed wyruszeniem w karawanę.
+                </p>
+              </div>
 
-              {/* LOGOWANIE GOOGLE (WKRÓTCE) */}
-              <button 
-                disabled 
-                className="w-full bg-[#16161c]/50 text-gray-600 font-black py-4 px-8 border border-[#2c2c3b]/50 tracking-wider text-sm uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
-              >
-                <span>Zaloguj przez Google</span>
-                <span className="text-[10px] bg-[#f0b73a] text-black px-2 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
-                  Wkrótce
-                </span>
-              </button>
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
+                <div className="text-3xl">🛡️</div>
+                <h3 className="font-bold text-sky-400 font-albion-title text-base tracking-wide uppercase">Królewska Zbrojownia</h3>
+                <p className="text-gray-300 leading-relaxed text-sm">
+                  Przeglądaj, oceniaj i twórz strategiczne zestawy rynsztunku pod PvP Solo, ZvZ, PvE oraz Ganking.
+                </p>
+              </div>
+
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
+                <div className="text-3xl">💬</div>
+                <h3 className="font-bold text-purple-400 font-albion-title text-base tracking-wide uppercase">Czat Społeczności</h3>
+                <p className="text-gray-300 leading-relaxed text-sm">
+                  Dyskutuj, handluj i rekrutuj na żywo na kanałach zsynchronizowanych z bazą danych w czasie rzeczywistym.
+                </p>
+              </div>
+
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
+                <div className="text-3xl">⚔️</div>
+                <h3 className="font-bold text-emerald-400 font-albion-title text-base tracking-wide uppercase">Rejestr Gildii</h3>
+                <p className="text-gray-300 leading-relaxed text-sm">
+                  Znajdź swoją nową armię na serwerze. Sprawdzaj statusy rekrutacji polskich sojuszy i aplikuj do struktur.
+                </p>
+              </div>
             </div>
+
+            {/* PRAWA STRONA: PANEL LOGOWANIA */}
+            <div className="lg:col-span-5 space-y-6 w-full">
+              <div className="w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-sm">
+                <span className="text-xs text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-6">BRAMA DO KRONIK MIEJSKICH</span>
+                
+                <div className="space-y-4">
+                  <button 
+                    onClick={loginWithDiscord} 
+                    className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-4 px-8 border border-[#4a3a1d] tracking-wider text-sm uppercase transition font-albion-title active:scale-95 shadow-md"
+                  >
+                    Zaloguj przez Discord
+                  </button>
+
+                  <button 
+                    disabled 
+                    className="w-full bg-[#16161c]/50 text-gray-500 font-black py-4 px-8 border border-[#2c2c3b]/50 tracking-wider text-sm uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
+                  >
+                    <span>Zaloguj przez Google</span>
+                    <span className="text-[10px] bg-[#f0b73a] text-black px-2 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
+                      Wkrótce
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* OFICJALNE NEWSY DLA GOŚCI */}
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm space-y-3 backdrop-blur-sm">
+                <h4 className="text-sm font-bold text-[#c59b27] uppercase tracking-wider font-albion-title">📜 Kroniki i Aktualizacje</h4>
+                <div className="space-y-2 text-sm">
+                  {news.map(item => (
+                    <div key={item.id} className="border-b border-[#23232c] pb-2 text-gray-300">
+                      <span className="text-xs text-gray-500 block font-mono">{item.date}</span>
+                      <span className="font-medium">{item.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
           </div>
 
-          {/* PRAWDZIWE OPISY MODUŁÓW ZWIĘKSZAJĄCE CZYTELNOŚĆ */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-sm">
-            <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
-              <div className="text-2xl">📊</div>
-              <h3 className="font-bold text-[#c59b27] font-albion-title text-base tracking-wide uppercase">Kalkulator Caerleon</h3>
-              <p className="text-gray-400 leading-relaxed text-sm">
-                Analizuj marże transportowe i zyski ze skupu na Czarnym Rynku. Pobieraj aktualne ceny live i sprawdzaj rentowność flipów przed wyruszeniem z karawaną handlową.
-              </p>
-            </div>
-
-            <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
-              <div className="text-2xl">🛡️</div>
-              <h3 className="font-bold text-sky-400 font-albion-title text-base tracking-wide uppercase">Królewska Zbrojownia</h3>
-              <p className="text-gray-400 leading-relaxed text-sm">
-                Przeglądaj, oceniaj i twórz strategiczne zestawy rynsztunku. Filtruj buildy pod PvP Solo, ZvZ, PvE / HCE czy Ganking stworzone przez społeczność.
-              </p>
-            </div>
-
-            <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
-              <div className="text-2xl">⚔️</div>
-              <h3 className="font-bold text-emerald-400 font-albion-title text-base tracking-wide uppercase">Rejestr Gildii</h3>
-              <p className="text-gray-400 leading-relaxed text-sm">
-                Znajdź swoją nową armię na serwerze. Sprawdzaj statusy rekrutacji polskich sojuszy i aplikuj bezpośrednio do ich struktur Discord.
-              </p>
-            </div>
-          </div>
         </div>
       ) : (
-        
-        // 2. PANEL DLA ZALOGOWANYCH UŻYTKOWNIKÓW
-        <div className="w-full max-w-4xl bg-[#141419] border-2 border-[#c59b27] p-8 z-10 space-y-8 shadow-2xl my-12 rounded-sm">
-          <div className="flex justify-between items-center border-b border-[#23232c] pb-5">
+
+        // 2. PANEL DLA ZALOGOWANYCH UŻYTKOWNIKÓW (PEŁNY DASHBOARD + CZAT + NAWIGACJA)
+        <div className="w-full max-w-6xl z-10 space-y-8 my-6">
+          
+          {/* NAGŁÓWEK DASHBOARDU */}
+          <div className="bg-[#141419] border-2 border-[#c59b27] p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center shadow-2xl rounded-sm gap-4">
             <div>
-              <h2 className="text-2xl font-black font-albion-title text-gray-100 tracking-wide">PULPIT ZARZĄDZANIA WĘZŁEM</h2>
+              <h2 className="text-2xl sm:text-3xl font-black font-albion-title text-gray-100 tracking-wide">PULPIT ZARZĄDZANIA WĘZŁEM</h2>
               <p className="text-sm text-gray-400 mt-1">Wojownik: <span className="text-[#c59b27] font-bold">{user.email}</span></p>
             </div>
             <button 
               onClick={handleLogout} 
-              className="bg-red-950/60 text-red-400 border border-red-900/50 hover:bg-red-900 px-5 py-2.5 font-bold text-sm uppercase tracking-wider transition rounded-sm active:scale-95"
+              className="bg-red-950/60 text-red-400 border border-red-900/50 hover:bg-red-900 px-6 py-3 font-bold text-sm uppercase tracking-wider transition rounded-sm active:scale-95"
             >
               Opuść Węzeł
             </button>
           </div>
 
-          {/* NAWIGACJA PO MODUŁACH APLIKACJI */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 font-bold uppercase text-sm">
-            <Link href="/rynek" className="p-6 bg-[#0b0b0d] border border-[#23232c] hover:border-[#c59b27] transition text-center space-y-3 block rounded-sm group">
-              <div className="text-3xl group-hover:scale-110 transition duration-200">📊</div>
-              <div className="text-base text-gray-200 tracking-wide">Kalkulator Rynku</div>
+          {/* NAWIGACJA GŁÓWNA */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-bold uppercase text-sm">
+            <Link href="/rynek" className="p-6 bg-[#141419] border border-[#23232c] hover:border-[#c59b27] transition text-center space-y-3 block rounded-sm group shadow-xl">
+              <div className="text-4xl group-hover:scale-110 transition duration-200">📊</div>
+              <div className="text-lg text-gray-200 tracking-wide">Kalkulator Rynku</div>
             </Link>
             
-            <Link href="/buildy" className="p-6 bg-[#0b0b0d] border border-[#23232c] hover:border-sky-400 transition text-center space-y-3 block rounded-sm group">
-              <div className="text-3xl group-hover:scale-110 transition duration-200">🛡️</div>
-              <div className="text-base text-gray-200 tracking-wide">Zbrojownia Buildów</div>
+            <Link href="/buildy" className="p-6 bg-[#141419] border border-[#23232c] hover:border-sky-400 transition text-center space-y-3 block rounded-sm group shadow-xl">
+              <div className="text-4xl group-hover:scale-110 transition duration-200">🛡️</div>
+              <div className="text-lg text-gray-200 tracking-wide">Zbrojownia Buildów</div>
             </Link>
             
-            <Link href="/gildie" className="p-6 bg-[#0b0b0d] border border-[#23232c] hover:border-emerald-400 transition text-center space-y-3 block rounded-sm group">
-              <div className="text-3xl group-hover:scale-110 transition duration-200">⚔️</div>
-              <div className="text-base text-gray-200 tracking-wide">Rejestr Gildii</div>
+            <Link href="/gildie" className="p-6 bg-[#141419] border border-[#23232c] hover:border-emerald-400 transition text-center space-y-3 block rounded-sm group shadow-xl">
+              <div className="text-4xl group-hover:scale-110 transition duration-200">⚔️</div>
+              <div className="text-lg text-gray-200 tracking-wide">Rejestr Gildii</div>
             </Link>
           </div>
+
+          {/* SEKCJA CZATU NA ŻYVO ORAZ NEWSÓW */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* CZAT SPOŁECZNOŚCI (2 kolumny) */}
+            <div className="lg:col-span-2 bg-[#141419] border border-[#23232c] p-6 rounded-sm shadow-xl flex flex-col h-[500px]">
+              <h3 className="text-base font-bold text-[#c59b27] uppercase tracking-wide font-albion-title border-b border-[#23232c] pb-3 mb-4">
+                💬 Czat Miejski na Żywo
+              </h3>
+
+              <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+                {messages.length === 0 ? (
+                  <p className="text-sm text-gray-500 italic text-center py-10">Brak wiadomości. Bądź pierwszy i napisz coś do braci z gildii!</p>
+                ) : (
+                  messages.map((msg) => (
+                    <div key={msg.id} className="bg-[#0b0b0d] p-3 border border-[#23232c] text-sm">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-sky-400">{msg.profiles?.username || 'Wojownik'}</span>
+                        <span className="text-[10px] text-gray-500 font-mono">
+                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-gray-300 leading-relaxed">{msg.content}</p>
+                    </div>
+                  ))
+                )}
+                <div ref={chatBottomRef} />
+              </div>
+
+              <form onSubmit={handleSendMessage} className="mt-4 flex gap-2 pt-3 border-t border-[#23232c]">
+                <input 
+                  type="text" 
+                  value={newMessage} 
+                  onChange={(e) => setNewMessage(e.target.value)} 
+                  placeholder="Napisz wiadomość na czacie..." 
+                  className="flex-1 bg-[#0b0b0d] border border-[#23232c] p-3 text-white text-sm focus:outline-none focus:border-[#c59b27]"
+                />
+                <button 
+                  type="submit" 
+                  className="bg-[#c59b27] hover:bg-[#dca62b] text-black font-black px-6 py-3 uppercase text-sm transition"
+                >
+                  Wyślij
+                </button>
+              </form>
+            </div>
+
+            {/* KRONIKI I NEWSY (1 kolumna) */}
+            <div className="bg-[#141419] border border-[#23232c] p-6 rounded-sm shadow-xl space-y-4">
+              <h3 className="text-base font-bold text-[#c59b27] uppercase tracking-wide font-albion-title border-b border-[#23232c] pb-3">
+                📜 Oficjalne Kroniki
+              </h3>
+              <div className="space-y-4">
+                {news.map(item => (
+                  <div key={item.id} className="bg-[#0b0b0d] p-4 border border-[#23232c] space-y-1">
+                    <span className="text-xs text-[#c59b27] font-mono font-bold block">{item.date}</span>
+                    <h4 className="font-bold text-gray-200 text-sm">{item.title}</h4>
+                    <p className="text-xs text-gray-400">Przeczytaj najnowsze doniesienia z centralnego węzła gry.</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
         </div>
       )}
     </main>
