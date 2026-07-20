@@ -380,7 +380,7 @@ export default function Home() {
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
                   >
                     <Link href="/buildy" className="w-full block bg-gradient-to-b from-[#966f2d] to-[#5a461d] hover:from-[#a87a1e] hover:to-[#735924] text-gray-200 border border-[#4a3a1d] font-black py-2.5 px-4 text-xs text-center uppercase tracking-widest transition shadow-md">
-                      🛡️ Interaktywny Kreator Buildów
+                      🛡️ Interaktywny Kreator Buildów (BETA)
                     </Link>
                   </motion.div>
 
@@ -463,7 +463,7 @@ export default function Home() {
               
               <div className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-2xl relative">
                 <div className="flex gap-4 border-b border-[#23232c] pb-3 mb-5 text-xs">
-                  <button onClick={() => setRightTab('ECONOMY')} className={`font-black uppercase tracking-wider font-albion-title pb-1 border-b-2 transition ${rightTab === 'ECONOMY' ? 'text-[#c59b27] border-[#c59b27]' : 'text-gray-500 border-transparent hover:text-gray-300'}`}>📋 Kalkulator Caerleon</button>
+                  <button onClick={() => setRightTab('ECONOMY')} className={`font-black uppercase tracking-wider font-albion-title pb-1 border-b-2 transition ${rightTab === 'ECONOMY' ? 'text-[#c59b27] border-[#c59b27]' : 'text-gray-500 border-transparent hover:text-gray-300'}`}>📋 Kalkulator Caerleon (BETA)</button>
                   {isAdmin && (
                     <button onClick={() => setRightTab('ADMIN')} className={`font-black uppercase tracking-wider font-albion-title pb-1 border-b-2 transition ${rightTab === 'ADMIN' ? 'text-red-500 border-red-500' : 'text-red-900 border-transparent hover:text-red-400'}`}>⚔️ Księga Inkwizycji (Admin)</button>
                   )}

@@ -1,339 +1,348 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 export default function Buildy() {
-  const [builds, setBuilds] = useState([])
   const [user, setUser] = useState(null)
+  const [builds, setBuilds] = useState([])
+  const [userVotes, setUserVotes] = useState({}) // [NOWE] Przechowuje głosy użytkownika: { build_id: 'UP' | 'DOWN' }
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-
-  // Filtry
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterActivity, setFilterActivity] = useState('ALL')
-  const [filterServer, setFilterServer] = useState('ALL')
+  const [activeFilter, setActiveFilter] = useState('ALL')
 
   // Formularz nowego buildu
-    const [formData, setFormData] = useState({
-      title: '',
-      activity_type: 'PvP',
-      server: 'Europa',
-      slot_head: '',
-      slot_chest: '',
-      slot_shoes: '',
-      slot_weapon: '',
-      slot_offhand: '',
-      slot_cape: '',
-      slot_food: '',
-      slot_potion: '',
-      description: ''
-    })
-  const [formMessage, setFormMessage] = useState('')
-  const [isSubmitting, setIsActiveSubmitting] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [activity, setActivity] = useState('PvP Solo')
+  const [weapon, setWeapon] = useState('T4_MAIN_CURSESTAFF')
+  const [offhand, setOffhand] = useState('Brak')
+  const [helmet, setHelmet] = useState('T4_HEAD_CLOTH_SET1')
+  const [armor, setArmor] = useState('T4_ARMOR_LEATHER_SET3')
+  const [shoes, setShoes] = useState('T4_SHOES_PLATE_SET1')
+  const [cape, setCape] = useState('T4_CAPE')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      fetchBuilds(currentUser)
+      if (currentUser) fetchAdminStatus(currentUser.id)
     })
-    fetchBuilds()
+
+    const buildsChannel = supabase
+      .channel('builds-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'builds' }, () => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          const currentUser = session?.user ?? null
+          fetchBuilds(currentUser)
+          if (currentUser) fetchAdminStatus(currentUser.id)
+        })
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(buildsChannel) }
   }, [])
 
-  const fetchBuilds = async () => {
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('builds')
-        .select('*, profiles(username)')
-        .order('created_at', { ascending: false })
+  const fetchBuilds = async (currentUser) => {
+    const { data: buildsData } = await supabase
+      .from('builds')
+      .select('*, profiles(username)')
+      .order('votes_count', { ascending: false })
+    
+    if (buildsData) setBuilds(buildsData)
 
-      if (error) throw error
-      if (data) setBuilds(data)
-    } catch (err) {
-      console.error("Błąd pobierania buildów:", err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setFormMessage('')
-    setIsActiveSubmitting(true)
-
-    if (!user) {
-      setFormMessage('BŁĄD: Musisz być zalogowany, aby zapisać projekt!')
-      setIsActiveSubmitting(false)
-      return
-    }
-
-    const cleanTitle = formData.title.trim()
-    if (cleanTitle.length < 3) {
-      setFormMessage('BŁĄD: Tytuł konfiguracji musi mieć minimum 3 znaki!')
-      setIsActiveSubmitting(false)
-      return
-    }
-
-    try {
-      // Bezpieczny zapis do bazy danych
-      const { error } = await supabase.from('builds').insert([
-        {
-          title: cleanTitle,
-          activity_type: formData.activity_type,
-          server: formData.server,
-          slot_head: formData.slot_head.trim(),
-          slot_chest: formData.slot_chest.trim(),
-          slot_shoes: formData.slot_shoes.trim(),
-          slot_weapon: formData.slot_weapon.trim(),
-          slot_offhand: formData.slot_offhand.trim(),
-          slot_cape: formData.slot_cape.trim(),
-          slot_food: formData.slot_food.trim(),
-          slot_potion: formData.slot_potion.trim(),
-          description: formData.description.trim() || null,
-          user_id: user.id
-        }
-      ])
-
-      if (error) {
-        // Jeśli tabela profiles nie zdążyła się zsynchronizować z nowym kontem Discorda
-        if (error.message.includes('profiles')) {
-          throw new Error('Brak zsynchronizowanego profilu użytkownika. Spróbuj wylogować się i zalogować ponownie.')
-        }
-        throw error
+    // Pobieramy głosy zalogowanego gracza, aby podświetlić ikonki
+    if (currentUser) {
+      const { data: votesData } = await supabase
+        .from('build_votes')
+        .select('build_id, vote_type')
+        .eq('user_id', currentUser.id)
+      
+      if (votesData) {
+        const votesMap = {}
+        votesData.forEach(v => { votesMap[v.build_id] = v.vote_type })
+        setUserVotes(votesMap)
       }
+    }
+    setLoading(false)
+  }
 
-      setFormMessage('SUKCES: Konfiguracja zapisana w zbrojowni!');
-      
-      // Reset tytułu i opisu po udanym zapisie
-      setFormData(prev => ({
-        ...prev,
-        title: '',
-        description: ''
-      }))
-      
-      // Odświeżenie listy na żywo
-      await fetchBuilds()
-    } catch (err) {
-      setFormMessage(`BŁĄD BAZY: ${err.message}`)
-    } finally {
-      setIsActiveSubmitting(false)
+  const fetchAdminStatus = async (userId) => {
+    const { data } = await supabase.from('profiles').select('is_admin').eq('id', userId).single()
+    if (data) setIsAdmin(data.is_admin)
+  }
+
+  const handleCreateBuild = async (e) => {
+    e.preventDefault()
+    if (!title.trim() || !user) return
+
+    const { error } = await supabase.from('builds').insert([
+      {
+        user_id: user.id,
+        title: title.trim(),
+        description: description.trim(),
+        activity_type: activity,
+        weapon,
+        offhand: offhand === 'Brak' ? null : offhand,
+        helmet,
+        armor,
+        shoes,
+        cape
+      }
+    ])
+
+    if (!error) {
+      setTitle('')
+      setDescription('')
+      setShowForm(false)
+      fetchBuilds(user)
     }
   }
 
-  const handleDelete = async (id) => {
-    if (confirm('Czy chcesz trwale usunąć tę konfigurację sprzętową?')) {
-      const { error } = await supabase.from('builds').delete().eq('id', id)
-      if (!error) fetchBuilds()
+  const handleVote = async (buildId, type) => {
+    if (!user) {
+      alert('Musisz być zalogowany, aby oddać głos wojowniku!')
+      return
+    }
+
+    // Wywołujemy naszą bezpieczną funkcję RPC w bazie danych
+    const { data: newTotal, error } = await supabase.rpc('handle_build_vote', {
+      p_build_id: buildId,
+      p_user_id: user.id,
+      p_vote_type: type
+    })
+
+    if (!error) {
+      // Optymistyczna aktualizacja lokalnego stanu dla natychmiastowej reakcji UI
+      setUserVotes(prev => {
+        const currentVote = prev[buildId]
+        if (currentVote === type) {
+          const updated = { ...prev }
+          delete updated[buildId]
+          return updated
+        }
+        return { ...prev, [buildId]: type }
+      })
+      
+      setBuilds(prev => prev.map(b => b.id === buildId ? { ...b, votes_count: newTotal } : b))
+    } else {
+      console.error("Błąd głosowania:", error)
     }
   }
 
-  const filteredBuilds = builds.filter(b => {
-    const matchesSearch = b.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          b.slot_weapon.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (b.description && b.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesActivity = filterActivity === 'ALL' || b.activity_type === filterActivity
-    const matchesServer = filterServer === 'ALL' || b.server === filterServer
-    return matchesSearch && matchesActivity && matchesServer
-  })
+  const handleDeleteBuild = async (buildId) => {
+    if (!isAdmin) return
+    
+    if (confirm('Czy na pewno chcesz spalić ten plan rynsztunku i usunąć go ze zbrojowni?')) {
+      const { error } = await supabase
+        .from('builds')
+        .delete()
+        .eq('id', buildId)
+
+      if (!error) {
+        setBuilds(prev => prev.filter(b => b.id !== buildId))
+      } else {
+        console.error("Błąd usuwania buildu:", error)
+        alert(`Nie udało się usunąć buildu: ${error.message}`)
+      }
+    }
+  }
+
+  const filteredBuilds = activeFilter === 'ALL' 
+    ? builds 
+    : builds.filter(b => b.activity_type === activeFilter)
 
   return (
-    <main className="min-h-screen animate-bg-drift text-[#bcbbc2] p-4 sm:p-6 flex flex-col items-center antialiased font-albion-ui select-none relative overflow-hidden">
+    <main className="min-h-screen bg-[#050507] text-[#bcbbc2] p-4 sm:p-6 antialiased font-sans flex flex-col items-center relative overflow-hidden">
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
         .font-albion-title { font-family: 'Cinzel', serif; }
-        .font-albion-ui { font-family: 'Inter', sans-serif; }
-
-        @keyframes bgDrift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-bg-drift {
-          background: linear-gradient(-45deg, #020203, #080706, #140f0a, #040405);
-          background-size: 300% 300%;
-          animation: bgDrift 35s ease infinite;
-        }
       `}</style>
 
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] pointer-events-none z-0"></div>
-
-      <div className="max-w-7xl w-full space-y-5 z-10">
-        <div className="mb-2">
-          <Link href="/" className="text-[#c59b27] hover:underline text-xs font-bold tracking-wider uppercase font-albion-title">← Zamknij Zbrojownię</Link>
-        </div>
-
-        <header className="bg-[#141419] border-2 border-[#c59b27] p-4 shadow-2xl">
-          <h1 className="text-2xl font-black text-gray-100 font-albion-title tracking-wider">⚔️ KREATOR I ARCHIWUM BUILDÓW SPOŁECZNOŚCI</h1>
-          <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mt-0.5">Projektuj zestawy, sprawdzaj synergie przedmiotów i publikuj swoje strategie</p>
+      <div className="max-w-6xl w-full space-y-5 z-10">
+        
+        {/* NAGŁÓWEK KREATORA */}
+        <header className="flex justify-between items-center bg-[#141419] border-2 border-[#c59b27] p-4 shadow-2xl">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-gray-100 font-albion-title tracking-wider">
+              🛡️ KRÓLEWSKA ZBROJOWNIA BUILDÓW (BETA)
+            </h1>
+            <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mt-0.5">Strategie i rynsztunek zatwierdzone przez Radę Wojenną</p>
+          </div>
+          <Link href="/" className="text-[10px] bg-[#1d1d24] border border-[#2c2c38] hover:border-[#c59b27] text-gray-300 px-3 py-2 font-bold transition uppercase tracking-wider">
+            🏰 Powrót
+          </Link>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        {/* NAWIGACJA / FILTRY */}
+        <div className="flex flex-wrap gap-2 border-b border-[#23232c] pb-3 text-[10px] font-bold uppercase tracking-wider">
+          {['ALL', 'PvP Solo', 'ZvZ', 'PvE / HCE', 'Ganking'].map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setActiveFilter(filter)}
+              className={`px-3 py-1.5 border transition ${
+                activeFilter === filter 
+                  ? 'bg-[#c59b27] text-black border-[#4a3a1d] font-black' 
+                  : 'text-gray-500 border-transparent hover:text-gray-300 bg-[#141419]'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
           
-          {/* LEWA STRONA: FORMULARZ KREATORA */}
-          
-          <div className="lg:col-span-5">
-            <div className="bg-[#141419] border border-[#23232c] p-5 shadow-xl">
-              <h2 className="text-xs font-black mb-4 text-[#c59b27] uppercase tracking-widest border-b border-[#23232c] pb-1.5 font-albion-title">Kuj Nowy Zestaw Ekwipunku</h2>
-              
-              {!user ? (
-                <p className="text-gray-500 text-xs italic bg-[#0b0b0d] p-4 border border-[#23232c]">Brama autoryzacji zamknięta. Zaloguj się na panelu głównym.</p>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-                  {formMessage && (
-                    <div className={`p-2 border text-center font-bold font-mono text-[10px] uppercase ${formMessage.startsWith('SUKCES') ? 'text-emerald-400 border-emerald-950 bg-emerald-950/20' : 'text-red-400 border-red-950 bg-red-950/20'}`}>
-                      {formMessage}
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Nazwa Konfiguracji (Min. 3 znaki)</label>
-                    <input type="text" name="title" required value={formData.title} onChange={handleInputChange} placeholder="np. Carving Solo PvP" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Aktywność</label>
-                      <select name="activity_type" value={formData.activity_type} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none cursor-pointer">
-                        <option value="PvP">PvP / Ganking</option>
-                        <option value="ZvZ">ZvZ</option>
-                        <option value="PvE / HCE">PvE / HCE</option>
-                        <option value="Solo">Solo</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Serwer</label>
-                      <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-[#c59b27] font-bold focus:border-[#c59b27] focus:outline-none cursor-pointer">
-                        <option value="Europa">Europa</option>
-                        <option value="Ameryka">Ameryka</option>
-                        <option value="Azja">Azja</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-[#23232c] my-2 pt-2 grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Broń Główna</label>
-                      <input type="text" name="slot_weapon" required value={formData.slot_weapon} onChange={handleInputChange} placeholder="np. Miecz Rzeźbiarz (Carving)" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Druga Ręka (Offhand)</label>
-                      <input type="text" name="slot_offhand" value={formData.slot_offhand} onChange={handleInputChange} placeholder="np. Brak" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Głowa</label>
-                      <input type="text" name="slot_head" value={formData.slot_head} onChange={handleInputChange} placeholder="np. Kaptur Uczonego" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Klatka</label>
-                      <input type="text" name="slot_chest" value={formData.slot_chest} onChange={handleInputChange} placeholder="np. Kurtka Najemnika" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Buty</label>
-                      <input type="text" name="slot_shoes" value={formData.slot_shoes} onChange={handleInputChange} placeholder="np. Buty Żołnierza" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Peleryna</label>
-                      <input type="text" name="slot_cape" value={formData.slot_cape} onChange={handleInputChange} placeholder="np. Przylądek Martlock" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Jedzenie</label>
-                      <input type="text" name="slot_food" value={formData.slot_food} onChange={handleInputChange} placeholder="np. Gulasz Wołowy" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Mikstura</label>
-                      <input type="text" name="slot_potion" value={formData.slot_potion} onChange={handleInputChange} placeholder="np. Mikstura Odporności" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Opis Strategii / Uwagi Taktyczne</label>
-                    <textarea name="description" rows="3" value={formData.description} onChange={handleInputChange} placeholder="Opisz rotację skilli, sytuacje taktyczne..." className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none font-sans resize-none" />
-                  </div>
-
-                  <button type="submit" disabled={isSubmitting} className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-2 px-4 uppercase tracking-widest border border-[#4a3a1d] transition transform active:scale-95 font-albion-title disabled:opacity-50">
-                    {isSubmitting ? 'KUŹNIA PRACUJE...' : 'ZAPISZ PROJEKT W ZBROJOWNI'}
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-
-          {/* PRAWA STRONA: PRZEGLĄDANIE BUILDÓW */}
-          <div className="lg:col-span-7 space-y-4">
-            
-            <div className="bg-[#141419] border border-[#23232c] p-4 flex flex-col sm:flex-row gap-3 shadow-md">
-              <input type="text" placeholder="Szukaj buildu po nazwie lub broni..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1 bg-[#0b0b0d] border border-[#23232c] p-2 text-xs text-white focus:outline-none focus:border-[#c59b27]" />
-              
-              <select value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="bg-[#0b0b0d] border border-[#23232c] p-2 text-xs text-[#c59b27] font-bold focus:outline-none focus:border-[#c59b27]">
-                <option value="ALL">Wszystkie Serwery</option>
-                <option value="Europa">Europa</option>
-                <option value="Ameryka">Ameryka</option>
-                <option value="Azja">Azja</option>
-              </select>
-
-              <select value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="bg-[#0b0b0d] border border-[#23232c] p-2 text-xs text-gray-300 focus:outline-none focus:border-[#c59b27]">
-                <option value="ALL">Każda aktywność</option>
-                <option value="PvP">PvP / Ganking</option>
-                <option value="ZvZ">ZvZ</option>
-                <option value="PvE / HCE">PvE / HCE</option>
-                <option value="Solo">Solo</option>
-              </select>
-            </div>
-
-            <div className="space-y-4">
-              {loading ? (
-                <p className="text-gray-500 font-bold animate-pulse text-xs font-mono">Wczytywanie planów wojennych społeczności...</p>
-              ) : filteredBuilds.length === 0 ? (
-                <p className="text-gray-600 italic text-center bg-[#141419]/40 border border-[#23232c]/60 p-8 text-xs">Brak zgłoszonych konfiguracji bojowych spełniających filtry.</p>
-              ) : (
-                filteredBuilds.map((build) => (
-                  <div key={build.id} className="bg-[#141419] border-2 border-[#23232c] p-4 shadow-2xl space-y-3">
-                    <div className="flex justify-between items-center border-b border-[#23232c] pb-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-bold bg-[#0b0b0d] border border-[#23232c] text-purple-400 px-1.5 py-0.5 uppercase">{build.server}</span>
-                          <span className="text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 uppercase">{build.activity_type}</span>
-                          <h3 className="text-base font-black text-gray-100 font-serif tracking-wide">{build.title}</h3>
-                        </div>
-                        <p className="text-[10px] text-gray-500 mt-0.5">Autor taktyki: <span className="text-gray-400 font-mono font-bold">{build.profiles?.username || 'Gracz'}</span></p>
-                      </div>
-                      {user && user.id === build.user_id && (
-                        <button onClick={() => handleDelete(build.id)} className="text-[10px] text-red-400 font-bold uppercase tracking-wider hover:underline">Rozmontuj</button>
-                      )}
-                    </div>
-
-                    <div className="bg-[#0b0b0d] p-3 rounded border border-[#1f1f26] grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Weapon:</span> <span className="text-[#c59b27] font-bold">{build.slot_weapon}</span></div>
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Chest Armor:</span> <span className="text-gray-300">{build.slot_chest}</span></div>
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Helmet:</span> <span className="text-gray-400">{build.slot_head}</span></div>
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Shoes:</span> <span className="text-gray-400">{build.slot_shoes}</span></div>
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Offhand:</span> <span className="text-gray-400">{build.slot_offhand}</span></div>
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Cape:</span> <span className="text-gray-400">{build.slot_cape}</span></div>
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Food:</span> <span className="text-gray-400">{build.slot_food}</span></div>
-                      <div><span className="text-gray-500 block text-[8px] uppercase font-bold">Potion:</span> <span className="text-gray-400">{build.slot_potion}</span></div>
-                    </div>
-
-                    {build.description && (
-                      <p className="text-xs text-gray-400 bg-[#1a1a24]/30 p-2.5 rounded border border-[#23232c]/40 font-sans leading-relaxed">{build.description}</p>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-
-          </div>
+          {user && (
+            <button 
+              onClick={() => setShowForm(!showForm)}
+              className="ml-auto bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black px-4 py-1.5 border border-[#4a3a1d] font-black transition uppercase"
+            >
+              {showForm ? '🛡️ Zamknij Kuźnię' : '⚒️ Wykuj Nowy Build'}
+            </button>
+          )}
         </div>
+
+        {/* FORMULARZ TWORZENIA NOWEGO ZESTAWU */}
+        {showForm && user && (
+          <motion.form 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            onSubmit={handleCreateBuild}
+            className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-2xl grid grid-cols-1 md:grid-cols-3 gap-4 text-xs"
+          >
+            <div className="space-y-3 md:col-span-2">
+              <div>
+                <label className="block text-[9px] text-gray-500 font-bold uppercase mb-1">Nazwa Zestawu Taktycznego</label>
+                <input type="text" required placeholder="np. Przeklęty Kostur pod Solo Corrupted" value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:outline-none focus:border-[#c59b27]" />
+              </div>
+              <div>
+                <label className="block text-[9px] text-gray-500 font-bold uppercase mb-1">Opis taktyki walki i rotacji czarów</label>
+                <textarea rows="6" placeholder="Opisz jak grać tym zestawem, jakie jedzenie brać i na co uważać..." value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:outline-none focus:border-[#c59b27] resize-none" />
+              </div>
+            </div>
+
+            <div className="space-y-2 bg-[#0b0b0d] p-3 border border-[#23232c] grid grid-cols-2 gap-2 h-fit">
+              <div className="col-span-2">
+                <label className="block text-[9px] text-[#c59b27] font-bold uppercase mb-1">Przeznaczenie</label>
+                <select value={activity} onChange={e => setActivity(e.target.value)} className="w-full bg-[#141419] border border-[#23232c] p-1.5 text-white">
+                  <option value="PvP Solo">PvP Solo</option>
+                  <option value="ZvZ">ZvZ (Wojny Gildii)</option>
+                  <option value="PvE / HCE">PvE / HCE</option>
+                  <option value="Ganking">Ganking</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[8px] text-gray-500 font-bold uppercase">⚔️ Broń</label>
+                <select value={weapon} onChange={e => setWeapon(e.target.value)} className="w-full bg-[#141419] p-1 text-white border border-gray-800"><option value="T4_MAIN_CURSESTAFF">Kostur Przekleństwa</option><option value="T4_MAIN_SPEAR">Włócznia</option><option value="T4_MAIN_AXE">Topór</option></select>
+              </div>
+              <div>
+                <label className="block text-[8px] text-gray-500 font-bold uppercase">🛡️ Druga ręka</label>
+                <select value={offhand} onChange={e => setOffhand(e.target.value)} className="w-full bg-[#141419] p-1 text-white border border-gray-800"><option value="Brak">Brak (Dwuręczna)</option><option value="T4_OFF_SHIELD">Tarcza</option><option value="T4_OFF_BOOK">Księga Zaklęć</option></select>
+              </div>
+              <div>
+                <label className="block text-[8px] text-gray-500 font-bold uppercase">🪖 Kaptur</label>
+                <select value={helmet} onChange={e => setHelmet(e.target.value)} className="w-full bg-[#141419] p-1 text-white border border-gray-800"><option value="T4_HEAD_CLOTH_SET1">Kaptur Uczonego</option><option value="T4_HEAD_LEATHER_SET2">Kaptur Łowcy</option></select>
+              </div>
+              <div>
+                <label className="block text-[8px] text-gray-500 font-bold uppercase">🧥 Kurtka/Zbroja</label>
+                <select value={armor} onChange={e => setArmor(e.target.value)} className="w-full bg-[#141419] p-1 text-white border border-gray-800"><option value="T4_ARMOR_LEATHER_SET3">Kurtka Najemnika</option><option value="T4_ARMOR_PLATE_SET1">Zbroja Żołnierza</option></select>
+              </div>
+              <div>
+                <label className="block text-[8px] text-gray-500 font-bold uppercase">🥾 Buty</label>
+                <select value={shoes} onChange={e => setShoes(e.target.value)} className="w-full bg-[#141419] p-1 text-white border border-gray-800"><option value="T4_SHOES_PLATE_SET1">Buty Żołnierza</option><option value="T4_SHOES_LEATHER_SET2">Buty Łowcy</option></select>
+              </div>
+              <div>
+                <label className="block text-[8px] text-gray-500 font-bold uppercase">🧥 Peleryna</label>
+                <select value={cape} onChange={e => setCape(e.target.value)} className="w-full bg-[#141419] p-1 text-white border border-gray-800"><option value="T4_CAPE">Zwykła Peleryna</option><option value="T4_CAPE_MARTLOCK">Peleryna Martlock</option></select>
+              </div>
+              <div className="col-span-2 pt-2">
+                <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-2 uppercase border border-[#4a3a1d] transition">Zapisz w Rejestrze Królestwa</button>
+              </div>
+            </div>
+          </motion.form>
+        )}
+
+        {/* LISTA ZAPISANYCH BUILDÓW */}
+        <div className="space-y-4">
+          {loading ? (
+            <p className="text-center text-gray-600 italic py-8 animate-pulse">Otwieranie planów zbrojowni...</p>
+          ) : filteredBuilds.length === 0 ? (
+            <p className="text-center text-gray-600 italic py-8 bg-[#141419] border border-[#23232c]">Brak wpisów w tej kategorii strategicznej.</p>
+          ) : (
+            filteredBuilds.map((build) => {
+              const hasUpvoted = userVotes[build.id] === 'UP';
+              const hasDownvoted = userVotes[build.id] === 'DOWN';
+
+              return (
+                <motion.div 
+                  key={build.id}
+                  layout
+                  className="bg-[#141419] border border-[#23232c] p-4 flex gap-4 items-start shadow-md hover:border-[#c59b27]/40 transition"
+                >
+                  {/* PANEL GŁOSOWANIA */}
+                  <div className="flex flex-col items-center bg-[#0b0b0d] border border-[#23232c] p-2 rounded-sm min-w-[45px]">
+                    <button 
+                      onClick={() => handleVote(build.id, 'UP')} 
+                      className={`text-sm font-bold transition ${hasUpvoted ? 'text-emerald-400 scale-125' : 'text-gray-600 hover:text-emerald-500'}`}
+                    >
+                      ▲
+                    </button>
+                    <span className={`text-xs font-mono font-black my-1 ${
+                      hasUpvoted ? 'text-emerald-400 font-extrabold' : 
+                      hasDownvoted ? 'text-red-500 font-extrabold' : 'text-[#c59b27]'
+                    }`}>
+                      {build.votes_count || 0}
+                    </span>
+                    <button 
+                      onClick={() => handleVote(build.id, 'DOWN')} 
+                      className={`text-sm font-bold transition ${hasDownvoted ? 'text-red-500 scale-125' : 'text-gray-600 hover:text-red-500'}`}
+                    >
+                      ▼
+                    </button>
+                  </div>
+
+                  {/* DANE I PRZEGLĄD RYNSIUNKU */}
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[8px] bg-[#c59b27]/10 text-[#c59b27] border border-[#c59b27]/30 px-1.5 py-0.5 font-bold uppercase rounded-sm font-mono">
+                        {build.activity_type}
+                      </span>
+                      <h3 className="text-sm font-bold text-gray-200">{build.title}</h3>
+                      <div className="ml-auto flex items-center gap-3">
+                        <span className="text-[10px] text-gray-600 font-medium">
+                          Autor: <span className="text-sky-400 font-semibold">{build.profiles?.username || 'Nieznany'}</span>
+                        </span>
+                        {isAdmin && (
+                          <button 
+                            onClick={() => handleDeleteBuild(build.id)}
+                            className="bg-red-950/80 hover:bg-red-900 border border-red-900/40 text-red-400 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-sm transition"
+                          >
+                            🗑️ Usuń Build
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-gray-400 leading-relaxed max-w-3xl whitespace-pre-line">{build.description}</p>
+                    
+                    {/* MINI PRZEGLĄD EKWIPUNKU */}
+                    <div className="flex flex-wrap gap-1.5 text-[9px] font-mono text-gray-500 pt-1">
+                      <span className="bg-[#0b0b0d] px-2 py-0.5 border border-[#1f1f26]">⚔️ {build.weapon.replace('T4_', '')}</span>
+                      {build.offhand && <span className="bg-[#0b0b0d] px-2 py-0.5 border border-[#1f1f26]">🛡️ {build.offhand.replace('T4_', '')}</span>}
+                      <span className="bg-[#0b0b0d] px-2 py-0.5 border border-[#1f1f26]">🪖 {build.helmet.replace('T4_', '')}</span>
+                      <span className="bg-[#0b0b0d] px-2 py-0.5 border border-[#1f1f26]">🧥 {build.armor.replace('T4_', '')}</span>
+                      <span className="bg-[#0b0b0d] px-2 py-0.5 border border-[#1f1f26]">🥾 {build.shoes.replace('T4_', '')}</span>
+                      <span className="bg-[#0b0b0d] px-2 py-0.5 border border-[#1f1f26]">🧥 {build.cape.replace('T4_', '')}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+        </div>
+
       </div>
     </main>
   )
