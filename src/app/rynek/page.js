@@ -35,7 +35,7 @@ export default function Rynek() {
   }, [])
 
   const fetchMarketPosts = async () => {
-    loading(true)
+    setLoading(true)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
@@ -118,7 +118,7 @@ export default function Rynek() {
   })
 
   return (
-    <main className="min-h-screen animate-bg-drift text-[#bcbbc2] p-4 sm:p-6 flex flex-col items-center antialiased font-albion-ui select-none relative overflow-hidden text-base">
+    <div className="min-h-screen animate-bg-drift flex flex-col justify-between overflow-x-hidden text-[#bcbbc2] antialiased font-albion-ui select-none relative">
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
@@ -172,17 +172,15 @@ export default function Rynek() {
 
       {/* SUBTELNA MGŁA I DROBINKI OGNIA */}
       <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
-      <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
       <div className="magic-fog bottom-[-150px] right-[-100px]" style={{ animation: 'fogPulse 25s ease-in-out infinite', animationDelay: '-5s' }}></div>
-      {/* Dodano 2 nowe płomyki pośrednie */}
       <div className="ember-particle w-3 h-3" style={{ left: '10%', animation: 'floatEmber 20s linear infinite' }}></div>
       <div className="ember-particle w-2 h-2" style={{ left: '28%', animation: 'floatEmber 25s linear infinite', animationDelay: '-8s' }}></div>
       <div className="ember-particle w-4 h-4" style={{ left: '50%', animation: 'floatEmber 28s linear infinite', animationDelay: '-6s' }}></div>
       <div className="ember-particle w-3 h-3" style={{ left: '68%', animation: 'floatEmber 22s linear infinite', animationDelay: '-12s' }}></div>
-      <div className="ember-particle w-2 h-2" style={{ left: '85%', animation: 'floatEmber 18s linear infinite', animationDelay: '-3s' }}></div>          
+      <div className="ember-particle w-2 h-2" style={{ left: '85%', animation: 'floatEmber 18s linear infinite', animationDelay: '-3s' }}></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
 
-      <div className="max-w-7xl w-full space-y-5 z-10">
+      <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5 flex-1 z-10 text-base">
         <div className="mb-2">
           <Link href="/" className="text-[#c59b27] hover:underline text-sm font-bold tracking-wider uppercase font-albion-title">← Zamknij tablicę rynkową</Link>
         </div>
@@ -303,7 +301,7 @@ export default function Rynek() {
                 <p className="text-gray-500 italic text-center bg-[#141419]/40 border border-[#23232c]/60 p-8 text-sm sm:text-base">Brak aktywnych zleceń handlowych spełniających te kryteria.</p>
               ) : (
                 filteredPosts.map((post) => (
-                  <div key={post.id} className="bg-[#141419] border border-[#23232c] hover:border-[#c59b27]/40 p-5 shadow-md flex justify-between items-center gap-5 transition duration-150 text-sm sm:text-base">
+                  <div key={post.id} className="bg-[#141419] border border-[#23232c] hover:border-[#c59b27]/40 p-5 shadow-md flex justify-between items-center gap-4 transition duration-150 text-sm sm:text-base">
                     <div className="flex-1 space-y-1">
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <span className={`text-[10px] font-black px-2 py-0.5 border ${post.post_type === 'SELL' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{post.post_type}</span>
@@ -325,6 +323,18 @@ export default function Rynek() {
           </div>
         </div>
       </div>
-    </main>
+
+      {/* KRÓLEWSKI FOOTER */}
+      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm font-sans tracking-wide mt-12">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
+          <p className="font-medium">
+            © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
+          </p>
+          <p className="text-xs border border-gray-900 bg-[#121216] px-3 py-1 text-gray-400 rounded-sm font-mono">
+            Tablica handlowa wolnego miasta i rynków zewnętrznych.
+          </p>
+        </div>
+      </footer>
+    </div>
   )
 }

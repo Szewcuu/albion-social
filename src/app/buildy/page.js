@@ -133,7 +133,7 @@ export default function Buildy() {
   const filteredBuilds = activeFilter === 'ALL' ? builds : builds.filter(b => b.activity_type === activeFilter)
 
   return (
-    <main className="min-h-screen bg-[#121216] text-gray-300 p-6 flex flex-col items-center font-sans text-base">
+    <div className="min-h-screen bg-[#121216] flex flex-col justify-between overflow-x-hidden font-sans">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap');
         .font-albion-title { font-family: 'Cinzel', serif; }
@@ -145,14 +145,15 @@ export default function Buildy() {
           100% { transform: translateY(-5vh) translateX(-15px) scale(0.8); opacity: 0; }
         }
         .ember-particle { position: absolute; background: radial-gradient(circle, rgba(243,169,59,0.85) 0%, rgba(197,155,39,0.2) 60%, transparent 100%); border-radius: 50%; pointer-events: none; z-index: 0; box-shadow: 0 0 10px rgba(243,169,59,0.3); }
-        {/* Efekt iskier w zbrojowni */}
-        <div className="ember-particle w-3 h-3" style={{ left: '12%', animation: 'floatEmber 21s linear infinite' }}></div>
-        <div className="ember-particle w-4 h-4" style={{ left: '45%', animation: 'floatEmber 25s linear infinite', animationDelay: '-5s' }}></div>
-        <div className="ember-particle w-3 h-3" style={{ left: '75%', animation: 'floatEmber 19s linear infinite', animationDelay: '-9s' }}></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
       `}</style>
 
-      <div className="max-w-5xl w-full space-y-6">
+      {/* Efekt iskier w zbrojowni */}
+      <div className="ember-particle w-3 h-3" style={{ left: '12%', animation: 'floatEmber 21s linear infinite' }}></div>
+      <div className="ember-particle w-4 h-4" style={{ left: '45%', animation: 'floatEmber 25s linear infinite', animationDelay: '-5s' }}></div>
+      <div className="ember-particle w-3 h-3" style={{ left: '75%', animation: 'floatEmber 19s linear infinite', animationDelay: '-9s' }}></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
+
+      <div className="max-w-5xl w-full mx-auto p-6 space-y-6 flex-1 text-base z-10">
         <header className="flex justify-between items-center bg-[#141419] border-2 border-[#c59b27] p-5 shadow-xl">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-gray-100 font-albion-title tracking-wider">🛡️ KRÓLEWSKA ZBROJOWNIA BUILDÓW</h1>
@@ -227,7 +228,7 @@ export default function Buildy() {
             const hasDownvoted = userVotes[build.id] === 'DOWN';
 
             return (
-              <motion.div key={build.id} layout className="bg-[#141419] border border-[#23232c] p-6 flex gap-6 items-start shadow-md text-base">
+              <motion.div key={build.id} layout className="bg-[#141419] border border-[#23232c] p-6 flex gap-6 items-start shadow-md text-base relative z-10">
                 <div className="flex flex-col items-center bg-[#0b0b0d] border border-[#23232c] p-3.5 rounded-sm min-w-[55px]">
                   <button onClick={() => handleVote(build.id, 'UP')} className={`text-xl font-bold transition ${hasUpvoted ? 'text-emerald-400 scale-125' : 'text-gray-500 hover:text-emerald-500'}`}>▲</button>
                   <span className={`text-base font-mono font-black my-2 ${hasUpvoted ? 'text-emerald-400' : hasDownvoted ? 'text-red-500' : 'text-[#c59b27]'}`}>{build.votes_count || 0}</span>
@@ -240,7 +241,7 @@ export default function Buildy() {
                     <h3 className="text-lg font-bold text-gray-100">{build.title}</h3>
                     <div className="ml-auto flex items-center gap-4 text-sm">
                       <span className="text-gray-400">Autor: <span className="text-sky-400 font-semibold">{build.profiles?.username || 'Nieznany'}</span></span>
-                      {isAdmin && <button onClick={() => handleDeleteBuild(build.id)} className="bg-red-950/80 hover:bg-red-900 border border-red-900/40 text-red-400 text-sm font-black uppercase tracking-wider px-3 py-1.5 transition">🗑️ Usunięcie</button>}
+                      {isAdmin && <button onClick={() => handleDeleteBuild(build.id)} className="bg-red-950/80 hover:bg-red-900 border border-red-900/40 text-red-400 text-sm font-black uppercase tracking-wider px-3 py-1.5 transition">🗑/ Usunięcie</button>}
                     </div>
                   </div>
                   <p className="text-base text-gray-300 leading-relaxed whitespace-pre-line">{build.description}</p>
@@ -258,6 +259,18 @@ export default function Buildy() {
           })}
         </div>
       </div>
-    </main>
+
+      {/* KRÓLEWSKI FOOTER */}
+      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm tracking-wide mt-12">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
+          <p className="font-medium">
+            © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
+          </p>
+          <p className="text-xs border border-gray-900 bg-[#121216] px-3 py-1 text-gray-400 rounded-sm font-mono">
+            Materiały zbrojowni i bazy strategiczne królestwa.
+          </p>
+        </div>
+      </footer>
+    </div>
   )
 }
