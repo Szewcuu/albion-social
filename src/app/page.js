@@ -735,8 +735,7 @@ export default function Home() {
                                 
                                 <span className="text-xs text-gray-500 font-mono font-bold">{messageTime}</span>
                               </div>
-
-                              <div className="mt-1 break-words">
+                              <div className="mt-1 break-all whitespace-pre-wrap">
                                 <span className={`text-sm sm:text-base ${
                                   msg.channel === 'SYSTEM' ? 'text-gray-500 italic font-mono text-xs' : 
                                   msg.channel === 'HANDEL' ? 'text-amber-100/90' :
