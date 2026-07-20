@@ -222,7 +222,7 @@ export default function Buildy() {
                     </div>
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Druga Ręka (Offhand)</label>
-                      <input type="text" name="slot_offhand" value={formData.slot_offhand} onChange={handleInputChange} placeholder="np. Brak (Dwuręczny) lub Tarczka" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_offhand" value={formData.slot_offhand} onChange={handleInputChange} placeholder="np. Brak" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                   </div>
 
