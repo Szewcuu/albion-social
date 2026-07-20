@@ -312,124 +312,69 @@ export default function Home() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] pointer-events-none z-0"></div>
       
       {!user ? (
-        <div className="flex flex-col items-center justify-center min-h-screen w-full max-w-5xl mx-auto z-10 space-y-10 px-4 py-12">
+        <div className="flex flex-col items-center justify-center min-h-screen w-full max-w-5xl mx-auto z-10 space-y-12 px-6 py-16">
           
           {/* NAGŁÓWEK POWITALNY */}
-          <div className="text-center space-y-2">
-            <h1 className="text-4xl font-black text-[#c59b27] tracking-widest font-albion-title drop-shadow-[0_5px_15px_rgba(0,0,0,0.5)]">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl sm:text-5xl font-black text-[#c59b27] tracking-widest font-albion-title drop-shadow-[0_5px_15px_rgba(0,0,0,0.6)]">
               ALBION ONLINE POLSKA
             </h1>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold max-w-md mx-auto leading-relaxed">
-              Centralny rejestr zbrojowni, kronika miejska oraz wolny rynek handlowy polskich wojowników
+            <p className="text-sm sm:text-base text-gray-300 uppercase tracking-widest font-bold max-w-2xl mx-auto leading-relaxed">
+              Polski węzeł społecznościowy: kalkulatory handlowe, zbrojownia taktyczna oraz rejestr gildii
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full items-start">
+          {/* GŁÓWNY PANEL LOGOWANIA */}
+          <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+            <span className="text-xs text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-4">BRAMA DO KRONIK MIEJSKICH</span>
             
-            {/* LEWA STRONA: OPISY FUNKCJI I STATYSTYKI */}
-            <div className="lg:col-span-7 space-y-6">
-              
-              {/* SIATKA FUNKCJI */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div className="bg-[#141419]/60 border border-[#23232c] p-4 rounded-sm shadow-xl space-y-1.5">
-                  <span className="text-amber-500 font-bold font-mono">📊 EKONOMIA</span>
-                  <h3 className="font-bold text-gray-200 font-albion-title uppercase tracking-wide">Kalkulator Caerleon</h3>
-                  <p className="text-gray-500 text-[11px] leading-relaxed">
-                    Analizuj marże transportowe i zyski z Czarnego Rynku przed wyruszeniem z karawaną.
-                  </p>
-                </div>
+            <div className="space-y-4">
+              {/* AKTYWNE LOGOWANIE DISCORD */}
+              <button 
+                onClick={loginWithDiscord} 
+                className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-4 px-8 border border-[#4a3a1d] tracking-wider text-sm uppercase transition font-albion-title active:scale-95 shadow-md"
+              >
+                Zaloguj przez Discord
+              </button>
 
-                <div className="bg-[#141419]/60 border border-[#23232c] p-4 rounded-sm shadow-xl space-y-1.5">
-                  <span className="text-sky-400 font-bold font-mono">🛡️ STRATEGIA</span>
-                  <h3 className="font-bold text-gray-200 font-albion-title uppercase tracking-wide">Królewska Zbrojownia</h3>
-                  <p className="text-gray-500 text-[11px] leading-relaxed">
-                    Przeglądaj i oceniaj najlepsze zestawy rynsztunku pod PvP, ZvZ oraz PvE.
-                  </p>
-                </div>
+              {/* ZABLOKOWANE LOGOWANIE GOOGLE (WKRÓTCE) */}
+              <button 
+                disabled 
+                className="w-full bg-[#16161c]/50 text-gray-500 font-black py-4 px-8 border border-[#2c2c3b]/50 tracking-wider text-sm uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
+              >
+                <span>Zaloguj przez Google</span>
+                <span className="text-[10px] bg-[#f0b73a] text-black px-2 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
+                  Wkrótce
+                </span>
+              </button>
+            </div>
+          </div>
 
-                <div className="bg-[#141419]/60 border border-[#23232c] p-4 rounded-sm shadow-xl space-y-1.5">
-                  <span className="text-emerald-400 font-bold font-mono">⚔️ SOJUSZE</span>
-                  <h3 className="font-bold text-gray-200 font-albion-title uppercase tracking-wide">Rejestr Gildii</h3>
-                  <p className="text-gray-500 text-[11px] leading-relaxed">
-                    Przeglądaj statusy rekrutacji polskich armii i aplikuj bezpośrednio w ich szeregi.
-                  </p>
-                </div>
-
-                <div className="bg-[#141419]/60 border border-[#23232c] p-4 rounded-sm shadow-xl space-y-1.5">
-                  <span className="text-purple-400 font-bold font-mono">💬 WĘZEŁ MIEJSKI</span>
-                  <h3 className="font-bold text-gray-200 font-albion-title uppercase tracking-wide">Czat Społeczności</h3>
-                  <p className="text-gray-500 text-[11px] leading-relaxed">
-                    Dyskutuj, handluj i rekrutuj na żywo na kanałach zsynchronizowanych z bazą danych.
-                  </p>
-                </div>
-              </div>
-
-              {/* [NOWE] DYNAMICZNY PODGLĄD ZBROJOWNI (PLACEHOLDER) */}
-              <div className="bg-[#141419]/40 border border-[#23232c] p-4 rounded-sm space-y-3">
-                <div className="flex justify-between items-center border-b border-[#23232c] pb-2">
-                  <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider">🔥 Ostatnio dodane strategie walki</span>
-                  <span className="text-[9px] text-[#c59b27] font-mono animate-pulse">● LIVE INDEX</span>
-                </div>
-                <div className="space-y-2 opacity-60">
-                  <div className="text-[11px] flex justify-between bg-[#0b0b0d]/50 p-2 border border-gray-900">
-                    <span className="text-gray-400">⚔️ Curse Staff [Solo PvP] - <span className="text-gray-600">autor: Wojownik_XYZ</span></span>
-                    <span className="text-emerald-400 font-bold">▲ +24</span>
-                  </div>
-                  <div className="text-[11px] flex justify-between bg-[#0b0b0d]/50 p-2 border border-gray-900">
-                    <span className="text-gray-400">🛡️ HCE Tank T8 Enigmatic - <span className="text-gray-600">autor: CarleonFlipi</span></span>
-                    <span className="text-emerald-400 font-bold">▲ +12</span>
-                  </div>
-                </div>
-              </div>
-
+          {/* PRAWDZIWE OPISY MODUŁÓW - WIĘKSZA CZCIONKA */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-sm">
+            <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3">
+              <div className="text-2xl">📊</div>
+              <h3 className="font-bold text-[#c59b27] font-albion-title text-base tracking-wide uppercase">Kalkulator Caerleon</h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Analizuj marże transportowe i zyski ze skupu na Czarnym Rynku. Pobieraj aktualne ceny live i sprawdzaj rentowność flipów przed wyruszeniem z karawaną handlową.
+              </p>
             </div>
 
-            {/* PRAWA STRONA: PANEL LOGOWANIA I STATYSTYKI PORTALU */}
-            <div className="lg:col-span-5 space-y-4 w-full">
-              
-              {/* PANEL LOGOWANIA */}
-              <div className="w-full bg-[#141419] border-2 border-[#c59b27] p-6 text-center shadow-[0_15px_40px_rgba(0,0,0,0.8)]">
-                <span className="text-[8px] text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-2">BRAMA DO KRONIK</span>
-                
-                <div className="space-y-3">
-                  {/* AKTYWNE LOGOWANIE DISCORD */}
-                  <button 
-                    onClick={loginWithDiscord} 
-                    className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-6 border border-[#4a3a1d] tracking-wider text-xs uppercase transition font-albion-title active:scale-95 shadow-md"
-                  >
-                    Zaloguj przez Discord
-                  </button>
-
-                  {/* ZABLOKOWANE LOGOWANIE GOOGLE (WKRÓTCE) */}
-                  <button 
-                    disabled 
-                    className="w-full bg-[#16161c]/50 text-gray-600 font-black py-3 px-6 border border-[#2c2c3b]/50 tracking-wider text-xs uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
-                  >
-                    <span>Zaloguj przez Google</span>
-                    <span className="text-[8px] bg-[#f0b73a] text-black px-1.5 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
-                      Wkrótce
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* [NOWE] WIDGET STATYSTYK BAZY DANYCH */}
-              <div className="bg-[#141419]/90 border border-[#23232c] p-4 text-center grid grid-cols-2 gap-4 shadow-xl">
-                <div className="bg-[#0b0b0d] p-3 border border-gray-900/60">
-                  <span className="text-gray-500 block text-[8px] uppercase font-bold tracking-wider mb-1">Zlecenia Rynkowe</span>
-                  <span className="text-base font-mono font-black text-amber-500 animate-pulse">{globalStats?.marketOffersCount || 14}</span>
-                </div>
-                <div className="bg-[#0b0b0d] p-3 border border-gray-900/60">
-                  <span className="text-gray-500 block text-[8px] uppercase font-bold tracking-wider mb-1">Zarejestrowane Gildie</span>
-                  <span className="text-base font-mono font-black text-emerald-500 animate-pulse">{globalStats?.guildsCount || 6}</span>
-                </div>
-                <div className="col-span-2 text-[8px] text-gray-600 font-mono uppercase tracking-widest pt-1 border-t border-[#1d1d24]">
-                  Dane zsynchronizowane z węzłem miejskim publicznym
-                </div>
-              </div>
-
+            <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3">
+              <div className="text-2xl">🛡️</div>
+              <h3 className="font-bold text-sky-400 font-albion-title text-base tracking-wide uppercase">Królewska Zbrojownia</h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Przeglądaj, oceniaj i twórz strategiczne zestawy rynsztunku. Filtruj buildy pod PvP Solo, ZvZ, PvE / HCE czy Ganking stworzone przez społeczność.
+              </p>
             </div>
 
+            <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3">
+              <div className="text-2xl">⚔️</div>
+              <h3 className="font-bold text-emerald-400 font-albion-title text-base tracking-wide uppercase">Rejestr Gildii</h3>
+              <p className="text-gray-400 leading-relaxed text-sm">
+                Znajdź swoją nową armię na serwerze. Sprawdzaj statusy rekrutacji polskich sojuszy i aplikuj bezpośrednio do ich struktur Discord.
+              </p>
+            </div>
           </div>
 
         </div>
