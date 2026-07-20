@@ -97,9 +97,19 @@ export default function Home() {
   }, [chatMessages])
 
   const fetchInitialChat = async () => {
-    const { data } = await supabase.from('chat_messages').select('*').order('created_at', { ascending: true }).limit(50)
+    const { data } = await supabase
+      .from('chat_messages')
+      .select('*, profiles(username, avatar_url)')
+      .order('created_at', { ascending: true })
+      .limit(50)
+      
     if (data && data.length > 0) {
-      setChatMessages(data)
+      const mapped = data.map(msg => ({
+        ...msg,
+        username: msg.profiles?.username || msg.username,
+        avatar_url: msg.profiles?.avatar_url || null
+      }))
+      setChatMessages(mapped)
     } else {
       setChatMessages([{ id: 'init', channel: 'SYSTEM', username: 'System', text: 'Połączono z węzłem miejskim Albion Online Polska Portal. Czat aktywny.' }])
     }
@@ -144,7 +154,6 @@ export default function Home() {
     } catch (err) {
       console.error(err)
     } finally {
-      // POPRAWKA: Przełączamy loading dopiero po tym, jak WSZYSTKIE dane z bazy spłyną do stanów
       setLoading(false)
     }
   }
@@ -575,77 +584,130 @@ export default function Home() {
                 )}
               </div>
 
-              {/* CZAT Z NOWYMI SKELETONAMI */}
-              <div className="bg-[#060608] border border-[#23232c] rounded-sm p-3 shadow-2xl h-[250px] flex flex-col justify-between">
+              {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY W KLIMACIE ALBIONA */}
+              <div className="bg-[#141419] border-2 border-[#c59b27] p-4 shadow-[0_15px_30px_rgba(0,0,0,0.7)] h-[430px] flex flex-col justify-between relative text-gray-300 font-sans">
                 
-                <div className="flex gap-2 border-b border-[#1c1916] pb-1.5 mb-2 text-[9px] font-black uppercase tracking-wider">
+                {/* NAGŁÓWEK KANAŁÓW - STYLIZOWANA TABLICA OGŁOSZEŃ */}
+                <div className="flex gap-2 border-b border-[#23232c] pb-2 mb-3 text-[10px] font-black uppercase tracking-widest font-albion-title items-center">
+                  <span className="text-[#c59b27] mr-1">📜 KANAŁY:</span>
                   {['GLOBALNY', 'HANDEL', 'REKRUTACJA', 'SYSTEM'].map((ch) => (
-                    <button key={ch} onClick={() => setActiveChannel(ch)} className={`px-2 py-0.5 border transition ${activeChannel === ch ? 'bg-[#c59b27] text-black border-[#4a3a1d]' : 'text-gray-500 border-transparent hover:text-gray-300'}`}>
+                    <button 
+                      key={ch} 
+                      onClick={() => { setActiveChannel(ch); }} 
+                      className={`px-2 py-1 border transition rounded-sm ${
+                        activeChannel === ch 
+                          ? 'bg-[#c59b27] text-black border-[#4a3a1d] font-black shadow-md' 
+                          : 'text-gray-500 border-transparent hover:text-gray-300 hover:bg-[#1f1f26]'
+                      }`}
+                    >
                       {ch}
                     </button>
                   ))}
                 </div>
 
-                <div className="space-y-1.5 overflow-y-auto max-h-[140px] flex-1 pr-1 text-[11px] font-medium leading-relaxed select-text">
+                {/* STRUMIŃ WIADOMOŚCI - PRZEWIJANIE KRONIKI */}
+                <div className="space-y-3 overflow-y-auto flex-1 pr-1 text-[12px] leading-relaxed select-text scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
                   {chatLoading ? (
-                    /* SKELETON LOADER DLA CZATU ZAMIAST PUSTKI */
-                    <div className="space-y-2.5 animate-pulse-fast">
-                      <div className="flex gap-2 items-center"><div className="h-4 w-14 bg-[#1f1f26] rounded-sm"></div><div className="h-3 w-1/3 bg-[#1f1f26] rounded"></div></div>
-                      <div className="flex gap-2 items-center"><div className="h-4 w-14 bg-[#1f1f26] rounded-sm"></div><div className="h-3 w-1/2 bg-[#1f1f26] rounded"></div></div>
-                      <div className="flex gap-2 items-center"><div className="h-4 w-14 bg-[#1f1f26] rounded-sm"></div><div className="h-3 w-1/4 bg-[#1f1f26] rounded"></div></div>
+                    <div className="space-y-4 animate-pulse-fast">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex gap-3 items-center">
+                          <div className="w-8 h-8 bg-[#1f1f26] border border-[#23232c] rounded-sm"></div>
+                          <div className="flex-1 space-y-1.5">
+                            <div className="h-2 bg-[#1f1f26] rounded w-1/4"></div>
+                            <div className="h-2 bg-[#1f1f26] rounded w-2/3"></div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     chatMessages
                       .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
-                      .map((msg) => (
-                        <motion.div 
-                          key={msg.id} 
-                          initial={{ opacity: 0, y: 8, filter: "brightness(1.5)" }}
-                          animate={{ opacity: 1, y: 0, filter: "brightness(1)" }}
-                          transition={{ duration: 0.22, ease: "easeOut" }}
-                          className="flex items-start gap-1.5"
-                        >
-                          {msg.channel !== 'SYSTEM' && (
-                            <span className={`font-black uppercase text-[8px] tracking-widest px-1.5 py-0.5 rounded-sm shrink-0 mt-0.5 ${
-                              msg.role === 'ADMIN' ? 'bg-red-950 text-red-400 border border-red-900/40' : 'bg-[#1a1a24] text-gray-500 border border-[#23232c]'
-                            }`}>
-                              {msg.role === 'ADMIN' ? 'Inkwizytor' : 'Wojownik'}
-                            </span>
-                          )}
+                      .map((msg) => {
+                        const messageTime = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) : 'Niedawno';
+                        const userAvatar = msg.avatar_url || (msg.user_id === user?.id ? user?.user_metadata?.avatar_url : null);
 
-                          <div>
-                            <span className={`font-bold mr-1.5 ${
-                              msg.channel === 'HANDEL' ? 'text-amber-500' :
-                              msg.channel === 'REKRUTACJA' ? 'text-purple-400' :
-                              msg.channel === 'SYSTEM' ? 'text-gray-500 font-mono text-[10px]' : 
-                              msg.role === 'ADMIN' ? 'text-[#c59b27]' : 'text-sky-400'
-                            }`}>
-                              [{msg.channel}] {msg.username ? `${msg.username}:` : ''}
-                            </span>
-                            <span className={msg.channel === 'SYSTEM' ? 'text-gray-500 italic' : msg.role === 'ADMIN' ? 'text-gray-100 font-medium' : 'text-gray-300'}>
-                              {msg.text}
-                            </span>
-                          </div>
-                        </motion.div>
-                      ))
+                        return (
+                          <motion.div 
+                            key={msg.id} 
+                            initial={{ opacity: 0, y: 4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.18 }}
+                            className="flex items-start gap-3 border-b border-[#1f1f26]/40 pb-2 last:border-none last:pb-0 hover:bg-[#1d1d24]/40 p-1 -mx-1 rounded-sm transition"
+                          >
+                            {/* AWATAR Z DISCORDA */}
+                            {userAvatar && msg.channel !== 'SYSTEM' ? (
+                              <img 
+                                src={userAvatar} 
+                                alt="Discord Avatar" 
+                                className={`w-8 h-8 rounded-sm object-cover border shadow-md shrink-0 ${
+                                  msg.role === 'ADMIN' ? 'border-[#c59b27]' : 'border-[#23232c]'
+                                }`} 
+                              />
+                            ) : (
+                              <div className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold text-xs shrink-0 border shadow-md ${
+                                msg.channel === 'SYSTEM' ? 'bg-[#1b1b22] border-gray-700 text-gray-500 font-mono' :
+                                msg.role === 'ADMIN' ? 'bg-red-950/60 border-[#c59b27] text-[#c59b27]' : 'bg-[#1d1d24] border-[#2c2c3b] text-sky-400'
+                              }`}>
+                                {msg.username ? msg.username.charAt(0).toUpperCase() : 'S'}
+                              </div>
+                            )}
+
+                            {/* DANE I TREŚĆ TEKSTOWA */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-2">
+                                <span className={`font-bold tracking-wide ${
+                                  msg.channel === 'SYSTEM' ? 'text-gray-500 font-mono text-[11px]' :
+                                  msg.role === 'ADMIN' ? 'text-[#c59b27] font-albion-title' : 'text-sky-400 font-semibold'
+                                }`}>
+                                  {msg.username || 'System'}
+                                </span>
+                                
+                                {msg.channel !== 'SYSTEM' && (
+                                  <span className={`text-[7px] font-black uppercase tracking-wider px-1 py-0.5 rounded-sm border ${
+                                    msg.role === 'ADMIN' ? 'bg-red-950 text-red-400 border-red-900/40' : 'bg-[#1d1d24] text-gray-500 border-[#23232c]'
+                                  }`}>
+                                    {msg.role === 'ADMIN' ? 'Inkwizytor' : 'Wojownik'}
+                                  </span>
+                                )}
+                                
+                                <span className="text-[9px] text-gray-600 font-mono font-bold">{messageTime}</span>
+                              </div>
+
+                              <div className="mt-1 break-words">
+                                <span className={`text-[11px] ${
+                                  msg.channel === 'SYSTEM' ? 'text-gray-500 italic font-mono' : 
+                                  msg.channel === 'HANDEL' ? 'text-amber-100/90' :
+                                  msg.channel === 'REKRUTACJA' ? 'text-purple-100/90' :
+                                  msg.role === 'ADMIN' ? 'text-gray-100 font-medium' : 'text-gray-300'
+                                }`}>
+                                  {msg.text}
+                                </span>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })
                   )}
                   <div ref={chatEndRef} />
                 </div>
 
-                <form onSubmit={handleSendChatMessage} className="mt-2.5 pt-2 border-t border-[#1c1916] flex gap-2">
-                  <div className="bg-[#0b0b0d] px-2 py-1 border border-[#23232c] text-[10px] font-bold text-[#c59b27] flex items-center">
-                    {activeChannel === 'SYSTEM' ? 'GLOBALNY' : activeChannel}
-                  </div>
+                {/* STYLIZOWANE POLE WPISYWANIA - MECHANICZNA STREFA ZŁOTA */}
+                <form onSubmit={handleSendChatMessage} className="mt-2.5 flex gap-2 items-center bg-[#0b0b0d] border border-[#23232c] rounded-sm px-2.5 py-1.5 focus-within:border-[#c59b27]/70 transition">
                   <input
                     type="text"
                     maxLength="120"
                     disabled={activeChannel === 'SYSTEM'}
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder={activeChannel === 'SYSTEM' ? 'Kanał systemowy jest zablokowany...' : 'Napisz wiadomość na czacie miejskim... [Max 120 znaków]'}
-                    className="flex-1 bg-[#0b0b0d] border border-[#23232c] p-1.5 text-xs text-white focus:outline-none focus:border-[#c59b27] disabled:opacity-40"
+                    placeholder={activeChannel === 'SYSTEM' ? 'Dekret królewski zablokowany...' : `Napisz na kanale ${activeChannel.toLowerCase()}...`}
+                    className="flex-1 bg-transparent text-xs text-white focus:outline-none placeholder-gray-600 disabled:opacity-40"
                   />
-                  <button type="submit" disabled={activeChannel === 'SYSTEM'} className="bg-[#201c18] hover:bg-[#c59b27] border border-[#3a3128] hover:text-black text-gray-300 px-4 py-1 text-xs font-bold uppercase transition disabled:hidden">
+
+                  <button 
+                    type="submit" 
+                    disabled={activeChannel === 'SYSTEM'} 
+                    className="bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black px-4 py-1 text-[10px] font-black font-albion-title uppercase border border-[#4a3a1d] rounded-sm transition active:scale-95 disabled:hidden"
+                  >
                     Wyślij
                   </button>
                 </form>
