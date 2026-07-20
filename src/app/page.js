@@ -312,32 +312,69 @@ export default function Home() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] pointer-events-none z-0"></div>
       
       {!user ? (
-        <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_15px_40px_rgba(0,0,0,0.8)] mt-36 z-10">
-          <h1 className="text-3xl font-black mb-1 text-[#c59b27] tracking-widest font-albion-title">ALBION ONLINE POLSKA</h1>
-          <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold border-b border-[#23232b] pb-3 mb-6">Polski Węzeł Społeczności</p>
-          
-          <div className="space-y-3">
-            {/* AKTYWNE LOGOWANIE DISCORD */}
-            <button 
-              onClick={loginWithDiscord} 
-              className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-6 border border-[#4a3a1d] tracking-wider text-xs uppercase transition font-albion-title active:scale-95"
-            >
-              Zaloguj przez Discord
-            </button>
+  <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto z-10 space-y-12 px-4">
+    
+    {/* GŁÓWNY PANEL LOGOWANIA */}
+    <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_15px_40px_rgba(0,0,0,0.8)] mt-12">
+      <h1 className="text-3xl font-black mb-1 text-[#c59b27] tracking-widest font-albion-title">ALBION ONLINE POLSKA</h1>
+      <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold border-b border-[#23232b] pb-3 mb-6">Polski Węzeł Społeczności</p>
+      
+      <div className="space-y-3">
+        {/* AKTYWNE LOGOWANIE DISCORD */}
+        <button 
+          onClick={loginWithDiscord} 
+          className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-6 border border-[#4a3a1d] tracking-wider text-xs uppercase transition font-albion-title active:scale-95"
+        >
+          Zaloguj przez Discord
+        </button>
 
-            {/* ZABLOKOWANE LOGOWANIE GOOGLE (WKRÓTCE) */}
-            <button 
-              disabled 
-              className="w-full bg-[#16161c]/50 text-gray-600 font-black py-3 px-6 border border-[#2c2c3b]/50 tracking-wider text-xs uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
-            >
-              <span>Zaloguj przez Google</span>
-              <span className="text-[8px] bg-[#f0b73a] text-black px-1.5 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
-                Wkrótce
-              </span>
-            </button>
-          </div>
-        </div>
-      ) : (
+        {/* ZABLOKOWANE LOGOWANIE GOOGLE (WKRÓTCE) */}
+        <button 
+          disabled 
+          className="w-full bg-[#16161c]/50 text-gray-600 font-black py-3 px-6 border border-[#2c2c3b]/50 tracking-wider text-xs uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
+        >
+          <span>Zaloguj przez Google</span>
+          <span className="text-[8px] bg-[#f0b73a] text-black px-1.5 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
+            Wkrótce
+          </span>
+        </button>
+      </div>
+    </div>
+
+    {/* [NOWE] PREZENTACJA FUNKCJI PORTALU DLA GOŚCI */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-xs">
+      
+      {/* KAFELEK 1: EKONOMIA */}
+      <div className="bg-[#141419]/60 border border-[#23232c] p-4 rounded-sm shadow-xl space-y-2">
+        <div className="text-xl">📊</div>
+        <h3 className="font-bold text-[#c59b27] font-albion-title tracking-wide uppercase">Kalkulator Caerleon</h3>
+        <p className="text-gray-500 leading-relaxed text-[11px]">
+          Analizuj marże transportowe i zyski ze skupu na Czarnym Rynku. Pobieraj ceny live i sprawdzaj rentowność flipów przed wyruszeniem z karawaną.
+        </p>
+      </div>
+
+      {/* KAFELEK 2: BUILDY */}
+      <div className="bg-[#141419]/60 border border-[#23232c] p-4 rounded-sm shadow-xl space-y-2">
+        <div className="text-xl">🛡️</div>
+        <h3 className="font-bold text-sky-400 font-albion-title tracking-wide uppercase">Królewska Zbrojownia</h3>
+        <p className="text-gray-500 leading-relaxed text-[11px]">
+          Przeglądaj, oceniaj i twórz strategiczne zestawy rynsztunku. Filtruj buildy pod PvP Solo, ZvZ, PvE / HCE czy Ganking stworzone przez polskich graczy.
+        </p>
+      </div>
+
+      {/* KAFELEK 3: GILDIE */}
+      <div className="bg-[#141419]/60 border border-[#23232c] p-4 rounded-sm shadow-xl space-y-2">
+        <div className="text-xl">⚔️</div>
+        <h3 className="font-bold text-emerald-400 font-albion-title tracking-wide uppercase">Rejestr Gildii</h3>
+        <p className="text-gray-500 leading-relaxed text-[11px]">
+          Znajdź swoją nową armię na serwerze. Sprawdzaj statusy rekrutacji polskich sojuszy i aplikuj bezpośrednio do ich struktur.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+) : (
         
         <div className="max-w-7xl w-full space-y-5 z-10">
           
