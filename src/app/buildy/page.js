@@ -14,20 +14,20 @@ export default function Buildy() {
   const [filterServer, setFilterServer] = useState('ALL')
 
   // Formularz nowego buildu
-  const [formData, setFormData] = useState({
-    title: '',
-    activity_type: 'PvP',
-    server: 'Europa',
-    slot_head: 'Kaptur Uczonego',
-    slot_chest: 'Kurtka Najemnika',
-    slot_shoes: 'Buty Żołnierza',
-    slot_weapon: 'Miecz Rzeźbiarz (Carving)',
-    slot_offhand: 'Brak (Dwuręczny)',
-    slot_cape: 'Przylądek Martlock',
-    slot_food: 'Gulasz Wołowy',
-    slot_potion: 'Mikstura Odporności',
-    description: ''
-  })
+    const [formData, setFormData] = useState({
+      title: '',
+      activity_type: 'PvP',
+      server: 'Europa',
+      slot_head: '',
+      slot_chest: '',
+      slot_shoes: '',
+      slot_weapon: '',
+      slot_offhand: '',
+      slot_cape: '',
+      slot_food: '',
+      slot_potion: '',
+      description: ''
+    })
   const [formMessage, setFormMessage] = useState('')
   const [isSubmitting, setIsActiveSubmitting] = useState(false)
 
@@ -175,6 +175,7 @@ export default function Buildy() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           
           {/* LEWA STRONA: FORMULARZ KREATORA */}
+          
           <div className="lg:col-span-5">
             <div className="bg-[#141419] border border-[#23232c] p-5 shadow-xl">
               <h2 className="text-xs font-black mb-4 text-[#c59b27] uppercase tracking-widest border-b border-[#23232c] pb-1.5 font-albion-title">Kuj Nowy Zestaw Ekwipunku</h2>
@@ -217,41 +218,41 @@ export default function Buildy() {
                   <div className="border-t border-[#23232c] my-2 pt-2 grid grid-cols-2 gap-2">
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Broń Główna</label>
-                      <input type="text" name="slot_weapon" required value={formData.slot_weapon} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_weapon" required value={formData.slot_weapon} onChange={handleInputChange} placeholder="np. Miecz Rzeźbiarz (Carving)" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Druga Ręka (Offhand)</label>
-                      <input type="text" name="slot_offhand" value={formData.slot_offhand} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_offhand" value={formData.slot_offhand} onChange={handleInputChange} placeholder="np. Brak (Dwuręczny) lub Tarczka" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Głowa</label>
-                      <input type="text" name="slot_head" value={formData.slot_head} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_head" value={formData.slot_head} onChange={handleInputChange} placeholder="np. Kaptur Uczonego" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Klatka</label>
-                      <input type="text" name="slot_chest" value={formData.slot_chest} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_chest" value={formData.slot_chest} onChange={handleInputChange} placeholder="np. Kurtka Najemnika" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Buty</label>
-                      <input type="text" name="slot_shoes" value={formData.slot_shoes} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_shoes" value={formData.slot_shoes} onChange={handleInputChange} placeholder="np. Buty Żołnierza" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2">
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Peleryna</label>
-                      <input type="text" name="slot_cape" value={formData.slot_cape} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_cape" value={formData.slot_cape} onChange={handleInputChange} placeholder="np. Przylądek Martlock" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Jedzenie</label>
-                      <input type="text" name="slot_food" value={formData.slot_food} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_food" value={formData.slot_food} onChange={handleInputChange} placeholder="np. Gulasz Wołowy" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                     <div>
                       <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Mikstura</label>
-                      <input type="text" name="slot_potion" value={formData.slot_potion} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
+                      <input type="text" name="slot_potion" value={formData.slot_potion} onChange={handleInputChange} placeholder="np. Mikstura Odporności" className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:border-[#c59b27] focus:outline-none" />
                     </div>
                   </div>
 
