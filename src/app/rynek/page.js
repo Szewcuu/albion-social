@@ -118,7 +118,7 @@ export default function Rynek() {
   })
 
   return (
-    <main className="min-h-screen bg-[#121216] text-[#bcbbc2] p-4 sm:p-6 antialiased font-albion-ui select-none relative overflow-x-hidden text-base">
+    <div className="min-h-screen animate-bg-drift flex flex-col justify-between overflow-x-hidden text-[#bcbbc2] antialiased font-albion-ui select-none relative">
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
@@ -180,7 +180,7 @@ export default function Rynek() {
       <div className="ember-particle w-2 h-2" style={{ left: '85%', animation: 'floatEmber 18s linear infinite', animationDelay: '-3s' }}></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
 
-      <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5 text-base z-10 relative">
+      <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5 flex-1 z-10 text-base">
         <div className="mb-2">
           <Link href="/" className="text-[#c59b27] hover:underline text-sm font-bold tracking-wider uppercase font-albion-title">← Zamknij tablicę rynkową</Link>
         </div>
@@ -324,11 +324,8 @@ export default function Rynek() {
         </div>
       </div>
 
-      {/* TŁO ANIMOWANE JAKO WARSTWA */}
-      <div className="absolute inset-0 animate-bg-drift opacity-90 z-0 pointer-events-none"></div>
-
       {/* KRÓLEWSKI FOOTER */}
-      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm font-sans tracking-wide mt-12 relative">
+      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm font-sans tracking-wide mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
           <p className="font-medium">
             © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
@@ -338,6 +335,6 @@ export default function Rynek() {
           </p>
         </div>
       </footer>
-    </main>
+    </div>
   )
 }
