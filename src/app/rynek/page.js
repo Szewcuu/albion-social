@@ -172,10 +172,14 @@ export default function Rynek() {
 
       {/* SUBTELNA MGŁA I DROBINKI OGNIA */}
       <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
+      <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
       <div className="magic-fog bottom-[-150px] right-[-100px]" style={{ animation: 'fogPulse 25s ease-in-out infinite', animationDelay: '-5s' }}></div>
+      {/* Dodano 2 nowe płomyki pośrednie */}
       <div className="ember-particle w-3 h-3" style={{ left: '10%', animation: 'floatEmber 20s linear infinite' }}></div>
+      <div className="ember-particle w-2 h-2" style={{ left: '28%', animation: 'floatEmber 25s linear infinite', animationDelay: '-8s' }}></div>
       <div className="ember-particle w-4 h-4" style={{ left: '50%', animation: 'floatEmber 28s linear infinite', animationDelay: '-6s' }}></div>
-      <div className="ember-particle w-2 h-2" style={{ left: '80%', animation: 'floatEmber 18s linear infinite', animationDelay: '-3s' }}></div>
+      <div className="ember-particle w-3 h-3" style={{ left: '68%', animation: 'floatEmber 22s linear infinite', animationDelay: '-12s' }}></div>
+      <div className="ember-particle w-2 h-2" style={{ left: '85%', animation: 'floatEmber 18s linear infinite', animationDelay: '-3s' }}></div>          
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
 
       <div className="max-w-7xl w-full space-y-5 z-10">

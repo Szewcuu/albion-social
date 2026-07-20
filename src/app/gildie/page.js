@@ -160,9 +160,11 @@ export default function Gildie() {
       {/* SUBTELNA MGŁA I DROBINKI OGNIA */}
       <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
       <div className="magic-fog bottom-[-150px] right-[-100px]" style={{ animation: 'fogPulse 25s ease-in-out infinite', animationDelay: '-5s' }}></div>
+      {/* Zwiększona liczba płomieni manifestu */}
       <div className="ember-particle w-3 h-3" style={{ left: '15%', animation: 'floatEmber 22s linear infinite' }}></div>
+      <div className="ember-particle w-4 h-4" style={{ left: '40%', animation: 'floatEmber 24s linear infinite', animationDelay: '-10s' }}></div>
       <div className="ember-particle w-4 h-4" style={{ left: '60%', animation: 'floatEmber 26s linear infinite', animationDelay: '-4s' }}></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
+      <div className="ember-particle w-3 h-3" style={{ left: '82%', animation: 'floatEmber 20s linear infinite', animationDelay: '-15s' }}></div>
 
       <div className="max-w-7xl w-full space-y-5 z-10">
         <div className="mb-2">

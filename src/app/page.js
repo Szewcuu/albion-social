@@ -306,9 +306,11 @@ export default function Home() {
 
       <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
       <div className="magic-fog bottom-[-150px] right-[-100px]" style={{ animation: 'fogPulse 25s ease-in-out infinite', animationDelay: '-5s' }}></div>
+      {/* Zagęszczona strefa iskier */}
       <div className="ember-particle w-3 h-3" style={{ left: '8%', animation: 'floatEmber 18s linear infinite' }}></div>
-      <div className="ember-particle w-4 h-4" style={{ left: '52%', animation: 'floatEmber 28s linear infinite', animationDelay: '-2s' }}></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
+      <div className="ember-particle w-4 h-4" style={{ left: '32%', animation: 'floatEmber 24s linear infinite', animationDelay: '-4s' }}></div>
+      <div className="ember-particle w-3 h-3" style={{ left: '52%', animation: 'floatEmber 28s linear infinite', animationDelay: '-2s' }}></div>
+      <div className="ember-particle w-4 h-4" style={{ left: '78%', animation: 'floatEmber 22s linear infinite', animationDelay: '-7s' }}></div>
       
       {!user ? (
         <div className="flex flex-col items-center justify-center min-h-screen w-full max-w-5xl mx-auto z-10 space-y-12 px-6 py-16">
@@ -319,7 +321,7 @@ export default function Home() {
               ALBION ONLINE POLSKA
             </h1>
             <p className="text-base sm:text-lg text-gray-300 uppercase tracking-widest font-bold max-w-2xl mx-auto leading-relaxed">
-              Polski węzeł społecznościowy: kalkulatory handlowe, zbrojownia taktyczna oraz rejestr gildii
+              Polski węzeł społecznościowy
             </p>
           </div>
 
