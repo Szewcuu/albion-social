@@ -133,7 +133,7 @@ export default function Buildy() {
   const filteredBuilds = activeFilter === 'ALL' ? builds : builds.filter(b => b.activity_type === activeFilter)
 
   return (
-    <div className="min-h-screen bg-[#121216] flex flex-col justify-between overflow-x-hidden font-sans">
+    <main className="min-h-screen bg-[#121216] text-gray-300 p-4 sm:p-6 antialiased font-sans relative overflow-x-hidden text-base">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap');
         .font-albion-title { font-family: 'Cinzel', serif; }
@@ -153,10 +153,10 @@ export default function Buildy() {
       <div className="ember-particle w-3 h-3" style={{ left: '75%', animation: 'floatEmber 19s linear infinite', animationDelay: '-9s' }}></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
 
-      <div className="max-w-5xl w-full mx-auto p-6 space-y-6 flex-1 text-base z-10">
+      <div className="max-w-5xl w-full mx-auto space-y-6 text-base z-10 relative">
         <header className="flex justify-between items-center bg-[#141419] border-2 border-[#c59b27] p-5 shadow-xl">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-100 font-albion-title tracking-wider">🛡️ KRÓLEWSKA ZBROJOWNIA BUILDÓW</h1>
+            <h1 className="text-2xl font-black text-gray-100 font-albion-title tracking-wider">🛡️ KRÓLEWSKA ZBROJOWNIA BUILDÓW</h1>
             <p className="text-sm text-gray-400 uppercase tracking-widest font-bold mt-1">Taktyki zatwierdzone przez Radę Wojenną</p>
           </div>
           <Link href="/" className="text-sm bg-[#1d1d24] border border-[#2c2c38] hover:border-[#c59b27] text-gray-300 px-4 py-2.5 font-bold uppercase tracking-wider transition">🏰 Powrót</Link>
@@ -241,7 +241,7 @@ export default function Buildy() {
                     <h3 className="text-lg font-bold text-gray-100">{build.title}</h3>
                     <div className="ml-auto flex items-center gap-4 text-sm">
                       <span className="text-gray-400">Autor: <span className="text-sky-400 font-semibold">{build.profiles?.username || 'Nieznany'}</span></span>
-                      {isAdmin && <button onClick={() => handleDeleteBuild(build.id)} className="bg-red-950/80 hover:bg-red-900 border border-red-900/40 text-red-400 text-sm font-black uppercase tracking-wider px-3 py-1.5 transition">🗑/ Usunięcie</button>}
+                      {isAdmin && <button onClick={() => handleDeleteBuild(build.id)} className="bg-red-950/80 hover:bg-red-900 border border-red-900/40 text-red-400 text-sm font-black uppercase tracking-wider px-3 py-1.5 transition">🗑️ Usuń</button>}
                     </div>
                   </div>
                   <p className="text-base text-gray-300 leading-relaxed whitespace-pre-line">{build.description}</p>
@@ -261,7 +261,7 @@ export default function Buildy() {
       </div>
 
       {/* KRÓLEWSKI FOOTER */}
-      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm tracking-wide mt-12">
+      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm tracking-wide mt-12 relative">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
           <p className="font-medium">
             © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
@@ -271,6 +271,6 @@ export default function Buildy() {
           </p>
         </div>
       </footer>
-    </div>
+    </main>
   )
 }
