@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 export default function Home() {
   const [selectedItem, setSelectedItem] = useState('T4_BAG')  
@@ -339,15 +340,46 @@ export default function Home() {
             <div className="lg:col-span-4 space-y-5">
               <div className="bg-[#141419] border-2 border-[#c59b27] p-4 shadow-xl">
                 <h2 className="text-[10px] font-black text-[#c59b27] uppercase tracking-widest mb-3 border-b border-[#23232c] pb-1.5 font-albion-title">Katalogi Główne</h2>
-                <div className="space-y-2">
-                  <Link href="/gildie" className="w-full block bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-2.5 px-4 text-xs text-center uppercase tracking-widest border border-[#4a3a1d] transition">⚔️ Rejestr Polskich Gildii</Link>
-                  <Link href="/rynek" className="w-full block bg-[#1d1d24] hover:bg-[#25252e] text-gray-200 border border-[#2c2c3b] font-black py-2.5 px-4 text-xs text-center uppercase tracking-widest transition">💰 Tablica Ogłoszeń Rynku</Link>
-                  <Link href="/buildy" className="w-full block bg-gradient-to-b from-[#966f2d] to-[#5a461d] hover:from-[#a87a1e] hover:to-[#735924] text-gray-200 border border-[#4a3a1d] font-black py-2.5 px-4 text-xs text-center uppercase tracking-widest transition">🛡️ Interaktywny Kreator Buildów</Link>
+                <div className="space-y-3">
+                  
+                  {/* ⚔️ REJESTR POLSKICH GILDII */}
+                  <motion.div
+                    whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
+                    whileTap={{ scale: 0.98, y: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  >
+                    <Link href="/gildie" className="w-full block bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-2.5 px-4 text-xs text-center uppercase tracking-widest border border-[#4a3a1d] transition shadow-md">
+                      ⚔️ Rejestr Polskich Gildii
+                    </Link>
+                  </motion.div>
+
+                  {/* 💰 TABLICA OGŁOSZEŃ RYNKU */}
+                  <motion.div
+                    whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
+                    whileTap={{ scale: 0.98, y: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  >
+                    <Link href="/rynek" className="w-full block bg-[#1d1d24] hover:bg-[#25252e] text-gray-200 border border-[#2c2c3b] font-black py-2.5 px-4 text-xs text-center uppercase tracking-widest transition shadow-md">
+                      💰 Tablica Ogłoszeń Rynku
+                    </Link>
+                  </motion.div>
+
+                  {/* 🛡️ INTERAKTYWNY KREATOR BUILDÓW */}
+                  <motion.div
+                    whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
+                    whileTap={{ scale: 0.98, y: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                  >
+                    <Link href="/buildy" className="w-full block bg-gradient-to-b from-[#966f2d] to-[#5a461d] hover:from-[#a87a1e] hover:to-[#735924] text-gray-200 border border-[#4a3a1d] font-black py-2.5 px-4 text-xs text-center uppercase tracking-widest transition shadow-md">
+                      🛡️ Interaktywny Kreator Buildów
+                    </Link>
+                  </motion.div>
+
                 </div>
               </div>
 
               <div className="bg-[#141419] border border-[#23232c] p-4 shadow-xl space-y-3">
-                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-1">Czas i Statystyki</h2>
+                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-1">WIADOMOŚĆI ALBIONU</h2>
                 
                 {/* GONIEC KRÓLEWSKI */}
                 <div className="bg-[#0b0b0d] border border-[#1f1f26] p-3 shadow-xl space-y-3">
@@ -566,7 +598,13 @@ export default function Home() {
                     chatMessages
                       .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
                       .map((msg) => (
-                        <div key={msg.id} className="flex items-start gap-1.5">
+                        <motion.div 
+                          key={msg.id} 
+                          initial={{ opacity: 0, y: 8, filter: "brightness(1.5)" }}
+                          animate={{ opacity: 1, y: 0, filter: "brightness(1)" }}
+                          transition={{ duration: 0.22, ease: "easeOut" }}
+                          className="flex items-start gap-1.5"
+                        >
                           {msg.channel !== 'SYSTEM' && (
                             <span className={`font-black uppercase text-[8px] tracking-widest px-1.5 py-0.5 rounded-sm shrink-0 mt-0.5 ${
                               msg.role === 'ADMIN' ? 'bg-red-950 text-red-400 border border-red-900/40' : 'bg-[#1a1a24] text-gray-500 border border-[#23232c]'
@@ -588,7 +626,7 @@ export default function Home() {
                               {msg.text}
                             </span>
                           </div>
-                        </div>
+                        </motion.div>
                       ))
                   )}
                   <div ref={chatEndRef} />
