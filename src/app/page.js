@@ -147,9 +147,9 @@ export default function Home() {
 
       if (adminStatus) {
         const { data: allG } = await supabase.from('guilds').select('*, profiles(username)').order('created_at', { ascending: false })
-        const { data: allM } = await supabase.from('market_posts').select('*, profiles(username)').order('created_at', { ascending: false })
+        const { data: allM = [] } = await supabase.from('market_posts').select('*, profiles(username)').order('created_at', { ascending: false })
         setAllGuilds(allG || [])
-        setAllMarketPosts(allM || [])
+        setAllMarketPosts(allM)
       }
     } catch (err) {
       console.error(err)
@@ -648,7 +648,7 @@ export default function Home() {
               </div>
 
               {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY W KLIMACIE ALBIONA */}
-              <div className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-[0_15px_30px_rgba(0,0,0,0.7)] h-[480px] flex flex-col justify-between relative text-gray-300 font-sans">
+              <div className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-[0_15px_30px_rgba(0,0,0,0.7)] h-[480px] flex flex-col justify-between relative text-gray-300 font-sans w-full">
                 
                 {/* NAGŁÓWEK KANAŁÓW */}
                 <div className="flex gap-2 border-b border-[#23232c] pb-2.5 mb-4 text-xs font-black uppercase tracking-widest font-albion-title items-center flex-wrap">
@@ -669,7 +669,7 @@ export default function Home() {
                 </div>
 
                 {/* STRUMIŃ WIADOMOŚCI */}
-                <div className="space-y-3 overflow-y-auto flex-1 pr-1 text-sm leading-relaxed select-text scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
+                <div className="space-y-3 overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
                   {chatLoading ? (
                     <div className="space-y-4 animate-pulse-fast">
                       {[1, 2, 3].map((i) => (
@@ -695,7 +695,7 @@ export default function Home() {
                             initial={{ opacity: 0, y: 4 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.18 }}
-                            className="flex items-start gap-3 border-b border-[#1f1f26]/40 pb-2.5 last:border-none last:pb-0 hover:bg-[#1d1d24]/40 p-1.5 -mx-1.5 rounded-sm transition text-sm"
+                            className="flex items-start gap-3 border-b border-[#1f1f26]/40 pb-2.5 last:border-none last:pb-0 hover:bg-[#1d1d24]/40 p-1.5 -mx-1.5 rounded-sm transition text-sm w-full min-w-0"
                           >
                             {/* AWATAR Z DISCORDA */}
                             {userAvatar && msg.channel !== 'SYSTEM' ? (
@@ -716,7 +716,7 @@ export default function Home() {
                             )}
 
                             {/* DANE I TREŚĆ TEKSTOWA */}
-                            <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0 w-full">
                               <div className="flex items-baseline gap-2 flex-wrap">
                                 <span className={`font-bold tracking-wide text-sm sm:text-base ${
                                   msg.channel === 'SYSTEM' ? 'text-gray-400 font-mono text-xs' :
@@ -735,6 +735,7 @@ export default function Home() {
                                 
                                 <span className="text-xs text-gray-500 font-mono font-bold">{messageTime}</span>
                               </div>
+
                               <div className="mt-1 break-all whitespace-pre-wrap">
                                 <span className={`text-sm sm:text-base ${
                                   msg.channel === 'SYSTEM' ? 'text-gray-500 italic font-mono text-xs' : 
