@@ -35,7 +35,7 @@ export default function Rynek() {
   }, [])
 
   const fetchMarketPosts = async () => {
-    setLoading(true)
+    loading(true)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
@@ -118,7 +118,7 @@ export default function Rynek() {
   })
 
   return (
-    <main className="min-h-screen animate-bg-drift text-[#bcbbc2] p-4 sm:p-6 flex flex-col items-center antialiased font-albion-ui select-none relative overflow-hidden">
+    <main className="min-h-screen animate-bg-drift text-[#bcbbc2] p-4 sm:p-6 flex flex-col items-center antialiased font-albion-ui select-none relative overflow-hidden text-base">
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
@@ -131,7 +131,7 @@ export default function Rynek() {
           100% { background-position: 0% 50%; }
         }
         .animate-bg-drift {
-          background: linear-gradient(-45deg, #020203, #080706, #140f0a, #040405);
+          background: linear-gradient(-45deg, #121216, #1a191f, #221c15, #16151a);
           background-size: 300% 300%;
           animation: bgDrift 35s ease infinite;
         }
@@ -176,40 +176,40 @@ export default function Rynek() {
       <div className="ember-particle w-3 h-3" style={{ left: '10%', animation: 'floatEmber 20s linear infinite' }}></div>
       <div className="ember-particle w-4 h-4" style={{ left: '50%', animation: 'floatEmber 28s linear infinite', animationDelay: '-6s' }}></div>
       <div className="ember-particle w-2 h-2" style={{ left: '80%', animation: 'floatEmber 18s linear infinite', animationDelay: '-3s' }}></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] pointer-events-none z-0"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
 
       <div className="max-w-7xl w-full space-y-5 z-10">
         <div className="mb-2">
-          <Link href="/" className="text-[#c59b27] hover:underline text-xs font-bold tracking-wider uppercase font-albion-title">← Zamknij tablicę rynkową</Link>
+          <Link href="/" className="text-[#c59b27] hover:underline text-sm font-bold tracking-wider uppercase font-albion-title">← Zamknij tablicę rynkową</Link>
         </div>
 
-        <header className="bg-[#141419] border-2 border-[#c59b27] p-4 shadow-2xl">
-          <h1 className="text-2xl font-black text-gray-100 font-albion-title tracking-wider">💰 REJESTR TRANSAKCJI I ZLECEŃ RYNKOWYCH</h1>
-          <p className="text-[9px] text-gray-500 uppercase tracking-widest font-bold mt-0.5">Wszystkie publiczne wpisy wygasają samoistnie po 7 cyklach dobowych</p>
+        <header className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-2xl">
+          <h1 className="text-2xl sm:text-3xl font-black text-gray-100 font-albion-title tracking-wider">💰 REJESTR TRANSAKCJI I ZLECEŃ RYNKOWYCH</h1>
+          <p className="text-sm text-gray-400 uppercase tracking-widest font-bold mt-1">Wszystkie publiczne wpisy wygasają samoistnie po 7 cyklach dobowych</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           
           {/* LEWA STRONA: FORMULARZ DODAWANIA */}
           <div className="lg:col-span-4">
-            <div className="bg-[#141419] border border-[#23232c] p-5 shadow-xl sticky top-6">
-              <h2 className="text-xs font-black mb-4 text-[#c59b27] uppercase tracking-widest border-b border-[#23232c] pb-1.5 font-albion-title">Wystaw Nowe Zlecenie</h2>
+            <div className="bg-[#141419] border border-[#23232c] p-6 shadow-xl sticky top-6">
+              <h2 className="text-sm sm:text-base font-black mb-4 text-[#c59b27] uppercase tracking-widest border-b border-[#23232c] pb-2 font-albion-title">Wystaw Nowe Zlecenie</h2>
               
               {!user ? (
-                <p className="text-gray-500 text-xs italic bg-[#0b0b0d] p-4 border border-[#23232c]">Brama autoryzacji zamknięta. Zaloguj się na panelu głównym.</p>
+                <p className="text-gray-400 text-sm italic bg-[#0b0b0d] p-5 border border-[#23232c]">Brama autoryzacji zamknięta. Zaloguj się na panelu głównym.</p>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+                <form onSubmit={handleSubmit} className="space-y-4 text-sm">
                   <div>
-                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Kierunek Kontraktu</label>
+                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Kierunek Kontraktu</label>
                     <div className="grid grid-cols-2 gap-2">
-                      <button type="button" onClick={() => setFormData(p => ({ ...p, post_type: 'SELL' }))} className={`py-2 font-bold uppercase tracking-wider border transition ${formData.post_type === 'SELL' ? 'bg-[#c59b27] text-black border-[#4a3a1d]' : 'bg-[#1d1d24] text-gray-400 border-[#2c2c38]'}`}>Sprzedam</button>
-                      <button type="button" onClick={() => setFormData(p => ({ ...p, post_type: 'BUY' }))} className={`py-2 font-bold uppercase tracking-wider border transition ${formData.post_type === 'BUY' ? 'bg-blue-900 text-blue-200 border-blue-700' : 'bg-[#1d1d24] text-gray-400 border-[#2c2c38]'}`}>Kupię</button>
+                      <button type="button" onClick={() => setFormData(p => ({ ...p, post_type: 'SELL' }))} className={`py-2.5 font-bold uppercase tracking-wider border transition text-sm ${formData.post_type === 'SELL' ? 'bg-[#c59b27] text-black border-[#4a3a1d]' : 'bg-[#1d1d24] text-gray-400 border-[#2c2c38]'}`}>Sprzedam</button>
+                      <button type="button" onClick={() => setFormData(p => ({ ...p, post_type: 'BUY' }))} className={`py-2.5 font-bold uppercase tracking-wider border transition text-sm ${formData.post_type === 'BUY' ? 'bg-blue-900 text-blue-200 border-blue-700' : 'bg-[#1d1d24] text-gray-400 border-[#2c2c38]'}`}>Kupię</button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Świat / Serwer Gry</label>
-                    <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-medium cursor-pointer focus:border-[#c59b27] focus:outline-none">
+                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Świat / Serwer Gry</label>
+                    <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white font-medium cursor-pointer focus:border-[#c59b27] focus:outline-none text-sm">
                       <option value="Europa">Europa (Europe)</option>
                       <option value="Ameryka">Ameryka (Americas)</option>
                       <option value="Azja">Azja (Asia)</option>
@@ -217,28 +217,28 @@ export default function Rynek() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Nazwa Przedmiotu</label>
-                    <input type="text" name="item_name" required value={formData.item_name} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:outline-none focus:border-[#c59b27]" placeholder="Np. Carving Sword" />
+                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Nazwa Przedmiotu</label>
+                    <input type="text" name="item_name" required value={formData.item_name} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white focus:outline-none focus:border-[#c59b27] text-sm" placeholder="Np. Carving Sword" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Stopień (Tier)</label>
-                      <select name="tier" value={formData.tier} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white cursor-pointer focus:border-[#c59b27] focus:outline-none">
+                      <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Stopień (Tier)</label>
+                      <select name="tier" value={formData.tier} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white cursor-pointer focus:border-[#c59b27] focus:outline-none text-sm">
                         {['T1','T2','T3','T4','T5','T6','T7','T8'].map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>
                     <div>
-                      <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Zaklęcie</label>
-                      <select name="enchantment" value={formData.enchantment} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white cursor-pointer focus:border-[#c59b27] focus:outline-none">
+                      <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Zaklęcie</label>
+                      <select name="enchantment" value={formData.enchantment} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white cursor-pointer focus:border-[#c59b27] focus:outline-none text-sm">
                         {['.0','.1','.2','.3','.4'].map(e => <option key={e} value={e}>{e}</option>)}
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Jakość Wykonania</label>
-                    <select name="quality" value={formData.quality} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white cursor-pointer focus:border-[#c59b27] focus:outline-none">
+                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Jakość Wykonania</label>
+                    <select name="quality" value={formData.quality} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white cursor-pointer focus:border-[#c59b27] focus:outline-none text-sm">
                       <option value="Normalna">Normalna</option>
                       <option value="Dobra">Dobra</option>
                       <option value="Wybitna">Wybitna</option>
@@ -248,10 +248,10 @@ export default function Rynek() {
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-gray-500 mb-1 font-bold uppercase tracking-wider">Wartość Srebra</label>
+                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Wartość Srebra</label>
                     <div className="flex gap-2 w-full">
-                      <input type="number" name="price_value" required min="0" step="any" value={formData.price_value} onChange={handleInputChange} className="flex-1 bg-[#0b0b0d] border border-[#23232c] p-2 text-white font-mono focus:outline-none focus:border-[#c59b27]" placeholder="15" />
-                      <select name="price_unit" value={formData.price_unit} onChange={handleInputChange} className="w-32 bg-[#0b0b0d] border border-[#23232c] p-2 text-[#c59b27] font-bold cursor-pointer focus:border-[#c59b27] focus:outline-none">
+                      <input type="number" name="price_value" required min="0" step="any" value={formData.price_value} onChange={handleInputChange} className="flex-1 bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white font-mono focus:outline-none focus:border-[#c59b27] text-sm" placeholder="15" />
+                      <select name="price_unit" value={formData.price_unit} onChange={handleInputChange} className="w-32 bg-[#0b0b0d] border border-[#23232c] p-2.5 text-[#c59b27] font-bold cursor-pointer focus:border-[#c59b27] focus:outline-none text-sm">
                         <option value="m">m (kk)</option>
                         <option value="k">k (tys)</option>
                         <option value=" Srebra">czyste</option>
@@ -260,11 +260,11 @@ export default function Rynek() {
                   </div>
 
                   <div>
-                    <textarea name="description" rows="2" maxLength="250" value={formData.description} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2 text-white focus:outline-none focus:border-[#c59b27] resize-none" placeholder="Notatki dodatkowe (np. strefa odbioru)..." />
+                    <textarea name="description" rows="3" maxLength="250" value={formData.description} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white focus:outline-none focus:border-[#c59b27] resize-none text-sm" placeholder="Notatki dodatkowe (np. strefa odbioru)..." />
                   </div>
 
-                  <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-2.5 px-4 uppercase tracking-widest border border-[#4a3a1d] font-albion-title text-xs transition">Pieczętuj Kontrakt</button>
-                  {formMessage && <p className="text-center font-bold text-amber-500 animate-pulse mt-2">{formMessage}</p>}
+                  <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-5 uppercase tracking-widest border border-[#4a3a1d] font-albion-title text-sm transition">Pieczętuj Kontrakt</button>
+                  {formMessage && <p className="text-center font-bold text-amber-500 animate-pulse mt-3 text-sm">{formMessage}</p>}
                 </form>
               )}
             </div>
@@ -273,19 +273,19 @@ export default function Rynek() {
           {/* PRAWA STRONA: LISTOWANIE I FILTROWANIE */}
           <div className="lg:col-span-8 space-y-4">
             
-            <div className="bg-[#141419] border border-[#23232c] p-3.5 flex flex-col sm:flex-row gap-3 shadow-md">
-              <input type="text" placeholder="Filtruj towary po nazwie..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex-1 bg-[#0b0b0d] border border-[#23232c] p-2 text-xs text-white focus:outline-none focus:border-[#c59b27]" />
+            <div className="bg-[#141419] border border-[#23232c] p-4 flex flex-col sm:flex-row gap-4 shadow-md items-center">
+              <input type="text" placeholder="Filtruj towary po nazwie..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full sm:flex-1 bg-[#0b0b0d] border border-[#23232c] p-2.5 text-sm text-white focus:outline-none focus:border-[#c59b27]" />
               
-              <select value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="bg-[#0b0b0d] border border-[#23232c] p-2 text-xs text-[#c59b27] font-bold cursor-pointer focus:outline-none focus:border-[#c59b27]">
+              <select value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="w-full sm:w-auto bg-[#0b0b0d] border border-[#23232c] p-2.5 text-sm text-[#c59b27] font-bold cursor-pointer focus:outline-none focus:border-[#c59b27]">
                 <option value="ALL">Wszystkie Światy</option>
                 <option value="Europa">Europa</option>
                 <option value="Ameryka">Ameryka</option>
                 <option value="Azja">Azja</option>
               </select>
 
-              <div className="flex bg-[#0b0b0d] p-1 border border-[#23232c] text-xs">
+              <div className="flex bg-[#0b0b0d] p-1 border border-[#23232c] text-sm w-full sm:w-auto justify-center">
                 {['ALL', 'SELL', 'BUY'].map((t) => (
-                  <button key={t} type="button" onClick={() => setFilterType(t)} className={`px-3 py-1 font-bold uppercase transition ${filterType === t ? 'bg-[#c59b27] text-black' : 'text-gray-500 hover:text-white'}`}>
+                  <button key={t} type="button" onClick={() => setFilterType(t)} className={`px-4 py-1.5 font-bold uppercase transition text-sm ${filterType === t ? 'bg-[#c59b27] text-black' : 'text-gray-400 hover:text-white'}`}>
                     {t === 'ALL' ? 'Wszystko' : t === 'SELL' ? 'Sprzedaż' : 'Kupno'}
                   </button>
                 ))}
@@ -294,24 +294,24 @@ export default function Rynek() {
 
             <div className="space-y-3">
               {loading ? (
-                <p className="text-gray-500 font-bold animate-pulse font-mono text-xs">Przeszukiwanie miejskich skarbców...</p>
+                <p className="text-gray-400 font-bold animate-pulse font-mono text-sm sm:text-base py-4">Przeszukiwanie miejskich skarbców...</p>
               ) : filteredPosts.length === 0 ? (
-                <p className="text-gray-600 italic text-center bg-[#141419]/40 border border-[#23232c]/60 p-8 text-xs">Brak aktywnych zleceń handlowych spełniających te kryteria.</p>
+                <p className="text-gray-500 italic text-center bg-[#141419]/40 border border-[#23232c]/60 p-8 text-sm sm:text-base">Brak aktywnych zleceń handlowych spełniających te kryteria.</p>
               ) : (
                 filteredPosts.map((post) => (
-                  <div key={post.id} className="bg-[#141419] border border-[#23232c] hover:border-[#c59b27]/40 p-4 shadow-md flex justify-between items-center gap-4 transition duration-150">
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                        <span className={`text-[9px] font-black px-1.5 py-0.5 border ${post.post_type === 'SELL' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{post.post_type}</span>
-                        <span className="text-[9px] font-bold bg-[#0b0b0d] border border-[#23232c] text-purple-400 px-1.5 py-0.5 uppercase tracking-wide">{post.server}</span>
-                        <h3 className="text-base font-extrabold text-gray-200 font-mono tracking-tight">{post.item_name}</h3>
+                  <div key={post.id} className="bg-[#141419] border border-[#23232c] hover:border-[#c59b27]/40 p-5 shadow-md flex justify-between items-center gap-5 transition duration-150 text-sm sm:text-base">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className={`text-[10px] font-black px-2 py-0.5 border ${post.post_type === 'SELL' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>{post.post_type}</span>
+                        <span className="text-[10px] font-bold bg-[#0b0b0d] border border-[#23232c] text-purple-400 px-2 py-0.5 uppercase tracking-wide">{post.server}</span>
+                        <h3 className="text-base sm:text-lg font-black text-gray-200 font-mono tracking-tight">{post.item_name}</h3>
                       </div>
-                      {post.description && <p className="text-gray-400 text-xs mb-2 leading-relaxed">{post.description}</p>}
-                      <p className="text-[10px] text-gray-500">Sygnatura: <span className="text-gray-400 font-medium">{post.profiles?.username || 'Nieznany Wojownik'}</span> • <span className="italic">Złożono {formatPostDate(post.created_at)}</span></p>
+                      {post.description && <p className="text-gray-300 text-sm mb-2.5 leading-relaxed">{post.description}</p>}
+                      <p className="text-xs text-gray-500">Sygnatura: <span className="text-gray-400 font-medium">{post.profiles?.username || 'Nieznany Wojownik'}</span> • <span className="italic text-gray-500/80">Złożono {formatPostDate(post.created_at)}</span></p>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-2 min-w-[100px]">
-                      <p className="text-lg font-black text-[#c59b27] font-mono">{post.price}</p>
-                      {user && user.id === post.user_id && <button onClick={() => handleDelete(post.id)} className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-wider">Wycofaj</button>}
+                    <div className="text-right flex flex-col items-end gap-2.5 min-w-[120px]">
+                      <p className="text-lg sm:text-xl font-black text-[#c59b27] font-mono">{post.price}</p>
+                      {user && user.id === post.user_id && <button onClick={() => handleDelete(post.id)} className="text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-wider border border-red-950/40 bg-red-950/20 px-2 py-1 rounded-sm transition">Wycofaj</button>}
                     </div>
                   </div>
                 ))
