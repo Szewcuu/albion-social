@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef, memo } from 'react'
 import Link from 'next/link'
 import { Castle, Swords, Coins, Shield, Calculator, Scroll, Trash2, LogOut } from 'lucide-react'
+import { motion } from 'framer-motion'
 
 // OSOBNY KOMPONENT ZEGARKA (Nie powoduje re-renderu całej strony!)
 const ServerClock = memo(function ServerClock() {
@@ -407,20 +408,42 @@ export default function Home() {
               <div className="lg:col-span-4 space-y-5">
                 <div className="bg-[#141419] border-2 border-[#c59b27] p-5">
                   <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-widest mb-4 border-b border-[#23232c] pb-2 font-albion-title">Katalogi Główne</h2>
-                  <div className="space-y-4">
-                    <Link href="/gildie" className="w-full flex items-center justify-center gap-2 ...">
-                      <Swords className="w-5 h-5" />
-                      <span>Rejestr Polskich Gildii</span>
-                    </Link>
+                    <div className="space-y-4">
+                      
+                      {/* ⚔️ REJESTR POLSKICH GILDII (PRZYWRÓCONA ANIMACJA) */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
+                        whileTap={{ scale: 0.98, y: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      >
+                        <Link href="/gildie" className="w-full block bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-5 text-sm text-center uppercase tracking-widest border border-[#4a3a1d] transition shadow-md">
+                          ⚔️ Rejestr Polskich Gildii
+                        </Link>
+                      </motion.div>
 
-                    <Link href="/rynek" className="w-full block bg-[#1d1d24] hover:bg-[#25252e] text-gray-200 border border-[#2c2c3b] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition">
-                      💰 Tablica Ogłoszeń Rynku
-                    </Link>
+                      {/* 💰 TABLICA OGŁOSZEŃ RYNKU */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
+                        whileTap={{ scale: 0.98, y: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      >
+                        <Link href="/rynek" className="w-full block bg-[#1d1d24] hover:bg-[#25252e] text-gray-200 border border-[#2c2c3b] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition shadow-md">
+                          💰 Tablica Ogłoszeń Rynku
+                        </Link>
+                      </motion.div>
 
-                    <Link href="/buildy" className="w-full block bg-gradient-to-b from-[#966f2d] to-[#5a461d] hover:from-[#a87a1e] hover:to-[#735924] text-gray-200 border border-[#4a3a1d] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition">
-                      🛡️ Interaktywny Kreator Buildów (BETA)
-                    </Link>
-                  </div>
+                      {/* 🛡️ INTERAKTYWNY KREATOR BUILDÓW */}
+                      <motion.div
+                        whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
+                        whileTap={{ scale: 0.98, y: 0 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                      >
+                        <Link href="/buildy" className="w-full block bg-gradient-to-b from-[#966f2d] to-[#5a461d] hover:from-[#a87a1e] hover:to-[#735924] text-gray-200 border border-[#4a3a1d] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition shadow-md">
+                          🛡️ Interaktywny Kreator Buildów (BETA)
+                        </Link>
+                      </motion.div>
+
+                    </div>
                 </div>
 
                 <div className="bg-[#141419] border border-[#23232c] p-5 space-y-4">
