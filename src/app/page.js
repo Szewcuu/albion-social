@@ -677,7 +677,6 @@ export default function Home() {
                                   {/* PRZYCISK USUWANIA WIADOMOŚCI */}
                                   {isAdmin && msg.channel !== 'SYSTEM' && (
                                     <button
-                                    {/* ZAMIAST: 🗑️ Usuń */}
                                     onClick={() => deleteChatMessage(msg.id)} className="flex items-center gap-1 ...">
                                       <Trash2 className="w-3 h-3 text-red-400" />
                                       <span>Usuń</span>
