@@ -237,7 +237,7 @@ export default function Home() {
     } catch (err) {
       console.error("Błąd pobierania cen:", err)
       alert("Nie udało się przetworzyć danych rynkowych.")
-    } fontally {
+    } finally {
       setIsFetchingApi(false)
     }
   }
