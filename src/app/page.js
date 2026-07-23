@@ -96,35 +96,10 @@ export default function Home() {
     }
   }, [])
 
-// PANCERNE AUTOMATYCZNE PRZEWIJANIE NA SAM DÓŁ (OBSŁUGA F5 I ASYNCHRONICZNYCH AWATARÓW)
+// Domyślne przewijanie do najnowszych wiadomości
   useEffect(() => {
-    const container = chatContainerRef.current
-    if (!container) return
-
-    const scrollToBottom = () => {
-      container.scrollTop = container.scrollHeight
-    }
-
-    // 1. Natychmiastowy zjazd
-    scrollToBottom()
-
-    // 2. Zjazd po krótkiej chwila na wyrenderowanie węzłów Reacta
-    const timer1 = setTimeout(scrollToBottom, 100)
-
-    // 3. Drugi zjazd po załadowaniu cięższych zasobów / wolniejszym łączu
-    const timer2 = setTimeout(scrollToBottom, 400)
-
-    // 4. Jeśli w czacie są awatary, przewiń ponownie, gdy obrazki skończą się ładować
-    const images = container.querySelectorAll('img')
-    images.forEach((img) => {
-      if (!img.complete) {
-        img.addEventListener('load', scrollToBottom, { once: true })
-      }
-    })
-
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
   }, [chatMessages, activeChannel])
 
@@ -702,25 +677,20 @@ export default function Home() {
                   </div>
 
                   {/* STRUMIŃ WIADOMOŚCI - SCROLL LOKALNY */}
+                  {/* STRUMIŃ WIADOMOŚCI - ODWRÓCONY FLEXBOX */}
                   <div 
                     ref={chatContainerRef}
-                    className="space-y-3 overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]"
+                    className="space-y-3 space-y-reverse overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text flex flex-col-reverse scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]"
                   >
                     {chatLoading ? (
                       <div className="space-y-4 animate-pulse-fast">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="flex gap-3 items-center">
-                            <div className="w-9 h-9 bg-[#1f1f26] border border-[#23232c] rounded-sm"></div>
-                            <div className="flex-1 space-y-2">
-                              <div className="h-3 bg-[#1f1f26] rounded w-1/4"></div>
-                              <div className="h-3 bg-[#1f1f26] rounded w-2/3"></div>
-                            </div>
-                          </div>
-                        ))}
+                        {/* Loader */}
                       </div>
                     ) : (
                       chatMessages
                         .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
+                        .slice() // Kopia tablicy
+                        .reverse() // Odwrócenie do układu flex-col-reverse
                         .map((msg) => {
                           const messageTime = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) : 'Niedawno';
                           const userAvatar = msg.avatar_url || (msg.user_id === user?.id ? user?.user_metadata?.avatar_url : null);
