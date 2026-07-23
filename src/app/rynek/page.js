@@ -120,65 +120,24 @@ export default function Rynek() {
   return (
     <main className="min-h-screen bg-[#121216] animate-bg-drift flex flex-col justify-between antialiased font-albion-ui select-none relative overflow-hidden text-[#bcbbc2]">
       
+      {/* CSS PŁONĄCEGO CAERLEON */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
-        .font-albion-title { font-family: 'Cinzel', serif; }
-        .font-albion-ui { font-family: 'Inter', sans-serif; }
-
-        @keyframes bgDrift {
+        @keyframes fireDrift {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
-        .animate-bg-drift {
-          background: linear-gradient(-45deg, #121216, #1a191f, #221c15, #16151a);
+        .animate-fire-drift {
+          background: linear-gradient(-45deg, #0f0a0a, #1a0c0e, #241014, #12090c);
           background-size: 300% 300%;
-          animation: bgDrift 35s ease infinite;
-        }
-
-        @keyframes floatEmber {
-          0% { transform: translateY(105vh) translateX(0px) scale(0.6); opacity: 0; }
-          15% { opacity: 0.35; filter: blur(1px); }
-          50% { transform: translateY(45vh) translateX(25px) scale(1.3); opacity: 0.50; filter: blur(2px); }
-          85% { opacity: 0.20; }
-          100% { transform: translateY(-5vh) translateX(-15px) scale(0.8); opacity: 0; }
-        }
-
-        @keyframes fogPulse {
-          0% { transform: scale(1) translate(0px, 0px); opacity: 0.15; }
-          50% { transform: scale(1.15) translate(20px, -10px); opacity: 0.28; }
-          100% { transform: scale(1) translate(0px, 0px); opacity: 0.15; }
-        }
-
-        .ember-particle {
-          position: absolute;
-          background: radial-gradient(circle, rgba(243,169,59,0.85) 0%, rgba(197,155,39,0.2) 60%, transparent 100%);
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 0;
-          box-shadow: 0 0 10px rgba(243,169,59,0.3);
-        }
-
-        .magic-fog {
-          position: absolute;
-          width: 600px;
-          height: 600px;
-          background: radial-gradient(circle, rgba(147,51,234,0.08) 0%, rgba(197,155,39,0.04) 50%, transparent 80%);
-          pointer-events: none;
-          filter: blur(40px);
-          z-index: 0;
+          animation: fireDrift 25s ease infinite;
         }
       `}</style>
 
-      {/* TŁO I PŁOMYKI ZAMKNIĘTE W OBROWIE OVERFLOW-HIDDEN */}
-      <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
-      <div className="magic-fog bottom-[-150px] right-[-100px]" style={{ animation: 'fogPulse 25s ease-in-out infinite', animationDelay: '-5s' }}></div>
-      <div className="ember-particle w-3 h-3" style={{ left: '10%', animation: 'floatEmber 20s linear infinite' }}></div>
-      <div className="ember-particle w-2 h-2" style={{ left: '28%', animation: 'floatEmber 25s linear infinite', animationDelay: '-8s' }}></div>
-      <div className="ember-particle w-4 h-4" style={{ left: '50%', animation: 'floatEmber 28s linear infinite', animationDelay: '-6s' }}></div>
-      <div className="ember-particle w-3 h-3" style={{ left: '68%', animation: 'floatEmber 22s linear infinite', animationDelay: '-12s' }}></div>
-      <div className="ember-particle w-2 h-2" style={{ left: '85%', animation: 'floatEmber 18s linear infinite', animationDelay: '-3s' }}></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
+      {/* WARSTWY TŁA CAERLEON */}
+      <div className="fixed inset-0 animate-fire-drift z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,#991b1b22,transparent_60%)] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] z-0 pointer-events-none"></div>
 
       {/* ZAWARTOŚĆ STRONY */}
       <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-5 flex-1 z-10 text-base">

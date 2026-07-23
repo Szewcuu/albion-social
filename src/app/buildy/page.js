@@ -134,24 +134,24 @@ export default function Buildy() {
 
   return (
     <main className="min-h-screen bg-[#121216] flex flex-col justify-between overflow-hidden font-sans text-base relative text-gray-300">
+            {/* CSS PŁONĄCEGO CAERLEON */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&display=swap');
-        .font-albion-title { font-family: 'Cinzel', serif; }
-        @keyframes floatEmber {
-          0% { transform: translateY(105vh) translateX(0px) scale(0.6); opacity: 0; }
-          15% { opacity: 0.35; filter: blur(1px); }
-          50% { transform: translateY(45vh) translateX(25px) scale(1.3); opacity: 0.50; filter: blur(2px); }
-          85% { opacity: 0.20; }
-          100% { transform: translateY(-5vh) translateX(-15px) scale(0.8); opacity: 0; }
+        @keyframes fireDrift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
         }
-        .ember-particle { position: absolute; background: radial-gradient(circle, rgba(243,169,59,0.85) 0%, rgba(197,155,39,0.2) 60%, transparent 100%); border-radius: 50%; pointer-events: none; z-index: 0; box-shadow: 0 0 10px rgba(243,169,59,0.3); }
+        .animate-fire-drift {
+          background: linear-gradient(-45deg, #0f0a0a, #1a0c0e, #241014, #12090c);
+          background-size: 300% 300%;
+          animation: fireDrift 25s ease infinite;
+        }
       `}</style>
 
-      {/* Efekt iskier w zbrojowni */}
-      <div className="ember-particle w-3 h-3" style={{ left: '12%', animation: 'floatEmber 21s linear infinite' }}></div>
-      <div className="ember-particle w-4 h-4" style={{ left: '45%', animation: 'floatEmber 25s linear infinite', animationDelay: '-5s' }}></div>
-      <div className="ember-particle w-3 h-3" style={{ left: '75%', animation: 'floatEmber 19s linear infinite', animationDelay: '-9s' }}></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
+      {/* WARSTWY TŁA CAERLEON */}
+      <div className="fixed inset-0 animate-fire-drift z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,#991b1b22,transparent_60%)] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] z-0 pointer-events-none"></div>
 
       <div className="max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 text-base z-10 relative">
         <header className="flex justify-between items-center bg-[#141419] border-2 border-[#c59b27] p-5 shadow-xl">

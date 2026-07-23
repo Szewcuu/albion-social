@@ -92,12 +92,22 @@ export default function Home() {
     }
   }, [])
 
-  // BEZPIECZNE PRZEWIJANIE CZATU (BEZ SPYCHANIA CAŁEJ STRONY)
+// BEZPIECZNE AUTO-SCROLLOWANIE NA DÓŁ CZATU
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    const scrollToBottom = () => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+      }
     }
-  }, [chatMessages])
+
+    // Wykonaj natychmiast
+    scrollToBottom()
+
+    // Oraz po 100ms, gdy przeglądarka w pełni narysuje elementy i awatary w DOM
+    const timer = setTimeout(scrollToBottom, 100)
+
+    return () => clearTimeout(timer)
+  }, [chatMessages, activeChannel])
 
   const fetchInitialChat = async () => {
     const { data } = await supabase
@@ -255,15 +265,17 @@ const handleSendChatMessage = async (e) => {
     }
   }
 
-  const deleteChatMessage = async (msgId) => {
-  if (!isAdmin) return
-  if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
-    const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
-    if (!error) {
-      setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
+const deleteChatMessage = async (msgId) => {
+    if (!isAdmin) return
+    if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
+      const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
+      if (!error) {
+        setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
+      } else {
+        alert(`Błąd usuwania z bazy danych: ${error.message}`)
+      }
     }
   }
-}
 
   const deleteGuild = async (id) => {
     if (confirm('Spalić dekret tej gildii?')) {
