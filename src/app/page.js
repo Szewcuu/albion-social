@@ -73,14 +73,18 @@ export default function Home() {
       }
     })
 
-    // Subskrypcja Realtime
+    // Subskrypcja Realtime z natychmiastowym czyszczeniem
     const chatChannel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'chat_messages' },
         (payload) => {
-          setChatMessages((prev) => [...prev, payload.new])
+          if (payload.eventType === 'INSERT') {
+            setChatMessages((prev) => [...prev, payload.new])
+          } else if (payload.eventType === 'DELETE') {
+            setChatMessages((prev) => prev.filter((msg) => msg.id !== payload.old.id))
+          }
         }
       )
       .subscribe()
@@ -92,7 +96,7 @@ export default function Home() {
     }
   }, [])
 
-// BEZPIECZNE AUTO-SCROLLOWANIE NA DÓŁ CZATU
+  // GWARANTOWANE AUTOMATYCZNE PRZEWIJANIE DO NAJNOWSZEJ WIADOMOŚCI
   useEffect(() => {
     const scrollToBottom = () => {
       if (chatContainerRef.current) {
@@ -100,11 +104,9 @@ export default function Home() {
       }
     }
 
-    // Wykonaj natychmiast
-    scrollToBottom()
-
-    // Oraz po 100ms, gdy przeglądarka w pełni narysuje elementy i awatary w DOM
-    const timer = setTimeout(scrollToBottom, 100)
+    // Wykonanie natychmiastowe oraz opóźnione dla pewności wyrenderowania w DOM
+    requestAnimationFrame(scrollToBottom)
+    const timer = setTimeout(scrollToBottom, 150)
 
     return () => clearTimeout(timer)
   }, [chatMessages, activeChannel])
@@ -119,8 +121,8 @@ export default function Home() {
     if (data && data.length > 0) {
       const mapped = data.map(msg => ({
         ...msg,
-        username: msg.profiles?.username || msg.username,
-        avatar_url: msg.profiles?.avatar_url || null
+        username: msg.username || msg.profiles?.username || 'Gracz',
+        avatar_url: msg.avatar_url || msg.profiles?.avatar_url || null
       }))
       setChatMessages(mapped)
     } else {
@@ -171,25 +173,38 @@ export default function Home() {
     }
   }
 
-const handleSendChatMessage = async (e) => {
-  e.preventDefault()
-  if (!newMessage.trim() || !user) return
+  const handleSendChatMessage = async (e) => {
+    e.preventDefault()
+    if (!newMessage.trim() || !user) return
 
-  // Oczyszczamy nick z doklejonego #0
-  const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
-  const cleanUsername = rawName.replace(/#0$/, '')
+    // Czyszczenie z doklejonego #0 przez Discord
+    const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
+    const cleanUsername = rawName.replace(/#0$/, '')
 
-  const { error } = await supabase.from('chat_messages').insert([
-    {
-      user_id: user.id,
-      channel: activeChannel,
-      username: cleanUsername,
-      text: newMessage.trim()
+    const { error } = await supabase.from('chat_messages').insert([
+      {
+        user_id: user.id,
+        channel: activeChannel,
+        username: cleanUsername,
+        text: newMessage.trim()
+      }
+    ])
+
+    if (!error) setNewMessage('')
+  }
+
+  // BEZPIECZNE USUWANIE Z OBSŁUGĄ BŁĘDÓW SUPABASE
+  const deleteChatMessage = async (msgId) => {
+    if (!isAdmin) return
+    if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
+      const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
+      if (error) {
+        alert(`Błąd usuwania z bazy: ${error.message}. Wykonaj zapytanie SQL w Supabase.`)
+      } else {
+        setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
+      }
     }
-  ])
-
-  if (!error) setNewMessage('')
-}
+  }
 
   const fetchLivePrices = async () => {
     setIsFetchingApi(true)
@@ -222,7 +237,7 @@ const handleSendChatMessage = async (e) => {
     } catch (err) {
       console.error("Błąd pobierania cen:", err)
       alert("Nie udało się przetworzyć danych rynkowych.")
-    } finally {
+    } fontally {
       setIsFetchingApi(false)
     }
   }
@@ -265,18 +280,6 @@ const handleSendChatMessage = async (e) => {
     }
   }
 
-const deleteChatMessage = async (msgId) => {
-    if (!isAdmin) return
-    if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
-      const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
-      if (!error) {
-        setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
-      } else {
-        alert(`Błąd usuwania z bazy danych: ${error.message}`)
-      }
-    }
-  }
-
   const deleteGuild = async (id) => {
     if (confirm('Spalić dekret tej gildii?')) {
       const { error } = await supabase.from('guilds').delete().eq('id', id)
@@ -286,17 +289,21 @@ const deleteChatMessage = async (msgId) => {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#050507] text-xl font-serif tracking-widest">
+      <main className="flex min-h-screen items-center justify-center bg-[#0a0505] text-xl font-serif tracking-widest">
         <p className="text-[#c59b27] animate-pulse">ŁADOWANIE REJESTRU KRÓLEWSKIEGO...</p>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen animate-bg-drift flex flex-col justify-between antialiased font-albion-ui select-none relative overflow-hidden text-[#bcbbc2]">
+    <main className="min-h-screen flex flex-col justify-between antialiased font-albion-ui select-none relative overflow-hidden text-[#bcbbc2]">
       
-      {/* CSS PŁONĄCEGO CAERLEON */}
+      {/* CSS MOTYW PŁONĄCEGO CAERLEON */}
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
+        .font-albion-title { font-family: 'Cinzel', serif; }
+        .font-albion-ui { font-family: 'Inter', sans-serif; }
+
         @keyframes fireDrift {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
@@ -307,21 +314,28 @@ const deleteChatMessage = async (msgId) => {
           background-size: 300% 300%;
           animation: fireDrift 25s ease infinite;
         }
+        .animate-pulse-fast {
+          animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .4; }
+        }
       `}</style>
 
-      {/* WARSTWY TŁA CAERLEON */}
+      {/* WARSTWY MOTYWU: PŁONĄCE CAERLEON */}
       <div className="fixed inset-0 animate-fire-drift z-0 pointer-events-none"></div>
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,#991b1b22,transparent_60%)] z-0 pointer-events-none"></div>
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] z-0 pointer-events-none"></div>
       
-      {/* GŁÓWNA ZAWARTOŚĆ STRONY */}
+      {/* GŁÓWNA ZAWARTOŚĆ */}
       <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
         {!user ? (
           <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto space-y-12 px-6 py-12">
             
             {/* NAGŁÓWEK POWITALNY */}
             <div className="text-center space-y-4">
-              <h1 className="text-4xl sm:text-5xl font-black text-[#c59b27] tracking-widest font-albion-title drop-shadow-[0_5px_15px_rgba(0,0,0,0.6)]">
+              <h1 className="text-4xl sm:text-5xl font-black text-[#c59b27] tracking-widest font-albion-title drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">
                 ALBION ONLINE POLSKA
               </h1>
               <p className="text-base sm:text-lg text-gray-300 uppercase tracking-widest font-bold max-w-2xl mx-auto leading-relaxed">
@@ -330,11 +344,10 @@ const deleteChatMessage = async (msgId) => {
             </div>
 
             {/* GŁÓWNY PANEL LOGOWANIA */}
-            <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-sm">
+            <div className="max-w-md w-full bg-[#141419]/90 border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-sm backdrop-blur-sm">
               <span className="text-sm text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-4">BRAMA DO KRONIK MIEJSKICH</span>
               
               <div className="space-y-4">
-                {/* AKTYWNE LOGOWANIE DISCORD */}
                 <button 
                   onClick={loginWithDiscord} 
                   className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-4 px-8 border border-[#4a3a1d] tracking-wider text-sm uppercase transition font-albion-title active:scale-95 shadow-md"
@@ -342,7 +355,6 @@ const deleteChatMessage = async (msgId) => {
                   Zaloguj przez Discord
                 </button>
 
-                {/* ZABLOKOWANE LOGOWANIE GOOGLE (WKRÓTCE) */}
                 <button 
                   disabled 
                   className="w-full bg-[#16161c]/50 text-gray-600 font-black py-4 px-8 border border-[#2c2c3b]/50 tracking-wider text-sm uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
@@ -355,9 +367,9 @@ const deleteChatMessage = async (msgId) => {
               </div>
             </div>
 
-            {/* PRAWDZIWE OPISY MODUŁÓW */}
+            {/* OPISY MODUŁÓW */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-sm sm:text-base">
-              <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3">
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
                 <div className="text-2xl">📊</div>
                 <h3 className="font-bold text-[#c59b27] font-albion-title text-base sm:text-lg tracking-wide uppercase">Kalkulator Caerleon</h3>
                 <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
@@ -365,7 +377,7 @@ const deleteChatMessage = async (msgId) => {
                 </p>
               </div>
 
-              <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3">
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
                 <div className="text-2xl">🛡️</div>
                 <h3 className="font-bold text-sky-400 font-albion-title text-base sm:text-lg tracking-wide uppercase">Królewska Zbrojownia</h3>
                 <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
@@ -373,7 +385,7 @@ const deleteChatMessage = async (msgId) => {
                 </p>
               </div>
 
-              <div className="bg-[#141419]/60 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3">
+              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
                 <div className="text-2xl">⚔️</div>
                 <h3 className="font-bold text-emerald-400 font-albion-title text-base sm:text-lg tracking-wide uppercase">Rejestr Gildii</h3>
                 <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
@@ -388,7 +400,7 @@ const deleteChatMessage = async (msgId) => {
           <div className="max-w-7xl w-full space-y-5 text-sm sm:text-base my-2">
             
             {/* NAGŁÓWEK MIEJSKI */}
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141419] border-2 border-[#c59b27] p-5 shadow-2xl relative">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-2xl relative backdrop-blur-sm">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-100 font-albion-title tracking-wider flex items-center gap-2 flex-wrap">
                   🏰 TABLICA MIEJSKA <span className="text-[#c59b27] text-sm font-sans bg-[#1d1d24] px-3 py-1 border border-[#2c2c38] font-bold">ALBION ONLINE POLSKA PORTAL</span>
@@ -403,7 +415,7 @@ const deleteChatMessage = async (msgId) => {
                   )}
                   <div className="flex flex-col">
                     <span className="text-xs text-gray-400 uppercase tracking-widest font-bold font-mono">{isAdmin ? 'Inkwizytor' : 'Wojownik'}</span>
-                    <span className="font-extrabold text-base text-emerald-400 tracking-wide font-mono">{user.user_metadata?.full_name}</span>
+                    <span className="font-extrabold text-base text-emerald-400 tracking-wide font-mono">{(user.user_metadata?.full_name || 'Gracz').replace(/#0$/, '')}</span>
                   </div>
                 </div>
                 <button onClick={logout} className="text-xs bg-red-950/60 hover:bg-red-900 border border-red-900/40 text-red-400 font-bold px-4 py-2 rounded-sm transition uppercase tracking-wider ml-4">Opuść</button>
@@ -414,7 +426,7 @@ const deleteChatMessage = async (msgId) => {
               
               {/* LEWA FLANKA */}
               <div className="lg:col-span-4 space-y-5">
-                <div className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-xl">
+                <div className="bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-xl backdrop-blur-sm">
                   <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-widest mb-4 border-b border-[#23232c] pb-2 font-albion-title">Katalogi Główne</h2>
                   <div className="space-y-4">
                     
@@ -454,7 +466,7 @@ const deleteChatMessage = async (msgId) => {
                   </div>
                 </div>
 
-                <div className="bg-[#141419] border border-[#23232c] p-5 shadow-xl space-y-4">
+                <div className="bg-[#141419]/90 border border-[#23232c] p-5 shadow-xl space-y-4 backdrop-blur-sm">
                   <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-2">WIADOMOŚĆI ALBIONU</h2>
                   
                   {/* GONIEC KRÓLEWSKI */}
@@ -528,7 +540,7 @@ const deleteChatMessage = async (msgId) => {
               {/* PRAWA FLANKA */}
               <div className="lg:col-span-8 space-y-5">
                 
-                <div className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-2xl relative">
+                <div className="bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-2xl relative backdrop-blur-sm">
                   <div className="flex gap-4 border-b border-[#23232c] pb-3 mb-5 text-sm sm:text-base">
                     <button onClick={() => setRightTab('ECONOMY')} className={`font-black uppercase tracking-wider font-albion-title pb-1 border-b-2 transition ${rightTab === 'ECONOMY' ? 'text-[#c59b27] border-[#c59b27]' : 'text-gray-400 border-transparent hover:text-gray-200'}`}>📋 Kalkulator Caerleon (BETA)</button>
                     {isAdmin && (
@@ -652,7 +664,7 @@ const deleteChatMessage = async (msgId) => {
                 </div>
 
                 {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY W KLIMACIE ALBIONA */}
-                <div className="bg-[#141419] border-2 border-[#c59b27] p-5 shadow-[0_15px_30px_rgba(0,0,0,0.7)] h-[480px] flex flex-col justify-between relative text-gray-300 font-sans w-full">
+                <div className="bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-[0_15px_30px_rgba(0,0,0,0.7)] h-[480px] flex flex-col justify-between relative text-gray-300 font-sans w-full backdrop-blur-sm">
                   
                   {/* NAGŁÓWEK KANAŁÓW */}
                   <div className="flex gap-2 border-b border-[#23232c] pb-2.5 mb-4 text-xs font-black uppercase tracking-widest font-albion-title items-center flex-wrap">
@@ -672,7 +684,7 @@ const deleteChatMessage = async (msgId) => {
                     ))}
                   </div>
 
-                  {/* STRUMIŃ WIADOMOŚCI - PRZEWIJANY LOKALNIE */}
+                  {/* STRUMIŃ WIADOMOŚCI - SCROLL LOKALNY */}
                   <div 
                     ref={chatContainerRef}
                     className="space-y-3 overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]"
@@ -695,6 +707,7 @@ const deleteChatMessage = async (msgId) => {
                         .map((msg) => {
                           const messageTime = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) : 'Niedawno';
                           const userAvatar = msg.avatar_url || (msg.user_id === user?.id ? user?.user_metadata?.avatar_url : null);
+                          const cleanDisplayName = (msg.username || 'System').replace(/#0$/, '');
 
                           return (
                             <motion.div 
@@ -718,7 +731,7 @@ const deleteChatMessage = async (msgId) => {
                                   msg.channel === 'SYSTEM' ? 'bg-[#1b1b22] border-gray-700 text-gray-500 font-mono' :
                                   msg.role === 'ADMIN' ? 'bg-red-950/60 border-[#c59b27] text-[#c59b27]' : 'bg-[#1d1d24] border-[#2c2c3b] text-sky-400'
                                 }`}>
-                                  {msg.username ? msg.username.charAt(0).toUpperCase() : 'S'}
+                                  {cleanDisplayName.charAt(0).toUpperCase()}
                                 </div>
                               )}
 
@@ -729,7 +742,7 @@ const deleteChatMessage = async (msgId) => {
                                     msg.channel === 'SYSTEM' ? 'text-gray-400 font-mono text-xs' :
                                     msg.role === 'ADMIN' ? 'text-[#c59b27] font-albion-title' : 'text-sky-400 font-semibold'
                                   }`}>
-                                    {msg.username || 'System'}
+                                    {cleanDisplayName}
                                   </span>
                                   
                                   {msg.channel !== 'SYSTEM' && (
@@ -742,7 +755,7 @@ const deleteChatMessage = async (msgId) => {
                                   
                                   <span className="text-xs text-gray-500 font-mono font-bold">{messageTime}</span>
 
-                                  {/* PRZYCISK USUWANIA DLA INKWIZYTORA (ADMINA) */}
+                                  {/* PRZYCISK USUWANIA WIADOMOŚCI DLA INKWIZYTORA */}
                                   {isAdmin && msg.channel !== 'SYSTEM' && (
                                     <button
                                       onClick={() => deleteChatMessage(msg.id)}
@@ -801,7 +814,7 @@ const deleteChatMessage = async (msgId) => {
         )}
       </div>
 
-      {/* KRÓLEWSKI FOOTER PRZYKLEJONY DO SAMEJ PODSTAWY */}
+      {/* FOOTER PRZYKLEJONY DO PODSTAWY */}
       <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-20 text-sm font-sans tracking-wide mt-8 relative">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
           <p className="font-medium">
