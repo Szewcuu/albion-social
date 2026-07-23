@@ -1,8 +1,28 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, memo } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+
+// OSOBNY KOMPONENT ZEGARKA (Nie powoduje re-renderu całej strony!)
+const ServerClock = memo(function ServerClock() {
+  const [utcTime, setUtcTime] = useState('')
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date()
+      setUtcTime(now.toLocaleTimeString('pl-PL', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+    }
+    updateClock()
+    const timer = setInterval(updateClock, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  return (
+    <span className="text-3xl font-mono font-black text-[#c59b27] tracking-widest">
+      {utcTime || '00:00:00'}
+    </span>
+  )
+})
 
 export default function Home() {
   const [selectedItem, setSelectedItem] = useState('T4_BAG')  
@@ -11,7 +31,6 @@ export default function Home() {
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [utcTime, setUtcTime] = useState('')
 
   // Stany Supabase
   const [myGuilds, setMyGuilds] = useState([])
@@ -42,13 +61,6 @@ export default function Home() {
   const chatContainerRef = useRef(null)
 
   useEffect(() => {
-    const updateClock = () => {
-      const now = new Date()
-      setUtcTime(now.toLocaleTimeString('pl-PL', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit' }))
-    }
-    updateClock()
-    const timer = setInterval(updateClock, 1000)
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
@@ -73,7 +85,7 @@ export default function Home() {
       }
     })
 
-    // Subskrypcja Realtime z natychmiastowym czyszczeniem
+    // Subskrypcja Realtime
     const chatChannel = supabase
       .channel('schema-db-changes')
       .on(
@@ -90,13 +102,12 @@ export default function Home() {
       .subscribe()
 
     return () => {
-      clearInterval(timer)
       subscription.unsubscribe()
       supabase.removeChannel(chatChannel)
     }
   }, [])
 
-// Domyślne przewijanie do najnowszych wiadomości
+  // Auto-scroll do najnowszych wiadomości
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
@@ -169,7 +180,6 @@ export default function Home() {
     e.preventDefault()
     if (!newMessage.trim() || !user) return
 
-    // Czyszczenie z doklejonego #0 przez Discord
     const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
     const cleanUsername = rawName.replace(/#0$/, '')
 
@@ -185,13 +195,12 @@ export default function Home() {
     if (!error) setNewMessage('')
   }
 
-  // BEZPIECZNE USUWANIE Z OBSŁUGĄ BŁĘDÓW SUPABASE
   const deleteChatMessage = async (msgId) => {
     if (!isAdmin) return
     if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
       const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
       if (error) {
-        alert(`Błąd usuwania z bazy: ${error.message}. Wykonaj zapytanie SQL w Supabase.`)
+        alert(`Błąd usuwania z bazy: ${error.message}`)
       } else {
         setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
       }
@@ -281,59 +290,31 @@ export default function Home() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0a0505] text-xl font-serif tracking-widest">
+      <main className="flex min-h-screen items-center justify-center bg-[#0f0a0a] text-xl font-serif tracking-widest">
         <p className="text-[#c59b27] animate-pulse">ŁADOWANIE REJESTRU KRÓLEWSKIEGO...</p>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between antialiased font-albion-ui select-none relative overflow-hidden text-[#bcbbc2]">
+    <main className="min-h-screen flex flex-col justify-between antialiased font-albion-ui select-none relative bg-[#0f0a0a] text-[#bcbbc2]">
       
-      {/* CSS MOTYW PŁONĄCEGO CAERLEON */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
         .font-albion-title { font-family: 'Cinzel', serif; }
         .font-albion-ui { font-family: 'Inter', sans-serif; }
-
-        /* Zoptymalizowana animacja tła z użyciem Oszczędnego GPU (Opacity/Transform) */
-        @keyframes firePulse {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 0.9; transform: scale(1.03); }
-        }
-
-        .animate-fire-drift {
-          background: linear-gradient(135deg, #0f0a0a 0%, #1a0c0e 50%, #241014 100%);
-          will-change: transform, opacity;
-        }
-
-        .fire-glow-layer {
-          animation: firePulse 12s ease-in-out infinite;
-          will-change: transform, opacity;
-        }
-
-        .animate-pulse-fast {
-          animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .4; }
-        }
       `}</style>
 
-      {/* LEKKIE WARSTWY TŁA (AKCELEROWANE PRZEZ GPU) */}
-      <div className="fixed inset-0 animate-fire-drift z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 fire-glow-layer bg-[radial-gradient(circle_at_top,#991b1b28,transparent_60%)] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.85)_100%)] z-0 pointer-events-none"></div>
-      
+      {/* SUPER LEKKIE TŁO STATYCZNE (ZERO PROCESORA) */}
+      <div className="fixed inset-0 bg-gradient-to-b from-[#1a0c0e] via-[#0f0a0a] to-[#080505] z-0 pointer-events-none"></div>
+
       {/* GŁÓWNA ZAWARTOŚĆ */}
       <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
         {!user ? (
           <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto space-y-12 px-6 py-12">
             
-            {/* NAGŁÓWEK POWITALNY */}
             <div className="text-center space-y-4">
-              <h1 className="text-4xl sm:text-5xl font-black text-[#c59b27] tracking-widest font-albion-title drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">
+              <h1 className="text-4xl sm:text-5xl font-black text-[#c59b27] tracking-widest font-albion-title">
                 ALBION ONLINE POLSKA
               </h1>
               <p className="text-base sm:text-lg text-gray-300 uppercase tracking-widest font-bold max-w-2xl mx-auto leading-relaxed">
@@ -341,14 +322,13 @@ export default function Home() {
               </p>
             </div>
 
-            {/* GŁÓWNY PANEL LOGOWANIA */}
-            <div className="max-w-md w-full bg-[#141419]/90 border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-sm backdrop-blur-sm">
+            <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center rounded-sm">
               <span className="text-sm text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-4">BRAMA DO KRONIK MIEJSKICH</span>
               
               <div className="space-y-4">
                 <button 
                   onClick={loginWithDiscord} 
-                  className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-4 px-8 border border-[#4a3a1d] tracking-wider text-sm uppercase transition font-albion-title active:scale-95 shadow-md"
+                  className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-4 px-8 border border-[#4a3a1d] tracking-wider text-sm uppercase transition font-albion-title active:scale-95"
                 >
                   Zaloguj przez Discord
                 </button>
@@ -358,16 +338,15 @@ export default function Home() {
                   className="w-full bg-[#16161c]/50 text-gray-600 font-black py-4 px-8 border border-[#2c2c3b]/50 tracking-wider text-sm uppercase font-albion-title cursor-not-allowed flex items-center justify-center gap-2 relative"
                 >
                   <span>Zaloguj przez Google</span>
-                  <span className="text-[10px] bg-[#f0b73a] text-black px-2 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case shadow-[0_0_10px_rgba(240,183,58,0.4)]">
+                  <span className="text-[10px] bg-[#f0b73a] text-black px-2 py-0.5 rounded-sm font-sans font-black tracking-normal normal-case">
                     Wkrótce
                   </span>
                 </button>
               </div>
             </div>
 
-            {/* OPISY MODUŁÓW */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-sm sm:text-base">
-              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
+              <div className="bg-[#141419] border border-[#23232c] p-6 rounded-sm space-y-3">
                 <div className="text-2xl">📊</div>
                 <h3 className="font-bold text-[#c59b27] font-albion-title text-base sm:text-lg tracking-wide uppercase">Kalkulator Caerleon</h3>
                 <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
@@ -375,7 +354,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
+              <div className="bg-[#141419] border border-[#23232c] p-6 rounded-sm space-y-3">
                 <div className="text-2xl">🛡️</div>
                 <h3 className="font-bold text-sky-400 font-albion-title text-base sm:text-lg tracking-wide uppercase">Królewska Zbrojownia</h3>
                 <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
@@ -383,7 +362,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="bg-[#141419]/70 border border-[#23232c] p-6 rounded-sm shadow-xl space-y-3 backdrop-blur-sm">
+              <div className="bg-[#141419] border border-[#23232c] p-6 rounded-sm space-y-3">
                 <div className="text-2xl">⚔️</div>
                 <h3 className="font-bold text-emerald-400 font-albion-title text-base sm:text-lg tracking-wide uppercase">Rejestr Gildii</h3>
                 <p className="text-gray-300 leading-relaxed text-sm sm:text-base">
@@ -398,7 +377,7 @@ export default function Home() {
           <div className="max-w-7xl w-full space-y-5 text-sm sm:text-base my-2">
             
             {/* NAGŁÓWEK MIEJSKI */}
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-2xl relative backdrop-blur-sm">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141419] border-2 border-[#c59b27] p-5 relative">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-gray-100 font-albion-title tracking-wider flex items-center gap-2 flex-wrap">
                   🏰 TABLICA MIEJSKA <span className="text-[#c59b27] text-sm font-sans bg-[#1d1d24] px-3 py-1 border border-[#2c2c38] font-bold">ALBION ONLINE POLSKA PORTAL</span>
@@ -406,10 +385,10 @@ export default function Home() {
                 <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mt-1">Lokalny punkt informacyjny wolnego miasta</p>
               </div>
               
-              <div className="flex items-center gap-5 bg-[#0b0b0d] py-3 px-6 rounded-sm border-2 border-[#c59b27]/50 self-stretch sm:self-auto justify-between shadow-2xl">
+              <div className="flex items-center gap-5 bg-[#0b0b0d] py-3 px-6 rounded-sm border-2 border-[#c59b27]/50 self-stretch sm:self-auto justify-between">
                 <div className="flex items-center gap-4">
                   {user.user_metadata?.avatar_url && (
-                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-11 h-11 rounded-sm border-2 border-[#c59b27] shadow-md" />
+                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-11 h-11 rounded-sm border-2 border-[#c59b27]" />
                   )}
                   <div className="flex flex-col">
                     <span className="text-xs text-gray-400 uppercase tracking-widest font-bold font-mono">{isAdmin ? 'Inkwizytor' : 'Wojownik'}</span>
@@ -424,71 +403,34 @@ export default function Home() {
               
               {/* LEWA FLANKA */}
               <div className="lg:col-span-4 space-y-5">
-                <div className="bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-xl backdrop-blur-sm">
+                <div className="bg-[#141419] border-2 border-[#c59b27] p-5">
                   <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-widest mb-4 border-b border-[#23232c] pb-2 font-albion-title">Katalogi Główne</h2>
                   <div className="space-y-4">
-                    
-                    {/* ⚔️ REJESTR POLSKICH GILDII */}
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
-                      whileTap={{ scale: 0.98, y: 0 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    >
-                      <Link href="/gildie" className="w-full block bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-5 text-sm text-center uppercase tracking-widest border border-[#4a3a1d] transition shadow-md">
-                        ⚔️ Rejestr Polskich Gildii
-                      </Link>
-                    </motion.div>
+                    <Link href="/gildie" className="w-full block bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-5 text-sm text-center uppercase tracking-widest border border-[#4a3a1d] transition">
+                      ⚔️ Rejestr Polskich Gildii
+                    </Link>
 
-                    {/* 💰 TABLICA OGŁOSZEŃ RYNKU */}
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
-                      whileTap={{ scale: 0.98, y: 0 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    >
-                      <Link href="/rynek" className="w-full block bg-[#1d1d24] hover:bg-[#25252e] text-gray-200 border border-[#2c2c3b] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition shadow-md">
-                        💰 Tablica Ogłoszeń Rynku
-                      </Link>
-                    </motion.div>
+                    <Link href="/rynek" className="w-full block bg-[#1d1d24] hover:bg-[#25252e] text-gray-200 border border-[#2c2c3b] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition">
+                      💰 Tablica Ogłoszeń Rynku
+                    </Link>
 
-                    {/* 🛡️ INTERAKTYWNY KREATOR BUILDÓW */}
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
-                      whileTap={{ scale: 0.98, y: 0 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    >
-                      <Link href="/buildy" className="w-full block bg-gradient-to-b from-[#966f2d] to-[#5a461d] hover:from-[#a87a1e] hover:to-[#735924] text-gray-200 border border-[#4a3a1d] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition shadow-md">
-                        🛡️ Interaktywny Kreator Buildów (BETA)
-                      </Link>
-                    </motion.div>
-
+                    <Link href="/buildy" className="w-full block bg-gradient-to-b from-[#966f2d] to-[#5a461d] hover:from-[#a87a1e] hover:to-[#735924] text-gray-200 border border-[#4a3a1d] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition">
+                      🛡️ Interaktywny Kreator Buildów (BETA)
+                    </Link>
                   </div>
                 </div>
 
-                <div className="bg-[#141419]/90 border border-[#23232c] p-5 shadow-xl space-y-4 backdrop-blur-sm">
+                <div className="bg-[#141419] border border-[#23232c] p-5 space-y-4">
                   <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-2">WIADOMOŚĆI ALBIONU</h2>
                   
                   {/* GONIEC KRÓLEWSKI */}
-                  <div className="bg-[#0b0b0d] border border-[#1f1f26] p-4 shadow-xl space-y-4">
+                  <div className="bg-[#0b0b0d] border border-[#1f1f26] p-4 space-y-4">
                     <h3 className="text-sm font-black text-[#c59b27] uppercase tracking-widest font-albion-title border-b border-[#1f1f26] pb-2">
                       📜 Goniec Królewski (Oficjalne Newsy)
                     </h3>
-                    <div className="space-y-4 max-h-[260px] overflow-y-auto pr-2 text-sm scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
+                    <div className="space-y-4 max-h-[260px] overflow-y-auto pr-2 text-sm">
                       {albionNews.length === 0 ? (
-                        <div className="space-y-4 animate-pulse-fast">
-                          {[1, 2, 3].map((i) => (
-                            <div key={i} className="border-b border-[#1f1f26]/60 pb-3 last:border-none last:pb-0 space-y-2">
-                              <div className="flex justify-between">
-                                <div className="h-2.5 w-16 bg-[#1f1f26] rounded"></div>
-                                <div className="h-2.5 w-12 bg-[#1f1f26] rounded"></div>
-                              </div>
-                              <div className="h-3.5 w-3/4 bg-[#1f1f26] rounded"></div>
-                              <div className="space-y-1">
-                                <div className="h-2.5 w-full bg-[#1f1f26] rounded"></div>
-                                <div className="h-2.5 w-5/6 bg-[#1f1f26] rounded"></div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        <p className="text-xs text-gray-500 italic">Ładowanie kronik...</p>
                       ) : (
                         albionNews.map((news, idx) => (
                           <div key={idx} className="border-b border-[#1f1f26]/60 pb-3 last:border-none last:pb-0">
@@ -508,28 +450,21 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-[#0b0b0d] border border-[#1f1f26] p-4 text-center shadow-inner">
+                  {/* IZOLOWANY ZEGAR UTC */}
+                  <div className="bg-[#0b0b0d] border border-[#1f1f26] p-4 text-center">
                     <span className="text-xs text-gray-500 font-bold tracking-widest block uppercase font-mono mb-1">SERVER TIME (UTC)</span>
-                    <span className="text-3xl font-mono font-black text-[#c59b27] tracking-widest">{utcTime || '00:00:00'}</span>
+                    <ServerClock />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div className="bg-[#0b0b0d] p-4 border border-[#1f1f26]">
                       <span className="text-gray-400 block text-xs uppercase font-bold tracking-wider mb-1.5">Oferty Rynku</span>
-                      {loading ? (
-                        <div className="h-5 w-12 bg-[#1f1f26] rounded animate-pulse-fast mx-auto my-0.5"></div>
-                      ) : (
-                        <span className="text-base sm:text-lg font-mono font-black text-amber-500">{globalStats?.marketOffersCount || 0}</span>
-                      )}
+                      <span className="text-base sm:text-lg font-mono font-black text-amber-500">{globalStats?.marketOffersCount || 0}</span>
                     </div>
 
                     <div className="bg-[#0b0b0d] p-4 border border-[#1f1f26]">
                       <span className="text-gray-400 block text-xs uppercase font-bold tracking-wider mb-1.5">Polskie Gildie</span>
-                      {loading ? (
-                        <div className="h-5 w-12 bg-[#1f1f26] rounded animate-pulse-fast mx-auto my-0.5"></div>
-                      ) : (
-                        <span className="text-base sm:text-lg font-mono font-black text-emerald-500">{globalStats?.guildsCount || 0}</span>
-                      )}
+                      <span className="text-base sm:text-lg font-mono font-black text-emerald-500">{globalStats?.guildsCount || 0}</span>
                     </div>
                   </div>
                 </div>
@@ -538,7 +473,7 @@ export default function Home() {
               {/* PRAWA FLANKA */}
               <div className="lg:col-span-8 space-y-5">
                 
-                <div className="bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-2xl relative backdrop-blur-sm">
+                <div className="bg-[#141419] border-2 border-[#c59b27] p-5 relative">
                   <div className="flex gap-4 border-b border-[#23232c] pb-3 mb-5 text-sm sm:text-base">
                     <button onClick={() => setRightTab('ECONOMY')} className={`font-black uppercase tracking-wider font-albion-title pb-1 border-b-2 transition ${rightTab === 'ECONOMY' ? 'text-[#c59b27] border-[#c59b27]' : 'text-gray-400 border-transparent hover:text-gray-200'}`}>📋 Kalkulator Caerleon (BETA)</button>
                     {isAdmin && (
@@ -596,11 +531,11 @@ export default function Home() {
                           </select>
                         </div>
                         
-                        <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] text-black font-black py-3 px-5 uppercase tracking-widest border border-[#4a3a1d] transition font-albion-title transform active:scale-95 text-sm sm:text-base">Analizuj Marżę</button>
+                        <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] text-black font-black py-3 px-5 uppercase tracking-widest border border-[#4a3a1d] transition font-albion-title active:scale-95 text-sm sm:text-base">Analizuj Marżę</button>
                       </form>
 
                       <div className="md:col-span-6 h-full flex flex-col justify-between space-y-4">
-                        <div className="bg-[#0b0b0d] border border-[#23232c] p-5 rounded-sm space-y-3 min-h-[190px] flex flex-col justify-center shadow-inner">
+                        <div className="bg-[#0b0b0d] border border-[#23232c] p-5 rounded-sm space-y-3 min-h-[190px] flex flex-col justify-center">
                           {calcResult ? (
                             <div className="space-y-3 text-sm sm:text-base">
                               <div className="flex justify-between border-b border-[#1f1f26] pb-2"><span className="text-gray-400">Czysty zysk (Netto):</span><span className="font-mono font-bold text-gray-100 text-base">{calcResult.profit} Silver</span></div>
@@ -612,15 +547,9 @@ export default function Home() {
                           )}
                         </div>
 
-                        {/* OSTATNIE KONTRAKTY Z BAZY */}
                         <div className="bg-[#0b0b0d] border border-[#23232c] p-4 rounded-sm space-y-3">
                           <span className="text-xs text-gray-400 font-bold uppercase tracking-wider block border-b border-[#1f1f26] pb-1.5">Ostatnie ogłoszenia z tablicy</span>
-                          {loading ? (
-                            <div className="space-y-2 animate-pulse-fast">
-                              <div className="h-4 bg-[#1f1f26] rounded w-full"></div>
-                              <div className="h-4 bg-[#1f1f26] rounded w-5/6"></div>
-                            </div>
-                          ) : recentGlobalPosts.length === 0 ? (
+                          {recentGlobalPosts.length === 0 ? (
                             <p className="text-sm text-gray-500 italic">Brak nowych zleceń kupna/sprzedaży.</p>
                           ) : (
                             recentGlobalPosts.map(post => (
@@ -644,7 +573,7 @@ export default function Home() {
                           <button onClick={() => setAdminTab('GUILDS')} className={`px-3 py-1 text-xs font-black uppercase transition ${adminTab === 'GUILDS' ? 'bg-red-950 text-red-400 border border-red-900/40' : 'text-gray-400 hover:text-white'}`}>Gildie ({allGuilds.length})</button>
                         </div>
                       </div>
-                      <div className="max-h-[250px] overflow-y-auto pr-1 space-y-2 scrollbar-thin">
+                      <div className="max-h-[250px] overflow-y-auto pr-1 space-y-2">
                         {adminTab === 'MARKET' ? allMarketPosts.map(post => (
                           <div key={post.id} className="bg-[#0b0b0d] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/40 transition text-sm flex-wrap gap-2">
                             <div><span className="text-purple-400 font-bold font-mono mr-1.5">[{post.server}]</span><span className="text-gray-200 font-bold">{post.item_name}</span> za <span className="text-[#c59b27] font-bold font-mono">{post.price}</span></div>
@@ -661,8 +590,8 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY W KLIMACIE ALBIONA */}
-                <div className="bg-[#141419]/90 border-2 border-[#c59b27] p-5 shadow-[0_15px_30px_rgba(0,0,0,0.7)] h-[480px] flex flex-col justify-between relative text-gray-300 font-sans w-full backdrop-blur-sm">
+                {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY (WYDAJNY, BEZ MOTION) */}
+                <div className="bg-[#141419] border-2 border-[#c59b27] p-5 h-[480px] flex flex-col justify-between relative text-gray-300 font-sans w-full">
                   
                   {/* NAGŁÓWEK KANAŁÓW */}
                   <div className="flex gap-2 border-b border-[#23232c] pb-2.5 mb-4 text-xs font-black uppercase tracking-widest font-albion-title items-center flex-wrap">
@@ -673,7 +602,7 @@ export default function Home() {
                         onClick={() => { setActiveChannel(ch); }} 
                         className={`px-3 py-1.5 border transition rounded-sm text-xs ${
                           activeChannel === ch 
-                            ? 'bg-[#c59b27] text-black border-[#4a3a1d] font-black shadow-md' 
+                            ? 'bg-[#c59b27] text-black border-[#4a3a1d] font-black' 
                             : 'text-gray-400 border-transparent hover:text-gray-200 hover:bg-[#1f1f26]'
                         }`}
                       >
@@ -682,45 +611,39 @@ export default function Home() {
                     ))}
                   </div>
 
-                  {/* STRUMIŃ WIADOMOŚCI - SCROLL LOKALNY */}
-                  {/* STRUMIŃ WIADOMOŚCI - ODWRÓCONY FLEXBOX */}
+                  {/* STRUMIŃ WIADOMOŚCI - CZYSTY HTML BEZ ANIMACJI (100% PŁYNNOŚCI) */}
                   <div 
                     ref={chatContainerRef}
-                    className="space-y-3 space-y-reverse overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text flex flex-col-reverse scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]"
+                    className="space-y-3 space-y-reverse overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text flex flex-col-reverse"
                   >
                     {chatLoading ? (
-                      <div className="space-y-4 animate-pulse-fast">
-                        {/* Loader */}
-                      </div>
+                      <p className="text-gray-500 italic text-center py-4">Ładowanie historii czatu...</p>
                     ) : (
                       chatMessages
                         .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
-                        .slice() // Kopia tablicy
-                        .reverse() // Odwrócenie do układu flex-col-reverse
+                        .slice()
+                        .reverse()
                         .map((msg) => {
                           const messageTime = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) : 'Niedawno';
                           const userAvatar = msg.avatar_url || (msg.user_id === user?.id ? user?.user_metadata?.avatar_url : null);
                           const cleanDisplayName = (msg.username || 'System').replace(/#0$/, '');
 
                           return (
-                            <motion.div 
+                            <div 
                               key={msg.id} 
-                              initial={{ opacity: 0, y: 4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.18 }}
                               className="flex items-start gap-3 border-b border-[#1f1f26]/40 pb-2.5 last:border-none last:pb-0 hover:bg-[#1d1d24]/40 p-1.5 -mx-1.5 rounded-sm transition text-sm w-full min-w-0"
                             >
                               {/* AWATAR Z DISCORDA */}
                               {userAvatar && msg.channel !== 'SYSTEM' ? (
                                 <img 
                                   src={userAvatar} 
-                                  alt="Discord Avatar" 
-                                  className={`w-9 h-9 rounded-sm object-cover border shadow-md shrink-0 ${
+                                  alt="Avatar" 
+                                  className={`w-9 h-9 rounded-sm object-cover border shrink-0 ${
                                     msg.role === 'ADMIN' ? 'border-[#c59b27]' : 'border-[#23232c]'
                                   }`} 
                                 />
                               ) : (
-                                <div className={`w-9 h-9 rounded-sm flex items-center justify-center font-black text-sm shrink-0 border shadow-md ${
+                                <div className={`w-9 h-9 rounded-sm flex items-center justify-center font-black text-sm shrink-0 border ${
                                   msg.channel === 'SYSTEM' ? 'bg-[#1b1b22] border-gray-700 text-gray-500 font-mono' :
                                   msg.role === 'ADMIN' ? 'bg-red-950/60 border-[#c59b27] text-[#c59b27]' : 'bg-[#1d1d24] border-[#2c2c3b] text-sky-400'
                                 }`}>
@@ -748,7 +671,7 @@ export default function Home() {
                                   
                                   <span className="text-xs text-gray-500 font-mono font-bold">{messageTime}</span>
 
-                                  {/* PRZYCISK USUWANIA WIADOMOŚCI DLA INKWIZYTORA */}
+                                  {/* PRZYCISK USUWANIA WIADOMOŚCI */}
                                   {isAdmin && msg.channel !== 'SYSTEM' && (
                                     <button
                                       onClick={() => deleteChatMessage(msg.id)}
@@ -771,7 +694,7 @@ export default function Home() {
                                   </span>
                                 </div>
                               </div>
-                            </motion.div>
+                            </div>
                           );
                         })
                     )}
@@ -807,7 +730,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* FOOTER PRZYKLEJONY DO PODSTAWY */}
+      {/* FOOTER */}
       <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-20 text-sm font-sans tracking-wide mt-8 relative">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
           <p className="font-medium">
