@@ -161,21 +161,25 @@ export default function Home() {
     }
   }
 
-  const handleSendChatMessage = async (e) => {
-    e.preventDefault()
-    if (!newMessage.trim() || !user) return
+const handleSendChatMessage = async (e) => {
+  e.preventDefault()
+  if (!newMessage.trim() || !user) return
 
-    const { error } = await supabase.from('chat_messages').insert([
-      {
-        user_id: user.id,
-        channel: activeChannel,
-        username: user.user_metadata?.full_name || 'Gracz',
-        text: newMessage.trim()
-      }
-    ])
+  // Oczyszczamy nick z doklejonego #0
+  const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
+  const cleanUsername = rawName.replace(/#0$/, '')
 
-    if (!error) setNewMessage('')
-  }
+  const { error } = await supabase.from('chat_messages').insert([
+    {
+      user_id: user.id,
+      channel: activeChannel,
+      username: cleanUsername,
+      text: newMessage.trim()
+    }
+  ])
+
+  if (!error) setNewMessage('')
+}
 
   const fetchLivePrices = async () => {
     setIsFetchingApi(true)
