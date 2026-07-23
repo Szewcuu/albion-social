@@ -2,7 +2,14 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef, memo } from 'react'
 import Link from 'next/link'
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from '@vercel/speed-insights/react';
+import { useRouter } from 'next/router';
+ 
+export default function Layout() {
+  const router = useRouter();
+ 
+  return <SpeedInsights route={router.pathname} />;
+}
 
 // OSOBNY KOMPONENT ZEGARKA (Nie powoduje re-renderu całej strony!)
 const ServerClock = memo(function ServerClock() {
