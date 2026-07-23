@@ -96,19 +96,36 @@ export default function Home() {
     }
   }, [])
 
-  // GWARANTOWANE AUTOMATYCZNE PRZEWIJANIE DO NAJNOWSZEJ WIADOMOŚCI
+// PANCERNE AUTOMATYCZNE PRZEWIJANIE NA SAM DÓŁ (OBSŁUGA F5 I ASYNCHRONICZNYCH AWATARÓW)
   useEffect(() => {
+    const container = chatContainerRef.current
+    if (!container) return
+
     const scrollToBottom = () => {
-      if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
-      }
+      container.scrollTop = container.scrollHeight
     }
 
-    // Wykonanie natychmiastowe oraz opóźnione dla pewności wyrenderowania w DOM
-    requestAnimationFrame(scrollToBottom)
-    const timer = setTimeout(scrollToBottom, 150)
+    // 1. Natychmiastowy zjazd
+    scrollToBottom()
 
-    return () => clearTimeout(timer)
+    // 2. Zjazd po krótkiej chwila na wyrenderowanie węzłów Reacta
+    const timer1 = setTimeout(scrollToBottom, 100)
+
+    // 3. Drugi zjazd po załadowaniu cięższych zasobów / wolniejszym łączu
+    const timer2 = setTimeout(scrollToBottom, 400)
+
+    // 4. Jeśli w czacie są awatary, przewiń ponownie, gdy obrazki skończą się ładować
+    const images = container.querySelectorAll('img')
+    images.forEach((img) => {
+      if (!img.complete) {
+        img.addEventListener('load', scrollToBottom, { once: true })
+      }
+    })
+
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+    }
   }, [chatMessages, activeChannel])
 
   const fetchInitialChat = async () => {
