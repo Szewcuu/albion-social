@@ -760,6 +760,14 @@ export default function Home() {
           <p className="font-medium">
             © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
           </p>
+          
+          {/* LINKI PRAWNE */}
+          <div className="flex gap-4 text-xs font-mono text-gray-400">
+            <Link href="/regulamin" className="hover:text-[#c59b27] transition">Regulamin</Link>
+            <span>•</span>
+            <Link href="/prywatnosc" className="hover:text-[#c59b27] transition">Polityka Prywatności</Link>
+          </div>
+
           <p className="text-xs border border-gray-900 bg-[#121216] px-3 py-1 text-gray-400 rounded-sm font-mono">
             Projekt tworzony niezależnie przez społeczność graczy.
           </p>
