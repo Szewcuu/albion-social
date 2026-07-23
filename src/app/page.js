@@ -296,16 +296,22 @@ export default function Home() {
         .font-albion-title { font-family: 'Cinzel', serif; }
         .font-albion-ui { font-family: 'Inter', sans-serif; }
 
-        @keyframes fireDrift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        /* Zoptymalizowana animacja tła z użyciem Oszczędnego GPU (Opacity/Transform) */
+        @keyframes firePulse {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50% { opacity: 0.9; transform: scale(1.03); }
         }
+
         .animate-fire-drift {
-          background: linear-gradient(-45deg, #0f0a0a, #1a0c0e, #241014, #12090c);
-          background-size: 300% 300%;
-          animation: fireDrift 25s ease infinite;
+          background: linear-gradient(135deg, #0f0a0a 0%, #1a0c0e 50%, #241014 100%);
+          will-change: transform, opacity;
         }
+
+        .fire-glow-layer {
+          animation: firePulse 12s ease-in-out infinite;
+          will-change: transform, opacity;
+        }
+
         .animate-pulse-fast {
           animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
@@ -315,10 +321,10 @@ export default function Home() {
         }
       `}</style>
 
-      {/* WARSTWY MOTYWU: PŁONĄCE CAERLEON */}
+      {/* LEKKIE WARSTWY TŁA (AKCELEROWANE PRZEZ GPU) */}
       <div className="fixed inset-0 animate-fire-drift z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,#991b1b22,transparent_60%)] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 fire-glow-layer bg-[radial-gradient(circle_at_top,#991b1b28,transparent_60%)] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.85)_100%)] z-0 pointer-events-none"></div>
       
       {/* GŁÓWNA ZAWARTOŚĆ */}
       <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
