@@ -2,14 +2,6 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef, memo } from 'react'
 import Link from 'next/link'
-import { SpeedInsights } from '@vercel/speed-insights/react';
-import { useRouter } from 'next/router';
- 
-export default function Layout() {
-  const router = useRouter();
- 
-  return <SpeedInsights route={router.pathname} />;
-}
 
 // OSOBNY KOMPONENT ZEGARKA (Nie powoduje re-renderu całej strony!)
 const ServerClock = memo(function ServerClock() {
@@ -313,7 +305,7 @@ export default function Home() {
         .font-albion-ui { font-family: 'Inter', sans-serif; }
       `}</style>
 
-      {/* SUPER LEKKIE TŁO STATYCZNE (ZERO PROCESORA) */}
+      {/* TŁO STATYCZNE */}
       <div className="fixed inset-0 bg-gradient-to-b from-[#1a0c0e] via-[#0f0a0a] to-[#080505] z-0 pointer-events-none"></div>
 
       {/* GŁÓWNA ZAWARTOŚĆ */}
@@ -598,7 +590,7 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY (WYDAJNY, BEZ MOTION) */}
+                {/* CZAT SPOŁECZNOŚCIOWO-SYSTEMOWY */}
                 <div className="bg-[#141419] border-2 border-[#c59b27] p-5 h-[480px] flex flex-col justify-between relative text-gray-300 font-sans w-full">
                   
                   {/* NAGŁÓWEK KANAŁÓW */}
@@ -619,7 +611,7 @@ export default function Home() {
                     ))}
                   </div>
 
-                  {/* STRUMIŃ WIADOMOŚCI - CZYSTY HTML BEZ ANIMACJI (100% PŁYNNOŚCI) */}
+                  {/* STRUMIŃ WIADOMOŚCI */}
                   <div 
                     ref={chatContainerRef}
                     className="space-y-3 space-y-reverse overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text flex flex-col-reverse"

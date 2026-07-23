@@ -1,12 +1,17 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { SpeedInsights } from '@vercel/speed-insights/react';
-import { useRouter } from 'next/router';
- 
-export default function Layout() {
-  const router = useRouter();
- 
-  return <SpeedInsights route={router.pathname} />;
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import './globals.css'
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="pl">
+      <body>
+        {children}
+        <SpeedInsights />
+      </body>
+    </html>
+  )
 }
 
 const geistSans = Geist({
