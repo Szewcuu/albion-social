@@ -1,7 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
 
 export default function Gildie() {
@@ -105,7 +104,7 @@ export default function Gildie() {
   })
 
   return (
-    <div className="min-h-screen animate-bg-drift flex flex-col justify-between overflow-x-hidden text-[#bcbbc2] antialiased font-albion-ui select-none relative">
+    <main className="min-h-screen bg-[#121216] animate-bg-drift flex flex-col justify-between antialiased font-albion-ui select-none relative overflow-hidden text-[#bcbbc2]">
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
@@ -318,8 +317,8 @@ export default function Gildie() {
         </div>
       </div>
 
-      {/* KRÓLEWSKI FOOTER */}
-      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm font-sans tracking-wide mt-12">
+      {/* FOOTER PRZYKLEJONY DO PODSTAWY */}
+      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-20 text-sm font-sans tracking-wide mt-8 relative">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
           <p className="font-medium">
             © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
@@ -329,6 +328,6 @@ export default function Gildie() {
           </p>
         </div>
       </footer>
-    </div>
+    </main>
   )
 }
