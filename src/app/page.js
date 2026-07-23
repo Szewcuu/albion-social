@@ -39,7 +39,7 @@ export default function Home() {
   const [newMessage, setNewMessage] = useState('')
   const [activeChannel, setActiveChannel] = useState('GLOBALNY')
   const chatLoading = chatMessages.length === 0
-  const chatEndRef = useRef(null)
+  const chatContainerRef = useRef(null)
 
   useEffect(() => {
     const updateClock = () => {
@@ -92,8 +92,11 @@ export default function Home() {
     }
   }, [])
 
+  // BEZPIECZNE PRZEWIJANIE CZATU (BEZ SPYCHANIA CAŁEJ STRONY)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
   }, [chatMessages])
 
   const fetchInitialChat = async () => {
@@ -264,7 +267,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen animate-bg-drift flex flex-col justify-between antialiased font-albion-ui select-none relative overflow-x-hidden">
+    <main className="min-h-screen animate-bg-drift flex flex-col justify-between antialiased font-albion-ui select-none relative overflow-hidden text-[#bcbbc2]">
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
@@ -304,18 +307,19 @@ export default function Home() {
         .magic-fog { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(147,51,234,0.08) 0%, rgba(197,155,39,0.04) 50%, transparent 80%); pointer-events: none; filter: blur(40px); z-index: 0; }
       `}</style>
 
+      {/* WARSTWY EFEKTÓW TŁA ZAMKNIĘTE W OBROWIE OVERFLOW-HIDDEN */}
       <div className="magic-fog top-[-100px] left-[-100px]" style={{ animation: 'fogPulse 20s ease-in-out infinite' }}></div>
       <div className="magic-fog bottom-[-150px] right-[-100px]" style={{ animation: 'fogPulse 25s ease-in-out infinite', animationDelay: '-5s' }}></div>
-      {/* Zagęszczona strefa iskier */}
       <div className="ember-particle w-3 h-3" style={{ left: '8%', animation: 'floatEmber 18s linear infinite' }}></div>
       <div className="ember-particle w-4 h-4" style={{ left: '32%', animation: 'floatEmber 24s linear infinite', animationDelay: '-4s' }}></div>
       <div className="ember-particle w-3 h-3" style={{ left: '52%', animation: 'floatEmber 28s linear infinite', animationDelay: '-2s' }}></div>
       <div className="ember-particle w-4 h-4" style={{ left: '78%', animation: 'floatEmber 22s linear infinite', animationDelay: '-7s' }}></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.55)_100%)] pointer-events-none z-0"></div>
       
-      <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2]">
+      {/* GŁÓWNA ZAWARTOŚĆ STRONY */}
+      <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
         {!user ? (
-          <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto z-10 space-y-12 px-6 py-16">
+          <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto space-y-12 px-6 py-12">
             
             {/* NAGŁÓWEK POWITALNY */}
             <div className="text-center space-y-4">
@@ -328,7 +332,7 @@ export default function Home() {
             </div>
 
             {/* GŁÓWNY PANEL LOGOWANIA */}
-            <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+            <div className="max-w-md w-full bg-[#141419] border-2 border-[#c59b27] p-8 text-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-sm">
               <span className="text-sm text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-4">BRAMA DO KRONIK MIEJSKICH</span>
               
               <div className="space-y-4">
@@ -383,7 +387,7 @@ export default function Home() {
           </div>
         ) : (
           
-          <div className="max-w-7xl w-full space-y-5 z-10 text-sm sm:text-base my-4">
+          <div className="max-w-7xl w-full space-y-5 text-sm sm:text-base my-2">
             
             {/* NAGŁÓWEK MIEJSKI */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141419] border-2 border-[#c59b27] p-5 shadow-2xl relative">
@@ -670,8 +674,11 @@ export default function Home() {
                     ))}
                   </div>
 
-                  {/* STRUMIŃ WIADOMOŚCI */}
-                  <div className="space-y-3 overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]">
+                  {/* STRUMIŃ WIADOMOŚCI - PRZEWIJANY LOKALNIE */}
+                  <div 
+                    ref={chatContainerRef}
+                    className="space-y-3 overflow-y-auto overflow-x-hidden flex-1 w-full pr-1 text-sm leading-relaxed select-text scrollbar-thin scrollbar-thumb-[#c59b27] scrollbar-track-[#0b0b0d] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-[#0b0b0d] [&::-webkit-scrollbar-thumb]:bg-[#c59b27] [&::-webkit-scrollbar-thumb]:border [&::-webkit-scrollbar-thumb]:border-[#23232c]"
+                  >
                     {chatLoading ? (
                       <div className="space-y-4 animate-pulse-fast">
                         {[1, 2, 3].map((i) => (
@@ -753,7 +760,6 @@ export default function Home() {
                           );
                         })
                     )}
-                    <div ref={chatEndRef} />
                   </div>
 
                   {/* POLE WPISYWANIA */}
@@ -771,7 +777,7 @@ export default function Home() {
                     <button 
                       type="submit" 
                       disabled={activeChannel === 'SYSTEM'} 
-                      className="bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black px-5 py-1.5 text-xs font-black font-albion-title uppercase border border-[#4a3a1d] rounded-sm transition active:scale-95 disabled:hidden"
+                      className="bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black px-5 py-1.5 text-xs font-black font-albion-title uppercase border border-[#4a3a1d] rounded-sm transition active:scale-95 disabled:hidden"
                     >
                       Wyślij
                     </button>
@@ -786,8 +792,8 @@ export default function Home() {
         )}
       </div>
 
-      {/* KRÓLEWSKI FOOTER */}
-      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-10 text-sm font-sans tracking-wide">
+      {/* KRÓLEWSKI FOOTER PRZYKLEJONY DO SAMEJ PODSTAWY */}
+      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-20 text-sm font-sans tracking-wide mt-8 relative">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
           <p className="font-medium">
             © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
@@ -798,6 +804,6 @@ export default function Home() {
         </div>
       </footer>
 
-    </div>
+    </main>
   )
 }
