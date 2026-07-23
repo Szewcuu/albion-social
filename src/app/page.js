@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef, memo } from 'react'
 import Link from 'next/link'
+import { Castle, Swords, Coins, Shield, Calculator, Scroll, Trash2, LogOut } from 'lucide-react'
 
 // OSOBNY KOMPONENT ZEGARKA (Nie powoduje re-renderu całej strony!)
 const ServerClock = memo(function ServerClock() {
@@ -379,8 +380,9 @@ export default function Home() {
             {/* NAGŁÓWEK MIEJSKI */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#141419] border-2 border-[#c59b27] p-5 relative">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-black text-gray-100 font-albion-title tracking-wider flex items-center gap-2 flex-wrap">
-                  🏰 TABLICA MIEJSKA <span className="text-[#c59b27] text-sm font-sans bg-[#1d1d24] px-3 py-1 border border-[#2c2c38] font-bold">ALBION ONLINE POLSKA PORTAL</span>
+                <h1 className="text-2xl font-black text-gray-100 flex items-center gap-2">
+                  <Castle className="w-7 h-7 text-[#c59b27]" />
+                  <span>TABLICA MIEJSKA</span>
                 </h1>
                 <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mt-1">Lokalny punkt informacyjny wolnego miasta</p>
               </div>
@@ -406,8 +408,9 @@ export default function Home() {
                 <div className="bg-[#141419] border-2 border-[#c59b27] p-5">
                   <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-widest mb-4 border-b border-[#23232c] pb-2 font-albion-title">Katalogi Główne</h2>
                   <div className="space-y-4">
-                    <Link href="/gildie" className="w-full block bg-gradient-to-b from-[#dca62b] to-[#a87a1e] hover:from-[#f0b73a] hover:to-[#be8c27] text-black font-black py-3 px-5 text-sm text-center uppercase tracking-widest border border-[#4a3a1d] transition">
-                      ⚔️ Rejestr Polskich Gildii
+                    <Link href="/gildie" className="w-full flex items-center justify-center gap-2 ...">
+                      <Swords className="w-5 h-5" />
+                      <span>Rejestr Polskich Gildii</span>
                     </Link>
 
                     <Link href="/rynek" className="w-full block bg-[#1d1d24] hover:bg-[#25252e] text-gray-200 border border-[#2c2c3b] font-black py-3 px-5 text-sm text-center uppercase tracking-widest transition">
@@ -674,11 +677,10 @@ export default function Home() {
                                   {/* PRZYCISK USUWANIA WIADOMOŚCI */}
                                   {isAdmin && msg.channel !== 'SYSTEM' && (
                                     <button
-                                      onClick={() => deleteChatMessage(msg.id)}
-                                      className="ml-auto text-[10px] bg-red-950/80 hover:bg-red-900 border border-red-900/50 text-red-400 px-1.5 py-0.5 rounded-sm font-bold uppercase transition"
-                                      title="Usuń wiadomość"
-                                    >
-                                      🗑️ Usuń
+                                    {/* ZAMIAST: 🗑️ Usuń */}
+                                    onClick={() => deleteChatMessage(msg.id)} className="flex items-center gap-1 ...">
+                                      <Trash2 className="w-3 h-3 text-red-400" />
+                                      <span>Usuń</span>
                                     </button>
                                   )}
                                 </div>
