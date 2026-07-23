@@ -78,7 +78,7 @@ export default function Home() {
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        { event: '*', schema: 'public', table: 'chat_messages' },
         (payload) => {
           setChatMessages((prev) => [...prev, payload.new])
         }
@@ -254,6 +254,16 @@ const handleSendChatMessage = async (e) => {
       if (!error) { fetchGlobalData(); if (user) fetchUserDataAndRole(user.id); }
     }
   }
+
+  const deleteChatMessage = async (msgId) => {
+  if (!isAdmin) return
+  if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
+    const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
+    if (!error) {
+      setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
+    }
+  }
+}
 
   const deleteGuild = async (id) => {
     if (confirm('Spalić dekret tej gildii?')) {
@@ -747,6 +757,17 @@ const handleSendChatMessage = async (e) => {
                                   )}
                                   
                                   <span className="text-xs text-gray-500 font-mono font-bold">{messageTime}</span>
+
+                                  {/* PRZYCISK USUWANIA DLA INKWIZYTORA (ADMINA) */}
+                                  {isAdmin && msg.channel !== 'SYSTEM' && (
+                                    <button
+                                      onClick={() => deleteChatMessage(msg.id)}
+                                      className="ml-auto text-[10px] bg-red-950/80 hover:bg-red-900 border border-red-900/50 text-red-400 px-1.5 py-0.5 rounded-sm font-bold uppercase transition"
+                                      title="Usuń wiadomość"
+                                    >
+                                      🗑️ Usuń
+                                    </button>
+                                  )}
                                 </div>
 
                                 <div className="mt-1 break-all whitespace-pre-wrap">
