@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef, memo } from 'react'
 import Link from 'next/link'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 // OSOBNY KOMPONENT ZEGARKA (Nie powoduje re-renderu całej strony!)
 const ServerClock = memo(function ServerClock() {
