@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+// WYSYŁANIE NOWEJ WIADOMOŚCI LUB POWIADOMIENIA
 export async function POST(req) {
   try {
     const body = await req.json()
@@ -14,10 +15,9 @@ export async function POST(req) {
       return NextResponse.json({ message: 'Pominięto wysyłanie webhooka (brak URL)' }, { status: 200 })
     }
 
-    // Adres Twojego portalu
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://albion-social.vercel.app'
 
-    // POWIADOMIENIE 1: ZEBRANO PEŁNY SKŁAD (PARTY FULL)
+    // 1. POWIADOMIENIE: PARTY FULL
     if (type === 'PARTY_FULL') {
       await fetch(webhookUrl, {
         method: 'POST',
@@ -28,7 +28,7 @@ export async function POST(req) {
             title: `✅ PEŁNY SKŁAD: ${title}`,
             url: `${appUrl}/wyprawy`,
             description: `Szykujcie ekwipunek! Zbiórka zaplanowana na **${start_time}**.`,
-            color: 0x10b981, // Zielony akcent sukcesu
+            color: 0x10b981,
             fields: [
               { name: '🎯 Aktywność', value: activity_type, inline: true },
               { name: '👑 Lider Drużyny', value: creator, inline: true },
@@ -41,20 +41,13 @@ export async function POST(req) {
       return NextResponse.json({ success: true })
     }
 
-    // POWIADOMIENIE 2: NOWA WYPRAWA (DEDYKOWANE KOLORY)
-    let embedColor = 0xc59b27 // Domyślny Złoty
+    // 2. DYNAMICZNE KOLORY
+    let embedColor = 0xc59b27
+    if (activity_type?.includes('Statyk')) embedColor = 0x3b82f6
+    else if (activity_type?.includes('Karawana')) embedColor = 0xf59e0b
+    else if (activity_type?.includes('Ava') || activity_type?.includes('Hellgate')) embedColor = 0xa855f7
+    else if (activity_type?.includes('Ganking') || activity_type?.includes('Roaming')) embedColor = 0xef4444
 
-    if (activity_type?.includes('Statyk')) {
-      embedColor = 0x3b82f6 // Niebieski
-    } else if (activity_type?.includes('Karawana')) {
-      embedColor = 0xf59e0b // Złoty / Bursztynowy
-    } else if (activity_type?.includes('Ava') || activity_type?.includes('Hellgate')) {
-      embedColor = 0xa855f7 // Fioletowy
-    } else if (activity_type?.includes('Ganking') || activity_type?.includes('Roaming')) {
-      embedColor = 0xef4444 // Czerwony
-    }
-
-    // Formatowanie rozpiski ról
     const rolesList = [
       max_tanks > 0 ? `🛡️ Tank: **${max_tanks}**` : null,
       max_healers > 0 ? `💚 Heal: **${max_healers}**` : null,
@@ -64,7 +57,7 @@ export async function POST(req) {
 
     const discordEmbed = {
       title: `⚔️ NOWA WYPRAWA: ${title}`,
-      url: `${appUrl}/wyprawy`, // Klikalny tytuł przekierowujący na portal
+      url: `${appUrl}/wyprawy`,
       description: description ? `> ${description}` : 'Brak dodatkowego opisu. Kliknij poniżej, aby dołączyć!',
       color: embedColor,
       fields: [
@@ -75,29 +68,49 @@ export async function POST(req) {
         { name: '👑 Lider Drużyny', value: creator, inline: true },
         { name: '👥 Poszukiwane Miejsca', value: rolesList, inline: false },
       ],
-      footer: {
-        text: 'Albion Online Polska Portal • Kliknij nagłówek, aby otworzyć wyprawy'
-      },
+      footer: { text: 'Albion Online Polska Portal • Kliknij nagłówek, aby otworzyć wyprawy' },
       timestamp: new Date().toISOString()
     }
 
-    // Dodatkowy ping @here tylko dla Karawan Handlowych
-    const contentText = activity_type?.includes('Karawana') 
-      ? `📢 @here **Zwołano ochronę Karawany Handlowej do Caerleon!** [👉 Dołącz do składu!](${appUrl}/wyprawy)`
-      : `📢 **Zwołano nową drużynę!** [👉 Kliknij tutaj, aby zarezerwować miejsce!](${appUrl}/wyprawy)`
-
-    await fetch(webhookUrl, {
+    // Dodajemy parameter ?wait=true, aby Discord zwrócił obiekt z ID wiadomości
+    const discordRes = await fetch(`${webhookUrl}?wait=true`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        content: contentText,
+        content: `📢 **Zwołano nową drużynę!** [👉 Kliknij tutaj, aby zarezerwować miejsce!](${appUrl}/wyprawy)`,
         embeds: [discordEmbed]
       })
     })
 
+    if (discordRes.ok) {
+      const discordData = await discordRes.json()
+      return NextResponse.json({ success: true, messageId: discordData.id })
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Błąd wywoływania Webhooka:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
+// AUTOMATYCZNE USUWANIE WIADOMOŚCI Z DISCORDA
+export async function DELETE(req) {
+  try {
+    const { messageId } = await req.json()
+    const webhookUrl = process.env.DISCORD_EXPEDITIONS_WEBHOOK_URL
+
+    if (!webhookUrl || !messageId) {
+      return NextResponse.json({ message: 'Brak ID wiadomości lub Webhooka' }, { status: 200 })
+    }
+
+    // Zapytanie DELETE do Discord API dla konkretnej wiadomości Webhooka
+    const deleteUrl = `${webhookUrl}/messages/${messageId}`
+    await fetch(deleteUrl, { method: 'DELETE' })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Błąd usuwania z Discorda:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

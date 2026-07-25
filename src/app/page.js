@@ -41,7 +41,8 @@ export default function Home() {
   const [allGuilds, setAllGuilds] = useState([])
   const [allMarketPosts, setAllMarketPosts] = useState([])
   const [allExpeditions, setAllExpeditions] = useState([])
-  const [adminTab, setAdminTab] = useState('MARKET') // 'MARKET' | 'GUILDS' | 'EXPEDITIONS'
+  const [allBuilds, setAllBuilds] = useState([])
+  const [adminTab, setAdminTab] = useState('MARKET') // 'MARKET' | 'GUILDS' | 'EXPEDITIONS' | 'BUILDS'
 
   // Zakładki
   const [rightTab, setRightTab] = useState('ECONOMY')
@@ -156,10 +157,12 @@ export default function Home() {
         const { data: allG } = await supabase.from('guilds').select('*, profiles(username)').order('created_at', { ascending: false })
         const { data: allM = [] } = await supabase.from('market_items').select('*, profiles(username)').order('created_at', { ascending: false })
         const { data: allE = [] } = await supabase.from('expeditions').select('*, profiles(username)').order('created_at', { ascending: false })
+        const { data: allB = [] } = await supabase.from('builds').select('*, profiles(username)').order('created_at', { ascending: false })
 
         setAllGuilds(allG || [])
         setAllMarketPosts(allM || [])
         setAllExpeditions(allE || [])
+        setAllBuilds(allB || [])
       }
     } catch (err) {
       console.error(err)
@@ -226,14 +229,8 @@ export default function Home() {
   }
 
   const logout = async () => { await supabase.auth.signOut() }
-  const loginWithDiscord = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'discord',
-      options: {
-        redirectTo: `${window.location.origin}` // Automatycznie wykrywa, czy jesteś na localhost, czy na Vercelu
-      }
-    })
-  }
+  const loginWithDiscord = async () => { await supabase.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: window.location.origin } }) }
+  
   const deleteMarketPost = async (id) => {
     if (confirm('Usunąć ofertę z rynku?')) {
       const { error } = await supabase.from('market_items').delete().eq('id', id)
@@ -248,9 +245,28 @@ export default function Home() {
     }
   }
 
-  const deleteExpedition = async (id) => {
-    if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina?')) {
+  const deleteExpedition = async (id, discordMsgId) => {
+    if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina? Wiadomość z Discorda zostanie również usunięta.')) {
+      if (discordMsgId) {
+        try {
+          await fetch('/api/webhooks/expedition', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messageId: discordMsgId })
+          })
+        } catch (err) {
+          console.error('Błąd kasowania na Discordzie:', err)
+        }
+      }
+
       const { error } = await supabase.from('expeditions').delete().eq('id', id)
+      if (!error) { fetchGlobalData(); if (user) fetchUserDataAndRole(user.id); }
+    }
+  }
+
+  const deleteBuild = async (id) => {
+    if (confirm('Czy na pewno chcesz usunąć ten zestaw uzbrojenia?')) {
+      const { error } = await supabase.from('builds').delete().eq('id', id)
       if (!error) { fetchGlobalData(); if (user) fetchUserDataAndRole(user.id); }
     }
   }
@@ -468,7 +484,7 @@ export default function Home() {
                         <span className="text-red-400 font-bold uppercase text-xs tracking-wider">
                           Panel Kontrolny Wyższego Inkwizytora
                         </span>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           <button 
                             onClick={() => setAdminTab('MARKET')} 
                             className={`px-3 py-1 text-xs font-black uppercase transition ${
@@ -492,6 +508,14 @@ export default function Home() {
                             }`}
                           >
                             Wyprawy ({allExpeditions.length})
+                          </button>
+                          <button 
+                            onClick={() => setAdminTab('BUILDS')} 
+                            className={`px-3 py-1 text-xs font-black uppercase transition ${
+                              adminTab === 'BUILDS' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            Buildy ({allBuilds.length})
                           </button>
                         </div>
                       </div>
@@ -541,7 +565,23 @@ export default function Home() {
                                   <span className="text-gray-100 font-serif font-bold">{exp.title}</span>
                                   <span className="text-amber-400 font-bold font-mono ml-2">({exp.start_time})</span>
                                 </div>
-                                <button onClick={() => deleteExpedition(exp.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Odwołaj</button>
+                                <button onClick={() => deleteExpedition(exp.id, exp.discord_message_id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Odwołaj</button>
+                              </div>
+                            ))
+                          )
+                        )}
+
+                        {adminTab === 'BUILDS' && (
+                          allBuilds.length === 0 ? (
+                            <p className="text-gray-500 italic text-center py-6">Brak opublikowanych buildów.</p>
+                          ) : (
+                            allBuilds.map(build => (
+                              <div key={build.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
+                                <div>
+                                  <span className="text-purple-400 font-mono font-bold mr-2">[{build.activity_type}]</span>
+                                  <span className="text-gray-100 font-serif font-bold">{build.title}</span>
+                                </div>
+                                <button onClick={() => deleteBuild(build.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Usuń Build</button>
                               </div>
                             ))
                           )
