@@ -1,38 +1,73 @@
-'use client'
 import Link from 'next/link'
+import { ArrowLeft, ScrollText, ShieldAlert } from 'lucide-react'
 
 export default function Regulamin() {
   return (
-    <main className="min-h-screen bg-[#0f0a0a] text-[#bcbbc2] p-6 max-w-4xl mx-auto space-y-6 font-sans">
-      <header className="border-b border-[#c59b27] pb-4">
-        <h1 className="text-3xl font-black text-[#c59b27] font-serif">REGULAMIN SERWISU</h1>
-        <p className="text-xs text-gray-400 mt-1">Ostatnia aktualizacja: Lipiec 2026 r.</p>
+    <main className="max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
+      <div>
+        <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span>Powrót do Centrum</span>
+        </Link>
+      </div>
+
+      <header className="bg-[#120a0c]/90 border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <ScrollText className="w-8 h-8 text-[#c59b27]" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-100 uppercase tracking-wider font-serif">
+              Regulamin Portalu
+            </h1>
+            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
+              Zasady i dekrety obowiązujące w naszej społeczności
+            </p>
+          </div>
+        </div>
       </header>
 
-      <section className="space-y-4 text-sm leading-relaxed">
-        <h2 className="text-lg font-bold text-gray-100">§ 1. Postanowienia Ogólne</h2>
-        <p>1. Serwis Albion Online Polska Portal jest niekomercyjnym projektem społecznościowym tworzonym niezależnie przez graczy dla graczy gry Albion Online.</p>
-        <p>2. Serwis nie jest powiązany, sponsorowany ani popierany przez studio Sandbox Interactive GmbH.</p>
-        <p>3. Korzystanie z serwisu jest całkowicie bezpłatne.</p>
+      <div className="bg-[#120a0c]/80 border border-[#3a1a1e] p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6 leading-relaxed">
+        <section className="space-y-2">
+          <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2">
+            § 1. Postanowienia Ogólne
+          </h2>
+          <p className="text-gray-300">
+            1. Portal Albion Online Polska jest niezależnym serwisem społecznościowym stworzonym dla graczy.
+          </p>
+          <p className="text-gray-300">
+            2. Korzystanie z portalu, w tym rejestracja gildii oraz dodawanie ofert na rynku, jest całkowicie darmowe.
+          </p>
+        </section>
 
-        <h2 className="text-lg font-bold text-gray-100">§ 2. Zasady Korzystania i Czat</h2>
-        <p>1. Użytkownik zobowiązuje się do kulturalnego zachowania na czacie oraz w publikowanych ogłoszeniach.</p>
-        <p>2. Zabrania się publikowania treści:</p>
-        <ul className="list-disc pl-6 space-y-1 text-gray-300">
-          <li>Wulgarnych, obraźliwych, nawołujących do nienawiści lub dyskryminacji.</li>
-          <li>Należących do kategorycznie zakazanego handlu za realne pieniądze (tzw. RMT – Real Money Trading).</li>
-          <li>Spamu, reklamy zewnętrznych usług niezwiązanych z grą Albion Online oraz złośliwych linków.</li>
-        </ul>
+        <section className="space-y-2">
+          <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2">
+            § 2. Zasady Zachowania i Czat
+          </h2>
+          <p className="text-gray-300">
+            1. Zabrania się publikowania treści obraźliwych, rasistowskich, zawierających mowę nienawiści oraz spamu.
+          </p>
+          <p className="text-gray-300">
+            2. Handel na czacie publicznym i rynku powinien dotyczyć wyłącznie przedmiotów z gry Albion Online. Surowo zakazuje się handlu za realne pieniądze (RMT).
+          </p>
+        </section>
 
-        <h2 className="text-lg font-bold text-gray-100">§ 3. Moderacja i Uprawnienia Administracji</h2>
-        <p>1. Administratorzy (Inkwizytorzy) zastrzegają sobie prawo do natychmiastowego usuwania wiadomości na czacie, ogłoszeń rynkowych oraz dekrety gildii, które naruszają postanowienia niniejszego regulaminu.</p>
-        <p>2. W przypadku rażącego łamania zasad administracja ma prawo zablokować dostęp danego konta do serwisu.</p>
-      </section>
+        <section className="space-y-2">
+          <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2">
+            § 3. Rejestr Gildii i Aplikacje
+          </h2>
+          <p className="text-gray-300">
+            1. Liderzy gildii ponoszą pełną odpowiedzialność za treść opublikowanych manifestów oraz poprawność linków Webhook.
+          </p>
+          <p className="text-gray-300">
+            2. Ogłoszenia wprowadzające graczy w błąd lub zawierające wulgarne nazwy będą usuwane przez administrację.
+          </p>
+        </section>
 
-      <div className="pt-6 border-t border-[#23232c]">
-        <Link href="/" className="text-xs font-bold text-[#c59b27] hover:underline uppercase">
-          ← Powrót do Tablicy Miejskiej
-        </Link>
+        <div className="p-4 bg-[#2b0d10]/40 border border-red-900/50 rounded-sm flex items-start gap-3">
+          <ShieldAlert className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-200">
+            Nieprzestrzeganie powyższych zasad może skutkować zablokowaniem konta na portalu oraz usunięciem wpisów z rejestru gildii.
+          </p>
+        </div>
       </div>
     </main>
   )

@@ -1,41 +1,64 @@
-'use client'
 import Link from 'next/link'
+import { ArrowLeft, Lock, EyeOff } from 'lucide-react'
 
 export default function Prywatnosc() {
   return (
-    <main className="min-h-screen bg-[#0f0a0a] text-[#bcbbc2] p-6 max-w-4xl mx-auto space-y-6 font-sans">
-      <header className="border-b border-[#c59b27] pb-4">
-        <h1 className="text-3xl font-black text-[#c59b27] font-serif">POLITYKA PRYWATNOŚCI (RODO)</h1>
-        <p className="text-xs text-gray-400 mt-1">Ostatnia aktualizacja: Lipiec 2026 r.</p>
+    <main className="max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
+      <div>
+        <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span>Powrót do Centrum</span>
+        </Link>
+      </div>
+
+      <header className="bg-[#120a0c]/90 border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <Lock className="w-8 h-8 text-[#c59b27]" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-100 uppercase tracking-wider font-serif">
+              Polityka Prywatności
+            </h1>
+            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
+              Jak chronimy dane graczy naszej społeczności
+            </p>
+          </div>
+        </div>
       </header>
 
-      <section className="space-y-4 text-sm leading-relaxed">
-        <h2 className="text-lg font-bold text-gray-100">1. Administrator Danych</h2>
-        <p>Administratorem danych osobowych przetwarzanych w ramach serwisu jest twórca projektu Albion Online Polska Portal. W sprawach związanych z danymi można kontaktować się poprzez profil administracyjny na platformie Discord.</p>
+      <div className="bg-[#120a0c]/80 border border-[#3a1a1e] p-6 sm:p-8 shadow-xl backdrop-blur-md space-y-6 leading-relaxed">
+        <section className="space-y-2">
+          <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2">
+            1. Gromadzone Dane
+          </h2>
+          <p className="text-gray-300">
+            W ramach logowania przez aplikację Discord zapisujemy jedynie podstawowe dane profilowe, takie jak identyfikator Discord (ID), nazwę użytkownika oraz awatar, wymagane do autoryzacji na stronie.
+          </p>
+        </section>
 
-        <h2 className="text-lg font-bold text-gray-100">2. Jakie dane zbieramy?</h2>
-        <p>Podczas logowania za pośrednictwem usługi Discord OAuth pobieramy i przechowujemy w bezpiecznej bazie danych Supabase jedynie niezbędne informacje identyfikacyjne:</p>
-        <ul className="list-disc pl-6 space-y-1 text-gray-300">
-          <li>Unikalny identyfikator konta Discord (User ID).</li>
-          <li>Nazwę użytkownika (Username / Nick).</li>
-          <li>Adres URL publicznego awatara Discord.</li>
-          <li>Treści wiadomości wysyłanych na czacie oraz ogłoszeń tworzonych w serwisie.</li>
-        </ul>
+        <section className="space-y-2">
+          <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2">
+            2. Aplikacje do Gildii
+          </h2>
+          <p className="text-gray-300">
+            Dane wprowadzane w formularzu rekrutacyjnym (Nick z gry, Fame, Rola) są przekazywane bezpośrednio na serwer Discord wybranej gildii za pośrednictwem bezpiecznego Webhooka oraz szyfrowanej bazy danych.
+          </p>
+        </section>
 
-        <h2 className="text-lg font-bold text-gray-100">3. Cel przetwarzania danych</h2>
-        <p>Dane są przetwarzane wyłącznie w celu świadczenia usług społecznościowych (autoryzacja użytkownika, wyświetlanie wiadomości na czacie oraz publikacja ogłoszeń gildii i rynku).</p>
+        <section className="space-y-2">
+          <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2">
+            3. Bezpieczeństwo i Pliki Cookie
+          </h2>
+          <p className="text-gray-300">
+            Portal wykorzystuje wyłącznie niezbędne pliki cookie obsługujące sesję logowania użytkownika (Supabase Auth). Nie odprzedajemy ani nie udostępniamy Twoich danych podmiotom trzecim.
+          </p>
+        </section>
 
-        <h2 className="text-lg font-bold text-gray-[#bcbbc2]">4. Pliki Cookies i Pamięć Lokalna</h2>
-        <p>Serwis używa mechanizmów `localStorage` oraz niezbędnych technicznych plików cookies dostarczanych przez infrastrukturę Supabase w celu utrzymania poprawnej sesji zalogowanego użytkownika.</p>
-
-        <h2 className="text-lg font-bold text-gray-100">5. Prawa Użytkownika</h2>
-        <p>Każdy użytkownik ma prawo do wglądu w swoje dane, ich poprawiania oraz zażądania całkowitego usunięcia swojego konta i związanych z nim wiadomości z bazy danych serwisu.</p>
-      </section>
-
-      <div className="pt-6 border-t border-[#23232c]">
-        <Link href="/" className="text-xs font-bold text-[#c59b27] hover:underline uppercase">
-          ← Powrót do Tablicy Miejskiej
-        </Link>
+        <div className="p-4 bg-[#080506] border border-[#2b181a] rounded-sm flex items-center gap-3 text-xs text-gray-400">
+          <EyeOff className="w-5 h-5 text-[#c59b27] shrink-0" />
+          <p>
+            Wszystkie połączenia z naszą witryną są szyfrowane protokołem SSL. Możesz w każdej chwili usunąć swoje konto i powiązane z nim wpisy.
+          </p>
+        </div>
       </div>
     </main>
   )

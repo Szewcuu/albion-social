@@ -1,276 +1,176 @@
 'use client'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { ArrowLeft, Shield, Swords, Plus, ThumbsUp } from 'lucide-react'
 
 export default function Buildy() {
-  const [user, setUser] = useState(null)
-  const [isAdmin, setIsAdmin] = useState(false)
   const [builds, setBuilds] = useState([])
-  const [userVotes, setUserVotes] = useState({})
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [activeFilter, setActiveFilter] = useState('ALL')
 
-  // Formularz nowego buildu
-  const [showForm, setShowForm] = useState(false)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [activity, setActivity] = useState('PvP Solo')
-  const [weapon, setWeapon] = useState('T4_MAIN_CURSESTAFF')
-  const [offhand, setOffhand] = useState('Brak')
-  const [helmet, setHelmet] = useState('T4_HEAD_CLOTH_SET1')
-  const [armor, setArmor] = useState('T4_ARMOR_LEATHER_SET3')
-  const [shoes, setShoes] = useState('T4_SHOES_PLATE_SET1')
-  const [cape, setCape] = useState('T4_CAPE')
+  const [formData, setFormData] = useState({
+    title: '',
+    activity_type: 'PvP Solo',
+    weapon: '',
+    armor: '',
+    description: ''
+  })
+  const [formMessage, setFormMessage] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      fetchBuilds(currentUser)
-      if (currentUser) fetchAdminStatus(currentUser.id)
+      setUser(session?.user ?? null)
     })
-
-    const buildsChannel = supabase
-      .channel('builds-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'builds' }, () => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          const currentUser = session?.user ?? null
-          fetchBuilds(currentUser)
-        })
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(buildsChannel) }
+    fetchBuilds()
   }, [])
 
-  const fetchAdminStatus = async (userId) => {
-    const { data } = await supabase.from('profiles').select('is_admin').eq('id', userId).single()
-    if (data) setIsAdmin(data.is_admin)
-  }
-
-  const fetchBuilds = async (currentUser) => {
-    const { data: buildsData } = await supabase
+  const fetchBuilds = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
       .from('builds')
-      .select('*, profiles(username)')
-      .order('votes_count', { ascending: false })
-    
-    if (buildsData) setBuilds(buildsData)
+      .select(`*, profiles(username)`)
+      .order('created_at', { ascending: false })
 
-    if (currentUser) {
-      const { data: votesData } = await supabase
-        .from('build_votes')
-        .select('build_id, vote_type')
-        .eq('user_id', currentUser.id)
-      
-      if (votesData) {
-        const votesMap = {}
-        votesData.forEach(v => { votesMap[v.build_id] = v.vote_type })
-        setUserVotes(votesMap)
-      }
-    }
+    if (!error && data) setBuilds(data)
     setLoading(false)
   }
 
-  const handleCreateBuild = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!title.trim() || !user) return
+    setFormMessage('')
+
+    if (!user) {
+      setFormMessage('Musisz być zalogowany!')
+      return
+    }
 
     const { error } = await supabase.from('builds').insert([
       {
-        user_id: user.id,
-        title: title.trim(),
-        description: description.trim(),
-        activity_type: activity,
-        weapon,
-        offhand: offhand === 'Brak' ? null : offhand,
-        helmet,
-        armor,
-        shoes,
-        cape
+        ...formData,
+        user_id: user.id
       }
     ])
 
-    if (!error) {
-      setTitle('')
-      setDescription('')
-      setShowForm(false)
-      fetchBuilds(user)
+    if (error) {
+      setFormMessage(`Błąd: ${error.message}`)
+    } else {
+      setFormMessage('Build został opublikowany!')
+      setFormData({ title: '', activity_type: 'PvP Solo', weapon: '', armor: '', description: '' })
+      fetchBuilds()
     }
   }
-
-  const handleVote = async (buildId, type) => {
-    if (!user) return
-    const { data: newTotal, error } = await supabase.rpc('handle_build_vote', {
-      p_build_id: buildId,
-      p_user_id: user.id,
-      p_vote_type: type
-    })
-
-    if (!error) {
-      setUserVotes(prev => {
-        const currentVote = prev[buildId]
-        if (currentVote === type) {
-          const updated = { ...prev }
-          delete updated[buildId]
-          return updated
-        }
-        return { ...prev, [buildId]: type }
-      })
-      setBuilds(prev => prev.map(b => b.id === buildId ? { ...b, votes_count: newTotal } : b))
-    }
-  }
-
-  const handleDeleteBuild = async (buildId) => {
-    if (!isAdmin) return
-    if (confirm('Czy na pewno chcesz spalić ten rynsztunek i usunąć go z rejestrów zbrojowni?')) {
-      const { error } = await supabase.from('builds').delete().eq('id', buildId)
-      if (!error) setBuilds(prev => prev.filter(b => b.id !== buildId))
-    }
-  }
-
-  const filteredBuilds = activeFilter === 'ALL' ? builds : builds.filter(b => b.activity_type === activeFilter)
 
   return (
-    <main className="min-h-screen bg-[#121216] flex flex-col justify-between overflow-hidden font-sans text-base relative text-gray-300">
-            {/* CSS PŁONĄCEGO CAERLEON */}
-      <style>{`
-        @keyframes fireDrift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        .animate-fire-drift {
-          background: linear-gradient(-45deg, #0f0a0a, #1a0c0e, #241014, #12090c);
-          background-size: 300% 300%;
-          animation: fireDrift 25s ease infinite;
-        }
-      `}</style>
-
-      {/* WARSTWY TŁA CAERLEON */}
-      <div className="fixed inset-0 animate-fire-drift z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,#991b1b22,transparent_60%)] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_30%,rgba(0,0,0,0.85)_100%)] z-0 pointer-events-none"></div>
-
-      <div className="max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 text-base z-10 relative">
-        <header className="flex justify-between items-center bg-[#141419] border-2 border-[#c59b27] p-5 shadow-xl">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-100 font-albion-title tracking-wider">🛡️ KRÓLEWSKA ZBROJOWNIA BUILDÓW</h1>
-            <p className="text-sm text-gray-400 uppercase tracking-widest font-bold mt-1">Taktyki zatwierdzone przez Radę Wojenną</p>
-          </div>
-          <Link href="/" className="text-sm bg-[#1d1d24] border border-[#2c2c38] hover:border-[#c59b27] text-gray-300 px-4 py-2.5 font-bold uppercase tracking-wider transition">🏰 Powrót</Link>
-        </header>
-
-        <div className="flex flex-wrap gap-2 border-b border-[#23232c] pb-4 text-sm font-bold uppercase tracking-wider">
-          {['ALL', 'PvP Solo', 'ZvZ', 'PvE / HCE', 'Ganking'].map((filter) => (
-            <button key={filter} onClick={() => setActiveFilter(filter)} className={`px-4 py-2 border transition ${activeFilter === filter ? 'bg-[#c59b27] text-black border-[#4a3a1d] font-black' : 'text-gray-400 border-transparent hover:text-gray-200 bg-[#141419]'}`}>{filter}</button>
-          ))}
-          {user && (
-            <button onClick={() => setShowForm(!showForm)} className="ml-auto bg-gradient-to-b from-[#dca62b] to-[#a87a1e] text-black px-5 py-2.5 border border-[#4a3a1d] font-black transition uppercase">{showForm ? '🛡️ Zamknij Kuźnię' : '⚒️ Wykuj Nowy Build'}</button>
-          )}
-        </div>
-
-        {showForm && user && (
-          <motion.form initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} onSubmit={handleCreateBuild} className="bg-[#141419] border-2 border-[#c59b27] p-6 shadow-2xl grid grid-cols-1 md:grid-cols-3 gap-6 text-sm sm:text-base">
-            <div className="space-y-4 md:col-span-2">
-              <div>
-                <label className="block text-sm text-gray-300 font-bold uppercase mb-2">Nazwa Zestawu Taktycznego</label>
-                <input type="text" required value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-3 text-white focus:outline-none focus:border-[#c59b27] text-base" />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-300 font-bold uppercase mb-2">Opis taktyki walki i rotacji czarów</label>
-                <textarea rows="6" value={description} onChange={e => setDescription(e.target.value)} className="w-full bg-[#0b0b0d] border border-[#23232c] p-3 text-white focus:outline-none focus:border-[#c59b27] resize-none text-base" />
-              </div>
-            </div>
-
-            <div className="space-y-3 bg-[#0b0b0d] p-4 border border-[#23232c] grid grid-cols-2 gap-3 h-fit">
-              <div className="col-span-2">
-                <label className="block text-sm text-[#c59b27] font-bold uppercase mb-1.5">Przeznaczenie</label>
-                <select value={activity} onChange={e => setActivity(e.target.value)} className="w-full bg-[#141419] border border-[#23232c] p-2.5 text-white text-base"><option value="PvP Solo">PvP Solo</option><option value="ZvZ">ZvZ (Wojny Gildii)</option><option value="PvE / HCE">PvE / HCE</option><option value="Ganking">Ganking</option></select>
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm text-gray-400 font-bold uppercase mb-1">⚔️ Broń</label>
-                <select value={weapon} onChange={e => setWeapon(e.target.value)} className="w-full bg-[#141419] p-2 text-white border border-gray-800 text-sm"><option value="T4_MAIN_CURSESTAFF">Kostur Przekleństwa</option><option value="T4_MAIN_SPEAR">Włócznia</option><option value="T4_MAIN_AXE">Topór</option></select>
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm text-gray-400 font-bold uppercase mb-1">🛡️ Druga ręka</label>
-                <select value={offhand} onChange={e => setOffhand(e.target.value)} className="w-full bg-[#141419] p-2 text-white border border-gray-800 text-sm"><option value="Brak">Brak</option><option value="T4_OFF_SHIELD">Tarcza</option><option value="T4_OFF_BOOK">Księga Zaklęć</option></select>
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm text-gray-400 font-bold uppercase mb-1">🪖 Kaptur</label>
-                <select value={helmet} onChange={e => setHelmet(e.target.value)} className="w-full bg-[#141419] p-2 text-white border border-gray-800 text-sm"><option value="T4_HEAD_CLOTH_SET1">Kaptur Uczonego</option><option value="T4_HEAD_LEATHER_SET2">Kaptur Łowcy</option></select>
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm text-gray-400 font-bold uppercase mb-1">🧥 Kurtka/Zbroja</label>
-                <select value={armor} onChange={e => setArmor(e.target.value)} className="w-full bg-[#141419] p-2 text-white border border-gray-800 text-sm"><option value="T4_ARMOR_LEATHER_SET3">Kurtka Najemnika</option><option value="T4_ARMOR_PLATE_SET1">Zbroja Żołnierza</option></select>
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm text-gray-400 font-bold uppercase mb-1">🥾 Buty</label>
-                <select value={shoes} onChange={e => setShoes(e.target.value)} className="w-full bg-[#141419] p-2 text-white border border-gray-800 text-sm"><option value="T4_SHOES_PLATE_SET1">Buty Żołnierza</option><option value="T4_SHOES_LEATHER_SET2">Buty Łowcy</option></select>
-              </div>
-              <div>
-                <label className="block text-xs sm:text-sm text-gray-400 font-bold uppercase mb-1">🧥 Peleryna</label>
-                <select value={cape} onChange={e => setCape(e.target.value)} className="w-full bg-[#141419] p-2 text-white border border-gray-800 text-sm"><option value="T4_CAPE">Zwykła Peleryna</option><option value="T4_CAPE_MARTLOCK">Peleryna Martlock</option></select>
-              </div>
-              <div className="col-span-2 pt-3">
-                <button type="submit" className="w-full bg-gradient-to-b from-[#dca62b] to-[#a87a1e] text-black font-black py-3.5 uppercase border border-[#4a3a1d] text-base">Zapisz w Rejestrze Królestwa</button>
-              </div>
-            </div>
-          </motion.form>
-        )}
-
-        <div className="space-y-4">
-          {loading ? (
-            <p className="text-center text-gray-400 italic py-8 text-lg animate-pulse">Otwieranie planów zbrojowni...</p>
-          ) : filteredBuilds.map((build) => {
-            const hasUpvoted = userVotes[build.id] === 'UP';
-            const hasDownvoted = userVotes[build.id] === 'DOWN';
-
-            return (
-              <motion.div key={build.id} layout className="bg-[#141419] border border-[#23232c] p-6 flex gap-6 items-start shadow-md text-base relative z-10">
-                <div className="flex flex-col items-center bg-[#0b0b0d] border border-[#23232c] p-3.5 rounded-sm min-w-[55px]">
-                  <button onClick={() => handleVote(build.id, 'UP')} className={`text-xl font-bold transition ${hasUpvoted ? 'text-emerald-400 scale-125' : 'text-gray-500 hover:text-emerald-500'}`}>▲</button>
-                  <span className={`text-base font-mono font-black my-2 ${hasUpvoted ? 'text-emerald-400' : hasDownvoted ? 'text-red-500' : 'text-[#c59b27]'}`}>{build.votes_count || 0}</span>
-                  <button onClick={() => handleVote(build.id, 'DOWN')} className={`text-xl font-bold transition ${hasDownvoted ? 'text-red-500 scale-125' : 'text-gray-500 hover:text-red-500'}`}>▼</button>
-                </div>
-
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-sm bg-[#c59b27]/10 text-[#c59b27] border border-[#c59b27]/30 px-2.5 py-0.5 font-bold uppercase font-mono">{build.activity_type}</span>
-                    <h3 className="text-lg font-bold text-gray-100">{build.title}</h3>
-                    <div className="ml-auto flex items-center gap-4 text-sm">
-                      <span className="text-gray-400">Autor: <span className="text-sky-400 font-semibold">{build.profiles?.username || 'Nieznany'}</span></span>
-                      {isAdmin && <button onClick={() => handleDeleteBuild(build.id)} className="bg-red-950/80 hover:bg-red-900 border border-red-900/40 text-red-400 text-sm font-black uppercase tracking-wider px-3 py-1.5 transition">🗑️ Usuń</button>}
-                    </div>
-                  </div>
-                  <p className="text-base text-gray-300 leading-relaxed whitespace-pre-line">{build.description}</p>
-                  <div className="flex flex-wrap gap-2.5 text-sm font-mono text-gray-300 pt-1">
-                    <span className="bg-[#0b0b0d] px-3 py-1.5 border border-[#1f1f26]">⚔️ {build.weapon.replace('T4_', '')}</span>
-                    {build.offhand && <span className="bg-[#0b0b0d] px-3 py-1.5 border border-[#1f1f26]">🛡️ {build.offhand.replace('T4_', '')}</span>}
-                    <span className="bg-[#0b0b0d] px-3 py-1.5 border border-[#1f1f26]">🪖 {build.helmet.replace('T4_', '')}</span>
-                    <span className="bg-[#0b0b0d] px-3 py-1.5 border border-[#1f1f26]">🧥 {build.armor.replace('T4_', '')}</span>
-                    <span className="bg-[#0b0b0d] px-3 py-1.5 border border-[#1f1f26]">🥾 {build.shoes.replace('T4_', '')}</span>
-                    <span className="bg-[#0b0b0d] px-3 py-1.5 border border-[#1f1f26]">🧥 {build.cape.replace('T4_', '')}</span>
-                  </div>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
+    <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
+      <div>
+        <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span>Powrót do Centrum</span>
+        </Link>
       </div>
 
-      {/* FOOTER PRZYKLEJONY DO PODSTAWY */}
-      <footer className="w-full bg-[#0b0b0d] border-t-2 border-[#c59b27] py-6 text-center z-20 text-sm tracking-wide mt-8 relative">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-gray-500">
-          <p className="font-medium">
-            © {new Date().getFullYear()} <span className="text-[#c59b27] font-bold font-albion-title">Albion Online Polska Portal</span>. Wszelkie prawa zastrzeżone.
-          </p>
-          <p className="text-xs border border-gray-900 bg-[#121216] px-3 py-1 text-gray-400 rounded-sm font-mono">
-            Materiały zbrojowni i bazy strategiczne królestwa.
-          </p>
+      <header className="bg-[#120a0c]/90 border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden backdrop-blur-md">
+        <div className="flex items-center gap-3">
+          <Shield className="w-8 h-8 text-[#c59b27]" />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-100 uppercase tracking-wider font-serif">
+              Kreator &amp; Zestawy Bojowe (Builds)
+            </h1>
+            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
+              Baza sprawdzonych zestawów uzbrojenia tworzona przez graczy
+            </p>
+          </div>
         </div>
-      </footer>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* FORMULARZ DODAWCZY */}
+        <div className="lg:col-span-4">
+          <div className="bg-[#120a0c]/80 border border-[#3a1a1e] p-6 shadow-xl sticky top-6 backdrop-blur-md space-y-4">
+            <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2 flex items-center gap-2">
+              <Plus className="w-4 h-4 text-[#c59b27]" />
+              <span>Opublikuj Zestaw</span>
+            </h2>
+
+            {!user ? (
+              <p className="text-xs text-gray-400 italic bg-[#080506] p-4 border border-[#2b181a]">
+                Zaloguj się na stronie głównej, aby udostępniać własne zestawy.
+              </p>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-gray-400 mb-1 font-bold uppercase">Nazwa Zestawu *</label>
+                  <input type="text" required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none" placeholder="np. Solo Corrupted Cursed Staff" />
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 mb-1 font-bold uppercase">Typ Aktywności *</label>
+                  <select value={formData.activity_type} onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none">
+                    <option value="PvP Solo">PvP Solo / Corrupted</option>
+                    <option value="ZvZ">ZvZ / Wojnami</option>
+                    <option value="Gank">Ganking / Small Scale</option>
+                    <option value="PvE / Static">PvE / Statyki / HCE</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 mb-1 font-bold uppercase">Główna Broń *</label>
+                  <input type="text" required value={formData.weapon} onChange={(e) => setFormData({ ...formData, weapon: e.target.value })} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none" placeholder="np. Shadowcaller / 1H Dagger" />
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 mb-1 font-bold uppercase">Pancerz i Dodatki *</label>
+                  <input type="text" required value={formData.armor} onChange={(e) => setFormData({ ...formData, armor: e.target.value })} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none" placeholder="np. Stalker Jacket, Cultist Cowl..." />
+                </div>
+
+                <div>
+                  <label className="block text-gray-400 mb-1 font-bold uppercase">Opis / Poradnik Rotacji</label>
+                  <textarea rows="4" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none resize-none" placeholder="Wyjaśnij jak grać tym zestawem..." />
+                </div>
+
+                <button type="submit" className="w-full bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-2.5 uppercase tracking-widest font-serif transition">
+                  Dodaj Build
+                </button>
+                {formMessage && <p className="text-center font-bold text-amber-500 animate-pulse mt-2">{formMessage}</p>}
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* LISTA BUILDÓW */}
+        <div className="lg:col-span-8 space-y-4">
+          {loading ? (
+            <p className="text-center py-8 text-gray-400 font-bold animate-pulse">Wczytywanie zestawów bojowych...</p>
+          ) : builds.length === 0 ? (
+            <p className="text-center py-12 text-gray-500 italic bg-[#120a0c]/40 border border-[#2b181a]">Brak opublikowanych zestawów.</p>
+          ) : (
+            builds.map((build) => (
+              <div key={build.id} className="bg-[#120a0c]/90 border border-[#2b181a] hover:border-[#c59b27]/60 p-5 shadow-xl backdrop-blur-md transition space-y-3">
+                <div className="flex items-center justify-between border-b border-[#2b181a] pb-2">
+                  <h3 className="text-lg font-bold text-gray-100 font-serif">{build.title}</h3>
+                  <span className="text-[10px] bg-[#2b0d10] text-red-400 border border-red-900/50 px-2.5 py-0.5 font-bold uppercase">{build.activity_type}</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-[#080506] p-3 border border-[#2b181a]">
+                  <div><span className="text-gray-500 uppercase font-bold">Broń:</span> <span className="text-amber-400 font-bold">{build.weapon}</span></div>
+                  <div><span className="text-gray-500 uppercase font-bold">Pancerz:</span> <span className="text-gray-300">{build.armor}</span></div>
+                </div>
+
+                <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap">{build.description}</p>
+
+                <div className="text-[11px] text-gray-500 border-t border-[#2b181a] pt-2 flex justify-between items-center">
+                  <span>Autor: <b className="text-gray-400 font-mono">{build.profiles?.username || 'Gracz'}</b></span>
+                  <button className="flex items-center gap-1 text-[#c59b27] hover:underline font-bold">
+                    <ThumbsUp className="w-3.5 h-3.5" />
+                    <span>Polecam</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </main>
   )
 }
