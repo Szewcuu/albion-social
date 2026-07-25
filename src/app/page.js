@@ -131,7 +131,7 @@ export default function Home() {
       }))
       setChatMessages(mapped)
     } else {
-      setChatMessages([{ id: 'init', channel: 'SYSTEM', username: 'System', text: 'Połączono z węzłem miejskim Albion Online Polska Portal. Czat aktywny.' }])
+      setChatMessages([{ id: 'init', channel: 'SYSTEM', username: 'System', text: 'Połączono z węzłem miejskim AOPP. Czat aktywny.' }])
     }
   }
 

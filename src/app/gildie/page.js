@@ -2,11 +2,16 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Swords } from 'lucide-react'
+import GuildApplyModal from '@/components/GuildApplyModal'
 
 export default function Gildie() {
   const [guilds, setGuilds] = useState([])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  // Stan dla okna aplikacji do gildii
+  const [selectedGuildForApply, setSelectedGuildForApply] = useState(null)
 
   // Filtry
   const [searchTerm, setSearchTerm] = useState('')
@@ -265,9 +270,22 @@ export default function Gildie() {
                       </div>
                       <p className="text-gray-300 text-sm sm:text-base whitespace-pre-wrap mb-5 leading-relaxed font-sans">{guild.description}</p>
                     </div>
+
                     <div className="flex flex-wrap items-center justify-between border-t border-[#23232c] pt-4 text-xs sm:text-sm text-gray-500 gap-3">
                       <p>Wystawca manifestu: <span className="text-gray-400 font-mono font-medium">{guild.profiles?.username || 'Nieznany'}</span></p>
-                      <a href={guild.discord_link} target="_blank" rel="noopener noreferrer" className="bg-gradient-to-b from-[#5865F2] to-[#404eed] text-white font-extrabold py-2 px-5 rounded-sm hover:from-[#6a77f3] hover:to-[#4e5cf5] transition text-xs sm:text-sm uppercase tracking-wider shadow">Wejdź na Discord</a>
+                      
+                      {/* PRZYCISKI: APLIKUJ ORAZ DISCORD */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedGuildForApply(guild)}
+                          className="bg-[#2b0d10] hover:bg-red-900 border border-red-700/50 text-red-200 font-bold py-2 px-4 rounded-sm transition text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1.5 shadow"
+                        >
+                          <Swords className="w-4 h-4 text-[#c59b27]" />
+                          <span>Aplikuj</span>
+                        </button>
+
+                        <a href={guild.discord_link} target="_blank" rel="noopener noreferrer" className="bg-gradient-to-b from-[#5865F2] to-[#404eed] text-white font-extrabold py-2 px-5 rounded-sm hover:from-[#6a77f3] hover:to-[#4e5cf5] transition text-xs sm:text-sm uppercase tracking-wider shadow">Wejdź na Discord</a>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -288,6 +306,14 @@ export default function Gildie() {
           </p>
         </div>
       </footer>
+
+      {/* MODAL FORMULARZA APLIKACYJNEGO */}
+      <GuildApplyModal
+        isOpen={!!selectedGuildForApply}
+        onClose={() => setSelectedGuildForApply(null)}
+        guild={selectedGuildForApply}
+        currentUser={user}
+      />
     </main>
   )
 }
