@@ -348,6 +348,9 @@ export default function Home() {
                     <Link href="/buildy" className="w-full block bg-[#2b0d10] hover:bg-red-900 text-red-200 border border-red-800/60 font-black py-3.5 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
                       🛡️ Kreator &amp; Zestawy Bojowe
                     </Link>
+                    <Link href="/wyprawy" className="w-full block bg-gradient-to-r from-purple-900 to-indigo-950 hover:from-purple-800 text-purple-200 border border-purple-700/60 font-black py-3.5 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
+                      🏹 Wyprawy &amp; Party Finder
+                    </Link>
                   </div>
                 </div>
 
