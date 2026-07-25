@@ -82,7 +82,7 @@ export default function Home() {
       }
     })
 
-    // Zoptymalizowana subskrypcja Realtime (bez lagu)
+    // Subskrypcja Realtime
     const chatChannel = supabase
       .channel('schema-db-changes')
       .on(
@@ -140,10 +140,10 @@ export default function Home() {
   }
 
   const fetchGlobalData = async () => {
-    const { data: recent } = await supabase.from('market_posts').select('*, profiles(username)').order('created_at', { ascending: false }).limit(3)
+    const { data: recent } = await supabase.from('market_items').select('*, profiles(username)').order('created_at', { ascending: false }).limit(3)
     setRecentGlobalPosts(recent || [])
     const { count: gCount } = await supabase.from('guilds').select('*', { count: 'exact', head: true })
-    const { count: mCount } = await supabase.from('market_posts').select('*', { count: 'exact', head: true })
+    const { count: mCount } = await supabase.from('market_items').select('*', { count: 'exact', head: true })
     setGlobalStats({ marketOffersCount: mCount || 0, guildsCount: gCount || 0 })
   }
 
@@ -155,9 +155,9 @@ export default function Home() {
 
       if (adminStatus) {
         const { data: allG } = await supabase.from('guilds').select('*, profiles(username)').order('created_at', { ascending: false })
-        const { data: allM = [] } = await supabase.from('market_posts').select('*, profiles(username)').order('created_at', { ascending: false })
+        const { data: allM = [] } = await supabase.from('market_items').select('*, profiles(username)').order('created_at', { ascending: false })
         setAllGuilds(allG || [])
-        setAllMarketPosts(allM)
+        setAllMarketPosts(allM || [])
       }
     } catch (err) {
       console.error(err)
@@ -195,41 +195,6 @@ export default function Home() {
     }
   }
 
-  const fetchLivePrices = async () => {
-    setIsFetchingApi(true)
-    try {
-      const res = await fetch(`/api/prices?item=${selectedItem}&city=${selectedCity}`)
-      const data = await res.json()
-
-      if (data && data.length > 0 && !data.error) {
-        const cityData = data.find(p => p?.location && p.location.toLowerCase() === selectedCity.toLowerCase())
-        const blackMarketData = data.find(p => p?.location && p.location.toLowerCase() === 'caerleon')
-
-        let updated = false
-
-        if (cityData && cityData.sell_price_min > 0) {
-          setBuyPrice(cityData.sell_price_min.toString())
-          updated = true
-        }
-
-        if (blackMarketData && blackMarketData.buy_price_max > 0) {
-          setBlackMarketPrice(blackMarketData.buy_price_max.toString())
-          updated = true
-        }
-
-        if (!updated) {
-          alert("Baza API nie posiada aktualnych cen dla tego przedmiotu.")
-        }
-      } else {
-        alert("Brak danych w bazie API dla tego przedmiotu.")
-      }
-    } catch (err) {
-      alert("Nie udało się pobrać danych cenowych.")
-    } finally {
-      setIsFetchingApi(false)
-    }
-  }
-
   const handleCalculateFlip = (e) => {
     e.preventDefault()
     const cost = parseFloat(buyPrice) || 0
@@ -262,14 +227,14 @@ export default function Home() {
   const loginWithDiscord = async () => { await supabase.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: window.location.origin } }) }
   
   const deleteMarketPost = async (id) => {
-    if (confirm('Usunąć kontrakt?')) {
-      const { error } = await supabase.from('market_posts').delete().eq('id', id)
+    if (confirm('Usunąć ofertę z rynku?')) {
+      const { error } = await supabase.from('market_items').delete().eq('id', id)
       if (!error) { fetchGlobalData(); if (user) fetchUserDataAndRole(user.id); }
     }
   }
 
   const deleteGuild = async (id) => {
-    if (confirm('Spalić dekret?')) {
+    if (confirm('Spalić dekret tej gildii?')) {
       const { error } = await supabase.from('guilds').delete().eq('id', id)
       if (!error) { fetchGlobalData(); if (user) fetchUserDataAndRole(user.id); }
     }
@@ -418,7 +383,7 @@ export default function Home() {
               {/* PRAWA STRONA: KALKULATOR & CZAT */}
               <div className="lg:col-span-8 space-y-6">
                 
-                {/* KALKULATOR */}
+                {/* KALKULATOR / ADMIN PANEL */}
                 <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 shadow-xl">
                   <div className="flex gap-4 border-b border-[#3a1a1e] pb-3 mb-4 text-sm font-serif font-black uppercase tracking-wider">
                     <button onClick={() => setRightTab('ECONOMY')} className={`pb-1 border-b-2 transition ${rightTab === 'ECONOMY' ? 'text-[#c59b27] border-[#c59b27]' : 'text-gray-400 border-transparent hover:text-gray-200'}`}>
@@ -431,6 +396,7 @@ export default function Home() {
                     )}
                   </div>
 
+                  {/* KONTENT 1: KALKULATOR */}
                   {rightTab === 'ECONOMY' && (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start text-xs sm:text-sm">
                       <form onSubmit={handleCalculateFlip} className="md:col-span-6 space-y-3">
@@ -483,6 +449,78 @@ export default function Home() {
                       </div>
                     </div>
                   )}
+
+                  {/* KONTENT 2: PANEL ADMINA (INKWIZYCJA) */}
+                  {rightTab === 'ADMIN' && isAdmin && (
+                    <div className="space-y-4 text-xs sm:text-sm">
+                      <div className="flex justify-between items-center bg-[#080506] p-3 border border-red-950/60 flex-wrap gap-2">
+                        <span className="text-red-400 font-bold uppercase text-xs tracking-wider">
+                          Panel Kontrolny Wyższego Inkwizytora
+                        </span>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => setAdminTab('MARKET')} 
+                            className={`px-3 py-1 text-xs font-black uppercase transition ${
+                              adminTab === 'MARKET' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            Oferty Rynku ({allMarketPosts.length})
+                          </button>
+                          <button 
+                            onClick={() => setAdminTab('GUILDS')} 
+                            className={`px-3 py-1 text-xs font-black uppercase transition ${
+                              adminTab === 'GUILDS' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            Dekrety Gildii ({allGuilds.length})
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
+                        {adminTab === 'MARKET' ? (
+                          allMarketPosts.length === 0 ? (
+                            <p className="text-gray-500 italic text-center py-6">Brak ofert na rynku do zarządzania.</p>
+                          ) : (
+                            allMarketPosts.map(post => (
+                              <div key={post.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
+                                <div>
+                                  <span className="text-purple-400 font-mono font-bold mr-2">[{post.city || post.server || 'Caerleon'}]</span>
+                                  <span className="text-gray-200 font-bold">{post.title || post.item_name}</span>
+                                  <span className="text-[#c59b27] font-bold font-mono ml-2">{post.price} Silver</span>
+                                </div>
+                                <button 
+                                  onClick={() => deleteMarketPost(post.id)} 
+                                  className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs tracking-wider transition"
+                                >
+                                  Anuluj
+                                </button>
+                              </div>
+                            ))
+                          )
+                        ) : (
+                          allGuilds.length === 0 ? (
+                            <p className="text-gray-500 italic text-center py-6">Brak zarejestrowanych gildii.</p>
+                          ) : (
+                            allGuilds.map(guild => (
+                              <div key={guild.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
+                                <div>
+                                  <span className="text-purple-400 font-mono font-bold mr-2">[{guild.server}]</span>
+                                  <span className="text-gray-100 font-serif font-bold">{guild.name}</span>
+                                </div>
+                                <button 
+                                  onClick={() => deleteGuild(guild.id)} 
+                                  className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs tracking-wider transition"
+                                >
+                                  Spal Dekret
+                                </button>
+                              </div>
+                            ))
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* CZAT SPOŁECZNOŚCIOWY */}
@@ -506,7 +544,7 @@ export default function Home() {
                     ))}
                   </div>
 
-                  {/* ZWIĘKSZONY I CZYTELNY TEKST CZATU */}
+                  {/* TEKST CZATU */}
                   <div 
                     ref={chatContainerRef}
                     className="space-y-3 overflow-y-auto flex-1 w-full pr-1 text-sm sm:text-base select-text flex flex-col"
