@@ -15,12 +15,14 @@ export async function GET(request) {
     })
   }
 
-  // Czyszczenie ID (remove enchant level @X)
-  const cleanId = itemId.split('@')[0]
+  // Zachowaj pełny ID z enchantam (format: ID@level)
+  const fullId = itemId.trim()
+  const baseId = fullId.split('@')[0]
 
   try {
-    // Pobierz obrazek z Albion API
-    const imageUrl = `${ALBION_RENDER_API}/${cleanId}.png?quality=1`
+    // Pobierz obrazek z Albion API - przesyłaj enchant suffix w URL
+    // Format: https://render.albiononline.com/v1/item/T8_HEAD_LEATHER_SET3@4.png
+    const imageUrl = `${ALBION_RENDER_API}/${fullId}.png?quality=1`
     
     const response = await fetch(imageUrl, {
       method: 'GET',
@@ -32,7 +34,7 @@ export async function GET(request) {
     })
 
     if (!response.ok) {
-      console.warn(`Failed to fetch image for ${cleanId}: ${response.status}`)
+      console.warn(`Failed to fetch image for ${fullId}: ${response.status}`)
       return new Response(JSON.stringify({ error: 'Item image not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
@@ -53,7 +55,7 @@ export async function GET(request) {
       }
     })
   } catch (error) {
-    console.error(`Error fetching item image for ${cleanId}:`, error.message)
+    console.error(`Error fetching item image for ${fullId}:`, error.message)
     
     // Na timeout/error zwróć 504 żeby client wiedział że fallback
     return new Response(JSON.stringify({ error: 'Failed to fetch image' }), {

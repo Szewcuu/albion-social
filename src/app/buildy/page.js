@@ -206,7 +206,6 @@ function InventorySlotCard({ slot }) {
   }
 
   const displayName = findItemName(slot.id)
-  const enchantLevel = slot.id?.includes('@') ? slot.id.split('@')[1] : null
 
   return (
     <div 
@@ -216,12 +215,6 @@ function InventorySlotCard({ slot }) {
       <span className="text-[8px] text-gray-500 font-bold uppercase tracking-tighter absolute top-1 left-1.5 pointer-events-none z-10">
         {slot.label}
       </span>
-
-      {enchantLevel && (
-        <div className="absolute top-1 right-1 bg-gradient-to-r from-[#ffd700] to-[#ffaa00] text-black font-bold text-[9px] px-1.5 py-0.5 rounded-full pointer-events-none z-20 shadow-lg border border-[#ffff00]/80">
-          .{enchantLevel}
-        </div>
-      )}
 
       {slot.id && isLoading && !hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#140c0e]/95 z-10 rounded">
