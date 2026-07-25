@@ -233,7 +233,7 @@ export default function Gildie() {
                           <li>Wklej skopiowany link w pole powyżej! Gotowe.</li>
                         </ol>
                         <p className="text-[11px] text-gray-500 italic mt-1">
-                          *Dzięki temu każda aplikacja gracza wysle powiadomienie z dźwiękiem na wyznaczony kanał na Waszym Discordzie.
+                          *Dzięki temu każda aplikacja gracza wysle powiadomienie na wyznaczony kanał na Waszym Discordzie.
                         </p>
                       </div>
                     </details>
@@ -323,15 +323,25 @@ export default function Gildie() {
                       
                       {/* PRZYCISKI: APLIKUJ ORAZ DISCORD */}
                       <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedGuildForApply(guild)}
-                          className="bg-[#2b0d10] hover:bg-red-900 border border-red-700/50 text-red-200 font-bold py-2 px-4 rounded-sm transition text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1.5 shadow"
-                        >
-                          <Swords className="w-4 h-4 text-[#c59b27]" />
-                          <span>Aplikuj</span>
-                        </button>
+                        {/* Wyświetlaj przycisk "Aplikuj" TYLKO jeśli gildia posiada podpięty webhook_url */}
+                        {guild.webhook_url && guild.webhook_url.trim() !== '' && (
+                          <button
+                            onClick={() => setSelectedGuildForApply(guild)}
+                            className="bg-[#2b0d10] hover:bg-red-900 border border-red-700/50 text-red-200 font-bold py-2 px-4 rounded-sm transition text-xs sm:text-sm uppercase tracking-wider flex items-center gap-1.5 shadow"
+                          >
+                            <Swords className="w-4 h-4 text-[#c59b27]" />
+                            <span>Aplikuj</span>
+                          </button>
+                        )}
 
-                        <a href={guild.discord_link} target="_blank" rel="noopener noreferrer" className="bg-gradient-to-b from-[#5865F2] to-[#404eed] text-white font-extrabold py-2 px-5 rounded-sm hover:from-[#6a77f3] hover:to-[#4e5cf5] transition text-xs sm:text-sm uppercase tracking-wider shadow">Wejdź na Discord</a>
+                        <a 
+                          href={guild.discord_link} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="bg-gradient-to-b from-[#5865F2] to-[#404eed] text-white font-extrabold py-2 px-5 rounded-sm hover:from-[#6a77f3] hover:to-[#4e5cf5] transition text-xs sm:text-sm uppercase tracking-wider shadow"
+                        >
+                          Wejdź na Discord
+                        </a>
                       </div>
                     </div>
                   </div>
