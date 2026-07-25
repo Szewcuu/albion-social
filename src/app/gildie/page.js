@@ -203,7 +203,6 @@ export default function Gildie() {
                     <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Baza Kwatery (Link Discord)</label>
                     <input type="url" name="discord_link" required value={formData.discord_link} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white focus:outline-none focus:border-[#c59b27] text-sm" placeholder="https://discord.gg/..." />
                   </div>
-
                   <div>
                     <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">
                       Webhook Discord do Rekrutacji (Opcjonalnie)
@@ -216,9 +215,28 @@ export default function Gildie() {
                       className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white focus:outline-none focus:border-[#c59b27] text-sm"
                       placeholder="https://discord.com/api/webhooks/..."
                     />
-                    <p className="text-[10px] text-gray-500 mt-1">
-                      Wklej link Webhooka ze swojego serwera Discord (Ustawienia kanału -&gt; Integracje -&gt; Webhooki), aby otrzymywać powiadomienia o nowych aplikacjach bezpośrednio na swoim kanale!
-                    </p>
+                    
+                    {/* PROSTY PORADNIK DLA GRACZY */}
+                    <details className="mt-2 text-xs text-gray-400 bg-[#0b0b0d] border border-[#23232c] p-3 rounded-sm">
+                      <summary className="cursor-pointer text-[#c59b27] font-bold hover:underline select-none">
+                        ❓ Jak stworzyć i zdobyć taki Webhook? (Kliknij, aby rozwijać poradnik)
+                      </summary>
+                      <div className="mt-2 space-y-1.5 text-gray-300 leading-relaxed font-sans border-t border-[#23232c] pt-2">
+                        <p>Jeśli chcesz, aby zgłoszenia od graczy ze strony trafiały bezpośrednio na Twój serwer Discord:</p>
+                        <ol className="list-decimal list-inside space-y-1 text-gray-300 pl-1">
+                          <li>Wejdź na swój serwer na Discordzie.</li>
+                          <li>Stwórz nowy kanał tekstowy, np. <span className="text-amber-400 font-mono">#rekrutacja-zgłoszenia</span>.</li>
+                          <li>Kliknij ikonę koła zębatego <span className="text-gray-400 font-mono">(Ustawienia kanału)</span> obok tego kanału.</li>
+                          <li>W menu po lewej stronie wybierz <span className="text-gray-400 font-mono">Integracje</span>.</li>
+                          <li>Kliknij przycisk <span className="text-gray-400 font-mono">Utwórz webhook</span> (lub „Wyświetl webhooki” i dodaj nowy).</li>
+                          <li>Nadaj mu nazwę (np. <i>Bot Rekrutacyjny</i>), upewnij się, że kanał to ten od rekrutacji, a następnie kliknij <span className="text-emerald-400 font-bold">Kopiuj adres URL webhooka</span>.</li>
+                          <li>Wklej skopiowany link w pole powyżej! Gotowe.</li>
+                        </ol>
+                        <p className="text-[11px] text-gray-500 italic mt-1">
+                          *Dzięki temu każda aplikacja gracza wysle powiadomienie z dźwiękiem na wyznaczony kanał na Waszym Discordzie.
+                        </p>
+                      </div>
+                    </details>
                   </div>
 
                   <div>
