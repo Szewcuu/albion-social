@@ -46,12 +46,13 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 will-change-transform">
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="w-full max-w-lg bg-[#140c0e] border-2 border-[#c59b27] p-6 shadow-[0_0_25px_rgba(197,155,39,0.2)] relative text-gray-200"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="w-full max-w-lg bg-[#140c0e] border-2 border-[#c59b27] p-6 shadow-2xl relative text-gray-200 transform-gpu"
         >
           {/* Przycisk Zamknięcia */}
           <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">

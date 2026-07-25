@@ -230,6 +230,7 @@ export default function Gildie() {
                           <li>W menu po lewej stronie wybierz <span className="text-gray-400 font-mono">Integracje</span>.</li>
                           <li>Kliknij przycisk <span className="text-gray-400 font-mono">Utwórz webhook</span> (lub „Wyświetl webhooki” i dodaj nowy).</li>
                           <li>Nadaj mu nazwę (np. <i>Bot Rekrutacyjny</i>), upewnij się, że kanał to ten od rekrutacji, a następnie kliknij <span className="text-emerald-400 font-bold">Kopiuj adres URL webhooka</span>.</li>
+                          <li>Nie zapomnij zapisać webhooka na discordzie.</li>
                           <li>Wklej skopiowany link w pole powyżej! Gotowe.</li>
                         </ol>
                         <p className="text-[11px] text-gray-500 italic mt-1">
