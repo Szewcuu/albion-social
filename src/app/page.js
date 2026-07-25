@@ -28,7 +28,6 @@ const ServerClock = memo(function ServerClock() {
 export default function Home() {
   const [selectedItem, setSelectedItem] = useState('T4_BAG')  
   const [selectedCity, setSelectedCity] = useState('Martlock')
-  const [isFetchingApi, setIsFetchingApi] = useState(false)
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -41,7 +40,8 @@ export default function Home() {
   // Stany Admina
   const [allGuilds, setAllGuilds] = useState([])
   const [allMarketPosts, setAllMarketPosts] = useState([])
-  const [adminTab, setAdminTab] = useState('MARKET')
+  const [allExpeditions, setAllExpeditions] = useState([])
+  const [adminTab, setAdminTab] = useState('MARKET') // 'MARKET' | 'GUILDS' | 'EXPEDITIONS'
 
   // Zakładki
   const [rightTab, setRightTab] = useState('ECONOMY')
@@ -82,7 +82,6 @@ export default function Home() {
       }
     })
 
-    // Subskrypcja Realtime
     const chatChannel = supabase
       .channel('schema-db-changes')
       .on(
@@ -156,8 +155,11 @@ export default function Home() {
       if (adminStatus) {
         const { data: allG } = await supabase.from('guilds').select('*, profiles(username)').order('created_at', { ascending: false })
         const { data: allM = [] } = await supabase.from('market_items').select('*, profiles(username)').order('created_at', { ascending: false })
+        const { data: allE = [] } = await supabase.from('expeditions').select('*, profiles(username)').order('created_at', { ascending: false })
+
         setAllGuilds(allG || [])
         setAllMarketPosts(allM || [])
+        setAllExpeditions(allE || [])
       }
     } catch (err) {
       console.error(err)
@@ -240,6 +242,13 @@ export default function Home() {
     }
   }
 
+  const deleteExpedition = async (id) => {
+    if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina?')) {
+      const { error } = await supabase.from('expeditions').delete().eq('id', id)
+      if (!error) { fetchGlobalData(); if (user) fetchUserDataAndRole(user.id); }
+    }
+  }
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#080506] text-xl font-serif tracking-widest">
@@ -251,11 +260,9 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#080506] text-[#bcbbc2]">
       
-      {/* TŁO */}
       <div className="fixed inset-0 bg-gradient-to-b from-[#1b0a0d] via-[#0d0708] to-[#050304] z-0 pointer-events-none"></div>
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/30 via-transparent to-transparent z-0 pointer-events-none"></div>
       
-      {/* TREŚĆ */}
       <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
         {!user ? (
           <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto space-y-10 px-4 py-8">
@@ -302,7 +309,6 @@ export default function Home() {
           
           <div className="max-w-7xl w-full space-y-6 text-base my-2">
             
-            {/* PROFILE HEADER */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#120a0c] border-2 border-[#c59b27]/80 p-5 shadow-2xl">
               <div>
                 <h1 className="text-2xl font-black text-gray-100 flex items-center gap-2 font-serif uppercase tracking-wider">
@@ -333,28 +339,26 @@ export default function Home() {
               {/* LEWA STRONA */}
               <div className="lg:col-span-4 space-y-6">
                 
-                {/* PRZYCISKI MODUŁÓW */}
                 <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 shadow-xl space-y-4">
                   <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-widest border-b border-[#3a1a1e] pb-2 font-serif">
                     Katalogi Główne
                   </h2>
                   <div className="space-y-3">
-                    <Link href="/gildie" className="w-full block bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-3.5 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
+                    <Link href="/gildie" className="w-full block bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
                       ⚔️ Rejestr Polskich Gildii
                     </Link>
-                    <Link href="/rynek" className="w-full block bg-[#080506] hover:bg-[#1a0c0e] text-gray-200 border border-[#3a1a1e] font-black py-3.5 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
+                    <Link href="/wyprawy" className="w-full block bg-gradient-to-r from-purple-900 to-indigo-950 hover:from-purple-800 text-purple-200 border border-purple-700/60 font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
+                      🏹 Wyprawy &amp; Party Finder
+                    </Link>
+                    <Link href="/rynek" className="w-full block bg-[#080506] hover:bg-[#1a0c0e] text-gray-200 border border-[#3a1a1e] font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
                       💰 Tablica Ogłoszeń Rynku
                     </Link>
-                    <Link href="/buildy" className="w-full block bg-[#2b0d10] hover:bg-red-900 text-red-200 border border-red-800/60 font-black py-3.5 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
+                    <Link href="/buildy" className="w-full block bg-[#2b0d10] hover:bg-red-900 text-red-200 border border-red-800/60 font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
                       🛡️ Kreator &amp; Zestawy Bojowe
-                    </Link>
-                    <Link href="/wyprawy" className="w-full block bg-gradient-to-r from-purple-900 to-indigo-950 hover:from-purple-800 text-purple-200 border border-purple-700/60 font-black py-3.5 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
-                      🏹 Wyprawy &amp; Party Finder
                     </Link>
                   </div>
                 </div>
 
-                {/* NEWSY & ZEGAREK */}
                 <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 shadow-xl space-y-4">
                   <div className="bg-[#080506] border border-[#2b181a] p-4 space-y-3">
                     <h3 className="text-xs font-black text-[#c59b27] uppercase tracking-widest font-serif border-b border-[#2b181a] pb-2">
@@ -383,10 +387,9 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* PRAWA STRONA: KALKULATOR & CZAT */}
+              {/* PRAWA STRONA */}
               <div className="lg:col-span-8 space-y-6">
                 
-                {/* KALKULATOR / ADMIN PANEL */}
                 <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 shadow-xl">
                   <div className="flex gap-4 border-b border-[#3a1a1e] pb-3 mb-4 text-sm font-serif font-black uppercase tracking-wider">
                     <button onClick={() => setRightTab('ECONOMY')} className={`pb-1 border-b-2 transition ${rightTab === 'ECONOMY' ? 'text-[#c59b27] border-[#c59b27]' : 'text-gray-400 border-transparent hover:text-gray-200'}`}>
@@ -399,7 +402,6 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* KONTENT 1: KALKULATOR */}
                   {rightTab === 'ECONOMY' && (
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start text-xs sm:text-sm">
                       <form onSubmit={handleCalculateFlip} className="md:col-span-6 space-y-3">
@@ -453,7 +455,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* KONTENT 2: PANEL ADMINA (INKWIZYCJA) */}
+                  {/* KONTENT ADMINA */}
                   {rightTab === 'ADMIN' && isAdmin && (
                     <div className="space-y-4 text-xs sm:text-sm">
                       <div className="flex justify-between items-center bg-[#080506] p-3 border border-red-950/60 flex-wrap gap-2">
@@ -467,7 +469,7 @@ export default function Home() {
                               adminTab === 'MARKET' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
                             }`}
                           >
-                            Oferty Rynku ({allMarketPosts.length})
+                            Oferty ({allMarketPosts.length})
                           </button>
                           <button 
                             onClick={() => setAdminTab('GUILDS')} 
@@ -475,35 +477,40 @@ export default function Home() {
                               adminTab === 'GUILDS' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
                             }`}
                           >
-                            Dekrety Gildii ({allGuilds.length})
+                            Gildie ({allGuilds.length})
+                          </button>
+                          <button 
+                            onClick={() => setAdminTab('EXPEDITIONS')} 
+                            className={`px-3 py-1 text-xs font-black uppercase transition ${
+                              adminTab === 'EXPEDITIONS' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            Wyprawy ({allExpeditions.length})
                           </button>
                         </div>
                       </div>
 
                       <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
-                        {adminTab === 'MARKET' ? (
+                        {adminTab === 'MARKET' && (
                           allMarketPosts.length === 0 ? (
-                            <p className="text-gray-500 italic text-center py-6">Brak ofert na rynku do zarządzania.</p>
+                            <p className="text-gray-500 italic text-center py-6">Brak ofert na rynku.</p>
                           ) : (
                             allMarketPosts.map(post => (
                               <div key={post.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
                                 <div>
-                                  <span className="text-purple-400 font-mono font-bold mr-2">[{post.city || post.server || 'Caerleon'}]</span>
+                                  <span className="text-purple-400 font-mono font-bold mr-2">[{post.city || 'Caerleon'}]</span>
                                   <span className="text-gray-200 font-bold">{post.title || post.item_name}</span>
                                   <span className="text-[#c59b27] font-bold font-mono ml-2">{post.price} Silver</span>
                                 </div>
-                                <button 
-                                  onClick={() => deleteMarketPost(post.id)} 
-                                  className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs tracking-wider transition"
-                                >
-                                  Anuluj
-                                </button>
+                                <button onClick={() => deleteMarketPost(post.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Anuluj</button>
                               </div>
                             ))
                           )
-                        ) : (
+                        )}
+
+                        {adminTab === 'GUILDS' && (
                           allGuilds.length === 0 ? (
-                            <p className="text-gray-500 italic text-center py-6">Brak zarejestrowanych gildii.</p>
+                            <p className="text-gray-500 italic text-center py-6">Brak gildii.</p>
                           ) : (
                             allGuilds.map(guild => (
                               <div key={guild.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
@@ -511,12 +518,24 @@ export default function Home() {
                                   <span className="text-purple-400 font-mono font-bold mr-2">[{guild.server}]</span>
                                   <span className="text-gray-100 font-serif font-bold">{guild.name}</span>
                                 </div>
-                                <button 
-                                  onClick={() => deleteGuild(guild.id)} 
-                                  className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs tracking-wider transition"
-                                >
-                                  Spal Dekret
-                                </button>
+                                <button onClick={() => deleteGuild(guild.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Spal Dekret</button>
+                              </div>
+                            ))
+                          )
+                        )}
+
+                        {adminTab === 'EXPEDITIONS' && (
+                          allExpeditions.length === 0 ? (
+                            <p className="text-gray-500 italic text-center py-6">Brak aktywnych wypraw.</p>
+                          ) : (
+                            allExpeditions.map(exp => (
+                              <div key={exp.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
+                                <div>
+                                  <span className="text-purple-400 font-mono font-bold mr-2">[{exp.activity_type}]</span>
+                                  <span className="text-gray-100 font-serif font-bold">{exp.title}</span>
+                                  <span className="text-amber-400 font-bold font-mono ml-2">({exp.start_time})</span>
+                                </div>
+                                <button onClick={() => deleteExpedition(exp.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Odwołaj</button>
                               </div>
                             ))
                           )
@@ -526,10 +545,8 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* CZAT SPOŁECZNOŚCIOWY */}
+                {/* CZAT */}
                 <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 h-[500px] flex flex-col justify-between shadow-xl">
-                  
-                  {/* KANAŁY */}
                   <div className="flex gap-2 border-b border-[#3a1a1e] pb-3 mb-3 text-xs font-serif font-black uppercase tracking-wider items-center flex-wrap">
                     <span className="text-[#c59b27] mr-1">📜 KANAŁY:</span>
                     {['GLOBALNY', 'HANDEL', 'REKRUTACJA', 'SYSTEM'].map((ch) => (
@@ -547,7 +564,6 @@ export default function Home() {
                     ))}
                   </div>
 
-                  {/* TEKST CZATU */}
                   <div 
                     ref={chatContainerRef}
                     className="space-y-3 overflow-y-auto flex-1 w-full pr-1 text-sm sm:text-base select-text flex flex-col"
@@ -563,10 +579,7 @@ export default function Home() {
                           const cleanDisplayName = (msg.username || 'System').replace(/#0$/, '');
 
                           return (
-                            <div 
-                              key={msg.id} 
-                              className="flex items-start gap-3 border-b border-[#2b181a]/50 pb-2.5 last:border-none"
-                            >
+                            <div key={msg.id} className="flex items-start gap-3 border-b border-[#2b181a]/50 pb-2.5 last:border-none">
                               {userAvatar && msg.channel !== 'SYSTEM' ? (
                                 <img src={userAvatar} alt="Avatar" className="w-9 h-9 object-cover border border-[#3a1a1e] shrink-0" />
                               ) : (
@@ -600,7 +613,6 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* INPUT CZATU */}
                   <form onSubmit={handleSendChatMessage} className="mt-3 flex gap-2 items-center bg-[#080506] border border-[#2b181a] p-2.5">
                     <input
                       type="text"
@@ -631,7 +643,6 @@ export default function Home() {
         )}
       </div>
 
-      {/* FOOTER */}
       <footer className="w-full bg-[#050304] border-t border-[#3a1a1e] py-6 text-center text-xs text-gray-500 mt-8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska Portal</span>.</p>

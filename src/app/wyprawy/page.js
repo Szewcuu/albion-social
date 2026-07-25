@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { 
   ArrowLeft, Swords, Shield, Heart, UserCheck, Plus, 
-  Clock, MapPin, Users, Trash2, CheckCircle2, AlertCircle 
+  Clock, Users, Trash2
 } from 'lucide-react'
 
 export default function Wyprawy() {
@@ -12,7 +12,6 @@ export default function Wyprawy() {
   const [loading, setLoading] = useState(true)
   const [expeditions, setExpeditions] = useState([])
   
-  // Stan formularza nowej wyprawy
   const [formData, setFormData] = useState({
     title: '',
     activity_type: 'Statyk T8',
@@ -27,7 +26,6 @@ export default function Wyprawy() {
   })
   const [formMessage, setFormMessage] = useState('')
 
-  // Stan formularza zapisu gracza do drużyny
   const [signupData, setFormSignupData] = useState({
     ingame_nick: '',
     player_ip: 1400,
@@ -59,7 +57,7 @@ export default function Wyprawy() {
     setLoading(false)
   }
 
-const handleCreateExpedition = async (e) => {
+  const handleCreateExpedition = async (e) => {
     e.preventDefault()
     setFormMessage('')
 
@@ -68,9 +66,9 @@ const handleCreateExpedition = async (e) => {
       return
     }
 
-    const creatorName = user?.user_metadata?.full_name || user?.email || 'Gracz'
+    const creatorName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gracz'
 
-    const { error } = await supabase.from('expeditions').insert([
+    const { data: newExp, error } = await supabase.from('expeditions').insert([
       {
         ...formData,
         min_ip: parseInt(formData.min_ip),
@@ -80,16 +78,16 @@ const handleCreateExpedition = async (e) => {
         max_supports: parseInt(formData.max_supports),
         user_id: user.id
       }
-    ])
+    ]).select().single()
 
     if (error) {
       setFormMessage(`Błąd: ${error.message}`)
     } else {
       setFormMessage('Wyprawa została ogłoszona na tablicy!')
 
-      // Wysyłamy automatyczne powiadomienie na Discorda
+      // Wysyłanie powiadomienia na Webhook Discorda
       try {
-        await fetch('/api/webhooks/expedition', {
+        const res = await fetch('/api/webhooks/expedition', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -102,8 +100,10 @@ const handleCreateExpedition = async (e) => {
             creator: creatorName
           })
         })
+        const resData = await res.json()
+        if (!res.ok) console.error('Błąd Webhooka:', resData)
       } catch (err) {
-        console.error('Błąd wysyłania na Discorda:', err)
+        console.error('Nie udało się wywołać Webhooka:', err)
       }
 
       setFormData({
@@ -126,11 +126,33 @@ const handleCreateExpedition = async (e) => {
     e.preventDefault()
     if (!user || !activeExpeditionForSignup) return
 
+    const signups = activeExpeditionForSignup.expedition_signups || []
+    const role = signupData.role_type // 'Tank', 'Healer', 'DPS', 'Support'
+    
+    // Walidacja dostępnych miejsc w doli
+    const currentCount = signups.filter(s => s.role_type === role).length
+    let maxAllowed = 0
+
+    if (role === 'Tank') maxAllowed = activeExpeditionForSignup.max_tanks
+    if (role === 'Healer') maxAllowed = activeExpeditionForSignup.max_healers
+    if (role === 'DPS') maxAllowed = activeExpeditionForSignup.max_dps
+    if (role === 'Support') maxAllowed = activeExpeditionForSignup.max_supports
+
+    if (maxAllowed <= 0) {
+      alert(`Wyprawa nie poszukuje graczy na rolę: ${role}!`)
+      return
+    }
+
+    if (currentCount >= maxAllowed) {
+      alert(`Brak wolnych miejsc dla roli ${role} (${currentCount}/${maxAllowed})!`)
+      return
+    }
+
     const { error } = await supabase.from('expedition_signups').insert([
       {
         expedition_id: activeExpeditionForSignup.id,
         user_id: user.id,
-        role_type: signupData.role_type,
+        role_type: role,
         ingame_nick: signupData.ingame_nick.trim(),
         player_ip: parseInt(signupData.player_ip)
       }
@@ -160,7 +182,6 @@ const handleCreateExpedition = async (e) => {
 
   return (
     <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
-      {/* POWRÓT */}
       <div>
         <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -168,7 +189,6 @@ const handleCreateExpedition = async (e) => {
         </Link>
       </div>
 
-      {/* NAGŁÓWEK */}
       <header className="bg-[#120a0c] border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden">
         <div className="flex items-center gap-3">
           <Users className="w-8 h-8 text-[#c59b27]" />
@@ -185,7 +205,7 @@ const handleCreateExpedition = async (e) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* FORMULARZ TWORZENIA WYPRAWY */}
+        {/* FORMULARZ */}
         <div className="lg:col-span-4">
           <div className="bg-[#120a0c] border border-[#3a1a1e] p-6 shadow-xl sticky top-6 space-y-4">
             <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2 flex items-center gap-2">
@@ -309,12 +329,12 @@ const handleCreateExpedition = async (e) => {
           </div>
         </div>
 
-        {/* LISTA AKTYWNYCH WYPRAW */}
+        {/* LISTA WYPRAW */}
         <div className="lg:col-span-8 space-y-4">
           {loading ? (
-            <p className="text-center py-8 text-gray-400 font-bold animate-pulse">Ładowanie aktywne wypraw...</p>
+            <p className="text-center py-8 text-gray-400 font-bold animate-pulse">Ładowanie aktywnych wypraw...</p>
           ) : expeditions.length === 0 ? (
-            <p className="text-center py-12 text-gray-500 italic bg-[#120a0c] border border-[#2b181a]">Brak aktywnych ogłoszeń wypraw. Zwołaj własną ekipę jako pierwszy!</p>
+            <p className="text-center py-12 text-gray-500 italic bg-[#120a0c] border border-[#2b181a]">Brak aktywnych ogłoszeń wypraw.</p>
           ) : (
             expeditions.map((exp) => {
               const signups = exp.expedition_signups || []
@@ -329,7 +349,6 @@ const handleCreateExpedition = async (e) => {
               return (
                 <div key={exp.id} className="bg-[#120a0c] border border-[#3a1a1e] hover:border-[#c59b27]/60 p-5 shadow-xl transition space-y-4 relative">
                   
-                  {/* HEADER KARTY */}
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#3a1a1e] pb-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -349,17 +368,16 @@ const handleCreateExpedition = async (e) => {
                     </div>
                   </div>
 
-                  {/* OPIS WYPRAWY */}
                   {exp.description && (
                     <p className="text-xs text-gray-300 bg-[#080506]/50 p-3 border border-[#2b181a]/60 leading-relaxed font-sans">
                       {exp.description}
                     </p>
                   )}
 
-                  {/* PODSUMOWANIE RÓL I SKŁADU */}
+                  {/* PODSUMOWANIE RÓL */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     
-                    {/* TANKI */}
+                    {/* TANK */}
                     <div className="bg-[#080506] p-2.5 border border-[#2b181a] space-y-1">
                       <div className="flex justify-between items-center border-b border-[#2b181a] pb-1">
                         <span className="font-bold text-sky-400 flex items-center gap-1"><Shield className="w-3 h-3" /> Tank</span>
@@ -373,7 +391,7 @@ const handleCreateExpedition = async (e) => {
                       ))}
                     </div>
 
-                    {/* HEALERZY */}
+                    {/* HEALER */}
                     <div className="bg-[#080506] p-2.5 border border-[#2b181a] space-y-1">
                       <div className="flex justify-between items-center border-b border-[#2b181a] pb-1">
                         <span className="font-bold text-emerald-400 flex items-center gap-1"><Heart className="w-3 h-3" /> Healer</span>
@@ -417,10 +435,9 @@ const handleCreateExpedition = async (e) => {
 
                   </div>
 
-                  {/* FOOTER KARTY I PRZYCISKI DOŁĄCZANIA */}
                   <div className="border-t border-[#3a1a1e] pt-3 flex flex-wrap justify-between items-center text-xs gap-3">
                     <span className="text-gray-500">
-                      Lider Drużyny: <b className="text-gray-300 font-mono">{exp.profiles?.username || 'Gracz'}</b>
+                      Lider: <b className="text-gray-300 font-mono">{exp.profiles?.username || 'Gracz'}</b>
                     </span>
 
                     <div className="flex items-center gap-2">
@@ -452,7 +469,7 @@ const handleCreateExpedition = async (e) => {
 
       </div>
 
-      {/* MODAL ZAPISU DO DRUŻYNY */}
+      {/* MODAL ZAPISU */}
       {activeExpeditionForSignup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85">
           <div className="w-full max-w-md bg-[#140c0e] border-2 border-[#c59b27] p-6 shadow-2xl space-y-4 text-gray-200">
@@ -469,7 +486,7 @@ const handleCreateExpedition = async (e) => {
                   value={signupData.ingame_nick} 
                   onChange={(e) => setFormSignupData({ ...signupData, ingame_nick: e.target.value })} 
                   className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                  placeholder="np. alpha123" 
+                  placeholder="np. Szewczykos" 
                 />
               </div>
 
@@ -480,10 +497,26 @@ const handleCreateExpedition = async (e) => {
                   onChange={(e) => setFormSignupData({ ...signupData, role_type: e.target.value })} 
                   className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none text-xs"
                 >
-                  <option value="Tank">Tank (Ciężki pancerz / Kontrola)</option>
-                  <option value="Healer">Healer (Leczenie)</option>
-                  <option value="DPS">DPS (Obrażenia)</option>
-                  <option value="Support">Support (Wsparcie / Debuff)</option>
+                  {activeExpeditionForSignup.max_tanks > 0 && (
+                    <option value="Tank">
+                      Tank ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length}/{activeExpeditionForSignup.max_tanks})
+                    </option>
+                  )}
+                  {activeExpeditionForSignup.max_healers > 0 && (
+                    <option value="Healer">
+                      Healer ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length}/{activeExpeditionForSignup.max_healers})
+                    </option>
+                  )}
+                  {activeExpeditionForSignup.max_dps > 0 && (
+                    <option value="DPS">
+                      DPS ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length}/{activeExpeditionForSignup.max_dps})
+                    </option>
+                  )}
+                  {activeExpeditionForSignup.max_supports > 0 && (
+                    <option value="Support">
+                      Support ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length}/{activeExpeditionForSignup.max_supports})
+                    </option>
+                  )}
                 </select>
               </div>
 
