@@ -12,6 +12,7 @@ export default function Wyprawy() {
   const [loading, setLoading] = useState(true)
   const [expeditions, setExpeditions] = useState([])
   
+  // FORMULARZ STWORZENIA WYPRAWY
   const [formData, setFormData] = useState({
     title: '',
     activity_type: 'Statyk T8',
@@ -26,6 +27,7 @@ export default function Wyprawy() {
   })
   const [formMessage, setFormMessage] = useState('')
 
+  // FORMULARZ DOŁĄCZANIA DO DRUŻYNY
   const [signupData, setFormSignupData] = useState({
     ingame_nick: '',
     player_ip: 1400,
@@ -57,14 +59,21 @@ export default function Wyprawy() {
     setLoading(false)
   }
 
-  // Otwieranie modalu z automatycznym wykryciem pierwszej wolnej roli
+  // Otwieranie modalu z automatycznym wykryciem PIERWSZEJ WOLNEJ roli
   const openSignupModal = (exp) => {
+    const signups = exp.expedition_signups || []
+    
+    const tanksCount = signups.filter(s => s.role_type === 'Tank').length
+    const healersCount = signups.filter(s => s.role_type === 'Healer').length
+    const dpsCount = signups.filter(s => s.role_type === 'DPS').length
+    const supportsCount = signups.filter(s => s.role_type === 'Support').length
+
     let defaultRole = 'Tank'
 
-    if (exp.max_tanks > 0) defaultRole = 'Tank'
-    else if (exp.max_healers > 0) defaultRole = 'Healer'
-    else if (exp.max_dps > 0) defaultRole = 'DPS'
-    else if (exp.max_supports > 0) defaultRole = 'Support'
+    if (exp.max_tanks > tanksCount) defaultRole = 'Tank'
+    else if (exp.max_healers > healersCount) defaultRole = 'Healer'
+    else if (exp.max_dps > dpsCount) defaultRole = 'DPS'
+    else if (exp.max_supports > supportsCount) defaultRole = 'Support'
 
     const defaultNick = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || ''
 
@@ -104,7 +113,7 @@ export default function Wyprawy() {
     } else {
       setFormMessage('Wyprawa została ogłoszona na tablicy!')
 
-      // Powiadomienie na Webhook Discorda
+      // Wywołanie Webhooka Discorda (Bez pingu @here)
       try {
         await fetch('/api/webhooks/expedition', {
           method: 'POST',
@@ -116,11 +125,15 @@ export default function Wyprawy() {
             start_time: formData.start_time,
             server: formData.server,
             description: formData.description,
+            max_tanks: formData.max_tanks,
+            max_healers: formData.max_healers,
+            max_dps: formData.max_dps,
+            max_supports: formData.max_supports,
             creator: creatorName
           })
         })
       } catch (err) {
-        console.error('Nie udało się wywołać Webhooka:', err)
+        console.error('Błąd wywołania Webhooka:', err)
       }
 
       setFormData({
@@ -146,7 +159,7 @@ export default function Wyprawy() {
     const signups = activeExpeditionForSignup.expedition_signups || []
     const role = signupData.role_type
     
-    // Walidacja dostępności ról
+    // Walidacja zajętości miejsc
     const currentCount = signups.filter(s => s.role_type === role).length
     let maxAllowed = 0
 
@@ -178,6 +191,28 @@ export default function Wyprawy() {
     if (error) {
       alert(`Błąd zapisu: ${error.message}`)
     } else {
+      // Powiadomienie Webhook, jeśli drużyna jest teraz w 100% PEŁNA
+      const totalMax = activeExpeditionForSignup.max_tanks + activeExpeditionForSignup.max_healers + activeExpeditionForSignup.max_dps + activeExpeditionForSignup.max_supports
+      const totalJoined = signups.length + 1
+
+      if (totalJoined >= totalMax && totalMax > 0) {
+        try {
+          await fetch('/api/webhooks/expedition', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'PARTY_FULL',
+              title: activeExpeditionForSignup.title,
+              activity_type: activeExpeditionForSignup.activity_type,
+              start_time: activeExpeditionForSignup.start_time,
+              creator: activeExpeditionForSignup.profiles?.username || 'Lider'
+            })
+          })
+        } catch (err) {
+          console.error('Błąd Webhooka (Party Full):', err)
+        }
+      }
+
       setActiveExpeditionForSignup(null)
       fetchExpeditions()
     }
@@ -199,6 +234,7 @@ export default function Wyprawy() {
 
   return (
     <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
+      {/* PRZYCISK POWROTU */}
       <div>
         <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
@@ -206,6 +242,7 @@ export default function Wyprawy() {
         </Link>
       </div>
 
+      {/* NAGŁÓWEK PODSTRONY */}
       <header className="bg-[#120a0c] border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden">
         <div className="flex items-center gap-3">
           <Users className="w-8 h-8 text-[#c59b27]" />
@@ -222,7 +259,7 @@ export default function Wyprawy() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* FORMULARZ */}
+        {/* LEWA KOLUMNA: FORMULARZ DODAWCZY */}
         <div className="lg:col-span-4">
           <div className="bg-[#120a0c] border border-[#3a1a1e] p-6 shadow-xl sticky top-6 space-y-4">
             <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2 flex items-center gap-2">
@@ -346,12 +383,12 @@ export default function Wyprawy() {
           </div>
         </div>
 
-        {/* LISTA WYPRAW */}
+        {/* PRAWA KOLUMNA: LISTA WYPRAW */}
         <div className="lg:col-span-8 space-y-4">
           {loading ? (
             <p className="text-center py-8 text-gray-400 font-bold animate-pulse">Ładowanie aktywnych wypraw...</p>
           ) : expeditions.length === 0 ? (
-            <p className="text-center py-12 text-gray-500 italic bg-[#120a0c] border border-[#2b181a]">Brak aktywnych ogłoszeń wypraw.</p>
+            <p className="text-center py-12 text-gray-500 italic bg-[#120a0c] border border-[#2b181a]">Brak aktywnych ogłoszeń wypraw. Zwołaj własną ekipę jako pierwszy!</p>
           ) : (
             expeditions.map((exp) => {
               const signups = exp.expedition_signups || []
@@ -366,6 +403,7 @@ export default function Wyprawy() {
               return (
                 <div key={exp.id} className="bg-[#120a0c] border border-[#3a1a1e] hover:border-[#c59b27]/60 p-5 shadow-xl transition space-y-4 relative">
                   
+                  {/* NAGŁÓWEK KARTY */}
                   <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#3a1a1e] pb-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -391,7 +429,7 @@ export default function Wyprawy() {
                     </p>
                   )}
 
-                  {/* PODSUMOWANIE RÓL */}
+                  {/* DISPLAY RÓL */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     
                     {/* TANK */}
@@ -486,7 +524,7 @@ export default function Wyprawy() {
 
       </div>
 
-      {/* MODAL ZAPISU */}
+      {/* MODAL ZAPISU DO DRUŻYNY */}
       {activeExpeditionForSignup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85">
           <div className="w-full max-w-md bg-[#140c0e] border-2 border-[#c59b27] p-6 shadow-2xl space-y-4 text-gray-200">
@@ -503,7 +541,7 @@ export default function Wyprawy() {
                   value={signupData.ingame_nick} 
                   onChange={(e) => setFormSignupData({ ...signupData, ingame_nick: e.target.value })} 
                   className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                  placeholder="np. Gracz123" 
+                  placeholder="np. Szewczykos" 
                 />
               </div>
 
@@ -515,23 +553,42 @@ export default function Wyprawy() {
                   className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none text-xs"
                 >
                   {activeExpeditionForSignup.max_tanks > 0 && (
-                    <option value="Tank">
-                      Tank ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length}/{activeExpeditionForSignup.max_tanks})
+                    <option 
+                      value="Tank" 
+                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length || 0) >= activeExpeditionForSignup.max_tanks}
+                    >
+                      Tank ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length || 0}/{activeExpeditionForSignup.max_tanks})
+                      {(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length || 0) >= activeExpeditionForSignup.max_tanks ? ' - PEŁNY' : ''}
                     </option>
                   )}
+
                   {activeExpeditionForSignup.max_healers > 0 && (
-                    <option value="Healer">
-                      Healer ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length}/{activeExpeditionForSignup.max_healers})
+                    <option 
+                      value="Healer" 
+                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length || 0) >= activeExpeditionForSignup.max_healers}
+                    >
+                      Healer ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length || 0}/{activeExpeditionForSignup.max_healers})
+                      {(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length || 0) >= activeExpeditionForSignup.max_healers ? ' - PEŁNY' : ''}
                     </option>
                   )}
+
                   {activeExpeditionForSignup.max_dps > 0 && (
-                    <option value="DPS">
-                      DPS ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length}/{activeExpeditionForSignup.max_dps})
+                    <option 
+                      value="DPS" 
+                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length || 0) >= activeExpeditionForSignup.max_dps}
+                    >
+                      DPS ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length || 0}/{activeExpeditionForSignup.max_dps})
+                      {(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length || 0) >= activeExpeditionForSignup.max_dps ? ' - PEŁNY' : ''}
                     </option>
                   )}
+
                   {activeExpeditionForSignup.max_supports > 0 && (
-                    <option value="Support">
-                      Support ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length}/{activeExpeditionForSignup.max_supports})
+                    <option 
+                      value="Support" 
+                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length || 0) >= activeExpeditionForSignup.max_supports}
+                    >
+                      Support ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length || 0}/{activeExpeditionForSignup.max_supports})
+                      {(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length || 0) >= activeExpeditionForSignup.max_supports ? ' - PEŁNY' : ''}
                     </option>
                   )}
                 </select>
@@ -549,7 +606,7 @@ export default function Wyprawy() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button type="submit" className="flex-1 bg-gradient-to-r from-[#c59b27] to-[#a87a1e] text-black font-black py-2.5 uppercase font-serif tracking-wider">
+                <button type="submit" className="flex-1 bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-2.5 uppercase font-serif tracking-wider">
                   Potwierdź Zgłoszenie
                 </button>
                 <button type="button" onClick={() => setActiveExpeditionForSignup(null)} className="bg-[#2b0d10] text-red-200 border border-red-900/60 font-bold px-4 py-2.5 uppercase">
