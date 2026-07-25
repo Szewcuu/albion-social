@@ -1,14 +1,26 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { Swords, ShoppingBag, Shield, MessageSquare, ExternalLink, LogIn, LogOut, ScrollText, Users } from 'lucide-react'
+import { 
+  Swords, ShoppingBag, Shield, MessageSquare, LogIn, LogOut, 
+  Clock, Users, Send, Bell, Flame, Globe, Sparkles 
+} from 'lucide-react'
 
 export default function Home() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // CZAT NA ŻYWO
+  const [messages, setMessages] = useState([])
+  const [newMessage, setNewMessage] = useState('')
+  const chatEndRef = useRef(null)
+
+  // ZEGAR ALBION (UTC)
+  const [utcTime, setUtcTime] = useState('')
+
   useEffect(() => {
+    // Session Auth
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
@@ -18,8 +30,49 @@ export default function Home() {
       setUser(session?.user ?? null)
     })
 
-    return () => subscription.unsubscribe()
+    // Zegar UTC Albion
+    const updateClock = () => {
+      const now = new Date()
+      setUtcTime(now.toISOString().substring(11, 19) + ' UTC')
+    }
+    updateClock()
+    const timer = setInterval(updateClock, 1000)
+
+    // Pobieranie wiadomości czatu
+    fetchMessages()
+
+    // Subskrypcja wiadomości czatu w czasie rzeczywistym
+    const channel = supabase
+      .channel('public:chat_messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
+        setMessages((prev) => [...prev, payload.new])
+        scrollToBottom()
+      })
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(timer)
+      supabase.removeChannel(channel)
+    }
   }, [])
+
+  const fetchMessages = async () => {
+    const { data } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .limit(50)
+
+    if (data) setMessages(data)
+    scrollToBottom()
+  }
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  }
 
   const handleLogin = async () => {
     await supabase.auth.signInWithOAuth({
@@ -32,21 +85,46 @@ export default function Home() {
     await supabase.auth.signOut()
   }
 
+  const handleSendMessage = async (e) => {
+    e.preventDefault()
+    if (!newMessage.trim() || !user) return
+
+    const username = user?.user_metadata?.custom_claims?.global_name || user?.email?.split('@')[0] || 'Gracz'
+
+    const { error } = await supabase.from('chat_messages').insert([
+      {
+        user_id: user.id,
+        username: username,
+        content: newMessage.trim(),
+      }
+    ])
+
+    if (!error) {
+      setNewMessage('')
+    }
+  }
+
   return (
-    <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
+    <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-base">
       
-      {/* PASEK NAWIGACJI / AUTORYZACJA */}
-      <nav className="flex items-center justify-between bg-[#120a0c]/90 border border-[#3a1a1e] p-4 shadow-xl backdrop-blur-md">
+      {/* PASEK NAWIGACJI & AUTORYZACJA */}
+      <nav className="flex flex-wrap items-center justify-between gap-4 bg-[#120a0c]/90 border border-[#3a1a1e] p-4 shadow-xl backdrop-blur-md">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#2b0d10] border border-[#c59b27] flex items-center justify-center shadow">
-            <Swords className="w-5 h-5 text-[#c59b27]" />
+          <div className="w-10 h-10 bg-[#2b0d10] border border-[#c59b27] flex items-center justify-center shadow">
+            <Swords className="w-6 h-6 text-[#c59b27]" />
           </div>
           <div>
-            <h2 className="text-base font-black text-gray-100 uppercase tracking-wider font-serif">
+            <h2 className="text-lg font-black text-gray-100 uppercase tracking-wider font-serif">
               Albion Online Polska
             </h2>
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Węzeł Społeczności Caerleon</p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-bold">Węzeł Społeczności Caerleon</p>
           </div>
+        </div>
+
+        {/* ZEGAR SERWEROWY UTC ALBION */}
+        <div className="hidden md:flex items-center gap-2 bg-[#080506] border border-[#2b181a] px-4 py-2 rounded-sm text-xs font-mono text-[#c59b27]">
+          <Clock className="w-4 h-4 text-[#c59b27] animate-pulse" />
+          <span>Czas Albion: <b>{utcTime || '00:00:00 UTC'}</b></span>
         </div>
 
         <div>
@@ -54,21 +132,21 @@ export default function Home() {
             <span className="text-xs text-gray-500 animate-pulse font-mono">Łączenie z bramą...</span>
           ) : user ? (
             <div className="flex items-center gap-3">
-              <span className="text-xs font-bold text-gray-300 hidden sm:inline">
+              <span className="text-sm font-bold text-gray-200 hidden sm:inline">
                 {user?.user_metadata?.custom_claims?.global_name || user?.email}
               </span>
               <button
                 onClick={handleLogout}
                 className="bg-[#2b0d10] hover:bg-red-900 border border-red-700/60 text-red-200 font-bold py-2 px-3 text-xs uppercase tracking-wider flex items-center gap-1.5 transition"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4" />
                 <span>Wyloguj</span>
               </button>
             </div>
           ) : (
             <button
               onClick={handleLogin}
-              className="bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-2 px-4 text-xs uppercase tracking-widest flex items-center gap-2 transition shadow-lg shadow-[#c59b27]/10 font-serif"
+              className="bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-2.5 px-5 text-xs uppercase tracking-widest flex items-center gap-2 transition shadow-lg shadow-[#c59b27]/10 font-serif"
             >
               <LogIn className="w-4 h-4" />
               <span>Zaloguj przez Discord</span>
@@ -77,22 +155,45 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* NAGŁÓWEK GŁÓWNY */}
-      <header className="relative bg-[#120a0c]/90 border-2 border-[#c59b27]/80 p-8 sm:p-12 shadow-[0_0_35px_rgba(197,155,39,0.15)] overflow-hidden text-center backdrop-blur-md">
-        <div className="max-w-3xl mx-auto space-y-4 relative z-10">
-          <span className="inline-block bg-[#2b0d10] text-red-400 border border-red-900/60 px-3 py-1 text-xs font-bold uppercase tracking-widest">
-            Centrum Królewskie
-          </span>
-          <h1 className="text-3xl sm:text-5xl font-black text-gray-100 uppercase tracking-wider font-serif leading-tight">
-            Polski Portal Albion Online
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed max-w-2xl mx-auto">
-            Główne centrum dowodzenia i tablica ogłoszeń dla polskich graczy. Szukaj gildii, handluj ekwipunkiem i twórz najlepsze zestawy bojowe.
-          </p>
+      {/* NAGŁÓWEK GŁÓWNY Z TIMERA-MI WZIZ */}
+      <header className="relative bg-[#120a0c]/90 border-2 border-[#c59b27]/80 p-6 sm:p-10 shadow-[0_0_35px_rgba(197,155,39,0.15)] overflow-hidden backdrop-blur-md">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          <div className="lg:col-span-8 space-y-3">
+            <span className="inline-flex items-center gap-1.5 bg-[#2b0d10] text-red-400 border border-red-900/60 px-3 py-1 text-xs font-bold uppercase tracking-widest">
+              <Flame className="w-3.5 h-3.5" /> Centrum Królewskie Caerleon
+            </span>
+            <h1 className="text-3xl sm:text-4xl font-black text-gray-100 uppercase tracking-wider font-serif leading-tight">
+              Polski Portal Albion Online
+            </h1>
+            <p className="text-sm text-gray-300 leading-relaxed max-w-2xl">
+              Główne centrum dowodzenia i tablica ogłoszeń dla polskich graczy. Szukaj gildii, organizuj się na ZvZ, handluj ekwipunkiem i rozmawiaj na żywo.
+            </p>
+          </div>
+
+          {/* SEKACJA TIMERA BITW WZIZ / RESETÓW */}
+          <div className="lg:col-span-4 bg-[#080506] border border-[#2b181a] p-4 space-y-3">
+            <h3 className="text-xs font-black text-[#c59b27] uppercase tracking-wider flex items-center gap-1.5 font-serif border-b border-[#2b181a] pb-2">
+              <Clock className="w-4 h-4" /> Timery ZvZ &amp; Resetów
+            </h3>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center text-gray-300">
+                <span>Serwer Europa (ZvZ Main):</span>
+                <span className="font-mono font-bold text-amber-400">18:00 / 20:00 UTC</span>
+              </div>
+              <div className="flex justify-between items-center text-gray-300">
+                <span>Przerwa Techniczna:</span>
+                <span className="font-mono font-bold text-gray-400">10:00 UTC</span>
+              </div>
+              <div className="flex justify-between items-center text-gray-300">
+                <span>Serwer Ameryka:</span>
+                <span className="font-mono font-bold text-purple-400">00:00 / 03:00 UTC</span>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
-      {/* SZYBKIE KAFELKI MODUŁÓW */}
+      {/* SZYBKIE KAFELKI MODUŁÓW NAWIGACJI */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* KAFEL 1: REJESTR GILDII */}
@@ -101,11 +202,11 @@ export default function Home() {
             <div className="w-10 h-10 bg-[#080506] border border-[#3a1a1e] group-hover:border-[#c59b27] flex items-center justify-center transition">
               <Users className="w-5 h-5 text-[#c59b27]" />
             </div>
-            <h3 className="text-lg font-black text-gray-100 uppercase font-serif tracking-wider group-hover:text-[#c59b27] transition">
+            <h3 className="text-xl font-black text-gray-100 uppercase font-serif tracking-wider group-hover:text-[#c59b27] transition">
               Rejestr Gildii
             </h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Przeglądaj aktywne sojusze, sprawdzaj wymagania rekrutacyjne i wysyłaj aplikacje do liderów.
+            <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+              Przeglądaj aktywne sojusze, sprawdzaj wymagania rekrutacyjne i wysyłaj aplikacje prosto do rekrutera.
             </p>
           </div>
           <span className="mt-6 text-xs font-bold text-[#c59b27] uppercase tracking-wider flex items-center gap-1 group-hover:translate-x-1 transition-transform">
@@ -119,10 +220,10 @@ export default function Home() {
             <div className="w-10 h-10 bg-[#080506] border border-[#3a1a1e] group-hover:border-[#c59b27] flex items-center justify-center transition">
               <ShoppingBag className="w-5 h-5 text-[#c59b27]" />
             </div>
-            <h3 className="text-lg font-black text-gray-100 uppercase font-serif tracking-wider group-hover:text-[#c59b27] transition">
+            <h3 className="text-xl font-black text-gray-100 uppercase font-serif tracking-wider group-hover:text-[#c59b27] transition">
               Rynek Handlowy
             </h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
               Wystawiaj przedmioty, wierzchowce i surowce na sprzedaż. Wymieniaj się z innymi graczami bez prowizji.
             </p>
           </div>
@@ -137,11 +238,11 @@ export default function Home() {
             <div className="w-10 h-10 bg-[#080506] border border-[#3a1a1e] group-hover:border-[#c59b27] flex items-center justify-center transition">
               <Shield className="w-5 h-5 text-[#c59b27]" />
             </div>
-            <h3 className="text-lg font-black text-gray-100 uppercase font-serif tracking-wider group-hover:text-[#c59b27] transition">
+            <h3 className="text-xl font-black text-gray-100 uppercase font-serif tracking-wider group-hover:text-[#c59b27] transition">
               Kreator Buildów
             </h3>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Odkrywaj najlepsze zestawy wyposażenia do PvP, ZvZ, Statyków i Solo Ganków przygotowane przez graczy.
+            <p className="text-xs sm:text-sm text-gray-400 leading-relaxed">
+              Odkrywaj najlepsze zestawy wyposażenia do PvP, ZvZ, Statyków i Solo Ganków przygotowane przez społeczność.
             </p>
           </div>
           <span className="mt-6 text-xs font-bold text-[#c59b27] uppercase tracking-wider flex items-center gap-1 group-hover:translate-x-1 transition-transform">
@@ -150,6 +251,63 @@ export default function Home() {
         </Link>
 
       </div>
+
+      {/* PRZYWRÓCONY CZAT NA ŻYWO (LIVE CHAT) */}
+      <section className="bg-[#120a0c]/80 border border-[#3a1a1e] p-6 shadow-2xl backdrop-blur-md space-y-4">
+        <div className="flex items-center justify-between border-b border-[#3a1a1e] pb-3">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-[#c59b27]" />
+            <h2 className="text-lg font-black text-gray-100 uppercase font-serif tracking-wider">
+              Karczma Caerleon (Czat Ogólny)
+            </h2>
+          </div>
+          <span className="text-xs text-emerald-400 font-mono font-bold flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Realtime
+          </span>
+        </div>
+
+        {/* OKNO WIADOMOŚCI CZATU */}
+        <div className="h-64 bg-[#080506] border border-[#2b181a] p-4 overflow-y-auto space-y-3 font-sans">
+          {messages.length === 0 ? (
+            <p className="text-xs text-gray-500 italic text-center py-8">Brak wiadomości. Bądź pierwszy i przywitaj się w karczmie!</p>
+          ) : (
+            messages.map((msg, index) => (
+              <div key={msg.id || index} className="text-xs sm:text-sm leading-relaxed">
+                <span className="text-gray-500 text-[10px] font-mono mr-2">
+                  {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                </span>
+                <span className="font-bold text-[#c59b27] mr-1.5">{msg.username || 'Gracz'}:</span>
+                <span className="text-gray-200">{msg.content}</span>
+              </div>
+            ))
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* INPUT WYSYŁANIA WIADOMOŚCI */}
+        {!user ? (
+          <p className="text-xs text-gray-400 italic text-center py-2 bg-[#080506] border border-[#2b181a]">
+            Zaloguj się przez Discorda powyżej, aby pisać na czacie.
+          </p>
+        ) : (
+          <form onSubmit={handleSendMessage} className="flex gap-2">
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Napisz wiadomość na czacie ogólnym..."
+              className="flex-1 bg-[#080506] border border-[#2b181a] p-2.5 text-xs sm:text-sm text-gray-100 focus:outline-none focus:border-[#c59b27] transition"
+            />
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black px-5 py-2.5 text-xs uppercase tracking-widest font-serif flex items-center gap-1.5 transition"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span>Wyślij</span>
+            </button>
+          </form>
+        )}
+      </section>
 
       {/* FOOTER STRONY GŁÓWNEJ */}
       <footer className="w-full bg-[#050304] border-t border-[#3a1a1e] py-6 text-center text-xs text-gray-500 mt-12">

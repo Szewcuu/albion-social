@@ -12,18 +12,22 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Globalna baza stylów i czcionki */
+/* Ujednolicona, większa i czytelna czcionka w całym portalu */
 html,
 body {
   background-color: var(--background);
   color: var(--foreground);
   min-height: 100vh;
-  font-size: 15px; /* Ujednolicony bazowy rozmiar tekstu */
+  font-size: 16px; /* Powiększony bazowy rozmiar tekstu */
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Krwisto-złoty paski przewijania (Scrollbar) dla całego portalu */
+h1, h2, h3, h4 {
+  letter-spacing: 0.025em;
+}
+
+/* Stylizowany paski przewijania (Scrollbar) */
 ::-webkit-scrollbar {
   width: 8px;
 }
