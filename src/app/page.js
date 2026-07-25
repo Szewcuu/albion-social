@@ -226,8 +226,14 @@ export default function Home() {
   }
 
   const logout = async () => { await supabase.auth.signOut() }
-  const loginWithDiscord = async () => { await supabase.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: window.location.origin } }) }
-  
+  const loginWithDiscord = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'discord',
+      options: {
+        redirectTo: `${window.location.origin}` // Automatycznie wykrywa, czy jesteś na localhost, czy na Vercelu
+      }
+    })
+  }
   const deleteMarketPost = async (id) => {
     if (confirm('Usunąć ofertę z rynku?')) {
       const { error } = await supabase.from('market_items').delete().eq('id', id)

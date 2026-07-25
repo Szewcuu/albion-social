@@ -29,7 +29,7 @@ export default function Wyprawy() {
   const [signupData, setFormSignupData] = useState({
     ingame_nick: '',
     player_ip: 1400,
-    role_type: 'DPS'
+    role_type: 'Tank'
   })
   const [activeExpeditionForSignup, setActiveExpeditionForSignup] = useState(null)
 
@@ -57,6 +57,25 @@ export default function Wyprawy() {
     setLoading(false)
   }
 
+  // Otwieranie modalu z automatycznym wykryciem pierwszej wolnej roli
+  const openSignupModal = (exp) => {
+    let defaultRole = 'Tank'
+
+    if (exp.max_tanks > 0) defaultRole = 'Tank'
+    else if (exp.max_healers > 0) defaultRole = 'Healer'
+    else if (exp.max_dps > 0) defaultRole = 'DPS'
+    else if (exp.max_supports > 0) defaultRole = 'Support'
+
+    const defaultNick = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || ''
+
+    setFormSignupData({
+      ingame_nick: defaultNick,
+      player_ip: exp.min_ip || 1400,
+      role_type: defaultRole
+    })
+    setActiveExpeditionForSignup(exp)
+  }
+
   const handleCreateExpedition = async (e) => {
     e.preventDefault()
     setFormMessage('')
@@ -68,7 +87,7 @@ export default function Wyprawy() {
 
     const creatorName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gracz'
 
-    const { data: newExp, error } = await supabase.from('expeditions').insert([
+    const { error } = await supabase.from('expeditions').insert([
       {
         ...formData,
         min_ip: parseInt(formData.min_ip),
@@ -78,16 +97,16 @@ export default function Wyprawy() {
         max_supports: parseInt(formData.max_supports),
         user_id: user.id
       }
-    ]).select().single()
+    ])
 
     if (error) {
       setFormMessage(`Błąd: ${error.message}`)
     } else {
       setFormMessage('Wyprawa została ogłoszona na tablicy!')
 
-      // Wysyłanie powiadomienia na Webhook Discorda
+      // Powiadomienie na Webhook Discorda
       try {
-        const res = await fetch('/api/webhooks/expedition', {
+        await fetch('/api/webhooks/expedition', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -100,8 +119,6 @@ export default function Wyprawy() {
             creator: creatorName
           })
         })
-        const resData = await res.json()
-        if (!res.ok) console.error('Błąd Webhooka:', resData)
       } catch (err) {
         console.error('Nie udało się wywołać Webhooka:', err)
       }
@@ -127,9 +144,9 @@ export default function Wyprawy() {
     if (!user || !activeExpeditionForSignup) return
 
     const signups = activeExpeditionForSignup.expedition_signups || []
-    const role = signupData.role_type // 'Tank', 'Healer', 'DPS', 'Support'
+    const role = signupData.role_type
     
-    // Walidacja dostępnych miejsc w doli
+    // Walidacja dostępności ról
     const currentCount = signups.filter(s => s.role_type === role).length
     let maxAllowed = 0
 
@@ -452,7 +469,7 @@ export default function Wyprawy() {
                           <Trash2 className="w-3 h-3" /> Opuść Drużynę
                         </button>
                       ) : user ? (
-                        <button onClick={() => setActiveExpeditionForSignup(exp)} className="bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black px-4 py-1.5 uppercase tracking-widest text-[11px] font-serif transition">
+                        <button onClick={() => openSignupModal(exp)} className="bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black px-4 py-1.5 uppercase tracking-widest text-[11px] font-serif transition">
                           Dołącz do Ekipy
                         </button>
                       ) : (
@@ -486,7 +503,7 @@ export default function Wyprawy() {
                   value={signupData.ingame_nick} 
                   onChange={(e) => setFormSignupData({ ...signupData, ingame_nick: e.target.value })} 
                   className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                  placeholder="np. Szewczykos" 
+                  placeholder="np. Gracz123" 
                 />
               </div>
 
