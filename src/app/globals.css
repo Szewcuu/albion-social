@@ -5,43 +5,37 @@
   --foreground: #bcbbc2;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-/* Ujednolicona, większa i czytelna czcionka w całym portalu */
+/* Globalny rozmiar czcionek na całym portalu */
 html,
 body {
   background-color: var(--background);
   color: var(--foreground);
   min-height: 100vh;
-  font-size: 16px; /* Powiększony bazowy rozmiar tekstu */
+  font-size: 16px; /* Zwiększona bazowa czcionka */
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 {
-  letter-spacing: 0.025em;
+/* Zwiększone czcionki dla elementów tekstowych */
+p, input, select, textarea, button {
+  font-size: 0.95rem !important; /* ~15px-16px */
 }
 
-/* Stylizowany paski przewijania (Scrollbar) */
+/* Zwiększony tekst na czacie */
+.chat-message-text {
+  font-size: 1rem !important; /* 16px */
+  line-height: 1.5;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: #080506;
 }
-
 ::-webkit-scrollbar-thumb {
   background: #2b0d10;
   border: 1px solid #c59b27;
   border-radius: 2px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #c59b27;
 }
