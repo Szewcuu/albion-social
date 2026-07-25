@@ -307,9 +307,16 @@ export default function Home() {
         .font-albion-ui { font-family: 'Inter', sans-serif; }
       `}</style>
 
-      {/* TŁO STATYCZNE */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#1a0c0e] via-[#0f0a0a] to-[#080505] z-0 pointer-events-none"></div>
+      {/* NOWE KRWISTO-OGNISTE TŁO */}
+      {/* 1. Baza: Ciemnoczerwony gradient liniowy z góry na dół */}
+      <div className="fixed inset-0 bg-gradient-to-b from-[#2b0d10] via-[#14080a] to-[#090405] z-0 pointer-events-none"></div>
 
+      {/* 2. Górna poświata: Błysk krwistej czerwieni u góry ekranu */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/35 via-red-950/10 to-transparent z-0 pointer-events-none"></div>
+
+      {/* 3. Centralna plama ognia: Delikatne czerwone światło na środku */}
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/20 via-transparent to-black/60 z-0 pointer-events-none"></div>
+      
       {/* GŁÓWNA ZAWARTOŚĆ */}
       <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
         {!user ? (
