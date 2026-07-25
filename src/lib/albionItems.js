@@ -204,3 +204,60 @@ export const ALBION_ITEMS = {
     { name: 'Zupa Rybna T1 (Fish Soup)', id: 'T1_MEAL_SOUP' },
   ],
 }
+
+// Flatten all items into one searchable array
+export const ALL_ITEMS_FLAT = Object.values(ALBION_ITEMS)
+  .flat()
+  .filter(item => item.id) // Remove empty slots
+
+// Fuzzy search function - znajduje item po nazwie lub ID
+export const findItemByName = (searchTerm) => {
+  if (!searchTerm || !searchTerm.trim()) return null
+  
+  const lower = searchTerm.toLowerCase().trim()
+  
+  // Exact match first (fastest)
+  const exact = ALL_ITEMS_FLAT.find(item => 
+    item.id.toLowerCase() === lower
+  )
+  if (exact) return exact
+  
+  // Partial match in name
+  const nameMatch = ALL_ITEMS_FLAT.find(item =>
+    item.name.toLowerCase().includes(lower) ||
+    item.id.toLowerCase().includes(lower)
+  )
+  if (nameMatch) return nameMatch
+  
+  // Fuzzy match - liczymy ile znaków pasuje
+  const fuzzyMatches = ALL_ITEMS_FLAT
+    .map(item => ({
+      item,
+      score: calculateFuzzyScore(lower, item.name.toLowerCase()) +
+             calculateFuzzyScore(lower, item.id.toLowerCase())
+    }))
+    .filter(m => m.score > 0)
+    .sort((a, b) => b.score - a.score)
+  
+  return fuzzyMatches.length > 0 ? fuzzyMatches[0].item : null
+}
+
+// Calculate fuzzy match score (how many chars match in order)
+const calculateFuzzyScore = (search, target) => {
+  let score = 0
+  let searchIdx = 0
+  
+  for (let i = 0; i < target.length && searchIdx < search.length; i++) {
+    if (target[i] === search[searchIdx]) {
+      score += 10
+      searchIdx++
+    }
+  }
+  
+  // Bonus dla znalezienia całego słowa
+  if (searchIdx === search.length) {
+    score += search.length * 5
+  }
+  
+  return score
+}

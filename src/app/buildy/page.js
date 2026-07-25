@@ -1,6 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { ALBION_ITEMS } from '@/lib/albionItems'
+import { ALBION_ITEMS, findItemByName } from '@/lib/albionItems'
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, User, Trash2, Search, Check } from 'lucide-react'
@@ -34,138 +34,117 @@ const getItemIcon = (itemId) => {
   if (cleanId.includes('BRAWLER')) return '🥊'
   return '⚔️'
 }
-function ItemSearchSelect({ label, category, value, enchantValue, onValueChange, onEnchantChange }) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [itemsList, setItemsList] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantChange }) {
+  const [inputValue, setInputValue] = useState(value || '')
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const containerRef = useRef(null)
 
+  // Zamknij suggestions na click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false)
+        setShowSuggestions(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Pobierz dane z API przy otwarciu lub zmianie kategor
-  useEffect(() => {
-    if (!isOpen) return
-
-    const fetchItems = async () => {
-      setIsLoading(true)
-      try {
-        const query = new URLSearchParams()
-        query.set('category', category)
-        if (searchQuery.trim()) {
-          query.set('search', searchQuery)
-        }
-
-        const res = await fetch(`/api/items?${query}`)
-        const data = await res.json()
-        
-        if (data.items) {
-          setItemsList(data.items)
-        } else if (Array.isArray(data)) {
-          setItemsList(data)
-        }
-      } catch (err) {
-        console.error('Error fetching items:', err)
-        // Fallback do lokalnych danych
-        setItemsList(ALBION_CATEGORIES[category] || [])
-      } finally {
-        setIsLoading(false)
-      }
+  // Update suggestions na input change
+  const handleInputChange = (text) => {
+    setInputValue(text)
+    
+    if (text.trim() === '') {
+      setSuggestions([])
+      setShowSuggestions(false)
+      return
     }
 
-    const timer = setTimeout(fetchItems, searchQuery ? 300 : 0)
-    return () => clearTimeout(timer)
-  }, [category, searchQuery, isOpen])
+    // Fuzzy search - znajdź pasujący item
+    const found = findItemByName(text)
+    if (found) {
+      setSuggestions([found])
+    } else {
+      setSuggestions([])
+    }
+    
+    setShowSuggestions(true)
+  }
 
-  const selectedItem = itemsList.find(i => i.id === value) || { name: value ? value : 'Brak / Pusty slot', id: value }
+  const handleSelectSuggestion = (item) => {
+    onValueChange(item.id)
+    setInputValue(item.name)
+    setShowSuggestions(false)
+  }
+
+  const handleClear = () => {
+    onValueChange('')
+    setInputValue('')
+    setSuggestions([])
+  }
 
   return (
     <div className="relative w-full" ref={containerRef}>
       <label className="block text-gray-400 mb-1 font-bold text-[11px] uppercase">{label}</label>
       
       <div className="flex gap-1.5 w-full">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex-1 bg-[#080506] border border-[#2b181a] hover:border-[#c59b27] p-2 text-left text-gray-200 text-xs flex justify-between items-center outline-none transition overflow-hidden"
-        >
-          <span className="truncate pr-1">
-            {value === '' ? 'Brak / Pusty slot' : `${selectedItem.name}${enchantValue > 0 ? ` .${enchantValue}` : ''}`}
-          </span>
-          <Search className="w-3.5 h-3.5 text-gray-500 shrink-0 ml-1" />
-        </button>
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onFocus={() => inputValue && setSuggestions(findItemByName(inputValue) ? [findItemByName(inputValue)] : [])}
+          placeholder="Wpisz nazwę itemu..."
+          className="flex-1 bg-[#080506] border border-[#2b181a] focus:border-[#c59b27] p-2 text-left text-gray-200 text-xs outline-none transition"
+        />
 
-        {value !== '' && category !== 'bags' && (
-          <select
-            value={enchantValue}
-            onChange={(e) => onEnchantChange(e.target.value)}
-            className="w-14 bg-[#080506] border border-[#2b181a] hover:border-[#c59b27] p-1.5 text-amber-400 font-bold text-xs text-center outline-none transition font-mono shrink-0"
-          >
-            <option value="0">.0</option>
-            <option value="1">.1</option>
-            <option value="2">.2</option>
-            <option value="3">.3</option>
-            <option value="4">.4</option>
-          </select>
+        {value !== '' && (
+          <>
+            <select
+              value={enchantValue}
+              onChange={(e) => onEnchantChange(e.target.value)}
+              className="w-14 bg-[#080506] border border-[#2b181a] hover:border-[#c59b27] p-1.5 text-amber-400 font-bold text-xs text-center outline-none transition font-mono shrink-0"
+            >
+              <option value="0">.0</option>
+              <option value="1">.1</option>
+              <option value="2">.2</option>
+              <option value="3">.3</option>
+              <option value="4">.4</option>
+            </select>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="px-2 bg-[#c59b27]/20 border border-[#c59b27]/50 text-[#c59b27] text-xs rounded hover:bg-[#c59b27]/40 transition shrink-0"
+            >
+              ✕
+            </button>
+          </>
         )}
       </div>
 
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#140c0e] border-2 border-[#c59b27] shadow-2xl rounded-sm max-h-64 overflow-y-auto p-1 space-y-1">
-          <input
-            type="text"
-            placeholder="Szukaj na liście..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#080506] border border-[#2b181a] p-2 text-xs text-gray-100 outline-none mb-1 sticky top-0 z-10"
-            autoFocus
-          />
-
-          <button
-            type="button"
-            onClick={() => {
-              onValueChange('')
-              setIsOpen(false)
-              setSearchQuery('')
-            }}
-            className="w-full text-left p-2 text-xs text-gray-400 hover:bg-[#2b181a] transition border-b border-[#2b181a]"
-          >
-            <em>[Wyczyść / Pusty slot]</em>
-          </button>
-
-          {isLoading ? (
-            <p className="text-xs text-gray-500 p-3 italic text-center">Ładowanie przedmiotów...</p>
-          ) : itemsList.length === 0 ? (
-            <p className="text-[10px] text-gray-500 p-3 italic text-center">Brak przedmiotów pasujących do zapytania.</p>
-          ) : (
-            itemsList.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  onValueChange(item.id)
-                  setIsOpen(false)
-                  setSearchQuery('')
-                }}
-                className={`w-full text-left p-2 text-xs flex items-center gap-2 hover:bg-[#2b181a] transition ${
-                  item.id === value ? 'text-[#c59b27] font-bold bg-[#2b181a]/60' : 'text-gray-200'
-                }`}
-              >
-                <span className="text-lg">{getItemIcon(item.id)}</span>
-                <span className="whitespace-normal leading-tight flex-1">{item.name}</span>
-                {item.id === value && <Check className="w-3.5 h-3.5 text-[#c59b27] shrink-0" />}
-              </button>
-            ))
-          )}
+      {/* Suggestions dropdown */}
+      {showSuggestions && suggestions.length > 0 && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#140c0e] border-2 border-[#c59b27] shadow-2xl rounded-sm p-1">
+          {suggestions.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => handleSelectSuggestion(item)}
+              className="w-full text-left p-2 text-xs flex items-center gap-2 hover:bg-[#2b181a] transition text-gray-200"
+            >
+              <span>{getItemIcon(item.id)}</span>
+              <span className="flex-1">{item.name}</span>
+              {item.id === value && <Check className="w-3.5 h-3.5 text-[#c59b27]" />}
+            </button>
+          ))}
         </div>
+      )}
+
+      {/* Info o custom input */}
+      {inputValue && !value && (
+        <p className="text-[9px] text-gray-500 mt-1 italic">
+          💡 Wpisz własną nazwę lub wybierz z bazy
+        </p>
       )}
     </div>
   )
@@ -469,20 +448,20 @@ export default function Buildy() {
                       Wybierz Ekwipunek
                     </span>
 
-                    <ItemSearchSelect label="Główna Broń *" category="weapons" value={formData.weapon} enchantValue={formData.weaponEnch} onValueChange={(val) => setFormData({ ...formData, weapon: val })} onEnchantChange={(ench) => setFormData({ ...formData, weaponEnch: ench })} />
-                    <ItemSearchSelect label="Druga Ręka" category="offhands" value={formData.offhand} enchantValue={formData.offhandEnch} onValueChange={(val) => setFormData({ ...formData, offhand: val })} onEnchantChange={(ench) => setFormData({ ...formData, offhandEnch: ench })} />
-                    <ItemSearchSelect label="Głowa *" category="heads" value={formData.head} enchantValue={formData.headEnch} onValueChange={(val) => setFormData({ ...formData, head: val })} onEnchantChange={(ench) => setFormData({ ...formData, headEnch: ench })} />
-                    <ItemSearchSelect label="Pancerz *" category="armors" value={formData.armor} enchantValue={formData.armorEnch} onValueChange={(val) => setFormData({ ...formData, armor: val })} onEnchantChange={(ench) => setFormData({ ...formData, armorEnch: ench })} />
-                    <ItemSearchSelect label="Buty *" category="shoes" value={formData.shoes} enchantValue={formData.shoesEnch} onValueChange={(val) => setFormData({ ...formData, shoes: val })} onEnchantChange={(ench) => setFormData({ ...formData, shoesEnch: ench })} />
+                    <ItemCustomInput label="Główna Broń *" value={formData.weapon} enchantValue={formData.weaponEnch} onValueChange={(val) => setFormData({ ...formData, weapon: val })} onEnchantChange={(ench) => setFormData({ ...formData, weaponEnch: ench })} />
+                    <ItemCustomInput label="Druga Ręka" value={formData.offhand} enchantValue={formData.offhandEnch} onValueChange={(val) => setFormData({ ...formData, offhand: val })} onEnchantChange={(ench) => setFormData({ ...formData, offhandEnch: ench })} />
+                    <ItemCustomInput label="Głowa *" value={formData.head} enchantValue={formData.headEnch} onValueChange={(val) => setFormData({ ...formData, head: val })} onEnchantChange={(ench) => setFormData({ ...formData, headEnch: ench })} />
+                    <ItemCustomInput label="Pancerz *" value={formData.armor} enchantValue={formData.armorEnch} onValueChange={(val) => setFormData({ ...formData, armor: val })} onEnchantChange={(ench) => setFormData({ ...formData, armorEnch: ench })} />
+                    <ItemCustomInput label="Buty *" value={formData.shoes} enchantValue={formData.shoesEnch} onValueChange={(val) => setFormData({ ...formData, shoes: val })} onEnchantChange={(ench) => setFormData({ ...formData, shoesEnch: ench })} />
 
                     <div className="grid grid-cols-2 gap-2">
-                      <ItemSearchSelect label="Torba" category="bags" value={formData.bag} enchantValue={formData.bagEnch} onValueChange={(val) => setFormData({ ...formData, bag: val })} onEnchantChange={(ench) => setFormData({ ...formData, bagEnch: ench })} />
-                      <ItemSearchSelect label="Peleryna" category="capes" value={formData.cape} enchantValue={formData.capeEnch} onValueChange={(val) => setFormData({ ...formData, cape: val })} onEnchantChange={(ench) => setFormData({ ...formData, capeEnch: ench })} />
+                      <ItemCustomInput label="Torba" value={formData.bag} enchantValue={formData.bagEnch} onValueChange={(val) => setFormData({ ...formData, bag: val })} onEnchantChange={(ench) => setFormData({ ...formData, bagEnch: ench })} />
+                      <ItemCustomInput label="Peleryna" value={formData.cape} enchantValue={formData.capeEnch} onValueChange={(val) => setFormData({ ...formData, cape: val })} onEnchantChange={(ench) => setFormData({ ...formData, capeEnch: ench })} />
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
-                      <ItemSearchSelect label="Mikstura" category="potions" value={formData.potion} enchantValue={formData.potionEnch} onValueChange={(val) => setFormData({ ...formData, potion: val })} onEnchantChange={(ench) => setFormData({ ...formData, potionEnch: ench })} />
-                      <ItemSearchSelect label="Jedzenie" category="foods" value={formData.food} enchantValue={formData.foodEnch} onValueChange={(val) => setFormData({ ...formData, food: val })} onEnchantChange={(ench) => setFormData({ ...formData, foodEnch: ench })} />
+                      <ItemCustomInput label="Mikstura" value={formData.potion} enchantValue={formData.potionEnch} onValueChange={(val) => setFormData({ ...formData, potion: val })} onEnchantChange={(ench) => setFormData({ ...formData, potionEnch: ench })} />
+                      <ItemCustomInput label="Jedzenie" value={formData.food} enchantValue={formData.foodEnch} onValueChange={(val) => setFormData({ ...formData, food: val })} onEnchantChange={(ench) => setFormData({ ...formData, foodEnch: ench })} />
                     </div>
                   </div>
 
