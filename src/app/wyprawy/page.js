@@ -59,7 +59,7 @@ export default function Wyprawy() {
     setLoading(false)
   }
 
-  const handleCreateExpedition = async (e) => {
+const handleCreateExpedition = async (e) => {
     e.preventDefault()
     setFormMessage('')
 
@@ -67,6 +67,8 @@ export default function Wyprawy() {
       setFormMessage('Musisz być zalogowany, aby zwołać wyprawę!')
       return
     }
+
+    const creatorName = user?.user_metadata?.full_name || user?.email || 'Gracz'
 
     const { error } = await supabase.from('expeditions').insert([
       {
@@ -84,6 +86,26 @@ export default function Wyprawy() {
       setFormMessage(`Błąd: ${error.message}`)
     } else {
       setFormMessage('Wyprawa została ogłoszona na tablicy!')
+
+      // Wysyłamy automatyczne powiadomienie na Discorda
+      try {
+        await fetch('/api/webhooks/expedition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: formData.title,
+            activity_type: formData.activity_type,
+            min_ip: formData.min_ip,
+            start_time: formData.start_time,
+            server: formData.server,
+            description: formData.description,
+            creator: creatorName
+          })
+        })
+      } catch (err) {
+        console.error('Błąd wysyłania na Discorda:', err)
+      }
+
       setFormData({
         title: '',
         activity_type: 'Statyk T8',
@@ -447,7 +469,7 @@ export default function Wyprawy() {
                   value={signupData.ingame_nick} 
                   onChange={(e) => setFormSignupData({ ...signupData, ingame_nick: e.target.value })} 
                   className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                  placeholder="np. Szewczykos" 
+                  placeholder="np. alpha123" 
                 />
               </div>
 
