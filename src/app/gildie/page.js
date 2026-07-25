@@ -26,7 +26,8 @@ export default function Gildie() {
     activity_type: 'PvP',
     main_city: 'Martlock',
     server: 'Europa',
-    discord_link: ''
+    discord_link: '',
+    webhook_url: '' // <-- Dodane pole
   })
   const [formMessage, setFormMessage] = useState('')
 
@@ -53,14 +54,65 @@ export default function Gildie() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setFormMessage('')
+const handleSubmit = async (e) => {
+  e.preventDefault()
+  setFormMessage('')
 
-    if (!user) {
-      setFormMessage('Musisz być zalogowany!')
-      return
+  if (!user) {
+    setFormMessage('Musisz być zalogowany!')
+    return
+  }
+
+  const cleanName = formData.name.trim()
+  const cleanDescription = formData.description.trim()
+  const cleanDiscord = formData.discord_link.trim()
+  const cleanWebhook = formData.webhook_url ? formData.webhook_url.trim() : '' // <-- Oczyszczenie linku Webhook
+
+  if (cleanName.length < 2 || cleanName.length > 30) {
+    setFormMessage('Nazwa gildii musi mieć od 2 do 30 znaków.')
+    return
+  }
+  if (cleanDescription.length < 10 || cleanDescription.length > 600) {
+    setFormMessage('Opis gildii musi zawierać od 10 do 600 znaków.')
+    return
+  }
+  if (!cleanDiscord.includes('discord.gg') && !cleanDiscord.includes('discord.com/invite')) {
+    setFormMessage('Podaj prawidłowy link zaproszenia Discord.')
+    return
+  }
+
+  // WYSYŁKA DO SUPABASE
+  const { error } = await supabase.from('guilds').insert([
+    {
+      name: cleanName,
+      description: cleanDescription,
+      activity_type: formData.activity_type,
+      main_city: formData.main_city,
+      server: formData.server,
+      discord_link: cleanDiscord,
+      webhook_url: cleanWebhook, // <-- TUTAJ DODAJEMY POLE DO BAZY DANYCH
+      user_id: user.id
     }
+  ])
+
+  if (error) {
+    setFormMessage(`Błąd: ${error.message}`)
+  } else {
+    setFormMessage('Gildia została zarejestrowana dekretem!')
+    // Zresetowanie formularza
+    setFormData({ 
+      name: '', 
+      description: '', 
+      activity_type: 'PvP', 
+      main_city: 'Martlock', 
+      server: 'Europa', 
+      discord_link: '',
+      webhook_url: '' // <-- Zresetowanie pola webhooka
+    })
+    fetchGuilds()
+  }
+}
+    
 
     const cleanName = formData.name.trim()
     const cleanDescription = formData.description.trim()
@@ -191,7 +243,22 @@ export default function Gildie() {
                     <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">Baza Kwatery (Link Discord)</label>
                     <input type="url" name="discord_link" required value={formData.discord_link} onChange={handleInputChange} className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white focus:outline-none focus:border-[#c59b27] text-sm" placeholder="https://discord.gg/..." />
                   </div>
-
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1.5 font-bold uppercase tracking-wider">
+                      Webhook Discord do Rekrutacji (Opcjonalnie)
+                    </label>
+                    <input
+                      type="url"
+                      name="webhook_url"
+                      value={formData.webhook_url}
+                      onChange={handleInputChange}
+                      className="w-full bg-[#0b0b0d] border border-[#23232c] p-2.5 text-white focus:outline-none focus:border-[#c59b27] text-sm"
+                      placeholder="https://discord.com/api/webhooks/..."
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      Wklej link Webhooka ze swojego serwera Discord (Ustawienia kanału -&gt; Integracje -&gt; Webhooki), aby otrzymywać powiadomienia o nowych aplikacjach bezpośrednio na swoim kanale!
+                    </p>
+                  </div>
                   <div>
                     <div className="flex justify-between items-center mb-1.5">
                       <label className="block text-xs text-gray-400 font-bold uppercase tracking-wider">Dekret rekrutacyjny / Wymagania</label>
