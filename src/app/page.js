@@ -292,14 +292,14 @@ export default function Home() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0f0a0a] text-xl font-serif tracking-widest">
+      <main className="flex min-h-screen items-center justify-center bg-[#080506] text-xl font-serif tracking-widest">
         <p className="text-[#c59b27] animate-pulse">ŁADOWANIE REJESTRU KRÓLEWSKIEGO...</p>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between antialiased font-albion-ui select-none relative bg-[#0f0a0a] text-[#bcbbc2]">
+    <main className="min-h-screen flex flex-col justify-between antialiased font-albion-ui select-none relative bg-[#080506] text-[#bcbbc2]">
       
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;700;800&display=swap');
@@ -307,15 +307,10 @@ export default function Home() {
         .font-albion-ui { font-family: 'Inter', sans-serif; }
       `}</style>
 
-      {/* NOWE KRWISTO-OGNISTE TŁO */}
-      {/* 1. Baza: Ciemnoczerwony gradient liniowy z góry na dół */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#2b0d10] via-[#14080a] to-[#090405] z-0 pointer-events-none"></div>
-
-      {/* 2. Górna poświata: Błysk krwistej czerwieni u góry ekranu */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/35 via-red-950/10 to-transparent z-0 pointer-events-none"></div>
-
-      {/* 3. Centralna plama ognia: Delikatne czerwone światło na środku */}
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-red-900/20 via-transparent to-black/60 z-0 pointer-events-none"></div>
+      {/* KRWISTO-ZŁOTE TŁO SPÓJNE Z INNYMI PODSTRONAMI */}
+      <div className="fixed inset-0 bg-gradient-to-b from-[#1b0a0d] via-[#0d0708] to-[#050304] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/30 via-transparent to-transparent z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-[#c59b27]/10 via-transparent to-transparent z-0 pointer-events-none"></div>
       
       {/* GŁÓWNA ZAWARTOŚĆ */}
       <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
@@ -417,7 +412,7 @@ export default function Home() {
                   <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-widest mb-4 border-b border-[#23232c] pb-2 font-albion-title">Katalogi Główne</h2>
                     <div className="space-y-4">
                       
-                      {/* ⚔️ REJESTR POLSKICH GILDII (PRZYWRÓCONA ANIMACJA) */}
+                      {/* ⚔️ REJESTR POLSKICH GILDII */}
                       <motion.div
                         whileHover={{ scale: 1.02, y: -2, filter: "brightness(1.15)" }}
                         whileTap={{ scale: 0.98, y: 0 }}
@@ -707,8 +702,9 @@ export default function Home() {
                                   {/* PRZYCISK USUWANIA WIADOMOŚCI */}
                                   {isAdmin && msg.channel !== 'SYSTEM' && (
                                     <button
-                                    onClick={() => deleteChatMessage(msg.id)} className="flex items-center gap-1 ...">
-                                      <Trash2 className="w-3 h-3 text-red-400" />
+                                      onClick={() => deleteChatMessage(msg.id)} className="flex items-center gap-1 text-red-400 hover:text-red-300 font-bold text-xs uppercase transition ml-auto"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
                                       <span>Usuń</span>
                                     </button>
                                   )}
