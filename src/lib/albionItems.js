@@ -9,8 +9,8 @@ export const ALBION_ITEMS = {
     { name: 'Torba T4', id: 'T4_BAG' },
     { name: 'Torba T3', id: 'T3_BAG' },
   ],
-  weapons: [
-    // Curved Staves
+    weapons: [
+    // Cursed Staves
     { name: 'Laska Klątw T8 (Cursed Staff)', id: 'T8_MAIN_CURSESTAFF' },
     { name: 'Laska Klątw T7', id: 'T7_MAIN_CURSESTAFF' },
     { name: 'Laska Klątw T6', id: 'T6_MAIN_CURSESTAFF' },
@@ -175,19 +175,18 @@ export const ALBION_ITEMS = {
     { name: 'Zwykła Peleryna T6', id: 'T6_CAPE' },
     { name: 'Zwykła Peleryna T4', id: 'T4_CAPE' },
   ],
-  potions: [
+    potions: [
     { name: 'Brak Mikstury', id: '' },
-    { name: 'Mikstura Zdrowia T8 (Healing Potion)', id: 'T8_POTION_HEAL' },
-    { name: 'Mikstura Zdrowia T7', id: 'T7_POTION_HEAL' },
-    { name: 'Mikstura Zdrowia T6', id: 'T6_POTION_HEAL' },
-    { name: 'Mikstura Zdrowia T5', id: 'T5_POTION_HEAL' },
-    { name: 'Mikstura Zdrowia T4', id: 'T4_POTION_HEAL' },
-    { name: 'Mikstura Giganta T8 (Gigantify Potion)', id: 'T8_POTION_COOLDOWN' },
-    { name: 'Mikstura Giganta T6', id: 'T6_POTION_COOLDOWN' },
-    { name: 'Mikstura Odporności T8 (Resistance Potion)', id: 'T8_POTION_REVIVE' },
-    { name: 'Mikstura Odporności T6', id: 'T6_POTION_REVIVE' },
-    { name: 'Mikstura Niewidzialności T8 (Invisible Potion)', id: 'T8_POTION_CLEANSE' },
-    { name: 'Mikstura Niewidzialności T6', id: 'T6_POTION_CLEANSE' },
+    { name: 'Mikstura Zdrowia T8', id: 'T8_POTION_HEAL' }, // Zostawiamy lub zmieniamy na inną działającą potkę
+    { name: 'Mikstura Zdrowia T7', id: 'T7_POTION_HEAL_LAND' },
+    { name: 'Mikstura Zdrowia T6', id: 'T6_POTION_HEAL_LAND' },
+    { name: 'Mikstura Zdrowia T5', id: 'T5_POTION_HEAL_LAND' },
+    { name: 'Mikstura Zdrowia T4', id: 'T4_POTION_HEAL_LAND' },
+    { name: 'Mikstura Giganta T8 (Gigantify Potion)', id: 'T8_POTION_GIGANTIFY' },
+    { name: 'Mikstura Giganta T6', id: 'T6_POTION_GIGANTIFY' },
+    { name: 'Mikstura Odporności T8 (Resistance Potion)', id: 'T8_POTION_RESISTANCE' },
+    { name: 'Mikstura Odporności T6', id: 'T6_POTION_RESISTANCE' },
+    { name: 'Mikstura Niewidzialności T8 (Invisible Potion)', id: 'T8_POTION_ENERGY' },
   ],
   foods: [
     { name: 'Brak Jedzenia', id: '' },
@@ -205,36 +204,24 @@ export const ALBION_ITEMS = {
   ],
 }
 
-// Flatten all items into one searchable array
 export const ALL_ITEMS_FLAT = Object.values(ALBION_ITEMS)
   .flat()
-  .filter(item => item.id) // Remove empty slots
+  .filter(item => item.id)
 
-// Fuzzy search function - znajduje item po nazwie lub ID
 export const findItemByName = (searchTerm) => {
   if (!searchTerm || !searchTerm.trim()) return null
-  
   const lower = searchTerm.toLowerCase().trim()
-  
-  // Exact match first (fastest)
-  const exact = ALL_ITEMS_FLAT.find(item => 
-    item.id.toLowerCase() === lower
-  )
+  const exact = ALL_ITEMS_FLAT.find(item => item.id.toLowerCase() === lower)
   if (exact) return exact
-  
-  // Partial match in name
   const nameMatch = ALL_ITEMS_FLAT.find(item =>
-    item.name.toLowerCase().includes(lower) ||
-    item.id.toLowerCase().includes(lower)
+    item.name.toLowerCase().includes(lower) || item.id.toLowerCase().includes(lower)
   )
   if (nameMatch) return nameMatch
   
-  // Fuzzy match - liczymy ile znaków pasuje
   const fuzzyMatches = ALL_ITEMS_FLAT
     .map(item => ({
       item,
-      score: calculateFuzzyScore(lower, item.name.toLowerCase()) +
-             calculateFuzzyScore(lower, item.id.toLowerCase())
+      score: calculateFuzzyScore(lower, item.name.toLowerCase()) + calculateFuzzyScore(lower, item.id.toLowerCase())
     }))
     .filter(m => m.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -242,43 +229,31 @@ export const findItemByName = (searchTerm) => {
   return fuzzyMatches.length > 0 ? fuzzyMatches[0].item : null
 }
 
-// Fuzzy search - zwraca WSZYSTKIE pasujące itemy (dla dropdown suggestions)
 export const findItemsByName = (searchTerm) => {
   if (!searchTerm || !searchTerm.trim()) return []
-  
   const lower = searchTerm.toLowerCase().trim()
-  
-  // Zbierz wszystkie matching itemy z scores
   const matches = ALL_ITEMS_FLAT
     .map(item => ({
       item,
-      score: calculateFuzzyScore(lower, item.name.toLowerCase()) +
-             calculateFuzzyScore(lower, item.id.toLowerCase())
+      score: calculateFuzzyScore(lower, item.name.toLowerCase()) + calculateFuzzyScore(lower, item.id.toLowerCase())
     }))
     .filter(m => m.score > 0)
     .sort((a, b) => b.score - a.score)
     .map(m => m.item)
-  
-  // Limit do 10 sugestii
   return matches.slice(0, 10)
 }
 
-// Calculate fuzzy match score (how many chars match in order)
 const calculateFuzzyScore = (search, target) => {
   let score = 0
   let searchIdx = 0
-  
   for (let i = 0; i < target.length && searchIdx < search.length; i++) {
     if (target[i] === search[searchIdx]) {
       score += 10
       searchIdx++
     }
   }
-  
-  // Bonus dla znalezienia całego słowa
   if (searchIdx === search.length) {
     score += search.length * 5
   }
-  
   return score
 }

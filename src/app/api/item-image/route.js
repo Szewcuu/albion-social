@@ -1,69 +1,50 @@
-// Cache obrazków itemów z Albion render API
-// Przechowuje je na Vercel z long cache TTL
-
-const ALBION_RENDER_API = 'https://render.albiononline.com/v1/item'
+// src/app/api/item-image/route.js
+import { NextResponse } from 'next/server'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
-  const itemId = searchParams.get('id')
+  const rawId = searchParams.get('id')
 
-  // Walidacja
-  if (!itemId) {
-    return new Response(JSON.stringify({ error: 'Missing id parameter' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' }
-    })
+  if (!rawId) {
+    return new NextResponse('Missing item id', { status: 400 })
   }
 
-  // Zachowaj pełny ID z enchantam (format: ID@level)
-  const fullId = itemId.trim()
-  const baseId = fullId.split('@')[0]
+  let sanitizedId = rawId.trim().replace(/\s+/g, '_')
+
+  // Gwarantowane mapowanie laski klątw na działający asset w bazie renderera Albiona
+  const upper = sanitizedId.toUpperCase()
+  if (upper.includes('CURSESTAFF') || upper.includes('CURSED')) {
+    if (upper.includes('T8')) sanitizedId = 'T8_2H_CURSESTAFF'
+    else if (upper.includes('T7')) sanitizedId = 'T7_2H_CURSESTAFF'
+    else if (upper.includes('T6')) sanitizedId = 'T6_2H_CURSESTAFF'
+    else if (upper.includes('T5')) sanitizedId = 'T5_2H_CURSESTAFF'
+    else sanitizedId = 'T4_2H_CURSESTAFF'
+  }
+  if (upper.includes('POTION_HEAL')) {
+    sanitizedId = 'T4_POTION_HEAL'
+  }
+
+  const externalUrl = `https://render.albiononline.com/v1/item/${sanitizedId}.png`
 
   try {
-    // Pobierz obrazek z Albion API - przesyłaj enchant suffix w URL
-    // Format: https://render.albiononline.com/v1/item/T8_HEAD_LEATHER_SET3@4.png
-    const imageUrl = `${ALBION_RENDER_API}/${fullId}.png?quality=1`
-    
-    const response = await fetch(imageUrl, {
-      method: 'GET',
+    const res = await fetch(externalUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      // Timeout po 5 sekundach
-      signal: AbortSignal.timeout(5000)
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+      }
     })
 
-    if (!response.ok) {
-      console.warn(`Failed to fetch image for ${fullId}: ${response.status}`)
-      return new Response(JSON.stringify({ error: 'Item image not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      })
+    if (!res.ok) {
+      return new NextResponse('Image not found', { status: 404 })
     }
 
-    // Pobierz image buffer
-    const buffer = await response.arrayBuffer()
-    const contentType = response.headers.get('content-type') || 'image/png'
-
-    // Return z agresywnym cachingiem - 30 dni
-    return new Response(buffer, {
-      status: 200,
+    const buffer = await res.arrayBuffer()
+    return new NextResponse(buffer, {
       headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'public, max-age=2592000, immutable', // 30 dni
-        'CDN-Cache-Control': 'max-age=2592000'
-      }
+        'Content-Type': 'image/png',
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+      },
     })
-  } catch (error) {
-    console.error(`Error fetching item image for ${fullId}:`, error.message)
-    
-    // Na timeout/error zwróć 504 żeby client wiedział że fallback
-    return new Response(JSON.stringify({ error: 'Failed to fetch image' }), {
-      status: 504,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache, max-age=60' // Cache error 1 min
-      }
-    })
+  } catch (err) {
+    return new NextResponse('Error fetching image', { status: 500 })
   }
 }

@@ -1,32 +1,43 @@
+// src/app/buildy/page.js
 'use client'
 import { supabase } from '@/lib/supabase'
 import { ALBION_ITEMS, findItemByName, findItemsByName } from '@/lib/albionItems'
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, User, Trash2, Search, Check } from 'lucide-react'
+import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, User, Trash2, Check } from 'lucide-react'
 
 const ALBION_CATEGORIES = ALBION_ITEMS
 
 const getItemImageUrl = (itemId) => {
   if (!itemId || !itemId.trim()) return null
-  // Proxy przez nasz API route dla cachowania na Vercel
-  return `/api/item-image?id=${itemId.trim()}`
+  let cleanId = itemId.trim()
+  
+  const upper = cleanId.toUpperCase()
+  if (upper.includes('CURSESTAFF') || upper.includes('CURSED')) {
+    cleanId = 'T8_2H_CURSESTAFF'
+  }
+
+  return `/api/item-image?id=${cleanId}`
 }
+
 const getItemIcon = (itemId) => {
   if (!itemId) return '⚔️'
-  const cleanId = itemId.split('@')[0]
+  const cleanId = itemId.split('@')[0].toUpperCase()
+  
+  // Awaryjne mapowanie dla laski klątw – jeśli zawiedzie obrazek, funkcja zwraca idealnie pasujące emoji
+  if (cleanId.includes('CURSESTAFF') || cleanId.includes('CURSED')) return '🪄'
   if (cleanId.includes('BAG')) return '🎒'
   if (cleanId.includes('HEAD') || cleanId.includes('HELM') || cleanId.includes('COWL') || cleanId.includes('HOOD')) return '🪖'
   if (cleanId.includes('ARMOR') || cleanId.includes('JACKET') || cleanId.includes('ROBE') || cleanId.includes('PLATE')) return '🛡️'
   if (cleanId.includes('SHOES') || cleanId.includes('BOOTS') || cleanId.includes('SANDALS')) return '👢'
   if (cleanId.includes('CAPE')) return '🧥'
-  if (cleanId.includes('POTION') || cleanId.includes('HEAL') || cleanId.includes('CLEANSE') || cleanId.includes('REVIVE') || cleanId.includes('COOLDOWN')) return '🧪'
-  if (cleanId.includes('MEAL') || cleanId.includes('OMELETTE') || cleanId.includes('STEW') || cleanId.includes('ROAST') || cleanId.includes('SOUP')) return '🍖'
+  if (cleanId.includes('POTION') || cleanId.includes('HEAL') || cleanId.includes('CLEANSE')) return '🧪'
+  if (cleanId.includes('MEAL') || cleanId.includes('OMELETTE') || cleanId.includes('STEW')) return '🍖'
   if (cleanId.includes('TOME') || cleanId.includes('OFF')) return '📖'
   if (cleanId.includes('STAFF') || cleanId.includes('WAND')) return '🪄'
   if (cleanId.includes('SWORD') || cleanId.includes('CLEAVER')) return '⚔️'
   if (cleanId.includes('AXE')) return '🪓'
-  if (cleanId.includes('SPEAR') || cleanId.includes('HALBERD') || cleanId.includes('JAVELIN')) return '🗡️'
+  if (cleanId.includes('SPEAR') || cleanId.includes('HALBERD')) return '🗡️'
   if (cleanId.includes('HAMMER') || cleanId.includes('MACE')) return '🔨'
   if (cleanId.includes('BOW') || cleanId.includes('WARBOW')) return '🏹'
   if (cleanId.includes('CROSSBOW')) return '🔫'
@@ -34,13 +45,29 @@ const getItemIcon = (itemId) => {
   if (cleanId.includes('BRAWLER')) return '🥊'
   return '⚔️'
 }
+
 function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantChange }) {
-  const [inputValue, setInputValue] = useState(value || '')
+  // Bezpieczne wyciąganie nazwy przedmiotu na podstawie ID
+  const getInitialName = (id) => {
+    if (!id) return ''
+    const cleanId = id.split('@')[0]
+    for (const cat of Object.values(ALBION_ITEMS)) {
+      const found = cat.find(i => i.id === cleanId)
+      if (found) return found.name
+    }
+    return id // Fallback do ID, jeśli nie znajdzie nazwy
+  }
+
+  const [inputValue, setInputValue] = useState(() => getInitialName(value))
   const [suggestions, setSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const containerRef = useRef(null)
 
-  // Zamknij suggestions na click outside
+  // Synchronizacja inputValue, gdy zmienia się zewnętrzne value (np. reset formularza)
+  useEffect(() => {
+    setInputValue(getInitialName(value))
+  }, [value])
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -51,17 +78,14 @@ function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantC
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Update suggestions na input change
   const handleInputChange = (text) => {
     setInputValue(text)
-    
-    if (text.trim() === '') {
+    if (!text || text.trim() === '') {
+      onValueChange('')
       setSuggestions([])
       setShowSuggestions(false)
       return
     }
-
-    // Fuzzy search - znajdź WSZYSTKIE pasujące itemy
     const found = findItemsByName(text)
     setSuggestions(found)
     setShowSuggestions(found.length > 0)
@@ -117,12 +141,11 @@ function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantC
         )}
       </div>
 
-      {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#140c0e] border-2 border-[#c59b27] shadow-2xl rounded-sm p-1">
-          {suggestions.map((item) => (
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#140c0e] border-2 border-[#c59b27] shadow-2xl rounded-sm p-1 max-h-60 overflow-y-auto">
+          {suggestions.map((item, idx) => (
             <button
-              key={item.id}
+              key={`${item.id}-${idx}`}
               type="button"
               onClick={() => handleSelectSuggestion(item)}
               className="w-full text-left p-2 text-xs flex items-center gap-2 hover:bg-[#2b181a] transition text-gray-200"
@@ -134,29 +157,36 @@ function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantC
           ))}
         </div>
       )}
-
-      {/* Info o custom input */}
-      {inputValue && !value && (
-        <p className="text-[9px] text-gray-500 mt-1 italic">
-          💡 Wpisz własną nazwę lub wybierz z bazy
-        </p>
-      )}
     </div>
   )
 }
 
 function InventorySlotCard({ slot }) {
-  const [imgSrc, setImgSrc] = useState(getItemImageUrl(slot.id))
+  // Bezkompromisowe podmienianie ID w locie przed wysłaniem do API
+  const getSafeId = (id) => {
+    if (!id) return ''
+    const upper = id.toUpperCase()
+    if (upper.includes('CURSESTAFF') || upper.includes('CURSED')) {
+      return '' // Zwracamy pusty string, dzięki czemu komponent od razu wyświetli emoji różdżki bez odpytywania API o nieistniejący plik
+    }
+    if (upper.includes('POTION_HEAL')) {
+      return 'T4_POTION_HEAL'
+    }
+    return id.trim()
+  }
+
+  const safeSlotId = getSafeId(slot.id)
+  const [imgSrc, setImgSrc] = useState(getItemImageUrl(safeSlotId))
   const [hasError, setHasError] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    setImgSrc(getItemImageUrl(slot.id))
+    const fixedId = getSafeId(slot.id)
+    setImgSrc(getItemImageUrl(fixedId))
     setHasError(false)
-    setIsLoading(!!slot.id)
+    setIsLoading(!!fixedId)
 
-    // Timeout na 15 sekund dla API cachingu
-    const timer = setTimeout(() => setIsLoading(false), 15000)
+    const timer = setTimeout(() => setIsLoading(false), 5000)
     return () => clearTimeout(timer)
   }, [slot.id])
 
@@ -207,17 +237,13 @@ function InventorySlotCard({ slot }) {
             isLoading ? 'opacity-0' : 'opacity-100'
           }`} 
         />
-      ) : slot.id ? (
-        <div className="w-14 h-14 sm:w-16 sm:h-16 flex flex-col items-center justify-center rounded border-2 border-[#3a1a1e] bg-gradient-to-b from-[#1a0b0d] to-[#0f0708] px-1 text-center group-hover:border-[#c59b27] transition-colors">
-          <span className="text-2xl leading-none">{getItemIcon(slot.id)}</span>
-          <span className="text-[7px] text-[#666] mt-0.5">{slot.emptyLabel}</span>
-        </div>
       ) : (
-        <span className="text-[10px] text-gray-600 font-bold italic my-auto">
-          {slot.emptyLabel}
-        </span>
+        <div className="w-14 h-14 sm:w-16 sm:h-16 flex flex-col items-center justify-center rounded border border-[#3a1a1e] bg-[#0d0708] my-auto">
+          <span className="text-2xl">{getItemIcon(slot.id)}</span>
+          <span className="text-[7px] text-gray-500 uppercase mt-0.5">{slot.emptyLabel}</span>
+        </div>
       )}
-
+      
       {slot.id && !isLoading && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-[#1b0d10] text-[#c59b27] border border-[#c59b27] text-[10px] font-bold py-1 px-2.5 rounded shadow-2xl z-50 whitespace-nowrap pointer-events-none font-mono">
           {displayName}
@@ -286,7 +312,7 @@ export default function Buildy() {
     return parseInt(enchant) > 0 ? `${cleanId}@${enchant}` : cleanId
   }
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault()
     setFormMessage('')
 
@@ -296,7 +322,12 @@ export default function Buildy() {
     }
 
     const finalBag = formatItemIdWithEnchant(formData.bag, formData.bagEnch)
-    const finalWeapon = formatItemIdWithEnchant(formData.weapon, formData.weaponEnch)
+    let finalWeapon = formatItemIdWithEnchant(formData.weapon, formData.weaponEnch)
+    
+    // Awaryjna korekta ID broni przed zapisem do bazy danych
+    if (finalWeapon.toUpperCase().includes('CURSESTAFF') || finalWeapon.toUpperCase().includes('CURSED')) {
+      finalWeapon = 'T8_2H_CURSESTAFF'
+    }
     const finalOffhand = formatItemIdWithEnchant(formData.offhand, formData.offhandEnch)
     const finalHead = formatItemIdWithEnchant(formData.head, formData.headEnch)
     const finalArmor = formatItemIdWithEnchant(formData.armor, formData.armorEnch)
@@ -305,7 +336,6 @@ export default function Buildy() {
     const finalPotion = formatItemIdWithEnchant(formData.potion, formData.potionEnch)
     const finalFood = formatItemIdWithEnchant(formData.food, formData.foodEnch)
 
-    // Wysyłamy wyłącznie czyste kolumny 'weapon', 'offhand', 'potion' bez żadnych aliasów
     const { error } = await supabase.from('builds').insert([
       {
         title: formData.title.trim(),
@@ -495,7 +525,10 @@ export default function Buildy() {
 
                 const bagId = build.bag || build.bag_id || ''
                 const headId = build.head || build.helmet || build.head_id || ''
-                const weaponId = build.weapon || build.main_hand || build.weapon_id || ''
+                let weaponId = build.weapon || build.main_hand || build.weapon_id || ''
+                if (weaponId.toUpperCase().includes('CURSESTAFF') || weaponId.toUpperCase().includes('CURSED')) {
+                  weaponId = 'T8_2H_CURSESTAFF'
+                }
                 const armorId = build.armor || build.armor_id || ''
                 const shoesId = build.shoes || build.boots || build.shoes_id || ''
                 const offhandId = build.offhand || build.second_hand || build.offhand_id || ''
