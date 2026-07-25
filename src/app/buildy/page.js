@@ -1,6 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { ALBION_ITEMS, findItemByName } from '@/lib/albionItems'
+import { ALBION_ITEMS, findItemByName, findItemsByName } from '@/lib/albionItems'
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, User, Trash2, Search, Check } from 'lucide-react'
@@ -61,15 +61,10 @@ function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantC
       return
     }
 
-    // Fuzzy search - znajdź pasujący item
-    const found = findItemByName(text)
-    if (found) {
-      setSuggestions([found])
-    } else {
-      setSuggestions([])
-    }
-    
-    setShowSuggestions(true)
+    // Fuzzy search - znajdź WSZYSTKIE pasujące itemy
+    const found = findItemsByName(text)
+    setSuggestions(found)
+    setShowSuggestions(found.length > 0)
   }
 
   const handleSelectSuggestion = (item) => {
@@ -93,7 +88,7 @@ function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantC
           type="text"
           value={inputValue}
           onChange={(e) => handleInputChange(e.target.value)}
-          onFocus={() => inputValue && setSuggestions(findItemByName(inputValue) ? [findItemByName(inputValue)] : [])}
+          onFocus={() => inputValue && setSuggestions(findItemsByName(inputValue))}
           placeholder="Wpisz nazwę itemu..."
           className="flex-1 bg-[#080506] border border-[#2b181a] focus:border-[#c59b27] p-2 text-left text-gray-200 text-xs outline-none transition"
         />

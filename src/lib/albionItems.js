@@ -242,6 +242,27 @@ export const findItemByName = (searchTerm) => {
   return fuzzyMatches.length > 0 ? fuzzyMatches[0].item : null
 }
 
+// Fuzzy search - zwraca WSZYSTKIE pasujące itemy (dla dropdown suggestions)
+export const findItemsByName = (searchTerm) => {
+  if (!searchTerm || !searchTerm.trim()) return []
+  
+  const lower = searchTerm.toLowerCase().trim()
+  
+  // Zbierz wszystkie matching itemy z scores
+  const matches = ALL_ITEMS_FLAT
+    .map(item => ({
+      item,
+      score: calculateFuzzyScore(lower, item.name.toLowerCase()) +
+             calculateFuzzyScore(lower, item.id.toLowerCase())
+    }))
+    .filter(m => m.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(m => m.item)
+  
+  // Limit do 10 sugestii
+  return matches.slice(0, 10)
+}
+
 // Calculate fuzzy match score (how many chars match in order)
 const calculateFuzzyScore = (search, target) => {
   let score = 0
