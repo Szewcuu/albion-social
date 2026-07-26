@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, useRef, memo } from 'react'
 import Link from 'next/link'
-import { Castle, Swords, ShoppingBag, Shield, Trash2, Send } from 'lucide-react'
+import { Castle, Swords, ShoppingBag, Shield, Trash2, Send, Flame, Terminal, Clock, Newspaper, Calculator, Radio, ShieldAlert } from 'lucide-react'
 
 // ZEGAR UTC
 const ServerClock = memo(function ServerClock() {
@@ -19,7 +19,7 @@ const ServerClock = memo(function ServerClock() {
   }, [])
 
   return (
-    <span className="text-3xl font-mono font-black text-[#c59b27] tracking-widest drop-shadow">
+    <span className="font-mono font-bold text-[#f3ba2f] tracking-wider text-lg">
       {utcTime || '00:00:00'}
     </span>
   )
@@ -42,7 +42,7 @@ export default function Home() {
   const [allMarketPosts, setAllMarketPosts] = useState([])
   const [allExpeditions, setAllExpeditions] = useState([])
   const [allBuilds, setAllBuilds] = useState([])
-  const [adminTab, setAdminTab] = useState('MARKET') // 'MARKET' | 'GUILDS' | 'EXPEDITIONS' | 'BUILDS'
+  const [adminTab, setAdminTab] = useState('MARKET')
 
   // Zakładki
   const [rightTab, setRightTab] = useState('ECONOMY')
@@ -214,15 +214,15 @@ export default function Home() {
     const profit = netRevenue - cost
     const roi = (profit / cost) * 100
 
-    let statusText = "Nieopłacalne / Za duże ryzyko"
-    let statusColor = "text-red-400 border-red-900/40 bg-red-950/20"
+    let statusText = "Nieopłacalne / Wysokie ryzyko"
+    let statusColor = "text-rose-400 border-rose-900/50 bg-rose-950/20"
 
     if (roi >= 10 && roi < 25) {
       statusText = "Umiarkowany zysk"
-      statusColor = "text-yellow-400 border-yellow-900/40 bg-yellow-950/20"
+      statusColor = "text-amber-400 border-amber-900/50 bg-amber-950/20"
     } else if (roi >= 25) {
-      statusText = "Złoty interes! Pakuj woła do Caerleon!"
-      statusColor = "text-emerald-400 border-emerald-900/40 bg-emerald-950/20"
+      statusText = "Złoty interes! Pakuj towary do Caerleon!"
+      statusColor = "text-emerald-400 border-emerald-900/50 bg-emerald-950/20"
     }
 
     setCalcResult({ profit: Math.round(profit).toLocaleString('pl-PL'), roi: roi.toFixed(1), statusColor, statusText })
@@ -273,349 +273,330 @@ export default function Home() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#080506] text-xl font-serif tracking-widest">
-        <p className="text-[#c59b27] animate-pulse font-bold">ŁADOWANIE REJESTRU KRÓLEWSKIEGO...</p>
+      <main className="flex min-h-screen items-center justify-center bg-[#050305] text-xl font-mono tracking-widest">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#f3ba2f] border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(243,186,47,0.5)]"></div>
+          <p className="text-[#f3ba2f] font-bold text-sm">SYNCHRONIZACJA SIECI CAERLEON...</p>
+        </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#080506] text-[#bcbbc2]">
+    <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#050305] text-gray-300">
       
-      <div className="fixed inset-0 bg-gradient-to-b from-[#1b0a0d] via-[#0d0708] to-[#050304] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/30 via-transparent to-transparent z-0 pointer-events-none"></div>
-      
-      <div className="w-full flex-1 flex flex-col items-center justify-center p-4 sm:p-6 text-[#bcbbc2] z-10">
+      {/* TŁO Z NOWOCZESNĄ VIGNETTE I GLOW */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
+
+      {/* ROZCIĄGNIĘCIE NA PEŁNĄ SZEROKOŚĆ EKRANU Z BEZPIECZNYMI MARGINESAMI */}
+      <div className="w-full flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 z-10 max-w-[1600px] mx-auto">
         {!user ? (
-          <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-5xl mx-auto space-y-10 px-4 py-8">
-            <div className="text-center space-y-3">
-              <h1 className="text-4xl sm:text-6xl font-black text-[#c59b27] tracking-widest font-serif">
-                ALBION ONLINE POLSKA
+          <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-xl mx-auto space-y-8 text-center my-auto">
+            <div className="p-4 bg-[#f3ba2f]/10 border border-[#f3ba2f]/30 rounded-2xl text-[#f3ba2f] shadow-[0_0_30px_rgba(243,186,47,0.15)]">
+              <Castle className="w-12 h-12" />
+            </div>
+            <div className="space-y-3">
+              <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight font-serif">
+                ALBION <span className="text-[#f3ba2f]">CAERLEON</span>
               </h1>
-              <p className="text-base sm:text-lg text-gray-300 uppercase tracking-widest font-bold max-w-2xl mx-auto">
-                Polski Węzeł Społecznościowy Caerleon
+              <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
+                Platforma handlowo-społecznościowa polskiej społeczności Albion Online. Zaloguj się, aby uzyskać pełny dostęp do terminali.
               </p>
             </div>
-
-            <div className="max-w-md w-full bg-[#120a0c] border-2 border-[#c59b27] p-8 text-center shadow-2xl">
-              <span className="text-sm text-[#c59b27] font-bold tracking-widest block uppercase font-mono mb-4">
-                Brama do Kronik Miejskich
-              </span>
-              <button 
-                onClick={loginWithDiscord} 
-                className="w-full bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-4 px-6 border border-[#4a3a1d] tracking-wider text-sm uppercase transition font-serif shadow-lg"
-              >
-                Zaloguj przez Discord
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-base">
-              <div className="bg-[#120a0c] border border-[#3a1a1e] p-6 shadow-xl space-y-3">
-                <div className="text-3xl">📊</div>
-                <h3 className="font-bold text-[#c59b27] font-serif text-lg uppercase tracking-wider">Kalkulator Caerleon</h3>
-                <p className="text-gray-300 leading-relaxed text-sm">Analizuj marże transportowe i zyski ze skupu na Czarnym Rynku.</p>
-              </div>
-              <div className="bg-[#120a0c] border border-[#3a1a1e] p-6 shadow-xl space-y-3">
-                <div className="text-3xl">🛡️</div>
-                <h3 className="font-bold text-sky-400 font-serif text-lg uppercase tracking-wider">Królewska Zbrojownia</h3>
-                <p className="text-gray-300 leading-relaxed text-sm">Przeglądaj i twórz zestawy rynsztunku do PvP, ZvZ i PvE.</p>
-              </div>
-              <div className="bg-[#120a0c] border border-[#3a1a1e] p-6 shadow-xl space-y-3">
-                <div className="text-3xl">⚔️</div>
-                <h3 className="font-bold text-emerald-400 font-serif text-lg uppercase tracking-wider">Rejestr Gildii</h3>
-                <p className="text-gray-300 leading-relaxed text-sm">Znajdź nową gildię i aplikuj bezpośrednio do ich rekruterów.</p>
-              </div>
-            </div>
+            <button 
+              onClick={loginWithDiscord} 
+              className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-4 px-8 rounded-2xl shadow-[0_4px_25px_rgba(243,186,47,0.3)] transition-all duration-300 text-xs uppercase tracking-widest"
+            >
+              Autoryzacja przez Discord
+            </button>
           </div>
         ) : (
           
-          <div className="max-w-7xl w-full space-y-6 text-base my-2">
+          <div className="w-full space-y-6">
             
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#120a0c] border-2 border-[#c59b27]/80 p-5 shadow-2xl">
-              <div>
-                <h1 className="text-2xl font-black text-gray-100 flex items-center gap-2 font-serif uppercase tracking-wider">
-                  <Castle className="w-8 h-8 text-[#c59b27]" />
-                  <span>Tablica Miejska Caerleon</span>
-                </h1>
-                <p className="text-xs text-gray-400 uppercase tracking-widest font-bold mt-1">Lokalny punkt informacyjny wolnego miasta</p>
-              </div>
-              
-              <div className="flex items-center gap-4 bg-[#080506] py-3 px-5 border border-[#3a1a1e] self-stretch sm:self-auto justify-between">
-                <div className="flex items-center gap-3">
-                  {user.user_metadata?.avatar_url && (
-                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-11 h-11 border border-[#c59b27]" />
-                  )}
-                  <div className="flex flex-col">
-                    <span className="text-xs text-gray-400 uppercase font-bold font-mono">{isAdmin ? 'Inkwizytor' : 'Wojownik'}</span>
-                    <span className="font-extrabold text-base text-emerald-400 font-mono">{(user.user_metadata?.full_name || 'Gracz').replace(/#0$/, '')}</span>
-                  </div>
+            {/* HERO / TOP BANNER W STYLU KONSOLI OPERACYJNEJ */}
+            <header className="bg-gradient-to-r from-[#12070a] via-[#0c0407] to-[#070204] border border-[#2c1219] rounded-3xl p-6 sm:p-8 shadow-[0_15px_40px_rgba(0,0,0,0.6)] relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-[#f3ba2f]/5 rounded-full blur-3xl pointer-events-none"></div>
+
+              <div className="flex items-center gap-5 w-full lg:w-auto">
+                <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-[#f3ba2f] shadow-inner shrink-0">
+                  <Castle className="w-8 h-8" />
                 </div>
-                <button onClick={logout} className="text-xs bg-[#2b0d10] hover:bg-red-900 border border-red-700/60 text-red-200 font-bold px-4 py-2 uppercase tracking-wider transition ml-3">
-                  Opuść
-                </button>
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide font-serif">
+                      Tablica Miejska Caerleon
+                    </h1>
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold tracking-wider uppercase">
+                      Online
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 font-mono mt-1">
+                    Autonomiczny Węzeł Handlowo-Bojowy • Sektor Główny
+                  </p>
+                </div>
+              </div>
+
+              {/* Prawa strona nagłówka: Zegar + Profil */}
+              <div className="flex flex-wrap items-center justify-end gap-4 w-full lg:w-auto">
+                <div className="bg-[#070204] border border-[#240e14] rounded-2xl px-5 py-2.5 flex items-center gap-3">
+                  <Clock className="w-4 h-4 text-[#f3ba2f]" />
+                  <ServerClock />
+                </div>
+
+                <div className="flex items-center gap-3 bg-[#070204] border border-[#240e14] rounded-2xl p-2 pl-4">
+                  {user.user_metadata?.avatar_url && (
+                    <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-9 h-9 rounded-xl object-cover border border-[#f3ba2f]/40" />
+                  )}
+                  <div className="flex flex-col text-left">
+                    <span className="text-[9px] text-gray-400 uppercase font-bold font-mono">
+                      {isAdmin ? '🛡️ Inkwizytor' : '⚔️ Wojownik'}
+                    </span>
+                    <span className="font-bold text-xs text-emerald-400 font-mono">
+                      {(user.user_metadata?.full_name || 'Gracz').replace(/#0$/, '')}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={logout} 
+                    className="ml-2 bg-[#1a080d] hover:bg-rose-950/80 border border-rose-900/40 text-rose-300 font-bold px-3.5 py-2 rounded-xl text-xs uppercase transition tracking-wider"
+                  >
+                    Wyjdź
+                  </button>
+                </div>
               </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              {/* LEWA STRONA */}
-              <div className="lg:col-span-4 space-y-6">
-                
-                <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 shadow-xl space-y-4">
-                  <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-widest border-b border-[#3a1a1e] pb-2 font-serif">
-                    Katalogi Główne
-                  </h2>
-                  <div className="space-y-3">
-                    <Link href="/gildie" className="w-full block bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
-                      ⚔️ Rejestr Polskich Gildii
-                    </Link>
-                    <Link href="/wyprawy" className="w-full block bg-gradient-to-r from-purple-900 to-indigo-950 hover:from-purple-800 text-purple-200 border border-purple-700/60 font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
-                      🏹 Wyprawy &amp; Party Finder
-                    </Link>
-                    <Link href="/rynek" className="w-full block bg-[#080506] hover:bg-[#1a0c0e] text-gray-200 border border-[#3a1a1e] font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
-                      💰 Tablica Ogłoszeń Rynku
-                    </Link>
-                    <Link href="/buildy" className="w-full block bg-[#2b0d10] hover:bg-red-900 text-red-200 border border-red-800/60 font-black py-3 px-4 text-sm text-center uppercase tracking-widest transition shadow font-serif">
-                      🛡️ Kreator &amp; Zestawy Bojowe
-                    </Link>
+            {/* GŁÓWNY GRID: NAWIGACJA JAKO MODERN CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Link href="/gildie" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-[#f3ba2f]/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-3 bg-[#f3ba2f]/10 rounded-xl text-[#f3ba2f] group-hover:scale-110 transition-transform">
+                    <Swords className="w-6 h-6" />
                   </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 01</span>
                 </div>
+                <div>
+                  <h3 className="font-bold text-white text-base group-hover:text-[#f3ba2f] transition-colors">Rejestr Gildii</h3>
+                  <p className="text-xs text-gray-400 mt-1">Przeglądaj polskie formacje i aplikuj do struktur.</p>
+                </div>
+              </Link>
 
-                <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 shadow-xl space-y-4">
-                  <div className="bg-[#080506] border border-[#2b181a] p-4 space-y-3">
-                    <h3 className="text-xs font-black text-[#c59b27] uppercase tracking-widest font-serif border-b border-[#2b181a] pb-2">
-                      📜 Goniec Królewski (Newsy)
-                    </h3>
-                    <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2 text-xs">
-                      {albionNews.length === 0 ? (
-                        <p className="text-xs text-gray-500 italic">Ładowanie kronik...</p>
-                      ) : (
-                        albionNews.map((news, idx) => (
-                          <div key={idx} className="border-b border-[#2b181a] pb-2.5 last:border-none">
-                            <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-gray-200 hover:text-[#c59b27] font-bold block transition text-sm mb-1">
-                              {news.title}
-                            </a>
-                            <p className="text-xs text-gray-400 line-clamp-2">{news.contentSnippet}</p>
-                          </div>
-                        ))
+              <Link href="/wyprawy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-purple-500/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400 group-hover:scale-110 transition-transform">
+                    <Shield className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 02</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base group-hover:text-purple-300 transition-colors">Wyprawy &amp; Party</h3>
+                  <p className="text-xs text-gray-400 mt-1">Koordynacja wypadów i integracja z Discordem.</p>
+                </div>
+              </Link>
+
+              <Link href="/rynek" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-sky-500/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-3 bg-sky-500/10 rounded-xl text-sky-400 group-hover:scale-110 transition-transform">
+                    <ShoppingBag className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 03</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base group-hover:text-sky-300 transition-colors">Tablica Rynku</h3>
+                  <p className="text-xs text-gray-400 mt-1">Ogłoszenia handlowe i oferty społeczności.</p>
+                </div>
+              </Link>
+
+              <Link href="/buildy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-rose-500/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-3 bg-rose-500/10 rounded-xl text-rose-400 group-hover:scale-110 transition-transform">
+                    <Flame className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 04</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base group-hover:text-rose-300 transition-colors">Zestawy Bojowe</h3>
+                  <p className="text-xs text-gray-400 mt-1">Kreator buildów dla PvP, ZvZ i statyków.</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* SEKCJA ŚRODKOWA: SZEROKI DUAL-PANE (KALKULATOR / ADMIN ORAZ CZAT) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              {/* LEWY PANEL: KALKULATOR / ADMIN + NEWSY */}
+              <div className="lg:col-span-6 space-y-6">
+                
+                {/* Kalkulator Marż / Admin Panel */}
+                <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+                  <div className="flex items-center justify-between border-b border-[#200d13] pb-4">
+                    <div className="flex gap-4 font-mono text-xs font-bold uppercase">
+                      <button onClick={() => setRightTab('ECONOMY')} className={`pb-1 transition-colors ${rightTab === 'ECONOMY' ? 'text-[#f3ba2f] border-b-2 border-[#f3ba2f]' : 'text-gray-500 hover:text-gray-300'}`}>
+                        Kalkulator Marż
+                      </button>
+                      {isAdmin && (
+                        <button onClick={() => setRightTab('ADMIN')} className={`pb-1 transition-colors ${rightTab === 'ADMIN' ? 'text-rose-400 border-b-2 border-rose-500' : 'text-rose-900 hover:text-rose-400'}`}>
+                          Panel Inkwizycji
+                        </button>
                       )}
                     </div>
-                  </div>
-
-                  <div className="bg-[#080506] border border-[#2b181a] p-4 text-center">
-                    <span className="text-xs text-gray-500 font-bold tracking-widest block uppercase font-mono mb-1">Czas Serwera (UTC)</span>
-                    <ServerClock />
-                  </div>
-                </div>
-              </div>
-
-              {/* PRAWA STRONA */}
-              <div className="lg:col-span-8 space-y-6">
-                
-                <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 shadow-xl">
-                  <div className="flex gap-4 border-b border-[#3a1a1e] pb-3 mb-4 text-sm font-serif font-black uppercase tracking-wider">
-                    <button onClick={() => setRightTab('ECONOMY')} className={`pb-1 border-b-2 transition ${rightTab === 'ECONOMY' ? 'text-[#c59b27] border-[#c59b27]' : 'text-gray-400 border-transparent hover:text-gray-200'}`}>
-                      📋 Kalkulator Caerleon (Flip)
-                    </button>
-                    {isAdmin && (
-                      <button onClick={() => setRightTab('ADMIN')} className={`pb-1 border-b-2 transition ${rightTab === 'ADMIN' ? 'text-red-400 border-red-500' : 'text-red-800 border-transparent hover:text-red-400'}`}>
-                        ⚔️ Panel Inkwizycji (Admin)
-                      </button>
-                    )}
+                    <Calculator className="w-4 h-4 text-gray-500" />
                   </div>
 
                   {rightTab === 'ECONOMY' && (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start text-xs sm:text-sm">
-                      <form onSubmit={handleCalculateFlip} className="md:col-span-6 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-gray-400 mb-1 font-bold uppercase">Przedmiot</label>
-                            <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none">
-                              <option value="T4_BAG">Torba T4</option>
-                              <option value="T5_BAG">Torba T5</option>
-                              <option value="T6_BAG">Torba T6</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-gray-400 mb-1 font-bold uppercase">Miasto Zakupu</label>
-                            <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none">
-                              <option value="Martlock">Martlock</option>
-                              <option value="Lymhurst">Lymhurst</option>
-                              <option value="FortSterling">Fort Sterling</option>
-                            </select>
-                          </div>
-                        </div>
-
+                    <form onSubmit={handleCalculateFlip} className="space-y-4 text-xs sm:text-sm">
+                      <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-gray-400 mb-1 font-bold uppercase">Cena Zakupu w mieście</label>
-                          <input type="number" required placeholder="Wpisz cenę" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 font-mono outline-none text-sm" />
+                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Przedmiot</label>
+                          <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f] transition-colors">
+                            <option value="T4_BAG">Torba T4</option>
+                            <option value="T5_BAG">Torba T5</option>
+                            <option value="T6_BAG">Torba T6</option>
+                          </select>
                         </div>
-                        
                         <div>
-                          <label className="block text-gray-400 mb-1 font-bold uppercase">Cena na Czarnym Rynku</label>
-                          <input type="number" required placeholder="Wpisz cenę" value={blackMarketPrice} onChange={e => setBlackMarketPrice(e.target.value)} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 font-mono outline-none text-sm" />
-                        </div>
-
-                        <button type="submit" className="w-full bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-3 uppercase tracking-widest font-serif transition">
-                          Analizuj Marżę
-                        </button>
-                      </form>
-
-                      <div className="md:col-span-6 h-full flex flex-col justify-between space-y-4">
-                        <div className="bg-[#080506] border border-[#2b181a] p-4 rounded-sm space-y-2 min-h-[160px] flex flex-col justify-center">
-                          {calcResult ? (
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between border-b border-[#2b181a] pb-1.5"><span className="text-gray-400">Czysty zysk:</span><span className="font-mono font-bold text-gray-100">{calcResult.profit} Silver</span></div>
-                              <div className="flex justify-between border-b border-[#2b181a] pb-1.5"><span className="text-gray-400">Zwrot (ROI):</span><span className="font-mono font-black text-amber-400">+{calcResult.roi}%</span></div>
-                              <div className={`mt-2 p-2 border text-center font-black uppercase text-xs ${calcResult.statusColor}`}>{calcResult.statusText}</div>
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 italic text-center text-xs">Wprowadź ceny, aby obliczyć zysk.</p>
-                          )}
+                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Miasto Zakupu</label>
+                          <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f] transition-colors">
+                            <option value="Martlock">Martlock</option>
+                            <option value="Lymhurst">Lymhurst</option>
+                            <option value="FortSterling">Fort Sterling</option>
+                          </select>
                         </div>
                       </div>
-                    </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Cena w mieście</label>
+                          <input type="number" required placeholder="Wpisz cenę" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 font-mono outline-none text-xs focus:border-[#f3ba2f]" />
+                        </div>
+                        <div>
+                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Cena Czarny Rynek</label>
+                          <input type="number" required placeholder="Wpisz cenę" value={blackMarketPrice} onChange={e => setBlackMarketPrice(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 font-mono outline-none text-xs focus:border-[#f3ba2f]" />
+                        </div>
+                      </div>
+
+                      <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider text-xs transition shadow-md">
+                        Analizuj Opłacalność
+                      </button>
+
+                      <div className="bg-[#050204] border border-[#220e14] rounded-2xl p-4 text-center">
+                        {calcResult ? (
+                          <div className="space-y-2 text-xs">
+                            <div className="flex justify-between border-b border-[#1c0b10] pb-2"><span className="text-gray-400">Czysty zysk:</span><span className="font-mono font-bold text-gray-100">{calcResult.profit} Silver</span></div>
+                            <div className="flex justify-between border-b border-[#1c0b10] pb-2"><span className="text-gray-400">Zwrot inwestycji (ROI):</span><span className="font-mono font-black text-amber-400">+{calcResult.roi}%</span></div>
+                            <div className={`mt-2 p-2.5 rounded-xl border text-center font-bold uppercase text-[11px] ${calcResult.statusColor}`}>{calcResult.statusText}</div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 italic text-xs py-2">Wprowadź ceny, aby wyliczyć marżę transportową do Caerleon.</p>
+                        )}
+                      </div>
+                    </form>
                   )}
 
-                  {/* KONTENT ADMINA */}
                   {rightTab === 'ADMIN' && isAdmin && (
-                    <div className="space-y-4 text-xs sm:text-sm">
-                      <div className="flex justify-between items-center bg-[#080506] p-3 border border-red-950/60 flex-wrap gap-2">
-                        <span className="text-red-400 font-bold uppercase text-xs tracking-wider">
-                          Panel Kontrolny Wyższego Inkwizytora
-                        </span>
-                        <div className="flex gap-2 flex-wrap">
-                          <button 
-                            onClick={() => setAdminTab('MARKET')} 
-                            className={`px-3 py-1 text-xs font-black uppercase transition ${
-                              adminTab === 'MARKET' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
-                            }`}
-                          >
-                            Oferty ({allMarketPosts.length})
-                          </button>
-                          <button 
-                            onClick={() => setAdminTab('GUILDS')} 
-                            className={`px-3 py-1 text-xs font-black uppercase transition ${
-                              adminTab === 'GUILDS' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
-                            }`}
-                          >
-                            Gildie ({allGuilds.length})
-                          </button>
-                          <button 
-                            onClick={() => setAdminTab('EXPEDITIONS')} 
-                            className={`px-3 py-1 text-xs font-black uppercase transition ${
-                              adminTab === 'EXPEDITIONS' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
-                            }`}
-                          >
-                            Wyprawy ({allExpeditions.length})
-                          </button>
-                          <button 
-                            onClick={() => setAdminTab('BUILDS')} 
-                            className={`px-3 py-1 text-xs font-black uppercase transition ${
-                              adminTab === 'BUILDS' ? 'bg-red-950 text-red-400 border border-red-900/60' : 'text-gray-400 hover:text-white'
-                            }`}
-                          >
-                            Buildy ({allBuilds.length})
-                          </button>
+                    <div className="space-y-4 text-xs">
+                      <div className="flex justify-between items-center bg-[#050204] p-3 rounded-xl border border-rose-950/60 flex-wrap gap-2">
+                        <span className="text-rose-400 font-bold uppercase tracking-wider font-mono">Panel Inkwizycji</span>
+                        <div className="flex gap-1 flex-wrap">
+                          <button onClick={() => setAdminTab('MARKET')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'MARKET' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Oferty ({allMarketPosts.length})</button>
+                          <button onClick={() => setAdminTab('GUILDS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'GUILDS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Gildie ({allGuilds.length})</button>
+                          <button onClick={() => setAdminTab('EXPEDITIONS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'EXPEDITIONS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Wyprawy ({allExpeditions.length})</button>
+                          <button onClick={() => setAdminTab('BUILDS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'BUILDS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Buildy ({allBuilds.length})</button>
                         </div>
                       </div>
 
-                      <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
-                        {adminTab === 'MARKET' && (
-                          allMarketPosts.length === 0 ? (
-                            <p className="text-gray-500 italic text-center py-6">Brak ofert na rynku.</p>
-                          ) : (
-                            allMarketPosts.map(post => (
-                              <div key={post.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
-                                <div>
-                                  <span className="text-purple-400 font-mono font-bold mr-2">[{post.city || 'Caerleon'}]</span>
-                                  <span className="text-gray-200 font-bold">{post.title || post.item_name}</span>
-                                  <span className="text-[#c59b27] font-bold font-mono ml-2">{post.price} Silver</span>
-                                </div>
-                                <button onClick={() => deleteMarketPost(post.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Anuluj</button>
-                              </div>
-                            ))
-                          )
-                        )}
-
-                        {adminTab === 'GUILDS' && (
-                          allGuilds.length === 0 ? (
-                            <p className="text-gray-500 italic text-center py-6">Brak gildii.</p>
-                          ) : (
-                            allGuilds.map(guild => (
-                              <div key={guild.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
-                                <div>
-                                  <span className="text-purple-400 font-mono font-bold mr-2">[{guild.server}]</span>
-                                  <span className="text-gray-100 font-serif font-bold">{guild.name}</span>
-                                </div>
-                                <button onClick={() => deleteGuild(guild.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Spal Dekret</button>
-                              </div>
-                            ))
-                          )
-                        )}
-
-                        {adminTab === 'EXPEDITIONS' && (
-                          allExpeditions.length === 0 ? (
-                            <p className="text-gray-500 italic text-center py-6">Brak aktywnych wypraw.</p>
-                          ) : (
-                            allExpeditions.map(exp => (
-                              <div key={exp.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
-                                <div>
-                                  <span className="text-purple-400 font-mono font-bold mr-2">[{exp.activity_type}]</span>
-                                  <span className="text-gray-100 font-serif font-bold">{exp.title}</span>
-                                  <span className="text-amber-400 font-bold font-mono ml-2">({exp.start_time})</span>
-                                </div>
-                                <button onClick={() => deleteExpedition(exp.id, exp.discord_message_id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Odwołaj</button>
-                              </div>
-                            ))
-                          )
-                        )}
-
-                        {adminTab === 'BUILDS' && (
-                          allBuilds.length === 0 ? (
-                            <p className="text-gray-500 italic text-center py-6">Brak opublikowanych buildów.</p>
-                          ) : (
-                            allBuilds.map(build => (
-                              <div key={build.id} className="bg-[#080506] border border-red-950/40 p-3 flex justify-between items-center hover:border-red-900/60 transition flex-wrap gap-2">
-                                <div>
-                                  <span className="text-purple-400 font-mono font-bold mr-2">[{build.activity_type}]</span>
-                                  <span className="text-gray-100 font-serif font-bold">{build.title}</span>
-                                </div>
-                                <button onClick={() => deleteBuild(build.id)} className="bg-red-950 hover:bg-red-900 text-red-400 font-black px-3 py-1 border border-red-900/60 uppercase text-xs transition">Usuń Build</button>
-                              </div>
-                            ))
-                          )
-                        )}
+                      <div className="max-h-[250px] overflow-y-auto space-y-2 pr-1">
+                        {adminTab === 'MARKET' && (allMarketPosts.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak ofert.</p> : allMarketPosts.map(p => (
+                          <div key={p.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
+                            <span className="text-gray-200 font-bold">{p.title || p.item_name} - <strong className="text-[#f3ba2f]">{p.price}s</strong></span>
+                            <button onClick={() => deleteMarketPost(p.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Usuń</button>
+                          </div>
+                        )))}
+                        {adminTab === 'GUILDS' && (allGuilds.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak gildii.</p> : allGuilds.map(g => (
+                          <div key={g.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
+                            <span className="text-gray-100 font-bold">{g.name}</span>
+                            <button onClick={() => deleteGuild(g.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Spal</button>
+                          </div>
+                        )))}
+                        {adminTab === 'EXPEDITIONS' && (allExpeditions.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak wypraw.</p> : allExpeditions.map(e => (
+                          <div key={e.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
+                            <span className="text-gray-100 font-bold">{e.title}</span>
+                            <button onClick={() => deleteExpedition(e.id, e.discord_message_id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Odwołaj</button>
+                          </div>
+                        )))}
+                        {adminTab === 'BUILDS' && (allBuilds.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak buildów.</p> : allBuilds.map(b => (
+                          <div key={b.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
+                            <span className="text-gray-100 font-bold">{b.title}</span>
+                            <button onClick={() => deleteBuild(b.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Usuń</button>
+                          </div>
+                        )))}
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* CZAT */}
-                <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 h-[500px] flex flex-col justify-between shadow-xl">
-                  <div className="flex gap-2 border-b border-[#3a1a1e] pb-3 mb-3 text-xs font-serif font-black uppercase tracking-wider items-center flex-wrap">
-                    <span className="text-[#c59b27] mr-1">📜 KANAŁY:</span>
-                    {['GLOBALNY', 'HANDEL', 'REKRUTACJA', 'SYSTEM'].map((ch) => (
-                      <button 
-                        key={ch} 
-                        onClick={() => { setActiveChannel(ch); }} 
-                        className={`px-3 py-1.5 transition border text-xs ${
-                          activeChannel === ch 
-                            ? 'bg-[#c59b27] text-black border-[#4a3a1d] font-bold' 
-                            : 'text-gray-400 border-transparent hover:text-gray-200'
-                        }`}
-                      >
-                        {ch}
-                      </button>
-                    ))}
+                {/* Goniec Królewski (Newsy RSS) */}
+                <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#200d13] pb-3">
+                    <span className="text-xs font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
+                      <Newspaper className="w-4 h-4" /> Goniec Królewski (Newsy)
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-mono">RSS Live</span>
+                  </div>
+                  <div className="space-y-3 max-h-[220px] overflow-y-auto pr-2 text-xs">
+                    {albionNews.length === 0 ? (
+                      <p className="text-xs text-gray-500 italic">Ładowanie kronik...</p>
+                    ) : (
+                      albionNews.map((news, idx) => (
+                        <div key={idx} className="border-b border-[#1c0b10] pb-2.5 last:border-none">
+                          <a href={news.link} target="_blank" rel="noopener noreferrer" className="text-gray-200 hover:text-[#f3ba2f] font-bold block transition text-xs mb-0.5">
+                            {news.title}
+                          </a>
+                          <p className="text-[11px] text-gray-400 line-clamp-1">{news.contentSnippet}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* PRAWY PANEL: NOWOCZESNY CZAT SPOŁECZNOŚCIOWY */}
+              <div className="lg:col-span-6">
+                <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 h-[600px] flex flex-col justify-between shadow-2xl">
+                  
+                  {/* Nagłówek czatu z kanałami */}
+                  <div className="flex items-center justify-between border-b border-[#200d13] pb-4 mb-3 flex-wrap gap-2">
+                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#f3ba2f]">
+                      <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
+                      <span>STRUMIEŃ KOMUNIKACJI</span>
+                    </div>
+                    
+                    <div className="flex gap-1.5 flex-wrap">
+                      {['GLOBALNY', 'HANDEL', 'REKRUTACJA', 'SYSTEM'].map((ch) => (
+                        <button 
+                          key={ch} 
+                          onClick={() => setActiveChannel(ch)} 
+                          className={`px-3 py-1.5 rounded-xl transition-all text-[11px] font-mono ${
+                            activeChannel === ch 
+                              ? 'bg-[#f3ba2f] text-black font-extrabold shadow-[0_0_10px_rgba(243,186,47,0.3)]' 
+                              : 'text-gray-400 bg-[#050204] hover:text-gray-200 border border-[#200d13]'
+                          }`}
+                        >
+                          {ch}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
+                  {/* Lista wiadomości */}
                   <div 
                     ref={chatContainerRef}
-                    className="space-y-3 overflow-y-auto flex-1 w-full pr-1 text-sm sm:text-base select-text flex flex-col"
+                    className="space-y-3 overflow-y-auto flex-1 w-full pr-2 text-sm select-text flex flex-col my-2"
                   >
                     {chatLoading ? (
-                      <p className="text-gray-500 italic text-center py-4">Ładowanie czatu...</p>
+                      <p className="text-gray-500 italic text-center py-10">Ładowanie bufora wiadomości...</p>
                     ) : (
                       chatMessages
                         .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
@@ -625,31 +606,30 @@ export default function Home() {
                           const cleanDisplayName = (msg.username || 'System').replace(/#0$/, '');
 
                           return (
-                            <div key={msg.id} className="flex items-start gap-3 border-b border-[#2b181a]/50 pb-2.5 last:border-none">
+                            <div key={msg.id} className="flex items-start gap-3 bg-[#070204]/60 border border-[#1c0b10] p-3.5 rounded-2xl">
                               {userAvatar && msg.channel !== 'SYSTEM' ? (
-                                <img src={userAvatar} alt="Avatar" className="w-9 h-9 object-cover border border-[#3a1a1e] shrink-0" />
+                                <img src={userAvatar} alt="Avatar" className="w-9 h-9 rounded-xl object-cover border border-[#3d1823] shrink-0 shadow" />
                               ) : (
-                                <div className="w-9 h-9 flex items-center justify-center font-bold text-sm shrink-0 border bg-[#080506] border-[#3a1a1e] text-[#c59b27]">
+                                <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 bg-[#12070a] border border-[#3d1823] text-[#f3ba2f]">
                                   {cleanDisplayName.charAt(0).toUpperCase()}
                                 </div>
                               )}
 
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`font-bold text-sm ${msg.role === 'ADMIN' ? 'text-[#c59b27] font-serif' : 'text-sky-400'}`}>
+                                  <span className={`font-bold text-xs ${msg.role === 'ADMIN' ? 'text-[#f3ba2f] font-serif' : 'text-sky-400'}`}>
                                     {cleanDisplayName}
                                   </span>
-                                  
-                                  <span className="text-xs text-gray-500 font-mono">{messageTime}</span>
+                                  <span className="text-[10px] text-gray-500 font-mono">{messageTime}</span>
 
                                   {isAdmin && msg.channel !== 'SYSTEM' && (
-                                    <button onClick={() => deleteChatMessage(msg.id)} className="text-red-400 hover:underline text-xs ml-auto">
+                                    <button onClick={() => deleteChatMessage(msg.id)} className="text-rose-400 hover:text-rose-300 text-xs ml-auto">
                                       <Trash2 className="w-3.5 h-3.5 inline" />
                                     </button>
                                   )}
                                 </div>
 
-                                <p className="text-gray-100 mt-1 whitespace-pre-wrap leading-relaxed chat-message-text">
+                                <p className="text-gray-200 mt-1 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
                                   {msg.text}
                                 </p>
                               </div>
@@ -659,21 +639,22 @@ export default function Home() {
                     )}
                   </div>
 
-                  <form onSubmit={handleSendChatMessage} className="mt-3 flex gap-2 items-center bg-[#080506] border border-[#2b181a] p-2.5">
+                  {/* Formularz wysyłania */}
+                  <form onSubmit={handleSendChatMessage} className="mt-2 flex gap-2 items-center bg-[#050204] border border-[#200d13] rounded-2xl p-2.5 pl-4">
                     <input
                       type="text"
                       maxLength="120"
                       disabled={activeChannel === 'SYSTEM'}
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder={activeChannel === 'SYSTEM' ? 'Kanał zablokowany...' : `Wiadomość na kanale ${activeChannel.toLowerCase()}...`}
-                      className="flex-1 bg-transparent text-sm text-gray-100 focus:outline-none placeholder-gray-500"
+                      placeholder={activeChannel === 'SYSTEM' ? 'Kanał systemowy zablokowany...' : `Napisz wiadomość na kanale ${activeChannel.toLowerCase()}...`}
+                      className="flex-1 bg-transparent text-xs sm:text-sm text-gray-100 focus:outline-none placeholder-gray-500"
                     />
 
                     <button 
                       type="submit" 
                       disabled={activeChannel === 'SYSTEM'} 
-                      className="bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black px-5 py-2 text-xs font-black font-serif uppercase transition disabled:hidden flex items-center gap-1"
+                      className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black px-5 py-2.5 rounded-xl text-xs font-black uppercase transition disabled:hidden flex items-center gap-1.5 shadow"
                     >
                       <Send className="w-3.5 h-3.5" />
                       <span>Wyślij</span>
@@ -681,21 +662,21 @@ export default function Home() {
                   </form>
 
                 </div>
-
               </div>
+
             </div>
 
           </div>
         )}
       </div>
 
-      <footer className="w-full bg-[#050304] border-t border-[#3a1a1e] py-6 text-center text-xs text-gray-500 mt-8 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska Portal</span>.</p>
+      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
+        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">
-            <Link href="/regulamin" className="hover:text-[#c59b27] transition">Regulamin</Link>
+            <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
             <span>•</span>
-            <Link href="/prywatnosc" className="hover:text-[#c59b27] transition">Polityka Prywatności</Link>
+            <Link href="/prywatnosc" className="hover:text-[#f3ba2f] transition">Polityka Prywatności</Link>
           </div>
         </div>
       </footer>

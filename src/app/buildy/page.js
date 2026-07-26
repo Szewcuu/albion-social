@@ -1,637 +1,239 @@
-// src/app/buildy/page.js
 'use client'
 import { supabase } from '@/lib/supabase'
-import { ALBION_ITEMS, findItemByName, findItemsByName } from '@/lib/albionItems'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, User, Trash2, Check } from 'lucide-react'
+import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, Trash2 } from 'lucide-react'
+import PageBanner from '@/components/PageBanner'
+import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
+import { buildFromDbRow, itemImageUrl } from '@/lib/buildSlots'
 
-const ALBION_CATEGORIES = ALBION_ITEMS
+const ALBION_CATEGORIES = [
+  { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
+  { id: 'pvp', name: 'PvP & ZvZ', icon: Shield },
+  { id: 'pve', name: 'PvE & Statyki', icon: Swords },
+  { id: 'ganking', name: 'Ganking & Mists', icon: Plus },
+]
 
-const getItemImageUrl = (itemId) => {
-  if (!itemId || !itemId.trim()) return null
-  let cleanId = itemId.trim()
-  
-  const upper = cleanId.toUpperCase()
-  if (upper.includes('CURSESTAFF') || upper.includes('CURSED')) {
-    cleanId = 'T8_2H_CURSESTAFF'
-  }
-
-  return `/api/item-image?id=${cleanId}`
-}
-
-const getItemIcon = (itemId) => {
-  if (!itemId) return '⚔️'
-  const cleanId = itemId.split('@')[0].toUpperCase()
-  
-  // Awaryjne mapowanie dla laski klątw – jeśli zawiedzie obrazek, funkcja zwraca idealnie pasujące emoji
-  if (cleanId.includes('CURSESTAFF') || cleanId.includes('CURSED')) return '🪄'
-  if (cleanId.includes('BAG')) return '🎒'
-  if (cleanId.includes('HEAD') || cleanId.includes('HELM') || cleanId.includes('COWL') || cleanId.includes('HOOD')) return '🪖'
-  if (cleanId.includes('ARMOR') || cleanId.includes('JACKET') || cleanId.includes('ROBE') || cleanId.includes('PLATE')) return '🛡️'
-  if (cleanId.includes('SHOES') || cleanId.includes('BOOTS') || cleanId.includes('SANDALS')) return '👢'
-  if (cleanId.includes('CAPE')) return '🧥'
-  if (cleanId.includes('POTION') || cleanId.includes('HEAL') || cleanId.includes('CLEANSE')) return '🧪'
-  if (cleanId.includes('MEAL') || cleanId.includes('OMELETTE') || cleanId.includes('STEW')) return '🍖'
-  if (cleanId.includes('TOME') || cleanId.includes('OFF')) return '📖'
-  if (cleanId.includes('STAFF') || cleanId.includes('WAND')) return '🪄'
-  if (cleanId.includes('SWORD') || cleanId.includes('CLEAVER')) return '⚔️'
-  if (cleanId.includes('AXE')) return '🪓'
-  if (cleanId.includes('SPEAR') || cleanId.includes('HALBERD')) return '🗡️'
-  if (cleanId.includes('HAMMER') || cleanId.includes('MACE')) return '🔨'
-  if (cleanId.includes('BOW') || cleanId.includes('WARBOW')) return '🏹'
-  if (cleanId.includes('CROSSBOW')) return '🔫'
-  if (cleanId.includes('DAGGER') || cleanId.includes('KNIFE')) return '🗡️'
-  if (cleanId.includes('BRAWLER')) return '🥊'
-  return '⚔️'
-}
-
-function ItemCustomInput({ label, value, enchantValue, onValueChange, onEnchantChange }) {
-  // Bezpieczne wyciąganie nazwy przedmiotu na podstawie ID
-  const getInitialName = (id) => {
-    if (!id) return ''
-    const cleanId = id.split('@')[0]
-    for (const cat of Object.values(ALBION_ITEMS)) {
-      const found = cat.find(i => i.id === cleanId)
-      if (found) return found.name
-    }
-    return id // Fallback do ID, jeśli nie znajdzie nazwy
-  }
-
-  const [inputValue, setInputValue] = useState(() => getInitialName(value))
-  const [suggestions, setSuggestions] = useState([])
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const containerRef = useRef(null)
-
-  // Synchronizacja inputValue, gdy zmienia się zewnętrzne value (np. reset formularza)
-  useEffect(() => {
-    setInputValue(getInitialName(value))
-  }, [value])
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setShowSuggestions(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const handleInputChange = (text) => {
-    setInputValue(text)
-    if (!text || text.trim() === '') {
-      onValueChange('')
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
-    }
-    const found = findItemsByName(text)
-    setSuggestions(found)
-    setShowSuggestions(found.length > 0)
-  }
-
-  const handleSelectSuggestion = (item) => {
-    onValueChange(item.id)
-    setInputValue(item.name)
-    setShowSuggestions(false)
-  }
-
-  const handleClear = () => {
-    onValueChange('')
-    setInputValue('')
-    setSuggestions([])
-  }
-
-  return (
-    <div className="relative w-full" ref={containerRef}>
-      <label className="block text-gray-400 mb-1 font-bold text-[11px] uppercase">{label}</label>
-      
-      <div className="flex gap-1.5 w-full">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => handleInputChange(e.target.value)}
-          onFocus={() => inputValue && setSuggestions(findItemsByName(inputValue))}
-          placeholder="Wpisz nazwę itemu..."
-          className="flex-1 bg-[#080506] border border-[#2b181a] focus:border-[#c59b27] p-2 text-left text-gray-200 text-xs outline-none transition"
-        />
-
-        {value !== '' && (
-          <>
-            <select
-              value={enchantValue}
-              onChange={(e) => onEnchantChange(e.target.value)}
-              className="w-14 bg-[#080506] border border-[#2b181a] hover:border-[#c59b27] p-1.5 text-amber-400 font-bold text-xs text-center outline-none transition font-mono shrink-0"
-            >
-              <option value="0">.0</option>
-              <option value="1">.1</option>
-              <option value="2">.2</option>
-              <option value="3">.3</option>
-              <option value="4">.4</option>
-            </select>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="px-2 bg-[#c59b27]/20 border border-[#c59b27]/50 text-[#c59b27] text-xs rounded hover:bg-[#c59b27]/40 transition shrink-0"
-            >
-              ✕
-            </button>
-          </>
-        )}
-      </div>
-
-      {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-[#140c0e] border-2 border-[#c59b27] shadow-2xl rounded-sm p-1 max-h-60 overflow-y-auto">
-          {suggestions.map((item, idx) => (
-            <button
-              key={`${item.id}-${idx}`}
-              type="button"
-              onClick={() => handleSelectSuggestion(item)}
-              className="w-full text-left p-2 text-xs flex items-center gap-2 hover:bg-[#2b181a] transition text-gray-200"
-            >
-              <span>{getItemIcon(item.id)}</span>
-              <span className="flex-1">{item.name}</span>
-              {item.id === value && <Check className="w-3.5 h-3.5 text-[#c59b27]" />}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function InventorySlotCard({ slot }) {
-  // Bezkompromisowe podmienianie ID w locie przed wysłaniem do API
-  const getSafeId = (id) => {
-    if (!id) return ''
-    const upper = id.toUpperCase()
-    if (upper.includes('CURSESTAFF') || upper.includes('CURSED')) {
-      return '' // Zwracamy pusty string, dzięki czemu komponent od razu wyświetli emoji różdżki bez odpytywania API o nieistniejący plik
-    }
-    if (upper.includes('POTION_HEAL')) {
-      return 'T4_POTION_HEAL'
-    }
-    return id.trim()
-  }
-
-  const safeSlotId = getSafeId(slot.id)
-  const [imgSrc, setImgSrc] = useState(getItemImageUrl(safeSlotId))
-  const [hasError, setHasError] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    const fixedId = getSafeId(slot.id)
-    setImgSrc(getItemImageUrl(fixedId))
-    setHasError(false)
-    setIsLoading(!!fixedId)
-
-    const timer = setTimeout(() => setIsLoading(false), 5000)
-    return () => clearTimeout(timer)
-  }, [slot.id])
-
-  const handleImageLoad = () => setIsLoading(false)
-  const handleImageError = () => {
-    setHasError(true)
-    setIsLoading(false)
-  }
-
-  const findItemName = (id) => {
-    if (!id) return slot.emptyLabel
-    const cleanId = id.split('@')[0]
-    for (const cat of Object.values(ALBION_CATEGORIES)) {
-      const found = cat.find(i => i.id === cleanId)
-      if (found) {
-        const enchant = id.includes('@') ? ` .${id.split('@')[1]}` : ''
-        return `${found.name}${enchant}`
-      }
-    }
-    return id
-  }
-
-  const displayName = findItemName(slot.id)
-
-  return (
-    <div 
-      title={displayName}
-      className="w-20 h-20 sm:w-24 sm:h-24 bg-[#140c0e] border-2 border-[#3a1a1e] p-1 flex flex-col items-center justify-center text-center rounded relative group hover:border-[#c59b27] transition-all shadow-md cursor-pointer"
-    >
-      <span className="text-[8px] text-gray-500 font-bold uppercase tracking-tighter absolute top-1 left-1.5 pointer-events-none z-10">
-        {slot.label}
-      </span>
-
-      {slot.id && isLoading && !hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#140c0e]/95 z-10 rounded">
-          <div className="w-4 h-4 border-2 border-[#c59b27] border-t-transparent rounded-full animate-spin mb-1"></div>
-          <span className="text-[7px] text-[#c59b27] font-bold uppercase font-mono">Ładowanie</span>
-        </div>
-      )}
-
-      {imgSrc && !hasError ? (
-        <img 
-          src={imgSrc} 
-          alt={displayName} 
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-          className={`w-14 h-14 sm:w-16 sm:h-16 object-contain my-auto drop-shadow-md group-hover:scale-110 transition-transform ${
-            isLoading ? 'opacity-0' : 'opacity-100'
-          }`} 
-        />
-      ) : (
-        <div className="w-14 h-14 sm:w-16 sm:h-16 flex flex-col items-center justify-center rounded border border-[#3a1a1e] bg-[#0d0708] my-auto">
-          <span className="text-2xl">{getItemIcon(slot.id)}</span>
-          <span className="text-[7px] text-gray-500 uppercase mt-0.5">{slot.emptyLabel}</span>
-        </div>
-      )}
-      
-      {slot.id && !isLoading && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-[#1b0d10] text-[#c59b27] border border-[#c59b27] text-[10px] font-bold py-1 px-2.5 rounded shadow-2xl z-50 whitespace-nowrap pointer-events-none font-mono">
-          {displayName}
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default function Buildy() {
-  const [builds, setBuilds] = useState([])
+export default function BuildyPage() {
   const [user, setUser] = useState(null)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
-
-  const [formData, setFormData] = useState({
-    title: '',
-    activity_type: 'PvP Solo / Corrupted',
-    bag: 'T8_BAG', bagEnch: '0',
-    weapon: 'T8_MAIN_CURSESTAFF', weaponEnch: '0',
-    offhand: '', offhandEnch: '0',
-    head: 'T8_HEAD_LEATHER_SET3', headEnch: '0',
-    armor: 'T8_ARMOR_LEATHER_SET1', armorEnch: '0',
-    shoes: 'T8_SHOES_CLOTH_SET2', shoesEnch: '0',
-    cape: 'T8_CAPEITEM_FW_CAERLEON', capeEnch: '0',
-    potion: 'T8_POTION_HEAL', potionEnch: '0',
-    food: 'T7_MEAL_OMELETTE', foodEnch: '0',
-    description: ''
-  })
-  const [formMessage, setFormMessage] = useState('')
+  const [activeCategory, setActiveCategory] = useState('all')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const u = session?.user ?? null
-      setUser(u)
-      if (u) checkAdminStatus(u.id)
+      setUser(session?.user ?? null)
     })
     fetchBuilds()
   }, [])
 
-  const checkAdminStatus = async (userId) => {
-    const { data } = await supabase.from('profiles').select('is_admin').eq('id', userId).single()
-    setIsAdmin(data?.is_admin ?? false)
-  }
-
   const fetchBuilds = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
+    try {
+      const { data, error } = await supabase
+        .from('builds')
+        .select('*, profiles(username, avatar_url)')
+        .order('created_at', { ascending: false })
+
+      if (!error && data) setBuilds(data)
+    } catch (err) {
+      console.error('Błąd pobierania buildów:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteBuild = async (id) => {
+    if (!confirm('Czy na pewno chcesz usunąć ten zestaw?')) return
+    const { error } = await supabase.from('builds').delete().eq('id', id)
+    if (!error) fetchBuilds()
+  }
+
+  const handleUpvote = async (id, currentLikes) => {
+    if (!user) return
+    const { error } = await supabase
       .from('builds')
-      .select(`
-        *,
-        profiles(username),
-        build_upvotes(user_id)
-      `)
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      setBuilds(data)
-    }
-    setLoading(false)
+      .update({ likes: (currentLikes || 0) + 1 })
+      .eq('id', id)
+    if (!error) fetchBuilds()
   }
 
-  const formatItemIdWithEnchant = (itemId, enchant) => {
-    if (!itemId) return ''
-    const cleanId = itemId.split('@')[0]
-    return parseInt(enchant) > 0 ? `${cleanId}@${enchant}` : cleanId
-  }
+  const filteredBuilds = activeCategory === 'all'
+    ? builds
+    : builds.filter(b => b.activity_type?.toLowerCase().includes(activeCategory))
 
-const handleSubmit = async (e) => {
-    e.preventDefault()
-    setFormMessage('')
-
-    if (!user) {
-      setFormMessage('Musisz być zalogowany, aby dodać build!')
-      return
-    }
-
-    const finalBag = formatItemIdWithEnchant(formData.bag, formData.bagEnch)
-    let finalWeapon = formatItemIdWithEnchant(formData.weapon, formData.weaponEnch)
-    
-    // Awaryjna korekta ID broni przed zapisem do bazy danych
-    if (finalWeapon.toUpperCase().includes('CURSESTAFF') || finalWeapon.toUpperCase().includes('CURSED')) {
-      finalWeapon = 'T8_2H_CURSESTAFF'
-    }
-    const finalOffhand = formatItemIdWithEnchant(formData.offhand, formData.offhandEnch)
-    const finalHead = formatItemIdWithEnchant(formData.head, formData.headEnch)
-    const finalArmor = formatItemIdWithEnchant(formData.armor, formData.armorEnch)
-    const finalShoes = formatItemIdWithEnchant(formData.shoes, formData.shoesEnch)
-    const finalCape = formatItemIdWithEnchant(formData.cape, formData.capeEnch)
-    const finalPotion = formatItemIdWithEnchant(formData.potion, formData.potionEnch)
-    const finalFood = formatItemIdWithEnchant(formData.food, formData.foodEnch)
-
-    const { error } = await supabase.from('builds').insert([
-      {
-        title: formData.title.trim(),
-        activity_type: formData.activity_type,
-        bag: finalBag,
-        weapon: finalWeapon,
-        offhand: finalOffhand,
-        head: finalHead,
-        helmet: finalHead,
-        armor: finalArmor,
-        shoes: finalShoes,
-        cape: finalCape,
-        potion: finalPotion,
-        food: finalFood,
-        description: formData.description.trim(),
-        user_id: user.id
-      }
-    ])
-
-    if (error) {
-      setFormMessage(`Błąd: ${error.message}`)
-    } else {
-      setFormMessage('Build został pomyślnie opublikowany!')
-      setFormData({
-        title: '',
-        activity_type: 'PvP Solo / Corrupted',
-        bag: 'T8_BAG', bagEnch: '0',
-        weapon: 'T8_MAIN_CURSESTAFF', weaponEnch: '0',
-        offhand: '', offhandEnch: '0',
-        head: 'T8_HEAD_LEATHER_SET3', headEnch: '0',
-        armor: 'T8_ARMOR_LEATHER_SET1', armorEnch: '0',
-        shoes: 'T8_SHOES_CLOTH_SET2', shoesEnch: '0',
-        cape: 'T8_CAPEITEM_FW_CAERLEON', capeEnch: '0',
-        potion: 'T8_POTION_HEAL', potionEnch: '0',
-        food: 'T7_MEAL_OMELETTE', foodEnch: '0',
-        description: ''
-      })
-      fetchBuilds()
-    }
-  }
-
-  const handleToggleLike = async (buildId, hasLiked) => {
-    if (!user) {
-      alert('Musisz być zalogowany, aby oceniać zestawy!')
-      return
-    }
-
-    if (hasLiked) {
-      await supabase.from('build_upvotes').delete().eq('build_id', buildId).eq('user_id', user.id)
-    } else {
-      await supabase.from('build_upvotes').insert([{ build_id: buildId, user_id: user.id }])
-    }
-
-    fetchBuilds()
-  }
-
-  const handleDeleteBuild = async (buildId) => {
-    if (confirm('Czy na pewno chcesz usunąć ten zestaw uzbrojenia?')) {
-      const { error } = await supabase.from('builds').delete().eq('id', buildId)
-      if (!error) fetchBuilds()
-    }
-  }
+  const renderItemSlot = (itemName, label) => (
+    <div className="flex flex-col items-center bg-[#050204] border border-[#260f16] rounded-2xl p-2 text-center relative group shadow-inner">
+      <span className="text-[9px] text-gray-500 font-mono uppercase mb-1">{label}</span>
+      {itemName ? (
+        <img
+          src={itemImageUrl(itemName)}
+          alt={itemName}
+          className="w-12 h-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110"
+          title={itemName}
+          onError={(e) => { e.target.style.display = 'none' }}
+        />
+      ) : (
+        <div className="w-12 h-12 flex items-center justify-center text-[10px] text-gray-700 font-mono">-</div>
+      )}
+    </div>
+  )
 
   return (
-    <div className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#080506] text-[#bcbbc2]">
-      <div className="fixed inset-0 bg-gradient-to-b from-[#1b0a0d] via-[#0d0708] to-[#050304] z-0 pointer-events-none"></div>
-      
-      <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
-        <div>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
+    <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#050305] text-gray-300">
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none" />
+      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none" />
+
+      <div className="w-full flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 z-10 max-w-[1600px] mx-auto space-y-8">
+
+        <div className="w-full flex justify-between items-center">
+          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-mono font-black tracking-widest uppercase transition group">
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             <span>Powrót do Centrum Caerleon</span>
           </Link>
+          <Link
+            href="/buildy/create"
+            className="flex items-center gap-2 bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-5 py-2.5 rounded-xl uppercase text-xs tracking-wider shadow transition"
+          >
+            <Plus className="w-4 h-4" />
+            Stwórz Build
+          </Link>
         </div>
 
-        <header className="bg-[#120a0c] border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-          <div className="flex items-center gap-3">
-            <Shield className="w-8 h-8 text-[#c59b27]" />
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-gray-100 uppercase tracking-wider font-serif">
-                Królewska Zbrojownia (Kreator Buildów)
-              </h1>
-              <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
-                Kreator z dedykowanymi, sprawdzonymi listami broni, pancerzy i ekwipunku
-              </p>
+        <div className="w-full">
+          <PageBanner
+            title="Królewska Zbrojownia"
+            subtitle="Przeglądaj i dziel się buildami społeczności Albion Online Polska"
+            icon={Shield}
+          />
+        </div>
+
+        <div className="w-full flex flex-wrap gap-3">
+          {ALBION_CATEGORIES.map((cat) => {
+            const IconComponent = cat.icon
+            const isActive = activeCategory === cat.id
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-mono font-bold uppercase transition-all ${
+                  isActive
+                    ? 'bg-[#f3ba2f] text-black shadow-[0_0_15px_rgba(243,186,47,0.3)]'
+                    : 'bg-[#0c0407] hover:bg-[#15060b] text-gray-400 border border-[#281017]'
+                }`}
+              >
+                <IconComponent className="w-4 h-4" />
+                <span>{cat.name}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+            <p className="text-gray-500 italic col-span-full text-center py-10">Pobieranie rejestru zbrojowni...</p>
+          ) : filteredBuilds.length === 0 ? (
+            <div className="col-span-full text-center py-16 space-y-4">
+              <p className="text-gray-500 italic">Brak opublikowanych zestawów w tej kategorii.</p>
+              <Link
+                href="/buildy/create"
+                className="inline-flex items-center gap-2 bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] text-[#f3ba2f] px-6 py-3 rounded-xl text-xs font-mono font-bold uppercase transition"
+              >
+                <Plus className="w-4 h-4" /> Stwórz pierwszy build
+              </Link>
             </div>
-          </div>
-        </header>
+          ) : (
+            filteredBuilds.map((b) => {
+              const parsed = buildFromDbRow(b)
+              const hasExtended = b.build_data && Object.keys(b.build_data).length > 0
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* FORMULARZ */}
-          <div className="lg:col-span-4">
-            <div className="bg-[#120a0c] border border-[#3a1a1e] p-5 sm:p-6 shadow-xl sticky top-6 space-y-4 w-full overflow-hidden">
-              <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2 flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                <span>Stwórz Zestaw Bojowy</span>
-              </h2>
-
-              {!user ? (
-                <p className="text-xs text-gray-400 italic bg-[#080506] p-4 border border-[#2b181a]">
-                  Zaloguj się na stronie głównej, aby dodawać własne zestawy.
-                </p>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-3 text-xs w-full">
+              return (
+                <div key={b.id} className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 flex flex-col justify-between space-y-4 shadow-xl">
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase">Nazwa Zestawu *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={formData.title} 
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
-                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                      placeholder="np. Solo Corrupted Curse Staff" 
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase">Typ Aktywności *</label>
-                    <select 
-                      value={formData.activity_type} 
-                      onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })} 
-                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none text-xs"
-                    >
-                      <option value="PvP Solo / Corrupted">PvP Solo / Corrupted</option>
-                      <option value="ZvZ / Wojny">ZvZ / Wojny Gildii</option>
-                      <option value="Gank / Small Scale">Ganking / Small Scale</option>
-                      <option value="PvE / Statyki / HCE">PvE / Statyki / HCE</option>
-                      <option value="Hellgate 2v2 / 5v5">Hellgate</option>
-                    </select>
-                  </div>
-
-                  <div className="border-t border-[#2b181a] pt-3 space-y-3 w-full">
-                    <span className="block text-[#c59b27] font-bold uppercase text-[11px] tracking-wider">
-                      Wybierz Ekwipunek
-                    </span>
-
-                    <ItemCustomInput label="Główna Broń *" value={formData.weapon} enchantValue={formData.weaponEnch} onValueChange={(val) => setFormData({ ...formData, weapon: val })} onEnchantChange={(ench) => setFormData({ ...formData, weaponEnch: ench })} />
-                    <ItemCustomInput label="Druga Ręka" value={formData.offhand} enchantValue={formData.offhandEnch} onValueChange={(val) => setFormData({ ...formData, offhand: val })} onEnchantChange={(ench) => setFormData({ ...formData, offhandEnch: ench })} />
-                    <ItemCustomInput label="Głowa *" value={formData.head} enchantValue={formData.headEnch} onValueChange={(val) => setFormData({ ...formData, head: val })} onEnchantChange={(ench) => setFormData({ ...formData, headEnch: ench })} />
-                    <ItemCustomInput label="Pancerz *" value={formData.armor} enchantValue={formData.armorEnch} onValueChange={(val) => setFormData({ ...formData, armor: val })} onEnchantChange={(ench) => setFormData({ ...formData, armorEnch: ench })} />
-                    <ItemCustomInput label="Buty *" value={formData.shoes} enchantValue={formData.shoesEnch} onValueChange={(val) => setFormData({ ...formData, shoes: val })} onEnchantChange={(ench) => setFormData({ ...formData, shoesEnch: ench })} />
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <ItemCustomInput label="Torba" value={formData.bag} enchantValue={formData.bagEnch} onValueChange={(val) => setFormData({ ...formData, bag: val })} onEnchantChange={(ench) => setFormData({ ...formData, bagEnch: ench })} />
-                      <ItemCustomInput label="Peleryna" value={formData.cape} enchantValue={formData.capeEnch} onValueChange={(val) => setFormData({ ...formData, cape: val })} onEnchantChange={(ench) => setFormData({ ...formData, capeEnch: ench })} />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <ItemCustomInput label="Mikstura" value={formData.potion} enchantValue={formData.potionEnch} onValueChange={(val) => setFormData({ ...formData, potion: val })} onEnchantChange={(ench) => setFormData({ ...formData, potionEnch: ench })} />
-                      <ItemCustomInput label="Jedzenie" value={formData.food} enchantValue={formData.foodEnch} onValueChange={(val) => setFormData({ ...formData, food: val })} onEnchantChange={(ench) => setFormData({ ...formData, foodEnch: ench })} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase">Opis / Poradnik Rotacji</label>
-                    <textarea 
-                      rows="3" 
-                      value={formData.description} 
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
-                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none resize-none text-xs" 
-                      placeholder="Wytłumacz kombosy, zasady pvp..." 
-                    />
-                  </div>
-
-                  <button type="submit" className="w-full bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-2.5 uppercase tracking-widest font-serif transition text-xs">
-                    Opublikuj Build
-                  </button>
-                  {formMessage && <p className="text-center font-bold text-amber-500 animate-pulse mt-2 text-xs">{formMessage}</p>}
-                </form>
-              )}
-            </div>
-          </div>
-
-          {/* LISTA BUILDÓW Z SIATKĄ 3x3 */}
-          <div className="lg:col-span-8 space-y-4">
-            {loading ? (
-              <p className="text-center py-8 text-gray-400 font-bold animate-pulse">Ładowanie zbrojowni...</p>
-            ) : builds.length === 0 ? (
-              <p className="text-center py-12 text-gray-500 italic bg-[#120a0c] border border-[#2b181a]">Brak opublikowanych zestawów.</p>
-            ) : (
-              builds.map((build) => {
-                const upvotes = build.build_upvotes || []
-                const likesCount = upvotes.length
-                const hasLiked = upvotes.some(u => u.user_id === user?.id)
-                const isOwner = user?.id === build.user_id
-
-                const bagId = build.bag || build.bag_id || ''
-                const headId = build.head || build.helmet || build.head_id || ''
-                let weaponId = build.weapon || build.main_hand || build.weapon_id || ''
-                if (weaponId.toUpperCase().includes('CURSESTAFF') || weaponId.toUpperCase().includes('CURSED')) {
-                  weaponId = 'T8_2H_CURSESTAFF'
-                }
-                const armorId = build.armor || build.armor_id || ''
-                const shoesId = build.shoes || build.boots || build.shoes_id || ''
-                const offhandId = build.offhand || build.second_hand || build.offhand_id || ''
-                const capeId = build.cape || build.cape_id || ''
-                const potionId = build.potion || build.potions || build.potion_id || ''
-                const foodId = build.food || build.meal || build.food_id || ''
-
-                const gridSlots = [
-                  { label: 'Torba', id: bagId, emptyLabel: 'Torba' },
-                  { label: 'Głowa', id: headId, emptyLabel: 'Głowa' },
-                  { label: 'Peleryna', id: capeId, emptyLabel: 'Peleryna' },
-                  
-                  { label: 'Broń', id: weaponId, emptyLabel: 'Broń' },
-                  { label: 'Pancerz', id: armorId, emptyLabel: 'Pancerz' },
-                  { label: 'Druga Ręka', id: offhandId, emptyLabel: '2. Ręka' },
-
-                  { label: 'Mikstura', id: potionId, emptyLabel: 'Potka' },
-                  { label: 'Buty', id: shoesId, emptyLabel: 'Buty' },
-                  { label: 'Jedzenie', id: foodId, emptyLabel: 'Jedzenie' },
-                ]
-
-                return (
-                  <div key={build.id} className="bg-[#120a0c] border border-[#3a1a1e] hover:border-[#c59b27]/60 p-5 shadow-xl transition space-y-4 relative">
-                    
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#3a1a1e] pb-3">
-                      <h3 className="text-lg font-black text-gray-100 font-serif tracking-wide flex items-center gap-2">
-                        <Swords className="w-5 h-5 text-[#c59b27]" />
-                        <span>{build.title}</span>
-                      </h3>
-                      <span className="text-[10px] bg-[#2b0d10] text-red-400 border border-red-900/60 px-2.5 py-1 font-bold uppercase tracking-wider">
-                        {build.activity_type}
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#f3ba2f]/10 text-[#f3ba2f] border border-[#f3ba2f]/30 text-[10px] font-mono font-bold uppercase">
+                        {b.activity_type}
+                      </span>
+                      <span className="text-xs text-gray-500 font-mono">
+                        {new Date(b.created_at).toLocaleDateString()}
                       </span>
                     </div>
+                    <h3 className="font-serif font-black text-white text-lg">{b.title}</h3>
+                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{b.description || 'Brak opisu taktycznego.'}</p>
 
-                    {/* SIATKA 3x3 */}
-                    <div className="bg-[#080506] p-4 border border-[#2b181a] flex flex-col items-center">
-                      <span className="text-[10px] text-[#c59b27] font-bold uppercase tracking-wider block mb-3 font-serif">
-                        Siatka Uzbrojenia Postaci
-                      </span>
-
-                      <div className="grid grid-cols-3 gap-2.5 sm:gap-3 p-3 bg-[#0d0708] border border-[#2b181a] shadow-inner rounded-sm">
-                        {gridSlots.map((slot, idx) => (
-                          <InventorySlotCard key={idx} slot={slot} />
+                    {hasExtended && parsed.tags?.activities?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {parsed.tags.activities.slice(0, 3).map(tag => (
+                          <span key={tag} className="px-1.5 py-0.5 bg-[#050204] border border-[#200d13] rounded text-[9px] font-mono text-gray-500">{tag}</span>
                         ))}
                       </div>
-                    </div>
-
-                    {build.description && (
-                      <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-wrap font-sans bg-[#080506]/50 p-3 border border-[#2b181a]/60">
-                        {build.description}
-                      </p>
                     )}
+                  </div>
 
-                    <div className="text-xs text-gray-500 border-t border-[#3a1a1e] pt-3 flex flex-wrap justify-between items-center gap-2">
-                      <span className="flex items-center gap-1.5 text-gray-400">
-                        <User className="w-3.5 h-3.5 text-[#c59b27]" />
-                        <span>Autor: <b className="text-gray-200 font-mono">{build.profiles?.username || 'Gracz'}</b></span>
-                      </span>
+                  <div className="bg-[#050204] border border-[#200d13] rounded-2xl p-3 space-y-2">
+                    <div className="text-[10px] font-mono text-gray-500 text-center uppercase tracking-wider mb-1">Ekwipunek Zestawu</div>
 
-                      <div className="flex items-center gap-2 ml-auto">
-                        {(isOwner || isAdmin) && (
-                          <button
-                            onClick={() => handleDeleteBuild(build.id)}
-                            className="bg-red-950 hover:bg-red-900 text-red-300 border border-red-900/60 font-bold px-3 py-1.5 uppercase text-[11px] transition flex items-center gap-1"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Usuń</span>
-                          </button>
-                        )}
+                    {hasExtended ? (
+                      <EquipmentPreview slots={parsed.slots} size="sm" />
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-3 gap-2">
+                          {renderItemSlot(b.main_weapon, 'Broń')}
+                          {renderItemSlot(b.armor, 'Zbroja')}
+                          {renderItemSlot(b.helmet, 'Hełm')}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 w-2/3 mx-auto">
+                          {renderItemSlot(b.boots, 'Buty')}
+                          {renderItemSlot(b.cape, 'Peleryna')}
+                        </div>
+                      </>
+                    )}
+                  </div>
 
-                        <button 
-                          onClick={() => handleToggleLike(build.id, hasLiked)}
-                          className={`flex items-center gap-2 px-3.5 py-1.5 border font-bold text-xs uppercase transition shadow-sm ${
-                            hasLiked 
-                              ? 'bg-[#c59b27] text-black border-[#4a3a1d] font-black' 
-                              : 'bg-[#080506] hover:bg-[#1a0c0e] text-[#c59b27] border-[#3a1a1e]'
-                          }`}
-                        >
-                          <ThumbsUp className={`w-3.5 h-3.5 ${hasLiked ? 'fill-black' : ''}`} />
-                          <span>{hasLiked ? 'Polecasz' : 'Polecam'} ({likesCount})</span>
-                        </button>
+                  <div className="flex items-center justify-between pt-2 border-t border-[#200d13]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-[#1c080e] border border-[#3b131f] flex items-center justify-center text-[#f3ba2f] text-xs font-bold">
+                        {(b.profiles?.username || parsed.authorName || 'G').charAt(0).toUpperCase()}
                       </div>
+                      <span className="text-xs text-gray-400 font-mono">{b.profiles?.username || parsed.authorName || 'Gracz'}</span>
                     </div>
 
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleUpvote(b.id, b.likes)}
+                        className="flex items-center gap-1 bg-[#1a070d] hover:bg-[#280c14] border border-[#3b131f] text-amber-400 px-3 py-1.5 rounded-xl text-xs font-bold transition"
+                      >
+                        <ThumbsUp className="w-3.5 h-3.5" />
+                        <span>{b.likes || 0}</span>
+                      </button>
+
+                      {user && user.id === b.user_id && (
+                        <button
+                          onClick={() => handleDeleteBuild(b.id)}
+                          className="bg-rose-950/60 hover:bg-rose-900 text-rose-300 p-2 rounded-xl transition"
+                          title="Usuń build"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                )
-              })
-            )}
-          </div>
-
+                </div>
+              )
+            })
+          )}
         </div>
-      </main>
+      </div>
 
-      <footer className="w-full bg-[#050304] border-t border-[#3a1a1e] py-6 text-center text-xs text-gray-500 mt-8 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska Portal</span>.</p>
+      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
+        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">
-            <Link href="/regulamin" className="hover:text-[#c59b27] transition">Regulamin</Link>
+            <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
             <span>•</span>
-            <Link href="/prywatnosc" className="hover:text-[#c59b27] transition">Polityka Prywatności</Link>
+            <Link href="/prywatnosc" className="hover:text-[#f3ba2f] transition">Polityka Prywatności</Link>
           </div>
         </div>
       </footer>
-    </div>
+    </main>
   )
 }
