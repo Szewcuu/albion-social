@@ -184,10 +184,38 @@ export default function Wyprawy() {
     ])
 
     if (!error) {
+      const myNick = signupData.ingame_nick.trim() || user.user_metadata?.full_name || 'Gracz'
+
+      // 1. POWIADOMIENIE DLA LIDERA WYPRAWY W SUPABASE
+      if (activeExpeditionForSignup.user_id && activeExpeditionForSignup.user_id !== user.id) {
+        await supabase.from('notifications').insert([
+          {
+            user_id: activeExpeditionForSignup.user_id,
+            title: '⚔️ Nowy gracz w drużynie!',
+            message: `${myNick} dołączył do wyprawy "${activeExpeditionForSignup.title}" jako ${role} (${signupData.player_ip} IP).`,
+            type: 'info',
+            link: '/wyprawy'
+          }
+        ])
+      }
+
       const totalMax = activeExpeditionForSignup.max_tanks + activeExpeditionForSignup.max_healers + activeExpeditionForSignup.max_dps + activeExpeditionForSignup.max_supports
       const totalJoined = signups.length + 1
 
+      // 2. JEŚLI SKŁAD PEŁNY - POWIADOMIENIE DLA LIDERA I DISCORDA
       if (totalJoined >= totalMax && totalMax > 0) {
+        if (activeExpeditionForSignup.user_id) {
+          await supabase.from('notifications').insert([
+            {
+              user_id: activeExpeditionForSignup.user_id,
+              title: '🎉 Skład skompletowany!',
+              message: `Twoja wyprawa "${activeExpeditionForSignup.title}" ma już komplet graczy!`,
+              type: 'success',
+              link: '/wyprawy'
+            }
+          ])
+        }
+
         try {
           const res = await fetch('/api/webhooks/expedition', {
             method: 'POST',
