@@ -1,6 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { 
   ArrowLeft, Swords, Shield, Heart, UserCheck, Plus, 
@@ -9,12 +9,14 @@ import {
 
 export default function Wyprawy() {
   const [user, setUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expeditions, setExpeditions] = useState([])
   
   const [formData, setFormData] = useState({
     title: '',
-    activity_type: 'Statyk T8',
+    activity_type: 'Statyk',
+    custom_activity: '',
     min_ip: 1400,
     start_time: '19:00 UTC',
     server: 'Europa',
@@ -33,29 +35,88 @@ export default function Wyprawy() {
   })
   const [activeExpeditionForSignup, setActiveExpeditionForSignup] = useState(null)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-    fetchExpeditions()
+  // 1. CZYSZCZENIE PRZETERMINOWANYCH WYPRAW
+  const cleanExpiredExpeditions = useCallback(async (expeditionsList) => {
+    const now = new Date()
+
+    for (const exp of expeditionsList) {
+      let shouldDelete = false
+
+      // Sprawdzamy czy od planowanego startu minęły 3 godziny
+      if (exp.start_time) {
+        const [hours, minutes] = exp.start_time.split(':').map(Number)
+        if (!isNaN(hours) && !isNaN(minutes)) {
+          const startTime = new Date(exp.created_at)
+          startTime.setUTCHours(hours, minutes, 0, 0)
+
+          const hoursPassedAfterStart = (now - startTime) / (1000 * 60 * 60)
+          if (hoursPassedAfterStart >= 3) {
+            shouldDelete = true
+          }
+        }
+      }
+
+      // Bezpiecznik: usuwamy jeśli wpis ma więcej niż 24h od utworzenia
+      const createdAt = new Date(exp.created_at)
+      const hoursSinceCreation = (now - createdAt) / (1000 * 60 * 60)
+      if (hoursSinceCreation >= 24) {
+        shouldDelete = true
+      }
+
+      if (shouldDelete) {
+        if (exp.discord_message_id || exp.full_party_message_id) {
+          try {
+            await fetch('/api/webhooks/expedition', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                messageId: exp.discord_message_id,
+                fullPartyMessageId: exp.full_party_message_id 
+              })
+            })
+          } catch (err) {
+            console.error('Błąd kasowania wygasłej wyprawy z Discorda:', err)
+          }
+        }
+
+        await supabase.from('expeditions').delete().eq('id', exp.id)
+      }
+    }
   }, [])
 
-  const fetchExpeditions = async () => {
+  // 2. POBIERANIE WYPRAW Z BAZY
+  const fetchExpeditions = useCallback(async () => {
     setLoading(true)
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('expeditions')
-      .select(`
-        *,
-        profiles(username),
-        expedition_signups(*, profiles(username))
-      `)
+      .select('*, profiles(username), expedition_signups(*)')
       .order('created_at', { ascending: false })
 
-    if (!error && data) {
+    if (data) {
       setExpeditions(data)
+      cleanExpiredExpeditions(data)
     }
     setLoading(false)
-  }
+  }, [cleanExpiredExpeditions])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+
+      if (currentUser) {
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile) setUserProfile(profile)
+          })
+      }
+    })
+    fetchExpeditions()
+  }, [fetchExpeditions])
 
   const openSignupModal = (exp) => {
     const signups = exp.expedition_signups || []
@@ -72,11 +133,13 @@ export default function Wyprawy() {
     else if (exp.max_dps > dpsCount) defaultRole = 'DPS'
     else if (exp.max_supports > supportsCount) defaultRole = 'Support'
 
-    const defaultNick = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || ''
+    // Pobieranie domyślnego nicku z profilu gracza lub z Discorda
+    const defaultNick = userProfile?.ingame_nick || user?.user_metadata?.full_name || user?.user_metadata?.name || ''
+    const defaultIp = userProfile?.avg_ip || exp.min_ip || 1400
 
     setFormSignupData({
       ingame_nick: defaultNick,
-      player_ip: exp.min_ip || 1400,
+      player_ip: defaultIp,
       role_type: defaultRole
     })
     setActiveExpeditionForSignup(exp)
@@ -91,16 +154,22 @@ export default function Wyprawy() {
       return
     }
 
-    const creatorName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Gracz'
+    const creatorName = userProfile?.ingame_nick || user?.user_metadata?.full_name || 'Gracz'
     let discordMsgId = null
 
+    // 1. Ustalamy właściwą nazwę aktywności
+    const finalActivityType = formData.activity_type === 'Inna / Własna aktywność' 
+      ? (formData.custom_activity.trim() || 'Inna Aktywność')
+      : formData.activity_type
+
+    // 2. Wysyłamy powiadomienie na Discord
     try {
       const res = await fetch('/api/webhooks/expedition', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
-          activity_type: formData.activity_type,
+          activity_type: finalActivityType,
           min_ip: formData.min_ip,
           start_time: formData.start_time,
           server: formData.server,
@@ -120,9 +189,13 @@ export default function Wyprawy() {
       console.error('Błąd Webhooka:', err)
     }
 
+    // 3. Wyciągamy custom_activity, aby NIE wysyłać go jako nieistniejącą kolumnę do Supabase
+    const { custom_activity, ...expeditionPayload } = formData
+
     const { error } = await supabase.from('expeditions').insert([
       {
-        ...formData,
+        ...expeditionPayload,
+        activity_type: finalActivityType, // Zapisujemy ustaloną nazwę w activity_type
         min_ip: parseInt(formData.min_ip),
         max_tanks: parseInt(formData.max_tanks),
         max_healers: parseInt(formData.max_healers),
@@ -140,6 +213,7 @@ export default function Wyprawy() {
       setFormData({
         title: '',
         activity_type: 'Statyk T8',
+        custom_activity: '',
         min_ip: 1400,
         start_time: '19:00 UTC',
         server: 'Europa',
@@ -186,7 +260,7 @@ export default function Wyprawy() {
     if (!error) {
       const myNick = signupData.ingame_nick.trim() || user.user_metadata?.full_name || 'Gracz'
 
-      // 1. POWIADOMIENIE DLA LIDERA WYPRAWY W SUPABASE
+      // Powiadomienie w Supabase dla lidera
       if (activeExpeditionForSignup.user_id && activeExpeditionForSignup.user_id !== user.id) {
         await supabase.from('notifications').insert([
           {
@@ -202,7 +276,6 @@ export default function Wyprawy() {
       const totalMax = activeExpeditionForSignup.max_tanks + activeExpeditionForSignup.max_healers + activeExpeditionForSignup.max_dps + activeExpeditionForSignup.max_supports
       const totalJoined = signups.length + 1
 
-      // 2. JEŚLI SKŁAD PEŁNY - POWIADOMIENIE DLA LIDERA I DISCORDA
       if (totalJoined >= totalMax && totalMax > 0) {
         if (activeExpeditionForSignup.user_id) {
           await supabase.from('notifications').insert([
@@ -277,7 +350,6 @@ export default function Wyprawy() {
 
   return (
     <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#050305] text-gray-300">
-      
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
       <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
 
@@ -305,7 +377,7 @@ export default function Wyprawy() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* LEWA KOLUMNA: FORMULARZ */}
+          {/* FORMULARZ WYPRAWY */}
           <div className="lg:col-span-4">
             <div className="bg-[#0c0407] border border-[#281017] p-6 rounded-3xl shadow-2xl sticky top-6 space-y-4">
               <h2 className="text-sm font-black text-[#f3ba2f] uppercase tracking-wider font-serif border-b border-[#200d13] pb-3 flex items-center gap-2">
@@ -337,14 +409,45 @@ export default function Wyprawy() {
                       <select 
                         value={formData.activity_type} 
                         onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
+                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer focus:border-[#f3ba2f]"
                       >
-                        <option value="Statyk T8">Statyk / PvE</option>
-                        <option value="Ochrona Karawany">Karawana do Caerleon</option>
-                        <option value="Ava Dungeon">Ava Dungeon</option>
-                        <option value="Roaming / Ganking">Ganking / Small Scale</option>
-                        <option value="Hellgate 2v2 / 5v5">Hellgate</option>
+                        <optgroup label="PvE &amp; Lochy">
+                          <option value="Statyk T8">Statyk / Group Dungeon</option>
+                          <option value="Ava Dungeon">Avalonian Dungeon</option>
+                          <option value="Tropienie (Tracking)">Tropienie w Grupie (Tracking)</option>
+                          <option value="Lochy Spaczenia (Corrupted)">Corrupted Dungeons</option>
+                        </optgroup>
+
+                        <optgroup label="PvP &amp; Wojny">
+                          <option value="ZvZ / Zamki / Terytoria">ZvZ / Zamki / Terki</option>
+                          <option value="Wojny Frakcyjne (Faction)">Wojny Frakcyjne (Faction)</option>
+                          <option value="Roaming / Ganking">Ganking / Small Scale</option>
+                          <option value="Hellgate 2v2 / 5v5 / 10v10">Hellgate (2v2 / 5v5 / 10v10)</option>
+                          <option value="Kryształowa Arena / League">Kryształowa Arena / Crystal League</option>
+                        </optgroup>
+
+                        <optgroup label="Ekonomia &amp; Zbiory">
+                          <option value="Ochrona Karawany">Karawana do Caerleon / Transport</option>
+                          <option value="Power Core / Vortex">Esporta Core / Vortex (Outlands)</option>
+                          <option value="Zbieractwo w Grupie / Aspekty">Zbieractwo w Grupie / Aspekty</option>
+                        </optgroup>
+
+                        <optgroup label="Inne">
+                          <option value="Inna / Własna aktywność">✍️ Inna / Własna aktywność...</option>
+                        </optgroup>
                       </select>
+
+                      {/* Pole na własną nazwę aktywności, widoczne tylko po wybraniu "Inna" */}
+                      {formData.activity_type === 'Inna / Własna aktywność' && (
+                        <input 
+                          type="text"
+                          required
+                          placeholder="Wpisz własną nazwę aktywności..."
+                          value={formData.custom_activity}
+                          onChange={(e) => setFormData({ ...formData, custom_activity: e.target.value })}
+                          className="w-full mt-2 bg-[#050204] border border-[#f3ba2f]/50 rounded-xl p-2.5 text-gray-100 outline-none text-xs"
+                        />
+                      )}
                     </div>
 
                     <div>
@@ -428,7 +531,7 @@ export default function Wyprawy() {
             </div>
           </div>
 
-          {/* PRAWA KOLUMNA: LISTA WYPRAW */}
+          {/* LISTA WYPRAW */}
           <div className="lg:col-span-8 space-y-4">
             {loading ? (
               <p className="text-center py-12 text-gray-500 font-mono animate-pulse">Ładowanie aktywnych wypraw...</p>

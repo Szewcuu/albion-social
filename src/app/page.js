@@ -431,11 +431,18 @@ export default function Home() {
                         </div>
                       </div>
 
+                      {/* PRZYCISKI W MENU */}
                       <div className="space-y-2 font-mono text-xs">
+                        <Link href="/profil" onClick={() => setProfileOpen(false)} className="flex items-center justify-between p-3 bg-[#18080f] hover:bg-[#280c18] border border-[#f3ba2f]/40 rounded-2xl transition group text-[#f3ba2f] font-bold">
+                          <span className="flex items-center gap-2.5"><User className="w-4 h-4" /> Karta Postaci &amp; Edycja</span>
+                          <span className="text-[10px] bg-[#f3ba2f] text-black px-2.5 py-0.5 rounded-lg font-black">&rarr;</span>
+                        </Link>
+
                         <Link href="/wyprawy" onClick={() => setProfileOpen(false)} className="flex items-center justify-between p-3 bg-[#050204] hover:bg-[#18080f] border border-[#220e14] hover:border-[#f3ba2f]/40 rounded-2xl transition group text-gray-300 hover:text-white">
                           <span className="flex items-center gap-2.5"><Shield className="w-4 h-4 text-purple-400" /> Moje Wyprawy</span>
                           <span className="text-[10px] bg-purple-950/80 text-purple-300 border border-purple-800/50 px-2.5 py-0.5 rounded-lg font-bold">Otwórz</span>
                         </Link>
+
                         <Link href="/rynek" onClick={() => setProfileOpen(false)} className="flex items-center justify-between p-3 bg-[#050204] hover:bg-[#18080f] border border-[#220e14] hover:border-[#f3ba2f]/40 rounded-2xl transition group text-gray-300 hover:text-white">
                           <span className="flex items-center gap-2.5"><ShoppingBag className="w-4 h-4 text-sky-400" /> Moje Oferty Rynku</span>
                           <span className="text-[10px] bg-sky-950/80 text-sky-300 border border-sky-800/50 px-2.5 py-0.5 rounded-lg font-bold">Otwórz</span>
