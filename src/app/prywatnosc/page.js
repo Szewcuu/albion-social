@@ -50,7 +50,7 @@ export default function PolitykaPrywatnosci() {
 
       <footer className="w-full bg-[#050304] border-t border-[#3a1a1e] py-6 text-center text-xs text-gray-500 mt-8 relative z-10">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska Portal</span>.</p>
+          <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska - Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">
             <Link href="/regulamin" className="hover:text-[#c59b27] transition">Regulamin</Link>
             <span>•</span>

@@ -88,186 +88,205 @@ export default function Rynek() {
   })
 
   return (
-    <main className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10 text-sm">
-      <div>
-        <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          <span>Powrót do Centrum</span>
-        </Link>
-      </div>
+    <main className="min-h-screen flex flex-col justify-between bg-[#050305] text-gray-300 antialiased font-sans select-none relative">
+      
+      {/* Tło i siatka nawiązująca do reszty portalu */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
 
-      <header className="bg-[#120a0c] border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-        <div className="flex items-center gap-3">
-          <ShoppingBag className="w-8 h-8 text-[#c59b27]" />
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-100 uppercase tracking-wider font-serif">
-              Rynek Handlowy Caerleon
-            </h1>
-            <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
-              Kupuj i sprzedawaj wyposażenie, surowce i wierzchowce
-            </p>
-          </div>
+      <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10">
+        <div>
+          <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <span>Powrót do Centrum</span>
+          </Link>
         </div>
-      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* FORMULARZ DODAWCZY */}
-        <div className="lg:col-span-4">
-          <div className="bg-[#120a0c] border border-[#3a1a1e] p-6 shadow-xl sticky top-6 space-y-4">
-            <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2 flex items-center gap-2">
-              <Plus className="w-4 h-4" />
-              <span>Wystaw Ofertę</span>
-            </h2>
-
-            {!user ? (
-              <p className="text-xs text-gray-400 italic bg-[#080506] p-4 border border-[#2b181a]">
-                Zaloguj się na stronie głównej, aby dodawać oferty na rynku.
+        <header className="bg-[#120a0c] border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="flex items-center gap-3">
+            <ShoppingBag className="w-8 h-8 text-[#c59b27]" />
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-100 uppercase tracking-wider font-serif">
+                Rynek Handlowy Caerleon
+              </h1>
+              <p className="text-xs text-gray-400 mt-1 uppercase tracking-widest font-bold">
+                Kupuj i sprzedawaj wyposażenie, surowce i wierzchowce
               </p>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-3 text-xs">
-                <div>
-                  <label className="block text-gray-400 mb-1 font-bold uppercase">Przedmiot / Tytuł *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={formData.title} 
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
-                    className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                    placeholder="np. Młot Zniszczenia T8.3" 
-                  />
-                </div>
+            </div>
+          </div>
+        </header>
 
-                <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* FORMULARZ DODAWCZY */}
+          <div className="lg:col-span-4">
+            <div className="bg-[#120a0c] border border-[#3a1a1e] p-6 shadow-xl sticky top-6 space-y-4">
+              <h2 className="text-sm font-black text-[#c59b27] uppercase tracking-wider font-serif border-b border-[#3a1a1e] pb-2 flex items-center gap-2">
+                <Plus className="w-4 h-4" />
+                <span>Wystaw Ofertę</span>
+              </h2>
+
+              {!user ? (
+                <p className="text-xs text-gray-400 italic bg-[#080506] p-4 border border-[#2b181a]">
+                  Zaloguj się na stronie głównej, aby dodawać oferty na rynku.
+                </p>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-3 text-xs">
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase">Cena (Srebro) *</label>
+                    <label className="block text-gray-400 mb-1 font-bold uppercase">Przedmiot / Tytuł *</label>
                     <input 
                       type="text" 
                       required 
-                      value={formData.price} 
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })} 
+                      value={formData.title} 
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
                       className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                      placeholder="np. 2,500,000" 
+                      placeholder="np. Młot Zniszczenia T8.3" 
                     />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-gray-400 mb-1 font-bold uppercase">Cena (Srebro) *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={formData.price} 
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })} 
+                        className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
+                        placeholder="np. 2,500,000" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-400 mb-1 font-bold uppercase">Miasto *</label>
+                      <select 
+                        value={formData.city} 
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })} 
+                        className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
+                      >
+                        <option value="Caerleon">Caerleon</option>
+                        <option value="Martlock">Martlock</option>
+                        <option value="Lymhurst">Lymhurst</option>
+                        <option value="Bridgewatch">Bridgewatch</option>
+                        <option value="Fort Sterling">Fort Sterling</option>
+                        <option value="Thetford">Thetford</option>
+                        <option value="Brecilien">Brecilien</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase">Miasto *</label>
+                    <label className="block text-gray-400 mb-1 font-bold uppercase">Kategoria *</label>
                     <select 
-                      value={formData.city} 
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })} 
-                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none text-xs"
+                      value={formData.category} 
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })} 
+                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
                     >
-                      <option value="Caerleon">Caerleon</option>
-                      <option value="Martlock">Martlock</option>
-                      <option value="Lymhurst">Lymhurst</option>
-                      <option value="Bridgewatch">Bridgewatch</option>
-                      <option value="Fort Sterling">Fort Sterling</option>
-                      <option value="Thetford">Thetford</option>
-                      <option value="Brecilien">Brecilien</option>
+                      <option value="Ekwipunek">Ekwipunek / Broń</option>
+                      <option value="Wierzchowce">Wierzchowce</option>
+                      <option value="Surowce">Surowce / Materiały</option>
+                      <option value="Inne">Inne</option>
                     </select>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-gray-400 mb-1 font-bold uppercase">Kategoria *</label>
-                  <select 
-                    value={formData.category} 
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })} 
-                    className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 outline-none text-xs"
-                  >
-                    <option value="Ekwipunek">Ekwipunek / Broń</option>
-                    <option value="Wierzchowce">Wierzchowce</option>
-                    <option value="Surowce">Surowce / Materiały</option>
-                    <option value="Inne">Inne</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-gray-400 mb-1 font-bold uppercase">Kontakt w grze / Discord *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={formData.contact} 
+                      onChange={(e) => setFormData({ ...formData, contact: e.target.value })} 
+                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
+                      placeholder="Nick w grze lub Discord ID" 
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-gray-400 mb-1 font-bold uppercase">Kontakt w grze / Discord *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={formData.contact} 
-                    onChange={(e) => setFormData({ ...formData, contact: e.target.value })} 
-                    className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none text-xs" 
-                    placeholder="Nick w grze lub Discord ID" 
-                  />
-                </div>
+                  <div>
+                    <label className="block text-gray-400 mb-1 font-bold uppercase">Opis / Jakość</label>
+                    <textarea 
+                      rows="3" 
+                      value={formData.description} 
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
+                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none resize-none text-xs" 
+                      placeholder="Opisz jakość, stopień zaklinania..." 
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-gray-400 mb-1 font-bold uppercase">Opis / Jakość</label>
-                  <textarea 
-                    rows="3" 
-                    value={formData.description} 
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
-                    className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none resize-none text-xs" 
-                    placeholder="Opisz jakość, stopień zaklinania..." 
-                  />
-                </div>
-
-                <button type="submit" className="w-full bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-2.5 uppercase tracking-widest font-serif transition text-xs">
-                  Wystaw na Rynek
-                </button>
-                {formMessage && <p className="text-center font-bold text-amber-500 animate-pulse mt-2 text-xs">{formMessage}</p>}
-              </form>
-            )}
-          </div>
-        </div>
-
-        {/* LISTA OFERT */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="bg-[#120a0c] border border-[#3a1a1e] p-4 shadow-xl flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
-              <input 
-                type="text" 
-                placeholder="Szukaj przedmiotu..." 
-                value={searchTerm} 
-                onChange={(e) => setSearchTerm(e.target.value)} 
-                className="w-full bg-[#080506] border border-[#2b181a] pl-9 pr-4 py-2 text-xs text-gray-100 focus:border-[#c59b27] outline-none" 
-              />
+                  <button type="submit" className="w-full bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-2.5 uppercase tracking-widest font-serif transition text-xs cursor-pointer">
+                    Wystaw na Rynek
+                  </button>
+                  {formMessage && <p className="text-center font-bold text-amber-500 animate-pulse mt-2 text-xs">{formMessage}</p>}
+                </form>
+              )}
             </div>
-            <select 
-              value={filterCategory} 
-              onChange={(e) => setFilterCategory(e.target.value)} 
-              className="bg-[#080506] border border-[#2b181a] p-2 text-xs text-gray-300 outline-none"
-            >
-              <option value="ALL">Wszystkie Kategorie</option>
-              <option value="Ekwipunek">Ekwipunek</option>
-              <option value="Wierzchowce">Wierzchowce</option>
-              <option value="Surowce">Surowce</option>
-              <option value="Inne">Inne</option>
-            </select>
           </div>
 
-          <div className="space-y-3">
-            {loading ? (
-              <p className="text-center py-8 text-gray-400 font-bold animate-pulse">Ładowanie ofert z rynku...</p>
-            ) : filteredItems.length === 0 ? (
-              <p className="text-center py-12 text-gray-500 italic bg-[#120a0c] border border-[#2b181a]">Brak dostępnych ofert.</p>
-            ) : (
-              filteredItems.map((item) => (
-                <div key={item.id} className="bg-[#120a0c] border border-[#3a1a1e] hover:border-[#c59b27]/60 p-4 shadow-xl transition flex flex-col sm:flex-row justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] bg-[#080506] text-[#c59b27] border border-[#c59b27]/30 px-2 py-0.5 font-bold uppercase">{item.category}</span>
-                      <h3 className="text-base font-bold text-gray-100">{item.title}</h3>
+          {/* LISTA OFERT */}
+          <div className="lg:col-span-8 space-y-4">
+            <div className="bg-[#120a0c] border border-[#3a1a1e] p-4 shadow-xl flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
+                <input 
+                  type="text" 
+                  placeholder="Szukaj przedmiotu..." 
+                  value={searchTerm} 
+                  onChange={(e) => setSearchTerm(e.target.value)} 
+                  className="w-full bg-[#080506] border border-[#2b181a] pl-9 pr-4 py-2 text-xs text-gray-100 focus:border-[#c59b27] outline-none" 
+                />
+              </div>
+              <select 
+                value={filterCategory} 
+                onChange={(e) => setFilterCategory(e.target.value)} 
+                className="bg-[#080506] border border-[#2b181a] p-2 text-xs text-gray-300 outline-none cursor-pointer"
+              >
+                <option value="ALL">Wszystkie Kategorie</option>
+                <option value="Ekwipunek">Ekwipunek</option>
+                <option value="Wierzchowce">Wierzchowce</option>
+                <option value="Surowce">Surowce</option>
+                <option value="Inne">Inne</option>
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              {loading ? (
+                <p className="text-center py-8 text-gray-400 font-bold animate-pulse">Ładowanie ofert z rynku...</p>
+              ) : filteredItems.length === 0 ? (
+                <p className="text-center py-12 text-gray-500 italic bg-[#120a0c] border border-[#2b181a]">Brak dostępnych ofert.</p>
+              ) : (
+                filteredItems.map((item) => (
+                  <div key={item.id} className="bg-[#120a0c] border border-[#3a1a1e] hover:border-[#c59b27]/60 p-4 shadow-xl transition flex flex-col sm:flex-row justify-between gap-4">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] bg-[#080506] text-[#c59b27] border border-[#c59b27]/30 px-2 py-0.5 font-bold uppercase">{item.category}</span>
+                        <h3 className="text-base font-bold text-gray-100">{item.title}</h3>
+                      </div>
+                      {item.description && <p className="text-xs text-gray-300">{item.description}</p>}
+                      <div className="flex items-center gap-3 text-xs text-gray-500 pt-1">
+                        <span className="flex items-center gap-1 text-amber-400"><MapPin className="w-3.5 h-3.5" /> {item.city}</span>
+                        <span>Kontakt: <b className="text-gray-200 font-mono">{item.contact}</b></span>
+                      </div>
                     </div>
-                    {item.description && <p className="text-xs text-gray-300">{item.description}</p>}
-                    <div className="flex items-center gap-3 text-xs text-gray-500 pt-1">
-                      <span className="flex items-center gap-1 text-amber-400"><MapPin className="w-3.5 h-3.5" /> {item.city}</span>
-                      <span>Kontakt: <b className="text-gray-200 font-mono">{item.contact}</b></span>
+                    <div className="flex sm:flex-col items-end justify-between sm:justify-center border-t sm:border-t-0 border-[#2b181a] pt-2 sm:pt-0">
+                      <span className="text-base font-black text-[#c59b27] font-mono">{item.price} Silver</span>
+                      <span className="text-[10px] text-gray-500">Wystawił: {item.profiles?.username || 'Gracz'}</span>
                     </div>
                   </div>
-                  <div className="flex sm:flex-col items-end justify-between sm:justify-center border-t sm:border-t-0 border-[#2b181a] pt-2 sm:pt-0">
-                    <span className="text-base font-black text-[#c59b27] font-mono">{item.price} Silver</span>
-                    <span className="text-[10px] text-gray-500">Wystawił: {item.profiles?.username || 'Gracz'}</span>
-                  </div>
-                </div>
-              ))
-            )}
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
+    
+      <footer className="w-full bg-[#030102]/80 backdrop-blur-md border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
+        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska - Portal</span>.</p>
+          <div className="flex gap-4 text-xs font-mono text-gray-400">
+            <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
+            <span>•</span>
+            <Link href="/prywatnosc" className="hover:text-[#f3ba2f] transition">Polityka Prywatności</Link>
+          </div>
+        </div>
+      </footer>
+
     </main>
   )
 }

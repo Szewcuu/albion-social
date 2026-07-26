@@ -16,10 +16,11 @@ export async function POST(req) {
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://albion-social.vercel.app'
+    const urlWithWait = webhookUrl.includes('?') ? `${webhookUrl}&wait=true` : `${webhookUrl}?wait=true`
 
     // 1. POWIADOMIENIE: PARTY FULL
     if (type === 'PARTY_FULL') {
-      await fetch(webhookUrl, {
+      const partyFullRes = await fetch(urlWithWait, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -30,18 +31,24 @@ export async function POST(req) {
             description: `Szykujcie ekwipunek! Zbiórka zaplanowana na **${start_time}**.`,
             color: 0x10b981,
             fields: [
-              { name: '🎯 Aktywność', value: activity_type, inline: true },
-              { name: '👑 Lider Drużyny', value: creator, inline: true },
+              { name: '🎯 Aktywność', value: activity_type || 'Wyprawa', inline: true },
+              { name: '👑 Lider Drużyny', value: creator || 'Lider', inline: true },
             ],
             footer: { text: 'Albion Online Polska Portal • Dołącz do innych wypraw' },
             timestamp: new Date().toISOString()
           }]
         })
       })
+
+      if (partyFullRes.ok) {
+        const discordData = await partyFullRes.json()
+        return NextResponse.json({ success: true, messageId: discordData.id })
+      }
+
       return NextResponse.json({ success: true })
     }
 
-    // 2. DYNAMICZNE KOLORY
+    // 2. NOWA WYPRAWA
     let embedColor = 0xc59b27
     if (activity_type?.includes('Statyk')) embedColor = 0x3b82f6
     else if (activity_type?.includes('Karawana')) embedColor = 0xf59e0b
@@ -61,19 +68,18 @@ export async function POST(req) {
       description: description ? `> ${description}` : 'Brak dodatkowego opisu. Kliknij poniżej, aby dołączyć!',
       color: embedColor,
       fields: [
-        { name: '🎯 Aktywność', value: activity_type, inline: true },
-        { name: '🌐 Serwer', value: server, inline: true },
-        { name: '⏰ Czas Zbiórki', value: start_time, inline: true },
-        { name: '🛡️ Wymagane IP', value: `${min_ip}+`, inline: true },
-        { name: '👑 Lider Drużyny', value: creator, inline: true },
+        { name: '🎯 Aktywność', value: activity_type || 'Statyk', inline: true },
+        { name: '🌐 Serwer', value: server || 'Europa', inline: true },
+        { name: '⏰ Czas Zbiórki', value: start_time || '19:00 UTC', inline: true },
+        { name: '🛡️ Wymagane IP', value: `${min_ip || 1200}+`, inline: true },
+        { name: '👑 Lider Drużyny', value: creator || 'Gracz', inline: true },
         { name: '👥 Poszukiwane Miejsca', value: rolesList, inline: false },
       ],
       footer: { text: 'Albion Online Polska Portal • Kliknij nagłówek, aby otworzyć wyprawy' },
       timestamp: new Date().toISOString()
     }
 
-    // Dodajemy parameter ?wait=true, aby Discord zwrócił obiekt z ID wiadomości
-    const discordRes = await fetch(`${webhookUrl}?wait=true`, {
+    const discordRes = await fetch(urlWithWait, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -97,16 +103,24 @@ export async function POST(req) {
 // AUTOMATYCZNE USUWANIE WIADOMOŚCI Z DISCORDA
 export async function DELETE(req) {
   try {
-    const { messageId } = await req.json()
+    const { messageId, fullPartyMessageId } = await req.json()
     const webhookUrl = process.env.DISCORD_EXPEDITIONS_WEBHOOK_URL
 
-    if (!webhookUrl || !messageId) {
-      return NextResponse.json({ message: 'Brak ID wiadomości lub Webhooka' }, { status: 200 })
+    if (!webhookUrl) {
+      return NextResponse.json({ message: 'Brak adresu Webhooka' }, { status: 200 })
     }
 
-    // Zapytanie DELETE do Discord API dla konkretnej wiadomości Webhooka
-    const deleteUrl = `${webhookUrl}/messages/${messageId}`
-    await fetch(deleteUrl, { method: 'DELETE' })
+    const cleanBaseUrl = webhookUrl.split('?')[0]
+
+    // 1. Usuwanie głównego ogłoszenia
+    if (messageId) {
+      await fetch(`${cleanBaseUrl}/messages/${messageId}`, { method: 'DELETE' })
+    }
+
+    // 2. Usuwanie powiadomienia o pełnej drużynie
+    if (fullPartyMessageId) {
+      await fetch(`${cleanBaseUrl}/messages/${fullPartyMessageId}`, { method: 'DELETE' })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

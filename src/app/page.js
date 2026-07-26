@@ -1,8 +1,9 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState, useRef, memo } from 'react'
+import { useEffect, useState, memo, useCallback } from 'react'
 import Link from 'next/link'
-import { Castle, Swords, ShoppingBag, Shield, Trash2, Send, Flame, Terminal, Clock, Newspaper, Calculator, Radio, ShieldAlert } from 'lucide-react'
+import { Castle, Swords, ShoppingBag, Shield, Clock, Newspaper, Calculator, Globe, Compass, ExternalLink } from 'lucide-react'
+import ChatBox from '@/components/ChatBox'
 
 // ZEGAR UTC
 const ServerClock = memo(function ServerClock() {
@@ -33,9 +34,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   // Stany Supabase
-  const [globalStats, setGlobalStats] = useState({ guilds: 0, market: 0 })
+  const [globalStats, setGlobalStats] = useState({ guildsCount: 0, marketOffersCount: 0 })
   const [albionNews, setAlbionNews] = useState([])
-  const [recentGlobalPosts, setRecentGlobalPosts] = useState([])
 
   // Stany Admina
   const [allGuilds, setAllGuilds] = useState([])
@@ -53,101 +53,17 @@ export default function Home() {
   const [marketTax, setMarketTax] = useState('8')
   const [calcResult, setCalcResult] = useState(null)
 
-  // Czat
-  const [chatMessages, setChatMessages] = useState([])
-  const [newMessage, setNewMessage] = useState('')
-  const [activeChannel, setActiveChannel] = useState('GLOBALNY')
-  const chatLoading = chatMessages.length === 0
-  const chatContainerRef = useRef(null)
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      fetchGlobalData()
-      fetchInitialChat()
-      fetchAlbionNews()
-      if (currentUser) fetchUserDataAndRole(currentUser.id)
-      else setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      fetchGlobalData()
-      if (currentUser) {
-        fetchUserDataAndRole(currentUser.id)
-      } else {
-        setIsAdmin(false)
-        setLoading(false)
-      }
-    })
-
-    const chatChannel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'chat_messages' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setChatMessages((prev) => [...prev, payload.new])
-          } else if (payload.eventType === 'DELETE') {
-            setChatMessages((prev) => prev.filter((msg) => msg.id !== payload.old.id))
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      subscription.unsubscribe()
-      supabase.removeChannel(chatChannel)
+  const fetchGlobalData = useCallback(async () => {
+    try {
+      const { count: gCount } = await supabase.from('guilds').select('*', { count: 'exact', head: true })
+      const { count: mCount } = await supabase.from('market_items').select('*', { count: 'exact', head: true })
+      setGlobalStats({ marketOffersCount: mCount || 0, guildsCount: gCount || 0 })
+    } catch (err) {
+      console.error(err)
     }
   }, [])
 
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
-    }
-  }, [chatMessages, activeChannel])
-
-  const fetchInitialChat = async () => {
-    const { data } = await supabase
-      .from('chat_messages')
-      .select('*, profiles(username, avatar_url)')
-      .order('created_at', { ascending: true })
-      .limit(50)
-      
-    if (data && data.length > 0) {
-      const mapped = data.map(msg => ({
-        ...msg,
-        username: msg.username || msg.profiles?.username || 'Gracz',
-        avatar_url: msg.avatar_url || msg.profiles?.avatar_url || null
-      }))
-      setChatMessages(mapped)
-    } else {
-      setChatMessages([{ id: 'init', channel: 'SYSTEM', username: 'System', text: 'Połączono z węzłem miejskim AOPP. Czat aktywny.' }])
-    }
-  }
-
-  const fetchAlbionNews = async () => {
-    try {
-      const res = await fetch('/api/news')
-      const data = await res.json()
-      if (data && !data.error) setAlbionNews(data)
-    } catch (err) {
-      console.error("Błąd ładowania wiadomości:", err)
-    }
-  }
-
-  const fetchGlobalData = async () => {
-    const { data: recent } = await supabase.from('market_items').select('*, profiles(username)').order('created_at', { ascending: false }).limit(3)
-    setRecentGlobalPosts(recent || [])
-    const { count: gCount } = await supabase.from('guilds').select('*', { count: 'exact', head: true })
-    const { count: mCount } = await supabase.from('market_items').select('*', { count: 'exact', head: true })
-    setGlobalStats({ marketOffersCount: mCount || 0, guildsCount: gCount || 0 })
-  }
-
-  const fetchUserDataAndRole = async (userId) => {
+  const fetchUserDataAndRole = useCallback(async (userId) => {
     try {
       const { data: profile } = await supabase.from('profiles').select('is_admin, username').eq('id', userId).single()
       const adminStatus = profile?.is_admin ?? false
@@ -166,37 +82,50 @@ export default function Home() {
       }
     } catch (err) {
       console.error(err)
-    } finally {
-      setLoading(false)
     }
-  }
+  }, [])
 
-  const handleSendChatMessage = async (e) => {
-    e.preventDefault()
-    if (!newMessage.trim() || !user) return
+  useEffect(() => {
+    let isMounted = true
 
-    const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
-    const cleanUsername = rawName.replace(/#0$/, '')
-
-    const { error } = await supabase.from('chat_messages').insert([
-      {
-        user_id: user.id,
-        channel: activeChannel,
-        username: cleanUsername,
-        text: newMessage.trim()
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      setLoading(false)
+      if (currentUser) {
+        fetchGlobalData()
+        fetchAlbionNews()
+        fetchUserDataAndRole(currentUser.id)
       }
-    ])
+    })
 
-    if (!error) setNewMessage('')
-  }
-
-  const deleteChatMessage = async (msgId) => {
-    if (!isAdmin) return
-    if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
-      const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
-      if (!error) {
-        setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      setLoading(false)
+      if (currentUser) {
+        fetchGlobalData()
+        fetchUserDataAndRole(currentUser.id)
+      } else {
+        setIsAdmin(false)
       }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [fetchGlobalData, fetchUserDataAndRole])
+
+  const fetchAlbionNews = async () => {
+    try {
+      const res = await fetch('/api/news')
+      const data = await res.json()
+      if (data && !data.error) setAlbionNews(data)
+    } catch (err) {
+      console.error("Błąd ładowania wiadomości:", err)
     }
   }
 
@@ -245,14 +174,17 @@ export default function Home() {
     }
   }
 
-  const deleteExpedition = async (id, discordMsgId) => {
-    if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina? Wiadomość z Discorda zostanie również usunięta.')) {
-      if (discordMsgId) {
+  const deleteExpedition = async (id, discordMsgId, fullPartyMsgId) => {
+    if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina? Wiadomości z Discorda zostaną również usunięte.')) {
+      if (discordMsgId || fullPartyMsgId) {
         try {
           await fetch('/api/webhooks/expedition', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messageId: discordMsgId })
+            body: JSON.stringify({ 
+              messageId: discordMsgId,
+              fullPartyMessageId: fullPartyMsgId
+            })
           })
         } catch (err) {
           console.error('Błąd kasowania na Discordzie:', err)
@@ -276,51 +208,74 @@ export default function Home() {
       <main className="flex min-h-screen items-center justify-center bg-[#050305] text-xl font-mono tracking-widest">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#f3ba2f] border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(243,186,47,0.5)]"></div>
-          <p className="text-[#f3ba2f] font-bold text-sm">SYNCHRONIZACJA SIECI CAERLEON...</p>
+          <p className="text-[#f3ba2f] font-bold text-sm">Ładowanie...</p>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#050305] text-gray-300">
-      
-      {/* TŁO Z NOWOCZESNĄ VIGNETTE I GLOW */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
+    <main 
+      className={`min-h-screen flex flex-col justify-between antialiased font-sans select-none relative text-gray-300 ${
+        !user 
+          ? 'bg-no-repeat bg-[center_top]' 
+          : 'bg-[#050305]'
+      }`}
+      style={!user ? { 
+        backgroundImage: "url('/albion-bg.jpg')",
+        backgroundSize: 'cover' 
+      } : undefined}
+    >
+      {!user ? (
+        <div className="fixed inset-0 bg-[#050305]/80 z-0 pointer-events-none"></div>
+      ) : (
+        <>
+          <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
+          <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
+        </>
+      )}
 
-      {/* ROZCIĄGNIĘCIE NA PEŁNĄ SZEROKOŚĆ EKRANU Z BEZPIECZNYMI MARGINESAMI */}
       <div className="w-full flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 z-10 max-w-[1600px] mx-auto">
         {!user ? (
-          <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-xl mx-auto space-y-8 text-center my-auto">
-            <div className="p-4 bg-[#f3ba2f]/10 border border-[#f3ba2f]/30 rounded-2xl text-[#f3ba2f] shadow-[0_0_30px_rgba(243,186,47,0.15)]">
-              <Castle className="w-12 h-12" />
+          <div className="flex flex-col items-center justify-center min-h-[80vh] w-full max-w-lg mx-auto space-y-8 text-center my-auto">
+            <div className="w-full bg-[#0a0306] border border-[#f3ba2f]/30 rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6 relative overflow-hidden group">
+              <div className="flex justify-center relative z-10">
+                <div className="p-4 bg-[#f3ba2f]/10 border border-[#f3ba2f]/30 rounded-2xl text-[#f3ba2f]">
+                  <Castle className="w-10 h-10" />
+                </div>
+              </div>
+
+              <div className="space-y-2 relative z-10">
+                <h1 className="text-3xl sm:text-4xl font-black text-white tracking-wide font-serif">
+                  ALBION <span className="text-[#f3ba2f]">CAERLEON</span>
+                </h1>
+                <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+                  Autonomiczna platforma polskiej społeczności. Wybierz metodę autoryzacji, aby uzyskać dostęp do terminali.
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-2 relative z-10">
+                <button 
+                  onClick={loginWithDiscord} 
+                  className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 px-6 rounded-xl shadow-lg transition-all duration-200 text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span>Autoryzacja przez Discord</span>
+                </button>
+
+                <button 
+                  disabled
+                  className="w-full bg-[#12070a]/60 border border-[#3d1823]/60 text-gray-500 font-bold py-3.5 px-6 rounded-xl text-xs uppercase tracking-wider cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  <span>Google (Niedostępność)</span>
+                </button>
+              </div>
             </div>
-            <div className="space-y-3">
-              <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight font-serif">
-                ALBION <span className="text-[#f3ba2f]">CAERLEON</span>
-              </h1>
-              <p className="text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
-                Platforma handlowo-społecznościowa polskiej społeczności Albion Online. Zaloguj się, aby uzyskać pełny dostęp do terminali.
-              </p>
-            </div>
-            <button 
-              onClick={loginWithDiscord} 
-              className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-4 px-8 rounded-2xl shadow-[0_4px_25px_rgba(243,186,47,0.3)] transition-all duration-300 text-xs uppercase tracking-widest"
-            >
-              Autoryzacja przez Discord
-            </button>
           </div>
         ) : (
-          
           <div className="w-full space-y-6">
-            
-            {/* HERO / TOP BANNER W STYLU KONSOLI OPERACYJNEJ */}
-            <header className="bg-gradient-to-r from-[#12070a] via-[#0c0407] to-[#070204] border border-[#2c1219] rounded-3xl p-6 sm:p-8 shadow-[0_15px_40px_rgba(0,0,0,0.6)] relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-[#f3ba2f]/5 rounded-full blur-3xl pointer-events-none"></div>
-
+            <header className="bg-[#0c0407] border border-[#2c1219] rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-5 w-full lg:w-auto">
-                <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-[#f3ba2f] shadow-inner shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-[#f3ba2f] shrink-0">
                   <Castle className="w-8 h-8" />
                 </div>
                 <div>
@@ -338,7 +293,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Prawa strona nagłówka: Zegar + Profil */}
               <div className="flex flex-wrap items-center justify-end gap-4 w-full lg:w-auto">
                 <div className="bg-[#070204] border border-[#240e14] rounded-2xl px-5 py-2.5 flex items-center gap-3">
                   <Clock className="w-4 h-4 text-[#f3ba2f]" />
@@ -359,7 +313,7 @@ export default function Home() {
                   </div>
                   <button 
                     onClick={logout} 
-                    className="ml-2 bg-[#1a080d] hover:bg-rose-950/80 border border-rose-900/40 text-rose-300 font-bold px-3.5 py-2 rounded-xl text-xs uppercase transition tracking-wider"
+                    className="ml-2 bg-[#1a080d] hover:bg-rose-950/80 border border-rose-900/40 text-rose-300 font-bold px-3.5 py-2 rounded-xl text-xs uppercase transition tracking-wider cursor-pointer"
                   >
                     Wyjdź
                   </button>
@@ -367,9 +321,66 @@ export default function Home() {
               </div>
             </header>
 
-            {/* GŁÓWNY GRID: NAWIGACJA JAKO MODERN CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link href="/gildie" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-[#f3ba2f]/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
+              <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase">Status Serwerów</span>
+                  <div className="text-sm font-bold text-emerald-400 flex items-center gap-1.5 mt-0.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    W pełni operacyjne
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+                <div className="p-3 bg-[#f3ba2f]/10 border border-[#f3ba2f]/20 rounded-xl text-[#f3ba2f]">
+                  <ShoppingBag className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase">Aktywne oferty rynku</span>
+                  <div className="text-sm font-bold text-white mt-0.5 font-mono">
+                    {globalStats.marketOffersCount} ogłoszeń
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400">
+                  <Compass className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-gray-400 uppercase">Zarejestrowane gildie</span>
+                  <div className="text-sm font-bold text-white mt-0.5 font-mono">
+                    {globalStats.guildsCount} formacji
+                  </div>
+                </div>
+              </div>
+
+              <a 
+                href="https://wiki.albiononline.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="bg-[#0c0407] border border-[#281017] hover:border-[#f3ba2f]/40 rounded-2xl p-4 flex items-center justify-between shadow-lg transition group cursor-pointer"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-400">
+                    <ExternalLink className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-gray-400 uppercase">Baza Wiedzy</span>
+                    <div className="text-sm font-bold text-white group-hover:text-[#f3ba2f] transition mt-0.5">
+                      Oficjalna Wiki
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Link href="/gildie" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-[#f3ba2f]/50 rounded-2xl p-5 transition-all duration-200 flex flex-col justify-between space-y-4 shadow-xl">
                 <div className="flex justify-between items-start">
                   <div className="p-3 bg-[#f3ba2f]/10 rounded-xl text-[#f3ba2f] group-hover:scale-110 transition-transform">
                     <Swords className="w-6 h-6" />
@@ -382,7 +393,7 @@ export default function Home() {
                 </div>
               </Link>
 
-              <Link href="/wyprawy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-purple-500/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
+              <Link href="/wyprawy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-purple-500/50 rounded-2xl p-5 transition-all duration-200 flex flex-col justify-between space-y-4 shadow-xl">
                 <div className="flex justify-between items-start">
                   <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400 group-hover:scale-110 transition-transform">
                     <Shield className="w-6 h-6" />
@@ -395,7 +406,7 @@ export default function Home() {
                 </div>
               </Link>
 
-              <Link href="/rynek" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-sky-500/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
+              <Link href="/rynek" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-sky-500/50 rounded-2xl p-5 transition-all duration-200 flex flex-col justify-between space-y-4 shadow-xl">
                 <div className="flex justify-between items-start">
                   <div className="p-3 bg-sky-500/10 rounded-xl text-sky-400 group-hover:scale-110 transition-transform">
                     <ShoppingBag className="w-6 h-6" />
@@ -407,36 +418,18 @@ export default function Home() {
                   <p className="text-xs text-gray-400 mt-1">Ogłoszenia handlowe i oferty społeczności.</p>
                 </div>
               </Link>
-
-              <Link href="/buildy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-rose-500/50 rounded-2xl p-5 transition-all duration-300 flex flex-col justify-between space-y-4 shadow-xl">
-                <div className="flex justify-between items-start">
-                  <div className="p-3 bg-rose-500/10 rounded-xl text-rose-400 group-hover:scale-110 transition-transform">
-                    <Flame className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 04</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-base group-hover:text-rose-300 transition-colors">Zestawy Bojowe</h3>
-                  <p className="text-xs text-gray-400 mt-1">Kreator buildów dla PvP, ZvZ i statyków.</p>
-                </div>
-              </Link>
             </div>
 
-            {/* SEKCJA ŚRODKOWA: SZEROKI DUAL-PANE (KALKULATOR / ADMIN ORAZ CZAT) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              
-              {/* LEWY PANEL: KALKULATOR / ADMIN + NEWSY */}
               <div className="lg:col-span-6 space-y-6">
-                
-                {/* Kalkulator Marż / Admin Panel */}
                 <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
                   <div className="flex items-center justify-between border-b border-[#200d13] pb-4">
                     <div className="flex gap-4 font-mono text-xs font-bold uppercase">
-                      <button onClick={() => setRightTab('ECONOMY')} className={`pb-1 transition-colors ${rightTab === 'ECONOMY' ? 'text-[#f3ba2f] border-b-2 border-[#f3ba2f]' : 'text-gray-500 hover:text-gray-300'}`}>
+                      <button onClick={() => setRightTab('ECONOMY')} className={`pb-1 transition-colors cursor-pointer ${rightTab === 'ECONOMY' ? 'text-[#f3ba2f] border-b-2 border-[#f3ba2f]' : 'text-gray-500 hover:text-gray-300'}`}>
                         Kalkulator Marż
                       </button>
                       {isAdmin && (
-                        <button onClick={() => setRightTab('ADMIN')} className={`pb-1 transition-colors ${rightTab === 'ADMIN' ? 'text-rose-400 border-b-2 border-rose-500' : 'text-rose-900 hover:text-rose-400'}`}>
+                        <button onClick={() => setRightTab('ADMIN')} className={`pb-1 transition-colors cursor-pointer ${rightTab === 'ADMIN' ? 'text-rose-400 border-b-2 border-rose-500' : 'text-rose-900 hover:text-rose-400'}`}>
                           Panel Inkwizycji
                         </button>
                       )}
@@ -449,7 +442,7 @@ export default function Home() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Przedmiot</label>
-                          <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f] transition-colors">
+                          <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f] transition-colors cursor-pointer">
                             <option value="T4_BAG">Torba T4</option>
                             <option value="T5_BAG">Torba T5</option>
                             <option value="T6_BAG">Torba T6</option>
@@ -457,7 +450,7 @@ export default function Home() {
                         </div>
                         <div>
                           <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Miasto Zakupu</label>
-                          <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f] transition-colors">
+                          <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f] transition-colors cursor-pointer">
                             <option value="Martlock">Martlock</option>
                             <option value="Lymhurst">Lymhurst</option>
                             <option value="FortSterling">Fort Sterling</option>
@@ -476,7 +469,7 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider text-xs transition shadow-md">
+                      <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider text-xs transition shadow-md cursor-pointer">
                         Analizuj Opłacalność
                       </button>
 
@@ -499,10 +492,10 @@ export default function Home() {
                       <div className="flex justify-between items-center bg-[#050204] p-3 rounded-xl border border-rose-950/60 flex-wrap gap-2">
                         <span className="text-rose-400 font-bold uppercase tracking-wider font-mono">Panel Inkwizycji</span>
                         <div className="flex gap-1 flex-wrap">
-                          <button onClick={() => setAdminTab('MARKET')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'MARKET' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Oferty ({allMarketPosts.length})</button>
-                          <button onClick={() => setAdminTab('GUILDS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'GUILDS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Gildie ({allGuilds.length})</button>
-                          <button onClick={() => setAdminTab('EXPEDITIONS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'EXPEDITIONS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Wyprawy ({allExpeditions.length})</button>
-                          <button onClick={() => setAdminTab('BUILDS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition ${adminTab === 'BUILDS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Buildy ({allBuilds.length})</button>
+                          <button onClick={() => setAdminTab('MARKET')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition cursor-pointer ${adminTab === 'MARKET' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Oferty ({allMarketPosts.length})</button>
+                          <button onClick={() => setAdminTab('GUILDS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition cursor-pointer ${adminTab === 'GUILDS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Gildie ({allGuilds.length})</button>
+                          <button onClick={() => setAdminTab('EXPEDITIONS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition cursor-pointer ${adminTab === 'EXPEDITIONS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Wyprawy ({allExpeditions.length})</button>
+                          <button onClick={() => setAdminTab('BUILDS')} className={`px-2.5 py-1 rounded-lg font-bold uppercase transition cursor-pointer ${adminTab === 'BUILDS' ? 'bg-rose-950 text-rose-300' : 'text-gray-400'}`}>Buildy ({allBuilds.length})</button>
                         </div>
                       </div>
 
@@ -510,25 +503,25 @@ export default function Home() {
                         {adminTab === 'MARKET' && (allMarketPosts.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak ofert.</p> : allMarketPosts.map(p => (
                           <div key={p.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
                             <span className="text-gray-200 font-bold">{p.title || p.item_name} - <strong className="text-[#f3ba2f]">{p.price}s</strong></span>
-                            <button onClick={() => deleteMarketPost(p.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Usuń</button>
+                            <button onClick={() => deleteMarketPost(p.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px] cursor-pointer">Usuń</button>
                           </div>
                         )))}
                         {adminTab === 'GUILDS' && (allGuilds.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak gildii.</p> : allGuilds.map(g => (
                           <div key={g.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
                             <span className="text-gray-100 font-bold">{g.name}</span>
-                            <button onClick={() => deleteGuild(g.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Spal</button>
+                            <button onClick={() => deleteGuild(g.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px] cursor-pointer">Spal</button>
                           </div>
                         )))}
                         {adminTab === 'EXPEDITIONS' && (allExpeditions.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak wypraw.</p> : allExpeditions.map(e => (
                           <div key={e.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
                             <span className="text-gray-100 font-bold">{e.title}</span>
-                            <button onClick={() => deleteExpedition(e.id, e.discord_message_id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Odwołaj</button>
+                            <button onClick={() => deleteExpedition(e.id, e.discord_message_id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px] cursor-pointer">Odwołaj</button>
                           </div>
                         )))}
                         {adminTab === 'BUILDS' && (allBuilds.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak buildów.</p> : allBuilds.map(b => (
                           <div key={b.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2">
                             <span className="text-gray-100 font-bold">{b.title}</span>
-                            <button onClick={() => deleteBuild(b.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Usuń</button>
+                            <button onClick={() => deleteBuild(b.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px] cursor-pointer">Usuń</button>
                           </div>
                         )))}
                       </div>
@@ -536,7 +529,6 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Goniec Królewski (Newsy RSS) */}
                 <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
                   <div className="flex items-center justify-between border-b border-[#200d13] pb-3">
                     <span className="text-xs font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
@@ -559,113 +551,13 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-
               </div>
 
-              {/* PRAWY PANEL: NOWOCZESNY CZAT SPOŁECZNOŚCIOWY */}
+              {/* PRAWY PANEL: WYDZIELONY KOMPONENT CZATU */}
               <div className="lg:col-span-6">
-                <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 h-[600px] flex flex-col justify-between shadow-2xl">
-                  
-                  {/* Nagłówek czatu z kanałami */}
-                  <div className="flex items-center justify-between border-b border-[#200d13] pb-4 mb-3 flex-wrap gap-2">
-                    <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#f3ba2f]">
-                      <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-                      <span>STRUMIEŃ KOMUNIKACJI</span>
-                    </div>
-                    
-                    <div className="flex gap-1.5 flex-wrap">
-                      {['GLOBALNY', 'HANDEL', 'REKRUTACJA', 'SYSTEM'].map((ch) => (
-                        <button 
-                          key={ch} 
-                          onClick={() => setActiveChannel(ch)} 
-                          className={`px-3 py-1.5 rounded-xl transition-all text-[11px] font-mono ${
-                            activeChannel === ch 
-                              ? 'bg-[#f3ba2f] text-black font-extrabold shadow-[0_0_10px_rgba(243,186,47,0.3)]' 
-                              : 'text-gray-400 bg-[#050204] hover:text-gray-200 border border-[#200d13]'
-                          }`}
-                        >
-                          {ch}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Lista wiadomości */}
-                  <div 
-                    ref={chatContainerRef}
-                    className="space-y-3 overflow-y-auto flex-1 w-full pr-2 text-sm select-text flex flex-col my-2"
-                  >
-                    {chatLoading ? (
-                      <p className="text-gray-500 italic text-center py-10">Ładowanie bufora wiadomości...</p>
-                    ) : (
-                      chatMessages
-                        .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
-                        .map((msg) => {
-                          const messageTime = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) : '';
-                          const userAvatar = msg.avatar_url || (msg.user_id === user?.id ? user?.user_metadata?.avatar_url : null);
-                          const cleanDisplayName = (msg.username || 'System').replace(/#0$/, '');
-
-                          return (
-                            <div key={msg.id} className="flex items-start gap-3 bg-[#070204]/60 border border-[#1c0b10] p-3.5 rounded-2xl">
-                              {userAvatar && msg.channel !== 'SYSTEM' ? (
-                                <img src={userAvatar} alt="Avatar" className="w-9 h-9 rounded-xl object-cover border border-[#3d1823] shrink-0 shadow" />
-                              ) : (
-                                <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 bg-[#12070a] border border-[#3d1823] text-[#f3ba2f]">
-                                  {cleanDisplayName.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`font-bold text-xs ${msg.role === 'ADMIN' ? 'text-[#f3ba2f] font-serif' : 'text-sky-400'}`}>
-                                    {cleanDisplayName}
-                                  </span>
-                                  <span className="text-[10px] text-gray-500 font-mono">{messageTime}</span>
-
-                                  {isAdmin && msg.channel !== 'SYSTEM' && (
-                                    <button onClick={() => deleteChatMessage(msg.id)} className="text-rose-400 hover:text-rose-300 text-xs ml-auto">
-                                      <Trash2 className="w-3.5 h-3.5 inline" />
-                                    </button>
-                                  )}
-                                </div>
-
-                                <p className="text-gray-200 mt-1 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
-                                  {msg.text}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })
-                    )}
-                  </div>
-
-                  {/* Formularz wysyłania */}
-                  <form onSubmit={handleSendChatMessage} className="mt-2 flex gap-2 items-center bg-[#050204] border border-[#200d13] rounded-2xl p-2.5 pl-4">
-                    <input
-                      type="text"
-                      maxLength="120"
-                      disabled={activeChannel === 'SYSTEM'}
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder={activeChannel === 'SYSTEM' ? 'Kanał systemowy zablokowany...' : `Napisz wiadomość na kanale ${activeChannel.toLowerCase()}...`}
-                      className="flex-1 bg-transparent text-xs sm:text-sm text-gray-100 focus:outline-none placeholder-gray-500"
-                    />
-
-                    <button 
-                      type="submit" 
-                      disabled={activeChannel === 'SYSTEM'} 
-                      className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black px-5 py-2.5 rounded-xl text-xs font-black uppercase transition disabled:hidden flex items-center gap-1.5 shadow"
-                    >
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Wyślij</span>
-                    </button>
-                  </form>
-
-                </div>
+                <ChatBox user={user} isAdmin={isAdmin} />
               </div>
-
             </div>
-
           </div>
         )}
       </div>
@@ -680,7 +572,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-
     </main>
   )
 }

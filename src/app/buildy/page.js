@@ -102,7 +102,7 @@ export default function BuildyPage() {
         <div className="w-full">
           <PageBanner
             title="Królewska Zbrojownia"
-            subtitle="Przeglądaj i dziel się buildami społeczności Albion Online Polska"
+            subtitle="Przeglądaj i dziel się buildami społeczności AOPP"
             icon={Shield}
           />
         </div>
@@ -226,7 +226,7 @@ export default function BuildyPage() {
 
       <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
+          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska - Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">
             <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
             <span>•</span>

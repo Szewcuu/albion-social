@@ -409,7 +409,7 @@ export default function Gildie() {
       {/* FOOTER */}
       <footer className="w-full bg-[#050304] border-t border-[#3a1a1e] py-6 text-center z-10 text-xs text-gray-500 mt-8">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-          <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska Portal</span>.</p>
+          <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska - Portal</span>.</p>
           <p className="font-mono text-[10px] text-gray-600">Rejestr Taktyczny &amp; Tablica Rekrutacji</p>
         </div>
       </footer>
