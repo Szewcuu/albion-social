@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Swords, Shield, Globe, MapPin, Search, ArrowLeft, ExternalLink, HelpCircle } from 'lucide-react'
+import { Swords, Shield, Globe, MapPin, Search, ArrowLeft, ExternalLink, HelpCircle, Plus } from 'lucide-react'
 import GuildApplyModal from '@/components/GuildApplyModal'
 
 export default function Gildie() {
@@ -120,73 +120,62 @@ export default function Gildie() {
   })
 
   return (
-    <main className="min-h-screen bg-[#080506] flex flex-col justify-between antialiased select-none relative text-[#bcbbc2] font-sans">
+    <main className="min-h-screen bg-[#050305] text-gray-300 flex flex-col justify-between antialiased font-sans select-none relative">
       
-      {/* GLĘBOKIE TŁO KRWISTO-ZŁOTE */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#1b0a0d] via-[#0d0708] to-[#050304] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/30 via-transparent to-transparent z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_bottom,_var(--tw-gradient-stops))] from-[#c59b27]/10 via-transparent to-transparent z-0 pointer-events-none"></div>
+      {/* TŁO KRWISTO-ZŁOTE */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
+      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
 
-      <div className="max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6 flex-1 z-10">
+      <div className="max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 flex-1 z-10 text-sm">
         
         {/* POWRÓT */}
         <div>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#c59b27] hover:text-[#f0b73a] text-xs font-black tracking-widest uppercase transition group">
+          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-black tracking-widest uppercase transition group">
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             <span>Powrót do Centrum Caerleon</span>
           </Link>
         </div>
 
-        {/* NOWY NAGŁÓWEK */}
-        <header className="relative bg-[#120a0c]/90 border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-[0_0_30px_rgba(197,155,39,0.15)] overflow-hidden">
-          <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-[#c59b27]">
-            <Swords className="w-64 h-64" />
+        {/* NAGŁÓWEK */}
+        <header className="bg-[#0c0407] border border-[#2c1219] p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden flex items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-[#f3ba2f] shrink-0 shadow-[0_0_15px_rgba(243,186,47,0.2)]">
+            <Swords className="w-8 h-8" />
           </div>
-          <div className="relative z-10 space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
-              <span className="text-xs font-bold text-red-500 uppercase tracking-widest">Królewski Rejestr Wojskowy</span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-black text-gray-100 uppercase tracking-wider font-serif">
-              ⚔️ Rejestr Dekretów i Sojuszy Gildyjnych
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider font-serif">
+              Rejestr Dekretów &amp; Sojuszy Gildyjnych
             </h1>
-            <p className="text-xs sm:text-sm text-gray-400 max-w-2xl leading-relaxed">
-              Oficjalne archiwum polskich formacji bojowych w Albion Online. Znajdź nową gildię, dołącz do ZvZ lub zarejestruj swój własny sojusz.
+            <p className="text-xs text-gray-400 font-mono mt-1">
+              Oficjalny rejestr polskich formacji w Albion Online. Dołącz do ZvZ, małych grup lub zarejestruj własną gildię.
             </p>
           </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* LEWA STRONA: FORMULARZ DEDYKOWANY */}
+          {/* LEWA STRONA: FORMULARZ */}
           <div className="lg:col-span-4">
-            <div className="bg-[#120a0c]/80 border border-[#3a1a1e] p-6 shadow-2xl sticky top-6 backdrop-blur-md">
-              <div className="flex items-center justify-between border-b border-[#3a1a1e] pb-3 mb-5">
-                <h2 className="text-base font-black text-[#c59b27] uppercase tracking-wider flex items-center gap-2 font-serif">
-                  <Shield className="w-5 h-5 text-[#c59b27]" />
-                  <span>Ogłoś Formację</span>
-                </h2>
-                <span className="text-[10px] bg-[#2b0d10] text-red-400 font-bold px-2 py-0.5 border border-red-900/50 uppercase">
-                  Rejestracja
-                </span>
-              </div>
+            <div className="bg-[#0c0407] border border-[#281017] p-6 rounded-3xl shadow-2xl sticky top-6 space-y-4">
+              <h2 className="text-sm font-black text-[#f3ba2f] uppercase tracking-wider font-serif border-b border-[#200d13] pb-3 flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                <span>Zarejestruj Gildię</span>
+              </h2>
               
               {!user ? (
-                <div className="text-center py-8 space-y-3 bg-[#080506]/60 border border-[#2b181a] p-4">
-                  <p className="text-xs text-gray-400 italic">Brama autoryzacji jest zamknięta.</p>
-                  <p className="text-xs font-bold text-[#c59b27]">Zaloguj się przez Discorda w menu głównym, aby wystawić manifest.</p>
-                </div>
+                <p className="text-xs text-gray-400 italic bg-[#050204] p-4 rounded-2xl border border-[#200d13]">
+                  Zaloguj się na stronie głównej, aby opublikować manifest swojej gildii.
+                </p>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                <form onSubmit={handleSubmit} className="space-y-3 text-xs">
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase tracking-wider">Nazwa Gildii *</label>
-                    <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:outline-none focus:border-[#c59b27] transition" placeholder="np. Husaria" />
+                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Nazwa Gildii *</label>
+                    <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" placeholder="np. Husaria Polska" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase tracking-wider">Serwer *</label>
-                      <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 cursor-pointer focus:border-[#c59b27] outline-none">
+                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Serwer *</label>
+                      <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
                         <option value="Europa">Europa</option>
                         <option value="Ameryka">Ameryka</option>
                         <option value="Azja">Azja</option>
@@ -194,8 +183,8 @@ export default function Gildie() {
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase tracking-wider">Główne Miasto *</label>
-                      <select name="main_city" value={formData.main_city} onChange={handleInputChange} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 cursor-pointer focus:border-[#c59b27] outline-none">
+                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Główne Miasto *</label>
+                      <select name="main_city" value={formData.main_city} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
                         <option value="Martlock">Martlock</option>
                         <option value="Lymhurst">Lymhurst</option>
                         <option value="Bridgewatch">Bridgewatch</option>
@@ -208,8 +197,8 @@ export default function Gildie() {
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase tracking-wider">Doktryna / Profil *</label>
-                    <select name="activity_type" value={formData.activity_type} onChange={handleInputChange} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-200 cursor-pointer focus:border-[#c59b27] outline-none">
+                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Profil / Doktryna *</label>
+                    <select name="activity_type" value={formData.activity_type} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
                       <option value="PvP">PvP / Ganking</option>
                       <option value="PvE / HCE">PvE / HCE</option>
                       <option value="ZvZ / Wojny">ZvZ / Wojny Terytorialne</option>
@@ -218,74 +207,71 @@ export default function Gildie() {
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase tracking-wider">Zaproszenie Discord *</label>
-                    <input type="url" name="discord_link" required value={formData.discord_link} onChange={handleInputChange} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:outline-none focus:border-[#c59b27] transition" placeholder="https://discord.gg/..." />
+                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Zaproszenie Discord *</label>
+                    <input type="url" name="discord_link" required value={formData.discord_link} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" placeholder="https://discord.gg/..." />
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase tracking-wider">
-                      Webhook Rekrutacji (Opcjonalnie)
-                    </label>
+                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Webhook Rekrutacji (Opcjonalnie)</label>
                     <input
                       type="url"
                       name="webhook_url"
                       value={formData.webhook_url}
                       onChange={handleInputChange}
-                      className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:outline-none focus:border-[#c59b27] transition"
+                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs"
                       placeholder="https://discord.com/api/webhooks/..."
                     />
                     
-                    <details className="mt-2 text-[11px] text-gray-400 bg-[#080506] border border-[#2b181a] p-2.5 rounded-sm">
-                      <summary className="cursor-pointer text-[#c59b27] font-bold hover:underline select-none flex items-center gap-1">
+                    <details className="mt-2 text-[10px] text-gray-400 bg-[#050204] border border-[#220e14] p-2.5 rounded-xl">
+                      <summary className="cursor-pointer text-[#f3ba2f] font-bold hover:underline select-none flex items-center gap-1 font-mono">
                         <HelpCircle className="w-3.5 h-3.5" />
-                        <span>Jak pobrać link Webhooka z Discorda?</span>
+                        <span>Jak pobrać Webhook z Discorda?</span>
                       </summary>
-                      <ol className="list-decimal list-inside space-y-1 text-gray-300 mt-2 pt-2 border-t border-[#2b181a]">
-                        <li>Wejdź na swój serwer Discord.</li>
-                        <li>Stwórz kanał np. <span className="text-amber-400 font-mono">#rekrutacja</span>.</li>
-                        <li>Przejdź w nim do: <b>Ustawienia kanału -&gt; Integracje -&gt; Webhooki</b>.</li>
-                        <li>Kliknij <b>Utwórz webhook</b>, a następnie <b>Kopiuj adres URL webhooka</b> i wklej powyżej.</li>
+                      <ol className="list-decimal list-inside space-y-1 text-gray-300 mt-2 pt-2 border-t border-[#1c0b10] font-mono">
+                        <li>Wejdź na serwer Discord.</li>
+                        <li>Przejdź do: <b>Ustawienia kanału -&gt; Integracje -&gt; Webhooki</b>.</li>
+                        <li>Kliknij <b>Utwórz webhook</b>, skopiuj go i wklej powyżej.</li>
                       </ol>
                     </details>
                   </div>
 
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="block text-gray-400 font-bold uppercase tracking-wider">Dekret / Wymagania *</label>
-                      <span className="text-gray-500 font-mono">{formData.description.length}/600</span>
+                      <label className="block text-gray-400 font-bold uppercase font-mono text-[10px]">Opis / Wymagania *</label>
+                      <span className="text-gray-500 font-mono text-[10px]">{formData.description.length}/600</span>
                     </div>
-                    <textarea name="description" rows="4" maxLength="600" value={formData.description} onChange={handleInputChange} className="w-full bg-[#080506] border border-[#2b181a] p-2.5 text-gray-100 focus:outline-none focus:border-[#c59b27] resize-none" placeholder="Opisz gildie, godziny aktywności, wymagany Fame..." />
+                    <textarea name="description" rows="4" maxLength="600" value={formData.description} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none resize-none text-xs" placeholder="Opisz godziny aktywności, wymagany Fame..." />
                   </div>
 
-                  <button type="submit" className="w-full bg-gradient-to-r from-[#c59b27] to-[#a87a1e] hover:from-[#dca62b] text-black font-black py-3 uppercase tracking-widest transition shadow-lg shadow-[#c59b27]/10 font-serif text-xs">
-                    Przybij Manifest
+                  <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider transition text-xs cursor-pointer shadow-md">
+                    Opublikuj Manifest
                   </button>
-                  {formMessage && <p className="text-center font-bold text-amber-500 animate-pulse mt-2">{formMessage}</p>}
+                  {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs font-mono">{formMessage}</p>}
                 </form>
               )}
             </div>
           </div>
 
-          {/* PRAWA STRONA: PRZEGLĄDANIE OSOBNO KART */}
-          <div className="lg:col-span-8 space-y-5">
+          {/* PRAWA STRONA: LISTA GILDII */}
+          <div className="lg:col-span-8 space-y-4">
             
-            {/* PASEK WYSZUKIWANIA I FILTRÓW */}
-            <div className="bg-[#120a0c]/80 border border-[#3a1a1e] p-4 shadow-xl backdrop-blur-md space-y-3">
+            {/* FILTRY */}
+            <div className="bg-[#0c0407] border border-[#281017] p-4 rounded-3xl shadow-xl space-y-3 font-mono text-xs">
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
                 <input 
                   type="text" 
-                  placeholder="Szukaj gildii po nazwie, opisie lub słowach kluczowych..." 
+                  placeholder="Szukaj gildii po nazwie lub opisie..." 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="w-full bg-[#080506] border border-[#2b181a] pl-9 pr-4 py-2.5 text-xs text-gray-100 focus:outline-none focus:border-[#c59b27] transition"
+                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl pl-9 pr-4 py-2.5 text-xs text-gray-100 focus:border-[#f3ba2f] outline-none"
                 />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div>
                   <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Serwer</label>
-                  <select value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="w-full bg-[#080506] border border-[#2b181a] p-2 text-[#c59b27] font-bold focus:outline-none focus:border-[#c59b27] cursor-pointer">
+                  <select value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-[#f3ba2f] font-bold outline-none cursor-pointer">
                     <option value="ALL">Wszystkie Serwery</option>
                     <option value="Europa">Europa</option>
                     <option value="Ameryka">Ameryka</option>
@@ -294,7 +280,7 @@ export default function Gildie() {
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Miasto</label>
-                  <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)} className="w-full bg-[#080506] border border-[#2b181a] p-2 text-gray-300 focus:outline-none focus:border-[#c59b27] cursor-pointer">
+                  <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-gray-300 outline-none cursor-pointer">
                     <option value="ALL">Wszystkie Miasta</option>
                     <option value="Martlock">Martlock</option>
                     <option value="Lymhurst">Lymhurst</option>
@@ -307,7 +293,7 @@ export default function Gildie() {
                 </div>
                 <div>
                   <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Doktryna</label>
-                  <select value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="w-full bg-[#080506] border border-[#2b181a] p-2 text-gray-300 focus:outline-none focus:border-[#c59b27] cursor-pointer">
+                  <select value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-gray-300 outline-none cursor-pointer">
                     <option value="ALL">Wszystkie Doktryny</option>
                     <option value="PvP">PvP / Ganking</option>
                     <option value="PvE / HCE">PvE / HCE</option>
@@ -321,68 +307,55 @@ export default function Gildie() {
             {/* LISTA KART GILDII */}
             <div className="space-y-4">
               {loading ? (
-                <div className="py-12 text-center text-gray-400 font-bold animate-pulse text-sm">
-                  Otwieranie królewskich archiwów gildyjnych...
+                <div className="py-12 text-center text-gray-500 font-mono animate-pulse">
+                  Otwieranie archiwów gildyjnych...
                 </div>
               ) : filteredGuilds.length === 0 ? (
-                <div className="text-gray-500 italic text-center bg-[#120a0c]/40 border border-[#2b181a] p-12 text-sm">
+                <div className="text-gray-500 italic text-center bg-[#0c0407] border border-[#281017] p-12 rounded-3xl">
                   Brak zarejestrowanych sojuszy spełniających te kryteria.
                 </div>
               ) : (
                 filteredGuilds.map((guild) => (
                   <div 
                     key={guild.id} 
-                    className="bg-[#120a0c]/90 border border-[#2b181a] hover:border-[#c59b27]/60 p-5 shadow-xl transition-all duration-200 relative overflow-hidden group"
+                    className="bg-[#0c0407] border border-[#281017] hover:border-[#f3ba2f]/40 p-6 rounded-3xl shadow-xl transition space-y-4 relative overflow-hidden"
                   >
-                    {/* Złota linia na krawędzi przy hoverze */}
-                    <div className="absolute top-0 left-0 w-1 h-full bg-[#c59b27] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#200d13] pb-3">
+                      <h3 className="text-xl font-black text-white uppercase tracking-wide font-serif">
+                        {guild.name}
+                      </h3>
 
-                    {/* NAGŁÓWEK KARTY */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 mb-3 border-b border-[#2b181a] pb-3">
-                      <div className="flex items-center gap-3">
-                        <h3 className="text-xl font-black text-gray-100 uppercase tracking-wider font-serif">
-                          {guild.name}
-                        </h3>
-                      </div>
-
-                      {/* TAGI INFORMACYJNE */}
-                      <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                        <span className="flex items-center gap-1 bg-[#080506] text-purple-400 border border-purple-900/40 px-2.5 py-1">
-                          <Globe className="w-3 h-3" />
-                          <span>{guild.server || 'Europa'}</span>
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold">
+                        <span className="flex items-center gap-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full uppercase">
+                          <Globe className="w-3 h-3" /> {guild.server || 'Europa'}
                         </span>
                         
-                        <span className="flex items-center gap-1 bg-[#080506] text-amber-400 border border-amber-900/40 px-2.5 py-1">
-                          <MapPin className="w-3 h-3" />
-                          <span>{guild.main_city}</span>
+                        <span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full uppercase">
+                          <MapPin className="w-3 h-3" /> {guild.main_city}
                         </span>
 
-                        <span className="flex items-center gap-1 bg-[#080506] text-emerald-400 border border-emerald-900/40 px-2.5 py-1">
-                          <Shield className="w-3 h-3" />
-                          <span>{guild.activity_type}</span>
+                        <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full uppercase">
+                          <Shield className="w-3 h-3" /> {guild.activity_type}
                         </span>
                       </div>
                     </div>
 
-                    {/* OPIS */}
-                    <p className="text-gray-300 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed mb-5 font-sans">
+                    <p className="text-xs text-gray-300 bg-[#050204] p-3.5 rounded-2xl border border-[#220e14] leading-relaxed font-sans whitespace-pre-wrap">
                       {guild.description}
                     </p>
 
-                    {/* STOPKA KARTY & PRZYCISKI */}
-                    <div className="flex flex-wrap items-center justify-between border-t border-[#2b181a] pt-3 text-xs text-gray-500 gap-3">
-                      <p className="text-[11px]">
-                        Lider / Wystawca: <span className="text-gray-300 font-mono">{guild.profiles?.username || 'Nieznany'}</span>
+                    <div className="flex flex-wrap items-center justify-between border-t border-[#200d13] pt-3 text-xs text-gray-500 gap-3 font-mono">
+                      <p>
+                        Lider: <b className="text-emerald-400">{guild.profiles?.username || 'Gracz'}</b>
                       </p>
 
                       <div className="flex items-center gap-2">
-                        {/* Przycisk Aplikuj wyświetlany TYLKO gdy jest webhook */}
                         {guild.webhook_url && guild.webhook_url.trim() !== '' && (
                           <button
                             onClick={() => setSelectedGuildForApply(guild)}
-                            className="bg-[#2b0d10] hover:bg-red-900 border border-red-700/60 text-red-200 font-bold py-2 px-4 text-xs uppercase tracking-wider flex items-center gap-1.5 transition shadow-md"
+                            className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider text-[11px] transition shadow cursor-pointer flex items-center gap-1.5"
                           >
-                            <Swords className="w-3.5 h-3.5 text-[#c59b27]" />
+                            <Swords className="w-3.5 h-3.5" />
                             <span>Aplikuj</span>
                           </button>
                         )}
@@ -391,7 +364,7 @@ export default function Gildie() {
                           href={guild.discord_link} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="bg-[#5865F2]/20 hover:bg-[#5865F2] text-[#5865F2] hover:text-white border border-[#5865F2]/50 font-bold py-2 px-4 text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-md"
+                          className="bg-[#5865F2]/20 hover:bg-[#5865F2] text-[#5865F2] hover:text-white border border-[#5865F2]/40 font-bold px-4 py-2 rounded-xl uppercase tracking-wider text-[11px] transition flex items-center gap-1.5 cursor-pointer"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                           <span>Discord</span>
@@ -406,15 +379,13 @@ export default function Gildie() {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <footer className="w-full bg-[#050304] border-t border-[#3a1a1e] py-6 text-center z-10 text-xs text-gray-500 mt-8">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
-          <p>© {new Date().getFullYear()} <span className="text-[#c59b27] font-bold">Albion Online Polska - Portal</span>.</p>
-          <p className="font-mono text-[10px] text-gray-600">Rejestr Taktyczny &amp; Tablica Rekrutacji</p>
+      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
+        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
+          <p className="font-mono text-[10px] text-gray-600">Rejestr Gildii &amp; Rekrutacja</p>
         </div>
       </footer>
 
-      {/* MODAL FORMULARZA APLIKACYJNEGO */}
       <GuildApplyModal
         isOpen={!!selectedGuildForApply}
         onClose={() => setSelectedGuildForApply(null)}

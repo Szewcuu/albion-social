@@ -1,8 +1,27 @@
 'use client'
+
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState, memo, useCallback } from 'react'
 import Link from 'next/link'
-import { Swords, ShoppingBag, Shield, Clock, Newspaper, Calculator, Globe, Compass, ExternalLink, LogOut, ChevronDown, User, Bell, Check, X } from 'lucide-react'
+import { 
+  Swords, 
+  ShoppingBag, 
+  Shield, 
+  Skull,
+  Clock, 
+  Newspaper, 
+  Calculator, 
+  Globe, 
+  Compass, 
+  ExternalLink, 
+  LogOut, 
+  ChevronDown, 
+  User, 
+  Bell, 
+  Check, 
+  X, 
+  Coins 
+} from 'lucide-react'
 import ChatBox from '@/components/ChatBox'
 
 // ZEGAR UTC
@@ -27,8 +46,7 @@ const ServerClock = memo(function ServerClock() {
 })
 
 export default function Home() {
-  const [selectedItem, setSelectedItem] = useState('T4_BAG')  
-  const [selectedCity, setSelectedCity] = useState('Martlock')
+  // Stany ogólne użytkownika
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -53,11 +71,45 @@ export default function Home() {
   // Zakładki
   const [rightTab, setRightTab] = useState('ECONOMY')
 
-  // Kalkulator
+  // --- PROSTY KALKULATOR MARŻ ---
   const [buyPrice, setBuyPrice] = useState('')
   const [blackMarketPrice, setBlackMarketPrice] = useState('')
-  const [marketTax, setMarketTax] = useState('8')
+  const [hasPremium, setHasPremium] = useState(true)
   const [calcResult, setCalcResult] = useState(null)
+
+  // Obliczanie opłacalności flipu
+  const handleCalculateFlip = (e) => {
+    e.preventDefault()
+
+    const buy = parseFloat(buyPrice) || 0
+    const sell = parseFloat(blackMarketPrice) || 0
+
+    if (buy <= 0 || sell <= 0) return
+
+    const taxRate = hasPremium ? 0.04 : 0.08
+    const netSell = sell * (1 - taxRate)
+
+    const profit = Math.round(netSell - buy)
+    const roi = ((profit / buy) * 100).toFixed(1)
+
+    let statusText = 'Ryzykowne / Mały Zysk'
+    let statusColor = 'bg-amber-950/40 border-amber-800 text-amber-300'
+
+    if (profit >= 50000 && parseFloat(roi) >= 15) {
+      statusText = '🔥 Bardzo Opłacalny Transport!'
+      statusColor = 'bg-emerald-950/40 border-emerald-800 text-emerald-400'
+    } else if (profit < 0) {
+      statusText = '⚠️ Transakcja Przyniesie Stratę'
+      statusColor = 'bg-rose-950/40 border-rose-800 text-rose-300'
+    }
+
+    setCalcResult({
+      profit: profit.toLocaleString('pl-PL'),
+      roi: roi,
+      statusText: statusText,
+      statusColor: statusColor
+    })
+  }
 
   const fetchNotifications = useCallback(async (userId) => {
     const { data } = await supabase
@@ -102,6 +154,16 @@ export default function Home() {
     }
   }, [])
 
+  const fetchAlbionNews = async () => {
+    try {
+      const res = await fetch('/api/news')
+      const data = await res.json()
+      if (data && !data.error) setAlbionNews(data)
+    } catch (err) {
+      console.error("Błąd ładowania wiadomości:", err)
+    }
+  }
+
   useEffect(() => {
     let isMounted = true
 
@@ -138,7 +200,7 @@ export default function Home() {
     }
   }, [fetchGlobalData, fetchUserDataAndRole, fetchNotifications])
 
-  // SUBSKRYPCJA POWIADOMIEŃ W CZASIE RZECZYWISTYM (REALTIME)
+  // SUBSKRYPCJA REALTIME POWIADOMIEŃ
   useEffect(() => {
     if (!user) return
 
@@ -154,7 +216,6 @@ export default function Home() {
         setNotifications(prev => [newNotif, ...prev])
         setToastNotification(newNotif)
 
-        // Automatyczne schowanie wysuwanego toasta po 5 sekundach
         setTimeout(() => {
           setToastNotification(null)
         }, 5000)
@@ -170,44 +231,6 @@ export default function Home() {
     if (!user) return
     await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id)
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
-  }
-
-  const fetchAlbionNews = async () => {
-    try {
-      const res = await fetch('/api/news')
-      const data = await res.json()
-      if (data && !data.error) setAlbionNews(data)
-    } catch (err) {
-      console.error("Błąd ładowania wiadomości:", err)
-    }
-  }
-
-  const handleCalculateFlip = (e) => {
-    e.preventDefault()
-    const cost = parseFloat(buyPrice) || 0
-    const rawRevenue = parseFloat(blackMarketPrice) || 0
-    const taxPercent = parseFloat(marketTax) || 0
-
-    if (cost <= 0 || rawRevenue <= 0) return
-
-    const taxAmount = rawRevenue * (taxPercent / 100)
-    const setupFee = rawRevenue * 0.01
-    const netRevenue = rawRevenue - taxAmount - setupFee
-    const profit = netRevenue - cost
-    const roi = (profit / cost) * 100
-
-    let statusText = "Nieopłacalne / Wysokie ryzyko"
-    let statusColor = "text-rose-400 border-rose-900/50 bg-rose-950/20"
-
-    if (roi >= 10 && roi < 25) {
-      statusText = "Umiarkowany zysk"
-      statusColor = "text-amber-400 border-amber-900/50 bg-amber-950/20"
-    } else if (roi >= 25) {
-      statusText = "Złoty interes! Pakuj towary do Caerleon!"
-      statusColor = "text-emerald-400 border-emerald-900/50 bg-[#050204]"
-    }
-
-    setCalcResult({ profit: Math.round(profit).toLocaleString('pl-PL'), roi: roi.toFixed(1), statusColor, statusText })
   }
 
   const logout = async () => { await supabase.auth.signOut() }
@@ -228,7 +251,7 @@ export default function Home() {
   }
 
   const deleteExpedition = async (id, discordMsgId, fullPartyMsgId) => {
-    if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina? Wiadomości z Discorda zostaną również usunięte.')) {
+    if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina?')) {
       if (discordMsgId || fullPartyMsgId) {
         try {
           await fetch('/api/webhooks/expedition', {
@@ -307,7 +330,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-3 relative z-10">
-                <button onClick={loginWithDiscord} className="w-full bg-gradient-to-r from-[#5865F2] to-[#4752C4] text-white font-black py-3.5 rounded-xl uppercase text-xs">
+                <button onClick={loginWithDiscord} className="w-full bg-gradient-to-r from-[#5865F2] to-[#4752C4] text-white font-black py-3.5 rounded-xl uppercase text-xs cursor-pointer">
                   Zaloguj przez Discord
                 </button>
               </div>
@@ -342,7 +365,7 @@ export default function Home() {
                   <ServerClock />
                 </div>
 
-                {/* CENTRUM POWIADOMIEŃ (DZWONEK) */}
+                {/* CENTRUM POWIADOMIEŃ */}
                 <div className="relative">
                   <button 
                     onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }}
@@ -357,7 +380,6 @@ export default function Home() {
                     )}
                   </button>
 
-                  {/* MENU POWIADOMIEŃ */}
                   {notifOpen && (
                     <div className="absolute right-0 mt-3 w-80 bg-[#0a0408]/95 border border-[#f3ba2f]/50 rounded-3xl shadow-2xl p-4 z-50 space-y-3 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="flex items-center justify-between border-b border-[#200d13] pb-2">
@@ -388,7 +410,7 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* DYSKRETNY PRZYCISK PROFILU */}
+                {/* PRZYCISK PROFILU */}
                 <div className="relative">
                   <button 
                     onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }}
@@ -408,7 +430,6 @@ export default function Home() {
                     <ChevronDown className={`w-3.5 h-3.5 text-[#f3ba2f] transition-transform duration-200 ${profileOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* PEŁNE MENU PROFILU */}
                   {profileOpen && (
                     <div className="absolute right-0 mt-3 w-80 bg-[#0a0408]/95 border border-[#f3ba2f]/50 rounded-3xl shadow-[0_0_30px_rgba(0,0,0,0.8)] p-5 z-50 space-y-4 backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="flex items-center gap-3.5 border-b border-[#200d13] pb-4">
@@ -431,7 +452,6 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {/* PRZYCISKI W MENU */}
                       <div className="space-y-2 font-mono text-xs">
                         <Link href="/profil" onClick={() => setProfileOpen(false)} className="flex items-center justify-between p-3 bg-[#18080f] hover:bg-[#280c18] border border-[#f3ba2f]/40 rounded-2xl transition group text-[#f3ba2f] font-bold">
                           <span className="flex items-center gap-2.5"><User className="w-4 h-4" /> Karta Postaci &amp; Edycja</span>
@@ -461,7 +481,7 @@ export default function Home() {
               </div>
             </header>
 
-            {/* SEKCJA Z KARTAMI */}
+            {/* SEKCJA Z KARTAMI I STATYSTYKAMI */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
                 <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400"><Globe className="w-5 h-5" /></div>
@@ -470,6 +490,7 @@ export default function Home() {
                   <div className="text-sm font-bold text-emerald-400 flex items-center gap-1.5 mt-0.5"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>W pełni operacyjne</div>
                 </div>
               </div>
+
               <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
                 <div className="p-3 bg-[#f3ba2f]/10 border border-[#f3ba2f]/20 rounded-xl text-[#f3ba2f]"><ShoppingBag className="w-5 h-5" /></div>
                 <div>
@@ -477,6 +498,7 @@ export default function Home() {
                   <div className="text-sm font-bold text-white mt-0.5 font-mono">{globalStats.marketOffersCount} ogłoszeń</div>
                 </div>
               </div>
+
               <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
                 <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400"><Compass className="w-5 h-5" /></div>
                 <div>
@@ -484,6 +506,7 @@ export default function Home() {
                   <div className="text-sm font-bold text-white mt-0.5 font-mono">{globalStats.guildsCount} formacji</div>
                 </div>
               </div>
+
               <a href="https://wiki.albiononline.com" target="_blank" rel="noopener noreferrer" className="bg-[#0c0407] border border-[#281017] hover:border-[#f3ba2f]/40 rounded-2xl p-4 flex items-center justify-between shadow-lg transition group cursor-pointer">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-400"><ExternalLink className="w-5 h-5" /></div>
@@ -495,22 +518,99 @@ export default function Home() {
               </a>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Link href="/gildie" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-[#f3ba2f]/50 rounded-2xl p-5 transition-all flex flex-col justify-between space-y-4 shadow-xl">
-                <div className="flex justify-between items-start"><div className="p-3 bg-[#f3ba2f]/10 rounded-xl text-[#f3ba2f]"><Swords className="w-6 h-6" /></div><span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 01</span></div>
-                <div><h3 className="font-bold text-white text-base group-hover:text-[#f3ba2f] transition">Rejestr Gildii</h3><p className="text-xs text-gray-400 mt-1">Przeglądaj polskie formacje i aplikuj do struktur.</p></div>
+            {/* SIATKA 6 MODUŁÓW PORTALU */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              
+              {/* MODUŁ 01: GILDIE */}
+              <Link href="/gildie" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-[#f3ba2f]/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-2.5 bg-[#f3ba2f]/10 rounded-xl text-[#f3ba2f] group-hover:scale-110 transition-transform">
+                    <Swords className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 01</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm group-hover:text-[#f3ba2f] transition-colors">Rejestr Gildii</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Formacje i rekrutacja.</p>
+                </div>
               </Link>
-              <Link href="/wyprawy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-purple-500/50 rounded-2xl p-5 transition-all flex flex-col justify-between space-y-4 shadow-xl">
-                <div className="flex justify-between items-start"><div className="p-3 bg-purple-500/10 rounded-xl text-purple-400"><Shield className="w-6 h-6" /></div><span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 02</span></div>
-                <div><h3 className="font-bold text-white text-base group-hover:text-purple-300 transition">Wyprawy &amp; Party</h3><p className="text-xs text-gray-400 mt-1">Koordynacja wypadów i integracja z Discordem.</p></div>
+
+              {/* MODUŁ 02: WYPRAWY */}
+              <Link href="/wyprawy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-purple-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400 group-hover:scale-110 transition-transform">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 02</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm group-hover:text-purple-300 transition-colors">Wyprawy &amp; Party</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Zbiórki i Discord.</p>
+                </div>
               </Link>
-              <Link href="/rynek" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-sky-500/50 rounded-2xl p-5 transition-all flex flex-col justify-between space-y-4 shadow-xl">
-                <div className="flex justify-between items-start"><div className="p-3 bg-sky-500/10 rounded-xl text-sky-400"><ShoppingBag className="w-6 h-6" /></div><span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 03</span></div>
-                <div><h3 className="font-bold text-white text-base group-hover:text-sky-300 transition">Tablica Rynku</h3><p className="text-xs text-gray-400 mt-1">Ogłoszenia handlowe i oferty społeczności.</p></div>
+
+              {/* MODUŁ 03: RYNEK */}
+              <Link href="/rynek" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-sky-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-2.5 bg-sky-500/10 rounded-xl text-sky-400 group-hover:scale-110 transition-transform">
+                    <ShoppingBag className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 03</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm group-hover:text-sky-300 transition-colors">Tablica Rynku</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Oferty i handel.</p>
+                </div>
               </Link>
+
+              {/* MODUŁ 04: LOOT SPLITTER */}
+              <Link href="/loot-split" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-emerald-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400 group-hover:scale-110 transition-transform">
+                    <Coins className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 04</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm group-hover:text-emerald-300 transition-colors">Loot Splitter</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Podział zysków i regeary.</p>
+                </div>
+              </Link>
+
+              {/* MODUŁ 05: TIMERY */}
+              <Link href="/timery" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-amber-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400 group-hover:scale-110 transition-transform">
+                    <Compass className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 05</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm group-hover:text-amber-300 transition-colors">Timery ZvZ &amp; Core</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Odliczanie do bitew i respów.</p>
+                </div>
+              </Link>
+
+              {/* MODUŁ 06: KILLBOARD */}
+              <Link href="/killboard" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-rose-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+                <div className="flex justify-between items-start">
+                  <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400 group-hover:scale-110 transition-transform">
+                    <Skull className="w-5 h-5" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 06</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-sm group-hover:text-rose-300 transition-colors">Killboard Graczy</h3>
+                  <p className="text-[11px] text-gray-400 mt-1">Sprawdzaj K/D i PvP Fame.</p>
+                </div>
+              </Link>
+
             </div>
 
+            {/* SEKCJA DOLNA: KALKULATOR/ADMIN (LEWA) + CZAT/NEWSY (PRAWA) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              {/* LEWA KOLUMNA: KALKULATOR & ADMIN */}
               <div className="lg:col-span-6 space-y-6">
                 <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
                   <div className="flex items-center justify-between border-b border-[#200d13] pb-4">
@@ -523,46 +623,72 @@ export default function Home() {
 
                   {rightTab === 'ECONOMY' && (
                     <form onSubmit={handleCalculateFlip} className="space-y-4 text-xs sm:text-sm">
+                      
+                      {/* CZYSTE CENY */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Przedmiot</label>
-                          <select value={selectedItem} onChange={e => setSelectedItem(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f]">
-                            <option value="T4_BAG">Torba T4</option>
-                            <option value="T5_BAG">Torba T5</option>
-                            <option value="T6_BAG">Torba T6</option>
-                          </select>
+                          <label className="block text-gray-400 mb-1 font-mono text-[10px] uppercase">Cena w Mieście (Silver)</label>
+                          <input 
+                            type="number" 
+                            required 
+                            placeholder="np. 45000" 
+                            value={buyPrice} 
+                            onChange={e => setBuyPrice(e.target.value)} 
+                            className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 font-mono outline-none text-xs focus:border-[#f3ba2f]" 
+                          />
                         </div>
                         <div>
-                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Miasto Zakupu</label>
-                          <select value={selectedCity} onChange={e => setSelectedCity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-200 outline-none text-xs focus:border-[#f3ba2f]">
-                            <option value="Martlock">Martlock</option>
-                            <option value="Lymhurst">Lymhurst</option>
-                            <option value="FortSterling">Fort Sterling</option>
-                          </select>
+                          <label className="block text-gray-400 mb-1 font-mono text-[10px] uppercase">Czarny Rynek Caerleon</label>
+                          <input 
+                            type="number" 
+                            required 
+                            placeholder="np. 68000" 
+                            value={blackMarketPrice} 
+                            onChange={e => setBlackMarketPrice(e.target.value)} 
+                            className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 font-mono outline-none text-xs focus:border-[#f3ba2f]" 
+                          />
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Cena w mieście</label>
-                          <input type="number" required placeholder="Wpisz cenę" value={buyPrice} onChange={e => setBuyPrice(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 font-mono outline-none text-xs focus:border-[#f3ba2f]" />
-                        </div>
-                        <div>
-                          <label className="block text-gray-400 mb-1 font-mono text-[11px] uppercase">Cena Czarny Rynek</label>
-                          <input type="number" required placeholder="Wpisz cenę" value={blackMarketPrice} onChange={e => setBlackMarketPrice(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 font-mono outline-none text-xs focus:border-[#f3ba2f]" />
-                        </div>
+                      {/* CHECKBOX PREMIUM */}
+                      <div className="flex items-center gap-2 font-mono text-xs text-gray-300 bg-[#050204] p-2.5 rounded-xl border border-[#220e14]">
+                        <input 
+                          type="checkbox" 
+                          id="hasPremium" 
+                          checked={hasPremium} 
+                          onChange={e => setHasPremium(e.target.checked)}
+                          className="rounded bg-[#050204] border-[#220e14] text-[#f3ba2f] cursor-pointer" 
+                        />
+                        <label htmlFor="hasPremium" className="cursor-pointer text-[11px]">
+                          Status Premium (Podatek 4% zamiast 8%)
+                        </label>
                       </div>
 
-                      <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider text-xs transition shadow-md">Analizuj Opłacalność</button>
+                      <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider text-xs transition shadow-md cursor-pointer font-serif">
+                        Analizuj Opłacalność
+                      </button>
 
+                      {/* WYNIK OBLICZEŃ */}
                       <div className="bg-[#050204] border border-[#220e14] rounded-2xl p-4 text-center">
                         {calcResult ? (
-                          <div className="space-y-2 text-xs">
-                            <div className="flex justify-between border-b border-[#1c0b10] pb-2"><span className="text-gray-400">Czysty zysk:</span><span className="font-mono font-bold text-gray-100">{calcResult.profit} Silver</span></div>
-                            <div className="flex justify-between border-b border-[#1c0b10] pb-2"><span className="text-gray-400">Zwrot inwestycji (ROI):</span><span className="font-mono font-black text-amber-400">+{calcResult.roi}%</span></div>
-                            <div className={`mt-2 p-2.5 rounded-xl border text-center font-bold uppercase text-[11px] ${calcResult.statusColor}`}>{calcResult.statusText}</div>
+                          <div className="space-y-2 text-xs font-mono">
+                            <div className="flex justify-between border-b border-[#1c0b10] pb-2">
+                              <span className="text-gray-400">Czysty Zysk (po podatku):</span>
+                              <span className="font-bold text-emerald-400">{calcResult.profit} Silver</span>
+                            </div>
+                            <div className="flex justify-between border-b border-[#1c0b10] pb-2">
+                              <span className="text-gray-400">Zwrot Inwestycji (ROI):</span>
+                              <span className="font-black text-amber-400">+{calcResult.roi}%</span>
+                            </div>
+                            <div className={`mt-2 p-2.5 rounded-xl border text-center font-bold uppercase text-[11px] ${calcResult.statusColor}`}>
+                              {calcResult.statusText}
+                            </div>
                           </div>
-                        ) : (<p className="text-gray-500 italic text-xs py-2">Wprowadź ceny, aby wyliczyć marżę transportową do Caerleon.</p>)}
+                        ) : (
+                          <p className="text-gray-500 italic text-xs py-2 font-mono">
+                            Wprowadź ceny, aby wyliczyć marżę transportową do Caerleon.
+                          </p>
+                        )}
                       </div>
                     </form>
                   )}
@@ -579,7 +705,7 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="max-h-[250px] overflow-y-auto space-y-2 pr-1">
+                      <div className="max-h-[250px] overflow-y-auto space-y-2 pr-1 font-mono">
                         {adminTab === 'MARKET' && (allMarketPosts.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak ofert.</p> : allMarketPosts.map(p => (
                           <div key={p.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2"><span className="text-gray-200 font-bold">{p.title || p.item_name} - <strong className="text-[#f3ba2f]">{p.price}s</strong></span><button onClick={() => deleteMarketPost(p.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Usuń</button></div>
                         )))}
@@ -597,6 +723,7 @@ export default function Home() {
                   )}
                 </div>
 
+                {/* KRONIKA NEWSÓW */}
                 <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
                   <div className="flex items-center justify-between border-b border-[#200d13] pb-3">
                     <span className="text-xs font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2"><Newspaper className="w-4 h-4" /> Goniec Królewski (Newsy)</span>
@@ -615,15 +742,17 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* PRAWA KOLUMNA: CHATBOX */}
               <div className="lg:col-span-6">
                 <ChatBox user={user} isAdmin={isAdmin} />
               </div>
             </div>
+
           </div>
         )}
       </div>
 
-      {/* TOAST POWIADOMIENIA NA ŻYWO (PRAWY DOLNY RÓG) */}
+      {/* TOAST POWIADOMIENIA NA ŻYWO */}
       {toastNotification && (
         <div className="fixed bottom-6 right-6 z-50 max-w-sm bg-[#0a0408] border-2 border-[#f3ba2f] p-4 rounded-2xl shadow-[0_0_25px_rgba(243,186,47,0.3)] animate-in slide-in-from-bottom-5 duration-300 flex items-start gap-3">
           <div className="p-2 bg-[#f3ba2f]/10 border border-[#f3ba2f]/40 rounded-xl text-[#f3ba2f] shrink-0">
@@ -639,6 +768,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* FOOTER */}
       <footer className="w-full bg-[#030102] border-t border-[#200d13] py-8 text-center text-xs text-gray-500 relative z-20 shadow-[0_-30px_60px_#030102]">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
