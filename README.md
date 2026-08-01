@@ -37,7 +37,7 @@ Etap P3 jest zamknięty. Wszystkie publiczne widoki przeszły audyt 360, 390 i 4
 - [x] zweryfikować kontrast tekstu i kontrolek według WCAG AA
 - [x] przejść klawiaturą przez nawigację, formularze i dialog potwierdzenia
 - [x] sprawdzić czytelność stanów ładowania, pustych, błędów i sukcesu
-- [ ] wykonać lint, build, ponowny audyt i wdrożenie produkcyjne
+- [x] wykonać lint, build, ponowny audyt i wdrożenie produkcyjne
 
 ### Zakończony sprint P3.1
 
