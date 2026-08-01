@@ -2,8 +2,8 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, Trash2 } from 'lucide-react'
-import PageBanner from '@/components/PageBanner'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame } from 'lucide-react'
+import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { buildFromDbRow, itemImageUrl } from '@/lib/buildSlots'
 
@@ -79,64 +79,61 @@ export default function BuildyPage() {
   )
 
   return (
-    <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#050305] text-gray-300">
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none" />
-      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none" />
+    <main className="aopp-shell flex min-h-screen flex-col justify-between text-[#d5d0c6]">
+      <div className="aopp-world-bg" />
+      <div className="aopp-grain" />
 
-      <div className="w-full flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 z-10 max-w-[1600px] mx-auto space-y-8">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col gap-7 p-4 sm:p-6 lg:p-8">
+        <PortalSubpageHeader
+          eyebrow="Kuźnia doktryn • Buildy społeczności"
+          title={<>Wykuj zestaw,<br /><span className="text-orange-200">który przetrwa bitwę.</span></>}
+          description="Przeglądaj sprawdzone kompozycje graczy, odkrywaj synergie ekwipunku i publikuj własne doktryny dla PvP, PvE oraz polowań."
+          icon={Anvil}
+          tone="ember"
+          stats={[
+            { label: 'Zapisane buildy', value: builds.length },
+            { label: 'Widoczne zestawy', value: filteredBuilds.length },
+            { label: 'Głosy społeczności', value: builds.reduce((sum, build) => sum + (build.likes || 0), 0) },
+          ]}
+          imagePosition="68% center"
+        />
 
-        <div className="w-full flex justify-between items-center">
-          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-mono font-black tracking-widest uppercase transition group">
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span>Powrót do Centrum Caerleon</span>
-          </Link>
-          <Link
-            href="/buildy/create"
-            className="flex items-center gap-2 bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-5 py-2.5 rounded-xl uppercase text-xs tracking-wider shadow transition"
-          >
-            <Plus className="w-4 h-4" />
-            Stwórz Build
-          </Link>
-        </div>
-
-        <div className="w-full">
-          <PageBanner
-            title="Królewska Zbrojownia"
-            subtitle="Przeglądaj i dziel się buildami społeczności AOPP"
-            icon={Shield}
-          />
-        </div>
-
-        <div className="w-full flex flex-wrap gap-3">
-          {ALBION_CATEGORIES.map((cat) => {
+        <section className="aopp-panel flex w-full flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="flex flex-wrap gap-2">
+            {ALBION_CATEGORIES.map((cat) => {
             const IconComponent = cat.icon
             const isActive = activeCategory === cat.id
             return (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-mono font-bold uppercase transition-all ${
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-[.12em] transition-all ${
                   isActive
-                    ? 'bg-[#f3ba2f] text-black shadow-[0_0_15px_rgba(243,186,47,0.3)]'
-                    : 'bg-[#0c0407] hover:bg-[#15060b] text-gray-400 border border-[#281017]'
+                    ? 'border border-orange-300/40 bg-orange-300 text-[#160b05] shadow-[0_0_20px_rgba(251,146,60,.16)]'
+                    : 'border border-white/8 bg-black/20 text-[#9d978d] hover:border-orange-300/25 hover:text-orange-100'
                 }`}
               >
                 <IconComponent className="w-4 h-4" />
                 <span>{cat.name}</span>
               </button>
             )
-          })}
-        </div>
+            })}
+          </div>
+          <Link href="/buildy/create" className="aopp-primary-button inline-flex shrink-0 items-center justify-center gap-2 px-5 py-3 text-[10px] font-black uppercase tracking-[.12em]">
+            <Flame className="h-4 w-4" /> Rozpal kuźnię
+          </Link>
+        </section>
 
         <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             <p className="text-gray-500 italic col-span-full text-center py-10">Pobieranie rejestru zbrojowni...</p>
           ) : filteredBuilds.length === 0 ? (
-            <div className="col-span-full text-center py-16 space-y-4">
-              <p className="text-gray-500 italic">Brak opublikowanych zestawów w tej kategorii.</p>
+            <div className="aopp-panel col-span-full space-y-4 py-16 text-center">
+              <Anvil className="mx-auto h-9 w-9 text-orange-200/70" />
+              <p className="font-display text-lg font-bold text-[#d8d2c8]">W tej części zbrojowni jest jeszcze pusto.</p>
               <Link
                 href="/buildy/create"
-                className="inline-flex items-center gap-2 bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] text-[#f3ba2f] px-6 py-3 rounded-xl text-xs font-mono font-bold uppercase transition"
+                className="aopp-ghost-button inline-flex items-center gap-2 px-5 py-3 text-[10px] font-black uppercase tracking-[.12em]"
               >
                 <Plus className="w-4 h-4" /> Stwórz pierwszy build
               </Link>
@@ -147,7 +144,7 @@ export default function BuildyPage() {
               const hasExtended = b.build_data && Object.keys(b.build_data).length > 0
 
               return (
-                <div key={b.id} className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 flex flex-col justify-between space-y-4 shadow-xl">
+                <article key={b.id} className="aopp-list-card group flex flex-col justify-between space-y-5 overflow-hidden p-5 sm:p-6">
                   <div>
                     <div className="flex justify-between items-start mb-2">
                       <span className="px-2.5 py-0.5 rounded-full bg-[#f3ba2f]/10 text-[#f3ba2f] border border-[#f3ba2f]/30 text-[10px] font-mono font-bold uppercase">
@@ -157,8 +154,8 @@ export default function BuildyPage() {
                         {new Date(b.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <h3 className="font-serif font-black text-white text-lg">{b.title}</h3>
-                    <p className="text-xs text-gray-400 mt-1 line-clamp-2">{b.description || 'Brak opisu taktycznego.'}</p>
+                    <h3 className="font-display mt-3 text-xl font-black leading-tight text-[#fff8e8] transition group-hover:text-orange-100">{b.title}</h3>
+                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#99938a]">{b.description || 'Brak opisu taktycznego.'}</p>
 
                     {hasExtended && parsed.tags?.activities?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
@@ -169,8 +166,8 @@ export default function BuildyPage() {
                     )}
                   </div>
 
-                  <div className="bg-[#050204] border border-[#200d13] rounded-2xl p-3 space-y-2">
-                    <div className="text-[10px] font-mono text-gray-500 text-center uppercase tracking-wider mb-1">Ekwipunek Zestawu</div>
+                  <div className="rounded-2xl border border-orange-200/10 bg-[radial-gradient(circle_at_50%_35%,rgba(193,91,36,.12),rgba(0,0,0,.25)_70%)] p-3 shadow-inner">
+                    <div className="mb-3 text-center text-[9px] font-black uppercase tracking-[.2em] text-orange-200/60">Ekwipunek zestawu</div>
 
                     {hasExtended ? (
                       <EquipmentPreview slots={parsed.slots} size="sm" />
@@ -217,15 +214,15 @@ export default function BuildyPage() {
                       )}
                     </div>
                   </div>
-                </div>
+                </article>
               )
             })
           )}
         </div>
       </div>
 
-      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
-        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#716d66]">
+        <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska - Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">
             <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>

@@ -2,7 +2,8 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, ShoppingBag, Plus, Search, Tag, MapPin, Coins, Trash2, Globe } from 'lucide-react'
+import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } from 'lucide-react'
+import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
@@ -97,46 +98,38 @@ export default function Rynek() {
   })
 
   return (
-    <main className="min-h-screen bg-[#050305] text-gray-300 flex flex-col justify-between antialiased font-sans select-none relative">
-      
-      {/* TŁO */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
+    <main className="aopp-shell flex min-h-screen flex-col justify-between text-[#d5d0c6]">
+      <div className="aopp-world-bg" />
+      <div className="aopp-grain" />
 
-      <div className="max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 flex-1 z-10 text-sm">
-        
-        {/* POWRÓT */}
-        <div>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-black tracking-widest uppercase transition group">
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span>Powrót do Centrum Caerleon</span>
-          </Link>
-        </div>
-
-        {/* NAGŁÓWEK */}
-        <header className="bg-[#0c0407] border border-[#2c1219] p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-sky-400 shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
-            <ShoppingBag className="w-8 h-8" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider font-serif">
-              Czarny Rynek &amp; Tablica Handlowa
-            </h1>
-            <p className="text-xs text-gray-400 font-mono mt-1">
-              Kupuj, sprzedawaj i wymieniaj ekwipunek, surowce oraz Mamuty bezpośrednio od graczy
-            </p>
-          </div>
-        </header>
+      <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col gap-7 p-4 text-sm sm:p-6 lg:p-8">
+        <PortalSubpageHeader
+          eyebrow="Plac targowy • Handel P2P"
+          title={<>Dobry interes zaczyna się<br /><span className="text-sky-300">od właściwej oferty.</span></>}
+          description="Przeglądaj ogłoszenia poszukiwaczy przygód, porównuj ceny i umawiaj bezpieczne transakcje w wybranym mieście Albionu."
+          icon={Store}
+          tone="sky"
+          stats={[
+            { label: 'Aktywne oferty', value: offers.length },
+            { label: 'Pasujące wyniki', value: filteredOffers.length },
+            { label: 'Region', value: filterCity === 'ALL' ? 'Cały Albion' : filterCity },
+          ]}
+          imagePosition="76% center"
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* LEWA KOLUMNA: FORMULARZ OFERTY */}
           <div className="lg:col-span-4">
-            <div className="bg-[#0c0407] border border-[#281017] p-6 rounded-3xl shadow-2xl sticky top-6 space-y-4">
-              <h2 className="text-sm font-black text-[#f3ba2f] uppercase tracking-wider font-serif border-b border-[#200d13] pb-3 flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                <span>Wystaw Ofertę</span>
-              </h2>
+            <div className="aopp-panel sticky top-6 space-y-5 p-5 sm:p-6">
+              <div className="border-b border-white/8 pb-4">
+                <p className="mb-2 text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Twoje stoisko</p>
+                <h2 className="font-display flex items-center gap-2 text-xl font-black text-[#fff8e8]">
+                  <Plus className="h-4 w-4" />
+                  <span>Wystaw ofertę</span>
+                </h2>
+                <p className="mt-2 text-xs leading-5 text-[#8f8a81]">Dodaj cenę, miejsce odbioru i sposób kontaktu. Ogłoszenie od razu trafi na tablicę.</p>
+              </div>
 
               {!user ? (
                 <p className="text-xs text-gray-400 italic bg-[#050204] p-4 rounded-2xl border border-[#200d13]">
@@ -228,7 +221,7 @@ export default function Rynek() {
                     />
                   </div>
 
-                  <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider transition text-xs cursor-pointer shadow-md">
+                  <button type="submit" className="aopp-primary-button w-full justify-center py-3.5">
                     Wystaw Ofertę
                   </button>
                   {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs font-mono">{formMessage}</p>}
@@ -241,7 +234,14 @@ export default function Rynek() {
           <div className="lg:col-span-8 space-y-4">
             
             {/* PASEK WYSZUKIWANIA */}
-            <div className="bg-[#0c0407] border border-[#281017] p-4 rounded-3xl shadow-xl space-y-3 font-mono text-xs">
+            <div className="aopp-panel space-y-4 p-4 text-xs sm:p-5">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Tablica ogłoszeń</p>
+                  <h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Znajdź właściwy towar</h2>
+                </div>
+                <span className="rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.14em] text-[#a9a49b]">{filteredOffers.length} ofert</span>
+              </div>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
                 <input 
@@ -287,34 +287,44 @@ export default function Rynek() {
               {loading ? (
                 <p className="text-center py-12 text-gray-500 font-mono animate-pulse">Pobieranie ofert z rynku...</p>
               ) : filteredOffers.length === 0 ? (
-                <p className="text-center py-12 text-gray-500 italic bg-[#0c0407] border border-[#281017] rounded-3xl">Brak aktywnych ofert na rynku.</p>
+                <div className="aopp-panel py-14 text-center">
+                  <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-sky-300/70" />
+                  <p className="font-display text-lg font-bold text-[#d8d2c8]">Stragany czekają na pierwszą ofertę.</p>
+                  <p className="mt-1 text-xs text-[#77736c]">Zmień filtry albo wystaw własne ogłoszenie.</p>
+                </div>
               ) : (
                 filteredOffers.map(offer => {
                   const isOwner = user?.id === offer.user_id
 
                   return (
-                    <div key={offer.id} className="bg-[#0c0407] border border-[#281017] hover:border-[#f3ba2f]/40 p-5 rounded-3xl shadow-xl transition flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <article key={offer.id} className="aopp-list-card flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                       
-                      <div className="space-y-1.5">
+                      <div className="flex min-w-0 gap-4">
+                        <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/8 text-sky-300 sm:flex">
+                          <ShoppingBag className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 space-y-2">
                         <div className="flex items-center gap-2 font-mono text-[10px]">
                           <span className="bg-sky-500/10 text-sky-400 border border-sky-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase">{offer.category || 'Przedmiot'}</span>
                           <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> {offer.city}</span>
                           <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> {offer.server || 'Europa'}</span>
                         </div>
 
-                        <h3 className="text-base font-black text-white font-serif">{offer.title}</h3>
+                        <h3 className="font-display text-xl font-black leading-tight text-[#fff8e8]">{offer.title}</h3>
+                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#77736c]">Sprzedawca: <span className="text-[#b8b1a7]">{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span></p>
                         
                         {offer.contact_info && (
                           <p className="text-xs text-gray-400 font-mono">
                             Kontakt: <span className="text-gray-200">{offer.contact_info}</span>
                           </p>
                         )}
+                        </div>
                       </div>
 
-                      <div className="flex sm:flex-col items-end justify-between w-full sm:w-auto gap-2 border-t sm:border-t-0 border-[#200d13] pt-2 sm:pt-0">
+                      <div className="flex w-full items-end justify-between gap-3 border-t border-white/8 pt-4 sm:w-auto sm:min-w-[190px] sm:flex-col sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
                         <div className="text-right font-mono">
                           <span className="text-[10px] text-gray-500 block uppercase">Cena</span>
-                          <span className="text-lg font-black text-[#f3ba2f]">
+                          <span className="font-display text-2xl font-black text-[#e5bb55]">
                             {parseInt(offer.price).toLocaleString('pl-PL')} <span className="text-xs font-normal text-gray-400">Silver</span>
                           </span>
                         </div>
@@ -329,7 +339,7 @@ export default function Rynek() {
                         )}
                       </div>
 
-                    </div>
+                    </article>
                   )
                 })
               )}
@@ -340,10 +350,10 @@ export default function Rynek() {
         </div>
       </div>
 
-      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
-        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#716d66]">
+        <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
-          <p className="font-mono text-[10px] text-gray-600">Giełda Handlowa &amp; Czarny Rynek</p>
+          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.16em] text-[#5f5b55]"><HandCoins className="h-3.5 w-3.5" /> Giełda Handlowa &amp; Czarny Rynek</p>
         </div>
       </footer>
     </main>

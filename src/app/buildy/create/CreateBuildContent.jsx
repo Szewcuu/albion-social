@@ -173,11 +173,11 @@ export default function CreateBuildPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-col antialiased font-sans relative bg-[#050305] text-gray-300">
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none" />
-      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none" />
+    <main className="aopp-shell relative flex min-h-screen flex-col text-[#d5d0c6]">
+      <div className="aopp-world-bg" />
+      <div className="aopp-grain" />
 
-      <div className="w-full flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 z-10 max-w-[1400px] mx-auto space-y-6">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col items-center space-y-6 p-4 sm:p-6 lg:p-8">
 
         <div className="w-full flex flex-wrap justify-between items-center gap-3">
           <Link href="/buildy" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-mono font-black tracking-widest uppercase transition group">
@@ -188,7 +188,7 @@ export default function CreateBuildPage() {
             <button
               type="button"
               onClick={handleShare}
-              className="flex items-center gap-1.5 bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] text-gray-300 px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition"
+              className="aopp-ghost-button inline-flex items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-[.1em]"
             >
               {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
               {shareCopied ? 'Skopiowano!' : 'Udostępnij link'}
@@ -197,7 +197,7 @@ export default function CreateBuildPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black px-5 py-2 rounded-xl text-xs font-extrabold uppercase transition disabled:opacity-50"
+              className="aopp-primary-button inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[.1em] disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               {saving ? 'Zapisywanie...' : saved ? 'Opublikowano!' : 'Opublikuj build'}
@@ -227,8 +227,8 @@ export default function CreateBuildPage() {
 
           <div className="space-y-6">
 
-            <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 space-y-4">
-              <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider">Informacje ogólne</h2>
+            <section className="aopp-panel space-y-4 p-5 sm:p-6">
+              <h2 className="font-display text-xl font-black text-[#fff8e8]">Informacje ogólne</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-gray-400 mb-1 font-mono text-[10px] uppercase">Nazwa buildu *</label>
@@ -266,8 +266,8 @@ export default function CreateBuildPage() {
               </div>
             </section>
 
-            <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6">
-              <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider mb-4">Tagi buildu</h2>
+            <section className="aopp-panel p-5 sm:p-6">
+              <h2 className="font-display mb-4 text-xl font-black text-[#fff8e8]">Doktryna i przeznaczenie</h2>
               <TagSelector
                 tags={build.tags}
                 budget={build.budget}
@@ -277,7 +277,7 @@ export default function CreateBuildPage() {
             </section>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-5 space-y-3">
+              <section className="aopp-panel space-y-3 p-5">
                 <h3 className="text-xs font-mono font-bold text-emerald-400 uppercase flex items-center gap-1.5">
                   <ThumbsUp className="w-3.5 h-3.5" /> Mocne strony
                 </h3>
@@ -288,7 +288,7 @@ export default function CreateBuildPage() {
                   max={5}
                 />
               </section>
-              <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-5 space-y-3">
+              <section className="aopp-panel space-y-3 p-5">
                 <h3 className="text-xs font-mono font-bold text-rose-400 uppercase flex items-center gap-1.5">
                   <ThumbsDown className="w-3.5 h-3.5" /> Słabe strony
                 </h3>
@@ -301,8 +301,8 @@ export default function CreateBuildPage() {
               </section>
             </div>
 
-            <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 space-y-4">
-              <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider">Alternatywne przedmioty</h2>
+            <section className="aopp-panel space-y-4 p-5 sm:p-6">
+              <h2 className="font-display text-xl font-black text-[#fff8e8]">Alternatywne przedmioty</h2>
               <p className="text-[10px] text-gray-500 font-mono">Dodaj do 2 alternatyw na slot (np. tańszy wariant)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {EQUIPMENT_SLOTS.filter(s => !s.hasAmount).map((slot) => (
@@ -330,7 +330,7 @@ export default function CreateBuildPage() {
               </div>
             </section>
 
-            <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 space-y-3">
+            <section className="aopp-panel space-y-3 p-5 sm:p-6">
               <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
                 <Zap className="w-4 h-4" /> Combo skilli ({build.skillCombos.length}/5)
               </h2>
@@ -372,7 +372,7 @@ export default function CreateBuildPage() {
               )}
             </section>
 
-            <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 space-y-3">
+            <section className="aopp-panel space-y-3 p-5 sm:p-6">
               <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
                 <Package className="w-4 h-4" /> Ekwipunek zapasowy ({build.inventory.length}/10)
               </h2>
@@ -414,7 +414,7 @@ export default function CreateBuildPage() {
               )}
             </section>
 
-            <section className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 space-y-3">
+            <section className="aopp-panel space-y-3 p-5 sm:p-6">
               <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
                 <Video className="w-4 h-4" /> Filmy YouTube ({build.youtubeVideos.length}/3)
               </h2>
@@ -448,8 +448,8 @@ export default function CreateBuildPage() {
           <div className="xl:sticky xl:top-6 xl:self-start space-y-4">
             <EquipmentGrid slots={build.slots} onSlotChange={updateSlot} />
 
-            <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 space-y-2">
-              <h3 className="text-[10px] font-mono font-bold text-gray-400 uppercase">Jak używać</h3>
+            <div className="aopp-panel space-y-2 p-4">
+              <h3 className="text-[10px] font-black uppercase tracking-[.18em] text-orange-200/70">Rytuał kucia</h3>
               <ol className="text-[10px] text-gray-500 font-mono space-y-1.5 list-decimal list-inside">
                 <li>Kliknij slot w siatce, aby wybrać przedmiot</li>
                 <li>Uzupełnij tagi i opis taktyki</li>
@@ -461,8 +461,8 @@ export default function CreateBuildPage() {
         </div>
       </div>
 
-      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
-        <div className="max-w-[1400px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#716d66]">
+        <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">
             <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
