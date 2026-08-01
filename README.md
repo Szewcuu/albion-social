@@ -26,18 +26,18 @@ Gotowe i wdrożone:
 
 ## Najbliższy krok
 
-> **P4.1: publiczna strona buildu i fundament interakcji społecznościowych**
+> **P4.2: komentarze i zgłaszanie nadużyć pod buildami**
 
-Etap P3 jest zamknięty. Sprint P4.1 buduje pierwszy pełny pion społecznościowy: publiczny URL szczegółów buildu, poprawny model jednego głosu użytkownika, prywatne ulubione oraz dynamiczne metadata do udostępniania zestawu.
+P4.1 jest wdrożone: publikacja prowadzi do publicznego URL-a buildu, głosowanie jest ograniczone do jednego rekordu użytkownika, a ulubione są prywatne i chronione przez RLS. Następny sprint rozbuduje stronę buildu o moderowalne komentarze i bezpieczne zgłoszenia nadużyć.
 
-### Aktywny sprint P4.1
+### Zakończony sprint P4.1
 
 - [x] dodać dynamiczną trasę `/buildy/[id]` z pełnym wyposażeniem i opisem doktryny
 - [x] połączyć katalog i kreator z publicznym URL-em zapisanego buildu
 - [x] dodać wersjonowaną migrację `build_votes` i `build_favorites` z RLS
 - [x] zabezpieczyć jeden głos użytkownika unikalnym indeksem w bazie
 - [x] dodać API oraz dostępne klawiaturą kontrolki głosu, ulubionych i udostępniania
-- [ ] przetestować pełny przepływ, wdrożyć PR i wykonać smoke test produkcji
+- [x] przetestować pełny przepływ, wdrożyć PR i wykonać smoke test produkcji
 
 ### Zakończony sprint P3.2
 
