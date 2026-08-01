@@ -64,7 +64,7 @@ export default function ConfirmDialog({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="presentation">
       <button type="button" aria-label="Zamknij okno potwierdzenia" className="absolute inset-0 cursor-default bg-black/75 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
       <div ref={dialogRef} role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="aopp-panel relative w-full max-w-md rounded-[24px] border border-white/12 p-5 shadow-2xl sm:p-6">
-        <button type="button" onClick={() => onOpenChange(false)} aria-label="Zamknij" className="absolute right-4 top-4 rounded-lg border border-white/8 p-2 text-[#77736c] transition hover:border-white/15 hover:text-[#eee7d9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e5bb55]"><X className="h-4 w-4" /></button>
+        <button type="button" onClick={() => onOpenChange(false)} aria-label="Zamknij" className="absolute right-4 top-4 rounded-lg border border-white/8 p-2 text-[#918b82] transition hover:border-white/15 hover:text-[#eee7d9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e5bb55]"><X className="h-4 w-4" /></button>
         <div className={`flex h-11 w-11 items-center justify-center rounded-xl border ${danger ? 'border-rose-400/25 bg-rose-400/8 text-rose-300' : 'border-[#e5bb55]/25 bg-[#e5bb55]/8 text-[#e5bb55]'}`}><AlertTriangle className="h-5 w-5" /></div>
         <h2 id={titleId} className="font-display mt-4 pr-10 text-xl font-black text-[#fff8e8]">{title}</h2>
         <p id={descriptionId} className="mt-2 text-xs leading-6 text-[#9f9a91]">{description}</p>

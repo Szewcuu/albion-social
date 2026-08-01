@@ -252,20 +252,22 @@ export default function Gildie() {
                 <span className="rounded-lg border border-[#d8ad4a]/20 bg-[#d8ad4a]/10 px-3 py-1 text-[10px] font-black text-[#e4b94f]">{filteredGuilds.length} {filteredGuilds.length === 1 ? 'wynik' : 'wyników'}</span>
               </div>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
+                <label htmlFor="guild-search" className="sr-only">Szukaj gildii po nazwie lub opisie</label>
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input 
+                  id="guild-search"
                   type="text" 
                   placeholder="Szukaj gildii po nazwie lub opisie..." 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl pl-9 pr-4 py-2.5 text-xs text-gray-100 focus:border-[#f3ba2f] outline-none"
+                  className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
                 />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Serwer</label>
-                  <select value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-[#f3ba2f] font-bold outline-none cursor-pointer">
+                  <label htmlFor="guild-server-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Serwer</label>
+                  <select id="guild-server-filter" value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 font-bold text-[#f3ba2f] outline-none">
                     <option value="ALL">Wszystkie Serwery</option>
                     <option value="Europa">Europa</option>
                     <option value="Ameryka">Ameryka</option>
@@ -273,8 +275,8 @@ export default function Gildie() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Miasto</label>
-                  <select value={filterCity} onChange={(e) => setFilterCity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-gray-300 outline-none cursor-pointer">
+                  <label htmlFor="guild-city-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Miasto</label>
+                  <select id="guild-city-filter" value={filterCity} onChange={(e) => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Miasta</option>
                     <option value="Martlock">Martlock</option>
                     <option value="Lymhurst">Lymhurst</option>
@@ -286,8 +288,8 @@ export default function Gildie() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Doktryna</label>
-                  <select value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-gray-300 outline-none cursor-pointer">
+                  <label htmlFor="guild-activity-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Doktryna</label>
+                  <select id="guild-activity-filter" value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Doktryny</option>
                     <option value="PvP">PvP / Ganking</option>
                     <option value="PvE / HCE">PvE / HCE</option>
@@ -342,7 +344,7 @@ export default function Gildie() {
                       {guild.description}
                     </p>
 
-                    <div className="relative flex flex-wrap items-center justify-between gap-3 border-t border-white/[.07] pt-4 text-xs text-gray-500">
+                    <div className="relative flex flex-wrap items-center justify-between gap-3 border-t border-white/[.07] pt-4 text-xs text-gray-400">
                       <p className="flex items-center gap-2">
                         <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" /> Lider: <b className="text-[#e3ded3]">{(guild.profiles?.username || 'Gracz').replace(/#0$/, '')}</b>
                       </p>
@@ -350,7 +352,7 @@ export default function Gildie() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setSelectedGuildForApply(guild)}
-                          className="aopp-primary-button flex items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider"
+                          className="aopp-primary-button flex min-h-11 items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider"
                         >
                           <Swords className="w-3.5 h-3.5" />
                           <span>Aplikuj</span>
@@ -360,7 +362,7 @@ export default function Gildie() {
                           href={guild.discord_link} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="bg-[#5865F2]/20 hover:bg-[#5865F2] text-[#5865F2] hover:text-white border border-[#5865F2]/40 font-bold px-4 py-2 rounded-xl uppercase tracking-wider text-[11px] transition flex items-center gap-1.5 cursor-pointer"
+                          className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-indigo-300/40 bg-indigo-300/10 px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-indigo-200 transition hover:bg-[#5865F2] hover:text-white"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
                           <span>Discord</span>
@@ -375,10 +377,10 @@ export default function Gildie() {
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-500">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-400">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
-          <p className="font-mono text-[10px] text-gray-600">Rejestr Gildii &amp; Rekrutacja</p>
+          <p className="font-mono text-[10px] text-gray-400">Rejestr Gildii &amp; Rekrutacja</p>
         </div>
       </footer>
 

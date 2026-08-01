@@ -195,8 +195,8 @@ export default function TimeryPage() {
                   <h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Zegary dowódcy</h2>
                   <p className="mt-2 text-xs text-[#8f8a81]">Czas aktualizowany co sekundę na podstawie zegara urządzenia.</p>
                 </div>
-                <label className="relative min-w-44 text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Region
-                  <select value={selectedServer} onChange={(event) => setSelectedServer(event.target.value)} className="mt-1.5 w-full appearance-none rounded-xl border px-3 py-2.5 text-xs normal-case tracking-normal text-[#eee7d9] outline-none">
+                <label className="relative min-w-44 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Region
+                  <select value={selectedServer} onChange={(event) => setSelectedServer(event.target.value)} className="mt-1.5 min-h-11 w-full appearance-none rounded-xl border px-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none">
                     {Object.keys(SERVER_CONFIG).map((name) => <option key={name}>{name}</option>)}
                   </select>
                   <ChevronDown className="pointer-events-none absolute bottom-3 right-3 h-3.5 w-3.5" />
@@ -239,10 +239,10 @@ export default function TimeryPage() {
               const urgent = window.countdown.totalSeconds <= 3_600
               return (
                 <article key={`${selectedServer}-${window.hour}`} className={`relative overflow-hidden rounded-2xl border p-4 ${urgent ? 'border-rose-400/30 bg-rose-400/8' : index === 0 ? 'border-[#e5bb55]/30 bg-[#e5bb55]/[.055]' : 'border-white/8 bg-black/15'}`}>
-                  <div className="flex items-start justify-between gap-3"><div><p className="font-display text-2xl font-black text-[#fff8e8]">{pad(window.hour)}:00</p><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">UTC</p></div>{urgent ? <span className="rounded-md border border-rose-400/25 bg-rose-400/10 px-2 py-1 text-[8px] font-black uppercase text-rose-300">Blisko</span> : index === 0 ? <Sparkles className="h-4 w-4 text-[#e5bb55]" /> : null}</div>
+                  <div className="flex items-start justify-between gap-3"><div><p className="font-display text-2xl font-black text-[#fff8e8]">{pad(window.hour)}:00</p><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">UTC</p></div>{urgent ? <span className="rounded-md border border-rose-400/25 bg-rose-400/10 px-2 py-1 text-[8px] font-black uppercase text-rose-300">Blisko</span> : index === 0 ? <Sparkles className="h-4 w-4 text-[#e5bb55]" /> : null}</div>
                   <h3 className="mt-5 text-xs font-bold text-[#d8d2c8]">{window.label}</h3>
-                  <p className="mt-1 text-[9px] text-[#77736c]">{window.type}</p>
-                  <div className="mt-4 border-t border-white/8 pt-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">Do rozpoczęcia</p><p className={`mt-1 font-mono text-sm font-bold ${urgent ? 'text-rose-300' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{window.countdown.formatted}</p></div>
+                  <p className="mt-1 text-[9px] text-[#918b82]">{window.type}</p>
+                  <div className="mt-4 border-t border-white/8 pt-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">Do rozpoczęcia</p><p className={`mt-1 font-mono text-sm font-bold ${urgent ? 'text-rose-300' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{window.countdown.formatted}</p></div>
                 </article>
               )
             })}
@@ -253,8 +253,8 @@ export default function TimeryPage() {
           <section className="aopp-panel rounded-[28px] p-5 sm:p-6">
             <div className="border-b border-white/8 pb-4"><p className="text-[9px] font-black uppercase tracking-[.2em] text-[#e5bb55]">Własny alarm</p><h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Dodaj wydarzenie</h2><p className="mt-2 text-xs leading-5 text-[#8f8a81]">Timer zapisze się lokalnie na tym urządzeniu.</p></div>
             <form onSubmit={addTimer} className="mt-5 space-y-4">
-              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Nazwa wydarzenia<input type="text" maxLength={80} value={timerName} onChange={(event) => setTimerName(event.target.value)} placeholder="np. Zbiórka pod hideoutem" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
-              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Data i godzina<input type="datetime-local" value={timerDate} onChange={(event) => setTimerDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
+              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Nazwa wydarzenia<input type="text" maxLength={80} value={timerName} onChange={(event) => setTimerName(event.target.value)} placeholder="np. Zbiórka pod hideoutem" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
+              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Data i godzina<input type="datetime-local" value={timerDate} onChange={(event) => setTimerDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
               <button type="submit" className="aopp-primary-button flex w-full items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em]"><Plus className="h-4 w-4" /> Dodaj timer</button>
             </form>
             {notice && <StatusNotice type="success" className="mt-3">{notice}</StatusNotice>}
@@ -269,8 +269,8 @@ export default function TimeryPage() {
                 const expired = timer.target <= now
                 return (
                   <article key={timer.id} className={`flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between ${expired ? 'border-white/6 bg-black/10 opacity-55' : 'border-white/8 bg-black/20'}`}>
-                    <div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{timer.name}</p><p className="mt-1 text-[9px] text-[#77736c]">{formatTimerDate(timer.date)}</p></div>
-                    <div className="flex items-center justify-between gap-3 sm:justify-end"><span className={`font-mono text-xs font-bold ${expired ? 'text-[#77736c]' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{expired ? 'Zakończony' : timer.countdown.formatted}</span><button type="button" onClick={() => removeTimer(timer.id)} aria-label={`Usuń timer ${timer.name}`} className="rounded-lg border border-rose-400/15 bg-rose-400/5 p-2 text-rose-300 hover:bg-rose-400/10"><Trash2 className="h-3.5 w-3.5" /></button></div>
+                    <div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{timer.name}</p><p className="mt-1 text-[9px] text-[#918b82]">{formatTimerDate(timer.date)}</p></div>
+                    <div className="flex items-center justify-between gap-3 sm:justify-end"><span className={`font-mono text-xs font-bold ${expired ? 'text-[#918b82]' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{expired ? 'Zakończony' : timer.countdown.formatted}</span><button type="button" onClick={() => removeTimer(timer.id)} aria-label={`Usuń timer ${timer.name}`} className="rounded-lg border border-rose-400/15 bg-rose-400/5 p-2 text-rose-300 hover:bg-rose-400/10"><Trash2 className="h-3.5 w-3.5" /></button></div>
                   </article>
                 )
               })}
@@ -286,16 +286,16 @@ export default function TimeryPage() {
 
 function ClockMetric({ label, value, icon: Icon, tone = 'gold' }) {
   const color = tone === 'sky' ? 'text-sky-300' : tone === 'violet' ? 'text-violet-300' : 'text-[#e5bb55]'
-  return <div className="rounded-2xl border border-white/8 bg-black/20 p-4"><div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[.16em] text-[#77736c]"><Icon className={`h-3.5 w-3.5 ${color}`} />{label}</div><p className={`mt-2 font-mono text-lg font-black ${color}`} suppressHydrationWarning>{value}</p></div>
+  return <div className="rounded-2xl border border-white/8 bg-black/20 p-4"><div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[.16em] text-[#918b82]"><Icon className={`h-3.5 w-3.5 ${color}`} />{label}</div><p className={`mt-2 font-mono text-lg font-black ${color}`} suppressHydrationWarning>{value}</p></div>
 }
 
 function CycleCard({ icon: Icon, eyebrow, title, target, countdown, tone, description }) {
   const toneClasses = tone === 'violet' ? 'text-violet-300 border-violet-400/20 bg-violet-400/7' : tone === 'rose' ? 'text-rose-300 border-rose-400/20 bg-rose-400/7' : 'text-amber-300 border-amber-400/20 bg-amber-400/7'
   return (
     <article className="aopp-panel rounded-[24px] p-5">
-      <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.18em] text-[#77736c]">{eyebrow}</p><h2 className="font-display mt-1 text-lg font-black text-[#fff8e8]">{title}</h2></div><span className={`rounded-xl border p-2 ${toneClasses}`}><Icon className="h-4 w-4" /></span></div>
+      <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.18em] text-[#918b82]">{eyebrow}</p><h2 className="font-display mt-1 text-lg font-black text-[#fff8e8]">{title}</h2></div><span className={`rounded-xl border p-2 ${toneClasses}`}><Icon className="h-4 w-4" /></span></div>
       <p className="mt-3 text-[10px] leading-5 text-[#8f8a81]">{description}</p>
-      <div className="mt-4 rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">{target.toLocaleString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC</p><p className="mt-1 font-mono text-xl font-black text-[#e5bb55]" suppressHydrationWarning>{countdown.formatted}</p></div>
+      <div className="mt-4 rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">{target.toLocaleString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC</p><p className="mt-1 font-mono text-xl font-black text-[#e5bb55]" suppressHydrationWarning>{countdown.formatted}</p></div>
     </article>
   )
 }

@@ -26,9 +26,18 @@ Gotowe i wdrożone:
 
 ## Najbliższy krok
 
-> **Etap 6.2 / P3.2: końcowy audyt wizualny i kontrastu**
+> **P4.1: publiczna strona buildu i fundament interakcji społecznościowych**
 
-Zakres kodowy P3.1 jest wdrożony: krytyczne układy mobilne nie generują poziomego overflow, interakcje mają etykiety i stany ARIA, a wspólne puste stany oraz potwierdzenia są gotowe. Do pełnego zamknięcia P3 pozostał ręczny przegląd wizualny najważniejszych przepływów przy 360, 390 i 430 px oraz pomiar kontrastu. Następnie przechodzimy do P4, zaczynając od publicznej strony szczegółów buildu, ulubionych i bezpiecznego głosowania.
+Etap P3 jest zamknięty. Wszystkie publiczne widoki przeszły audyt 360, 390 i 430 px, kontrolę poziomego overflow, etykiet formularzy, minimalnych celów dotykowych, fokusu klawiatury oraz kontrastu. Następny sprint rozpoczyna P4: osobna, publiczna strona szczegółów buildu, przygotowanie modelu jednego głosu na użytkownika i zapis buildów do ulubionych.
+
+### Zakończony sprint P3.2
+
+- [x] wyrenderować wszystkie publiczne trasy przy 360, 390 i 430 px
+- [x] usunąć poziomy overflow, ucięte treści i kolizje kontrolek
+- [x] zweryfikować kontrast tekstu i kontrolek według WCAG AA
+- [x] przejść klawiaturą przez nawigację, formularze i dialog potwierdzenia
+- [x] sprawdzić czytelność stanów ładowania, pustych, błędów i sukcesu
+- [ ] wykonać lint, build, ponowny audyt i wdrożenie produkcyjne
 
 ### Zakończony sprint P3.1
 
@@ -87,9 +96,9 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] przebudować Timery
 - [x] przebudować Loot Split i poprawić przepływ rozliczenia grupy
 - [x] dopracować strony Regulamin i Prywatność
-- [ ] wykonać pełny przegląd mobile 360–430 px
+- [x] wykonać pełny przegląd mobile 360–430 px
 - [x] ujednolicić skeletony, komunikaty błędów, puste stany i potwierdzenia akcji
-- [ ] przeprowadzić audyt dostępności klawiatury, kontrastu i etykiet formularzy
+- [x] przeprowadzić audyt dostępności klawiatury, kontrastu i etykiet formularzy
 
 ### P4 — funkcje społecznościowe
 

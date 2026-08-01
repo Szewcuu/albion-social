@@ -111,7 +111,7 @@ export default function BuildyPage() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-[.12em] transition-all ${
+                className={`flex min-h-11 items-center gap-2 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-[.12em] transition-all ${
                   isActive
                     ? 'border border-orange-300/40 bg-orange-300 text-[#160b05] shadow-[0_0_20px_rgba(251,146,60,.16)]'
                     : 'border border-white/8 bg-black/20 text-[#9d978d] hover:border-orange-300/25 hover:text-orange-100'
@@ -225,7 +225,7 @@ export default function BuildyPage() {
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#716d66]">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">
         <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska - Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">

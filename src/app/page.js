@@ -836,7 +836,7 @@ export default function Home() {
       )}
 
       {/* FOOTER */}
-      <footer className="relative z-20 mt-10 w-full border-t border-[#c39b42]/15 bg-[#070807]/85 py-8 text-center text-xs text-gray-500 backdrop-blur-xl">
+      <footer className="relative z-20 mt-10 w-full border-t border-[#c39b42]/15 bg-[#070807]/85 py-8 text-center text-xs text-gray-400 backdrop-blur-xl">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">

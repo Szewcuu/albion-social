@@ -32,18 +32,19 @@ function DynamicList({ items, onChange, placeholder, max = 5 }) {
         <div key={idx} className="flex gap-2">
           <input
             type="text"
+            aria-label={`${placeholder} ${idx + 1}`}
             value={item}
             onChange={(e) => update(idx, e.target.value)}
             placeholder={placeholder}
             className="flex-1 bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
           />
-          <button type="button" onClick={() => remove(idx)} className="text-rose-400 hover:text-rose-300 p-2">
+          <button type="button" onClick={() => remove(idx)} aria-label={`Usuń pozycję ${idx + 1}`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
       ))}
       {items.length < max && (
-        <button type="button" onClick={add} className="flex items-center gap-1.5 text-[10px] font-mono text-[#f3ba2f] uppercase hover:text-[#fcd053]">
+        <button type="button" onClick={add} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f] hover:text-[#fcd053]">
           <Plus className="w-3.5 h-3.5" /> Dodaj
         </button>
       )}
@@ -180,7 +181,7 @@ export default function CreateBuildPage() {
       <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col items-center space-y-6 p-4 sm:p-6 lg:p-8">
 
         <div className="w-full flex flex-wrap justify-between items-center gap-3">
-          <Link href="/buildy" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-mono font-black tracking-widest uppercase transition group">
+          <Link href="/buildy" className="group inline-flex min-h-11 items-center gap-2 rounded-lg pr-2 text-xs font-mono font-black uppercase tracking-widest text-[#f3ba2f] transition hover:text-[#fcd053]">
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Powrót do Zbrojowni
           </Link>
@@ -188,7 +189,7 @@ export default function CreateBuildPage() {
             <button
               type="button"
               onClick={handleShare}
-              className="aopp-ghost-button inline-flex items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-[.1em]"
+              className="aopp-ghost-button inline-flex min-h-11 items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-[.1em]"
             >
               {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
               {shareCopied ? 'Skopiowano!' : 'Udostępnij link'}
@@ -197,7 +198,7 @@ export default function CreateBuildPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="aopp-primary-button inline-flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[.1em] disabled:opacity-50"
+              className="aopp-primary-button inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[.1em] disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               {saving ? 'Zapisywanie...' : saved ? 'Opublikowano!' : 'Opublikuj build'}
@@ -231,32 +232,35 @@ export default function CreateBuildPage() {
               <h2 className="font-display text-xl font-black text-[#fff8e8]">Informacje ogólne</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-400 mb-1 font-mono text-[10px] uppercase">Nazwa buildu *</label>
+                  <label htmlFor="build-title" className="mb-1 block font-mono text-[10px] uppercase text-gray-300">Nazwa buildu *</label>
                   <input
+                    id="build-title"
                     type="text"
                     maxLength={100}
                     placeholder="np. Hellgate Healer T8"
                     value={build.title}
                     onChange={(e) => updateBuild({ title: e.target.value })}
-                    className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 text-xs focus:border-[#f3ba2f] outline-none"
+                    className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] p-3 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
                   />
-                  <span className="text-[9px] text-gray-600 font-mono">{build.title.length}/100</span>
+                  <span className="font-mono text-[9px] text-gray-400">{build.title.length}/100</span>
                 </div>
                 <div>
-                  <label className="block text-gray-400 mb-1 font-mono text-[10px] uppercase">Autor (opcjonalnie)</label>
+                  <label htmlFor="build-author" className="mb-1 block font-mono text-[10px] uppercase text-gray-300">Autor (opcjonalnie)</label>
                   <input
+                    id="build-author"
                     type="text"
                     maxLength={50}
                     placeholder="Twoja nazwa gracza"
                     value={build.authorName}
                     onChange={(e) => updateBuild({ authorName: e.target.value })}
-                    className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 text-xs focus:border-[#f3ba2f] outline-none"
+                    className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] p-3 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-gray-400 mb-1 font-mono text-[10px] uppercase">Opis / Taktyka</label>
+                <label htmlFor="build-description" className="mb-1 block font-mono text-[10px] uppercase text-gray-300">Opis / Taktyka</label>
                 <textarea
+                  id="build-description"
                   rows={4}
                   placeholder="Opisz jak grać tym buildem, rotację skilli, wskazówki..."
                   value={build.description}
@@ -339,6 +343,7 @@ export default function CreateBuildPage() {
                   <div className="flex gap-2">
                     <input
                       type="text"
+                      aria-label={`Nazwa combo ${idx + 1}`}
                       placeholder="Nazwa combo (np. Burst opener)"
                       value={combo.name}
                       onChange={(e) => {
@@ -348,12 +353,13 @@ export default function CreateBuildPage() {
                       }}
                       className="flex-1 bg-[#0c0407] border border-[#220e14] rounded-lg p-2 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
                     />
-                    <button type="button" onClick={() => updateBuild({ skillCombos: build.skillCombos.filter((_, i) => i !== idx) })} className="text-rose-400 p-2">
+                    <button type="button" onClick={() => updateBuild({ skillCombos: build.skillCombos.filter((_, i) => i !== idx) })} aria-label={`Usuń combo ${idx + 1}`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <input
                     type="text"
+                    aria-label={`Sekwencja combo ${idx + 1}`}
                     placeholder="Q → W → E → R"
                     value={combo.description}
                     onChange={(e) => {
@@ -366,7 +372,7 @@ export default function CreateBuildPage() {
                 </div>
               ))}
               {build.skillCombos.length < 5 && (
-                <button type="button" onClick={addSkillCombo} className="flex items-center gap-1.5 text-[10px] font-mono text-[#f3ba2f] uppercase">
+                <button type="button" onClick={addSkillCombo} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f]">
                   <Plus className="w-3.5 h-3.5" /> Dodaj combo
                 </button>
               )}
@@ -394,21 +400,22 @@ export default function CreateBuildPage() {
                   <input
                     type="number"
                     min={1}
+                    aria-label={`Liczba sztuk przedmiotu ${idx + 1}`}
                     value={item.amount}
                     onChange={(e) => {
                       const next = [...build.inventory]
                       next[idx] = { ...item, amount: parseInt(e.target.value) || 1 }
                       updateBuild({ inventory: next })
                     }}
-                    className="w-16 bg-[#050204] border border-[#220e14] rounded-lg text-center text-xs py-2"
+                    className="min-h-10 w-16 rounded-lg border border-[#220e14] bg-[#050204] py-2 text-center text-xs"
                   />
-                  <button type="button" onClick={() => updateBuild({ inventory: build.inventory.filter((_, i) => i !== idx) })} className="text-rose-400 p-2">
+                  <button type="button" onClick={() => updateBuild({ inventory: build.inventory.filter((_, i) => i !== idx) })} aria-label={`Usuń przedmiot ${idx + 1} z ekwipunku`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
               {build.inventory.length < 10 && (
-                <button type="button" onClick={addInventoryItem} className="flex items-center gap-1.5 text-[10px] font-mono text-[#f3ba2f] uppercase">
+                <button type="button" onClick={addInventoryItem} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f]">
                   <Plus className="w-3.5 h-3.5" /> Dodaj przedmiot
                 </button>
               )}
@@ -423,6 +430,7 @@ export default function CreateBuildPage() {
                 <div key={idx} className="flex gap-2">
                   <input
                     type="url"
+                    aria-label={`Adres filmu YouTube ${idx + 1}`}
                     placeholder="https://youtube.com/watch?v=..."
                     value={url}
                     onChange={(e) => {
@@ -432,13 +440,13 @@ export default function CreateBuildPage() {
                     }}
                     className="flex-1 bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
                   />
-                  <button type="button" onClick={() => updateBuild({ youtubeVideos: build.youtubeVideos.filter((_, i) => i !== idx) })} className="text-rose-400 p-2">
+                  <button type="button" onClick={() => updateBuild({ youtubeVideos: build.youtubeVideos.filter((_, i) => i !== idx) })} aria-label={`Usuń film ${idx + 1}`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
               {build.youtubeVideos.length < 3 && (
-                <button type="button" onClick={addYoutube} className="flex items-center gap-1.5 text-[10px] font-mono text-[#f3ba2f] uppercase">
+                <button type="button" onClick={addYoutube} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f]">
                   <Plus className="w-3.5 h-3.5" /> Dodaj film
                 </button>
               )}
@@ -461,7 +469,7 @@ export default function CreateBuildPage() {
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#716d66]">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">
         <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">

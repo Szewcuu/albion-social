@@ -151,7 +151,7 @@ export default function KillboardPage() {
               <p className="text-[9px] font-black uppercase tracking-[.22em] text-rose-300">Archiwum wojowników</p>
               <h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Znajdź gracza po nicku</h2>
             </div>
-            <p className="text-[10px] text-[#77736c]">Wybierz region, w którym znajduje się postać.</p>
+            <p className="text-[10px] text-[#918b82]">Wybierz region, w którym znajduje się postać.</p>
           </div>
 
           <form onSubmit={handleSearch} className="grid gap-3 sm:grid-cols-[210px_1fr_auto]">
@@ -220,7 +220,7 @@ export default function KillboardPage() {
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-rose-400/20 bg-rose-400/8 text-rose-300"><Skull className="h-5 w-5" /></div>
                     <div className="min-w-0">
                       <p className="font-display truncate text-lg font-black text-[#fff8e8]">{result.name}</p>
-                      <p className="truncate text-[10px] text-[#77736c]">{result.guildName || 'Bez gildii'}{result.allianceName ? ` • ${result.allianceName}` : ''}</p>
+                      <p className="truncate text-[10px] text-[#918b82]">{result.guildName || 'Bez gildii'}{result.allianceName ? ` • ${result.allianceName}` : ''}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
@@ -277,8 +277,8 @@ export default function KillboardPage() {
               <div className="space-y-4">
                 <div className="aopp-panel flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => setActiveHistory('kills')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'kills' ? 'border border-emerald-300/30 bg-emerald-300/10 text-emerald-200' : 'border border-white/8 bg-black/20 text-[#77736c]'}`}>Zabójstwa ({overview.kills.length})</button>
-                    <button type="button" onClick={() => setActiveHistory('deaths')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'deaths' ? 'border border-rose-300/30 bg-rose-300/10 text-rose-200' : 'border border-white/8 bg-black/20 text-[#77736c]'}`}>Zgony ({overview.deaths.length})</button>
+                    <button type="button" onClick={() => setActiveHistory('kills')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'kills' ? 'border border-emerald-300/30 bg-emerald-300/10 text-emerald-200' : 'border border-white/8 bg-black/20 text-[#918b82]'}`}>Zabójstwa ({overview.kills.length})</button>
+                    <button type="button" onClick={() => setActiveHistory('deaths')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'deaths' ? 'border border-rose-300/30 bg-rose-300/10 text-rose-200' : 'border border-white/8 bg-black/20 text-[#918b82]'}`}>Zgony ({overview.deaths.length})</button>
                   </div>
                   <p className="text-[9px] text-[#625e57]">Ostatnie zdarzenia z Gameinfo</p>
                 </div>

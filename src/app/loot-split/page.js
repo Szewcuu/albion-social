@@ -232,7 +232,7 @@ export default function LootSplit() {
 
             <section className="aopp-panel rounded-[28px] p-5 sm:p-7">
               <SectionTitle icon={Users} eyebrow="Krok 2" title="Lista uczestników" description="Wklej nicki rozdzielone przecinkiem, średnikiem lub nową linią. Duplikaty zostaną usunięte." badge={`${calculation.players.length} graczy`} />
-              <label className="mt-6 block text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Nicki graczy
+              <label className="mt-6 block text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Nicki graczy
                 <textarea rows={6} value={playerNicks} onChange={(event) => setPlayerNicks(event.target.value)} placeholder={'Szewczykos\nHealerOne\nTankMain'} className="mt-1.5 w-full resize-y rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[#eee7d9] outline-none" />
               </label>
               {calculation.players.length > 0 && (
@@ -243,7 +243,7 @@ export default function LootSplit() {
             <section className="aopp-panel rounded-[28px] p-5 sm:p-7">
               <SectionTitle icon={ShieldAlert} eyebrow="Krok 3" title="Zwroty za sprzęt" description="Regear jest wypłacany wskazanemu graczowi ponad jego równy udział, ale finansowany z całej puli." badge={`${regearList.length} pozycji`} tone="rose" />
               <form onSubmit={handleAddRegear} className="mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-                <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Gracz
+                <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Gracz
                   {calculation.players.length ? (
                     <select value={regearNick} onChange={(event) => setRegearNick(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none"><option value="">Wybierz uczestnika</option>{calculation.players.map((nick) => <option key={nick} value={nick}>{nick}</option>)}</select>
                   ) : (
@@ -268,9 +268,9 @@ export default function LootSplit() {
             <section className="aopp-panel rounded-[28px] p-5 sm:p-7">
               <SectionTitle icon={FileCheck2} eyebrow="Krok 4" title="Lista wypłat" description="Każdy gracz otrzymuje bazowy udział oraz przypisany zwrot za sprzęt." badge={`${calculation.payoutRows.length} przelewów`} tone="emerald" />
               <div className="mt-5 overflow-hidden rounded-2xl border border-white/8">
-                <div className="hidden grid-cols-[1fr_.8fr_.8fr_.8fr] gap-3 border-b border-white/8 bg-white/[.025] px-4 py-3 text-[8px] font-black uppercase tracking-[.14em] text-[#77736c] sm:grid"><span>Gracz</span><span>Udział</span><span>Regear</span><span>Razem</span></div>
+                <div className="hidden grid-cols-[1fr_.8fr_.8fr_.8fr] gap-3 border-b border-white/8 bg-white/[.025] px-4 py-3 text-[8px] font-black uppercase tracking-[.14em] text-[#918b82] sm:grid"><span>Gracz</span><span>Udział</span><span>Regear</span><span>Razem</span></div>
                 {calculation.payoutRows.length === 0 ? <EmptyState icon={Users} title="Lista wypłat jest pusta" description="Dodaj uczestników, aby wygenerować przelewy." className="m-4" /> : calculation.payoutRows.map((row) => (
-                  <div key={row.nick.toLocaleLowerCase('pl')} className="grid gap-2 border-b border-white/6 px-4 py-4 last:border-b-0 sm:grid-cols-[1fr_.8fr_.8fr_.8fr] sm:items-center"><p className="flex items-center gap-2 text-xs font-bold text-[#eee7d9]"><UserRoundCheck className="h-4 w-4 text-sky-300" />{row.nick}</p><p className="text-[10px] text-[#a9a49b]"><span className="mr-1 text-[#6f6a63] sm:hidden">Udział:</span>{silver(row.basePayout)}</p><p className="text-[10px] text-rose-300"><span className="mr-1 text-[#6f6a63] sm:hidden">Regear:</span>{row.reimbursement ? `+${silver(row.reimbursement)}` : '—'}</p><p className="font-mono text-xs font-black text-emerald-300"><span className="mr-1 text-[#6f6a63] sm:hidden">Razem:</span>{silver(row.total)}</p></div>
+                  <div key={row.nick.toLocaleLowerCase('pl')} className="grid gap-2 border-b border-white/6 px-4 py-4 last:border-b-0 sm:grid-cols-[1fr_.8fr_.8fr_.8fr] sm:items-center"><p className="flex items-center gap-2 text-xs font-bold text-[#eee7d9]"><UserRoundCheck className="h-4 w-4 text-sky-300" />{row.nick}</p><p className="text-[10px] text-[#a9a49b]"><span className="mr-1 text-[#9b958b] sm:hidden">Udział:</span>{silver(row.basePayout)}</p><p className="text-[10px] text-rose-300"><span className="mr-1 text-[#9b958b] sm:hidden">Regear:</span>{row.reimbursement ? `+${silver(row.reimbursement)}` : '—'}</p><p className="font-mono text-xs font-black text-emerald-300"><span className="mr-1 text-[#9b958b] sm:hidden">Razem:</span>{silver(row.total)}</p></div>
                 ))}
               </div>
             </section>
@@ -287,9 +287,9 @@ export default function LootSplit() {
 
                 {calculation.deficit > 0 && <div className="rounded-xl border border-rose-400/25 bg-rose-400/8 p-3 text-[10px] leading-5 text-rose-200"><strong>Brakuje {silver(calculation.deficit)}</strong> na pokrycie wszystkich regearów.</div>}
 
-                <div className="rounded-2xl border border-[#e5bb55]/20 bg-black/25 p-5 text-center"><p className="text-[8px] font-black uppercase tracking-[.18em] text-[#77736c]">Bazowa działka na gracza</p><p className="font-display mt-2 text-3xl font-black text-[#e5bb55]">{calculation.basePayout.toLocaleString('pl-PL')}</p><p className="mt-1 text-[9px] text-[#77736c]">silver · {calculation.players.length} uczestników</p></div>
+                <div className="rounded-2xl border border-[#e5bb55]/20 bg-black/25 p-5 text-center"><p className="text-[8px] font-black uppercase tracking-[.18em] text-[#918b82]">Bazowa działka na gracza</p><p className="font-display mt-2 text-3xl font-black text-[#e5bb55]">{calculation.basePayout.toLocaleString('pl-PL')}</p><p className="mt-1 text-[9px] text-[#918b82]">silver · {calculation.players.length} uczestników</p></div>
 
-                {calculation.roundingRemainder > 0 && <p className="flex items-start gap-2 text-[9px] leading-4 text-[#77736c]"><Coins className="mt-0.5 h-3 w-3 shrink-0 text-[#e5bb55]" /> Pozostałość po zaokrągleniu: {silver(calculation.roundingRemainder)}. Zostaje w banku rozliczenia.</p>}
+                {calculation.roundingRemainder > 0 && <p className="flex items-start gap-2 text-[9px] leading-4 text-[#918b82]"><Coins className="mt-0.5 h-3 w-3 shrink-0 text-[#e5bb55]" /> Pozostałość po zaokrągleniu: {silver(calculation.roundingRemainder)}. Zostaje w banku rozliczenia.</p>}
 
                 <button type="button" onClick={copyReport} disabled={!calculation.totalLoot || !calculation.players.length || calculation.deficit > 0 || calculation.unassignedRegears.length > 0} className="aopp-primary-button flex w-full items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40"><ClipboardCopy className="h-4 w-4" /> Kopiuj raport</button>
                 <div className="grid gap-2 sm:grid-cols-2"><button type="button" onClick={saveDraft} className="aopp-ghost-button flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Save className="h-3.5 w-3.5" /> Zapisz szkic</button><button type="button" onClick={() => setResetDialogOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-400/15 bg-rose-400/5 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-rose-300 hover:bg-rose-400/10"><RotateCcw className="h-3.5 w-3.5" /> Wyczyść</button></div>
@@ -318,12 +318,12 @@ function SectionTitle({ icon: Icon, eyebrow, title, description, badge, tone = '
 }
 
 function Field({ label, value, onChange, ...props }) {
-  return <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">{label}<input value={value} onChange={(event) => onChange(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" {...props} /></label>
+  return <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">{label}<input value={value} onChange={(event) => onChange(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" {...props} /></label>
 }
 
 function MiniMetric({ label, value, icon: Icon, tone = 'gold' }) {
   const color = tone === 'amber' ? 'text-amber-300' : tone === 'emerald' ? 'text-emerald-300' : 'text-[#e5bb55]'
-  return <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/15 p-3"><Icon className={`h-4 w-4 ${color}`} /><div className="min-w-0"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">{label}</p><p className={`mt-0.5 truncate font-mono text-xs font-bold ${color}`}>{value}</p></div></div>
+  return <div className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/15 p-3"><Icon className={`h-4 w-4 ${color}`} /><div className="min-w-0"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">{label}</p><p className={`mt-0.5 truncate font-mono text-xs font-bold ${color}`}>{value}</p></div></div>
 }
 
 function SummaryRow({ label, value, tone = 'normal', strong = false }) {

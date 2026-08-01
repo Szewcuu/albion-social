@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Search, X, Plus } from 'lucide-react'
 import { itemImageUrl } from '@/lib/buildSlots'
@@ -10,6 +10,41 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [customId, setCustomId] = useState(value || '')
+  const dialogTitleId = useId()
+  const dialogRef = useRef(null)
+  const triggerRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const trigger = triggerRef.current
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setIsOpen(false)
+        return
+      }
+
+      if (event.key !== 'Tab' || !dialogRef.current) return
+      const focusable = [...dialogRef.current.querySelectorAll('button:not([disabled]), input:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')]
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable.at(-1)
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      trigger?.focus()
+    }
+  }, [isOpen])
 
   const fetchItems = useCallback(async (query = '') => {
     setLoading(true)
@@ -59,7 +94,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
       <div className={`${compact ? '' : 'space-y-1'}`}>
         {!compact && <span className="text-[9px] text-gray-500 font-mono uppercase">{label}</span>}
         <div className="bg-[#050204]/50 border border-[#260f16]/50 rounded-xl p-2 flex items-center justify-center opacity-40 cursor-not-allowed">
-          <span className="text-[10px] text-gray-600 font-mono">Zablokowane (2H)</span>
+          <span className="text-[10px] text-gray-400 font-mono">Zablokowane (2H)</span>
         </div>
       </div>
     )
@@ -68,8 +103,12 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={openPicker}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-label={`${label}: ${value ? value : 'wybierz przedmiot'}`}
         className={`group w-full bg-[#050204] border border-[#260f16] hover:border-[#f3ba2f]/50 rounded-xl transition text-left ${
           compact ? 'p-1.5' : 'p-2.5'
         }`}
@@ -101,12 +140,12 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
-          <div className="bg-[#0c0407] border border-[#3b131f] rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={dialogTitleId} className="bg-[#0c0407] border border-[#3b131f] rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-[#200d13] shrink-0">
-              <h3 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
+              <h3 id={dialogTitleId} className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
                 <Search className="w-4 h-4" /> {label}
               </h3>
-              <button type="button" onClick={() => setIsOpen(false)} aria-label="Zamknij wybór przedmiotu" className="text-gray-400 hover:text-white p-1.5 rounded-xl bg-[#1a070d]">
+              <button type="button" onClick={() => setIsOpen(false)} aria-label="Zamknij wybór przedmiotu" className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1a070d] text-gray-300 hover:text-white">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -116,6 +155,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                 <input
                   type="text"
+                  aria-label="Szukaj przedmiotu"
                   placeholder="Szukaj przedmiotu..."
                   value={search}
                   onChange={handleSearchChange}
@@ -126,12 +166,13 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
               <div className="flex gap-2">
                 <input
                   type="text"
+                  aria-label="Identyfikator przedmiotu z gry"
                   placeholder="Wpisz ID z gry (np. T8_2H_BOW)"
                   value={customId}
                   onChange={(e) => setCustomId(e.target.value.toUpperCase())}
                   className="flex-1 bg-[#0c0407] border border-[#2b0e16] rounded-xl p-2.5 text-xs font-mono text-gray-100 outline-none focus:border-[#f3ba2f]"
                 />
-                <button type="button" onClick={() => handleSelect(customId)} className="bg-[#f3ba2f] text-black font-extrabold px-4 rounded-xl text-xs uppercase shrink-0">
+                <button type="button" onClick={() => handleSelect(customId)} className="min-h-11 shrink-0 rounded-xl bg-[#f3ba2f] px-4 text-xs font-extrabold uppercase text-black">
                   Użyj
                 </button>
               </div>
@@ -168,10 +209,10 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
             </div>
 
             <div className="p-4 border-t border-[#200d13] flex justify-between items-center bg-[#050204] shrink-0">
-              <button type="button" onClick={() => handleSelect('')} className="text-xs text-rose-400 hover:text-rose-300 font-mono uppercase">
+              <button type="button" onClick={() => handleSelect('')} className="inline-flex min-h-11 items-center rounded-lg px-2 font-mono text-xs uppercase text-rose-300 hover:text-rose-200">
                 Wyczyść slot
               </button>
-              <button type="button" onClick={() => setIsOpen(false)} className="bg-[#1a070d] hover:bg-[#2b0e16] text-gray-300 font-bold px-4 py-2 rounded-xl text-xs uppercase">
+              <button type="button" onClick={() => setIsOpen(false)} className="min-h-11 rounded-xl bg-[#1a070d] px-4 py-2 text-xs font-bold uppercase text-gray-200 hover:bg-[#2b0e16]">
                 Zamknij
               </button>
             </div>
