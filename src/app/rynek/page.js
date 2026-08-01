@@ -1,9 +1,9 @@
 'use client'
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } from 'lucide-react'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+import MarketIntelligence from '@/components/market/MarketIntelligence'
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
@@ -116,6 +116,17 @@ export default function Rynek() {
           ]}
           imagePosition="76% center"
         />
+
+        <MarketIntelligence />
+
+        <div className="mt-4 flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Ogłoszenia społeczności</p>
+            <h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Rynek ofert P2P</h2>
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-[#8f8a81]">Oferty wystawiają gracze portalu. Nie są automatycznie powiązane z cenami skanowanymi przez Albion Online Data Project.</p>
+          </div>
+          <span className="w-fit rounded-lg border border-sky-400/20 bg-sky-400/8 px-3 py-2 text-[9px] font-black uppercase tracking-[.14em] text-sky-300">Kontakt i odbiór w grze</span>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
