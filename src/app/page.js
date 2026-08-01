@@ -1,8 +1,10 @@
 'use client'
 
 import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, memo, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { 
   Swords, 
   ShoppingBag, 
@@ -139,7 +141,7 @@ export default function Home() {
       setIsAdmin(adminStatus)
 
       if (adminStatus) {
-        const { data: allG } = await supabase.from('guilds').select('*, profiles(username)').order('created_at', { ascending: false })
+        const { data: allG } = await supabase.from('guilds').select('id, name, user_id, profiles(username)').order('created_at', { ascending: false })
         const { data: allM = [] } = await supabase.from('market_items').select('*, profiles(username)').order('created_at', { ascending: false })
         const { data: allE = [] } = await supabase.from('expeditions').select('*, profiles(username)').order('created_at', { ascending: false })
         const { data: allB = [] } = await supabase.from('builds').select('*, profiles(username)').order('created_at', { ascending: false })
@@ -250,25 +252,22 @@ export default function Home() {
     }
   }
 
-  const deleteExpedition = async (id, discordMsgId, fullPartyMsgId) => {
+  const deleteExpedition = async (id) => {
     if (confirm('Czy na pewno chcesz odwołać tę wyprawę z panelu admina?')) {
-      if (discordMsgId || fullPartyMsgId) {
-        try {
-          await fetch('/api/webhooks/expedition', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              messageId: discordMsgId,
-              fullPartyMessageId: fullPartyMsgId 
-            })
-          })
-        } catch (err) {
-          console.error('Błąd kasowania na Discordzie:', err)
-        }
-      }
+      try {
+        const response = await authenticatedFetch('/api/webhooks/expedition', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expeditionId: id }),
+        })
 
-      const { error } = await supabase.from('expeditions').delete().eq('id', id)
-      if (!error) { fetchGlobalData(); if (user) fetchUserDataAndRole(user.id); }
+        if (response.ok) {
+          fetchGlobalData()
+          if (user) fetchUserDataAndRole(user.id)
+        }
+      } catch (err) {
+        console.error('Błąd kasowania wyprawy:', err)
+      }
     }
   }
 
@@ -320,7 +319,7 @@ export default function Home() {
               <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-48 h-24 bg-[#f3ba2f]/15 rounded-full blur-2xl pointer-events-none"></div>
               <div className="flex justify-center relative z-10">
                 <div className="w-20 h-20 rounded-full border-2 border-[#f3ba2f]/60 overflow-hidden shrink-0 shadow-[0_0_25px_rgba(243,186,47,0.3)] bg-[#0a0408]">
-                  <img src="/logo.png" alt="Logo" className="w-full h-full object-cover scale-105" />
+                  <Image src="/logo-256.webp" alt="Logo Albion Social" width={80} height={80} preload className="w-full h-full object-cover scale-105" />
                 </div>
               </div>
 
@@ -341,7 +340,7 @@ export default function Home() {
             <header className="bg-[#0c0407] border border-[#2c1219] rounded-3xl p-6 sm:p-8 shadow-xl relative flex flex-col lg:flex-row items-center justify-between gap-6 z-30">
               <div className="flex items-center gap-5 w-full lg:w-auto">
                 <div className="w-16 h-16 rounded-full border-2 border-[#f3ba2f]/50 overflow-hidden shrink-0 shadow-[0_0_15px_rgba(243,186,47,0.2)] bg-[#0c0407]">
-                  <img src="/logo.png" alt="Logo" className="w-full h-full object-cover scale-105" />
+                  <Image src="/logo-256.webp" alt="Logo Albion Social" width={64} height={64} preload className="w-full h-full object-cover scale-105" />
                 </div>
 
                 <div>
@@ -713,7 +712,7 @@ export default function Home() {
                           <div key={g.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2"><span className="text-gray-100 font-bold">{g.name}</span><button onClick={() => deleteGuild(g.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Spal</button></div>
                         )))}
                         {adminTab === 'EXPEDITIONS' && (allExpeditions.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak wypraw.</p> : allExpeditions.map(e => (
-                          <div key={e.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2"><span className="text-gray-100 font-bold">{e.title}</span><button onClick={() => deleteExpedition(e.id, e.discord_message_id, e.full_party_message_id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Odwołaj</button></div>
+                          <div key={e.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2"><span className="text-gray-100 font-bold">{e.title}</span><button onClick={() => deleteExpedition(e.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Odwołaj</button></div>
                         )))}
                         {adminTab === 'BUILDS' && (allBuilds.length === 0 ? <p className="text-gray-500 italic text-center py-4">Brak buildów.</p> : allBuilds.map(b => (
                           <div key={b.id} className="bg-[#050204] border border-rose-950/40 rounded-xl p-2.5 flex justify-between items-center gap-2"><span className="text-gray-100 font-bold">{b.title}</span><button onClick={() => deleteBuild(b.id)} className="bg-rose-950 hover:bg-rose-900 text-rose-300 font-bold px-2.5 py-1 rounded uppercase text-[10px]">Usuń</button></div>

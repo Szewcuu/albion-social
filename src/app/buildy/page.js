@@ -1,6 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Shield, Swords, Plus, ThumbsUp, Trash2 } from 'lucide-react'
 import PageBanner from '@/components/PageBanner'
@@ -20,14 +20,7 @@ export default function BuildyPage() {
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('all')
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-    fetchBuilds()
-  }, [])
-
-  const fetchBuilds = async () => {
+  const fetchBuilds = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('builds')
@@ -40,7 +33,14 @@ export default function BuildyPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      fetchBuilds()
+    })
+  }, [fetchBuilds])
 
   const handleDeleteBuild = async (id) => {
     if (!confirm('Czy na pewno chcesz usunąć ten zestaw?')) return

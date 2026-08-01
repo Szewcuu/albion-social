@@ -1,6 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Swords, Shield, Globe, MapPin, Search, ArrowLeft, ExternalLink, HelpCircle, Plus } from 'lucide-react'
 import GuildApplyModal from '@/components/GuildApplyModal'
@@ -31,23 +31,23 @@ export default function Gildie() {
   })
   const [formMessage, setFormMessage] = useState('')
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-    fetchGuilds()
-  }, [])
-
-  const fetchGuilds = async () => {
+  const fetchGuilds = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from('guilds')
-      .select(`*, profiles(username)`)
+      .select('id, name, description, activity_type, main_city, server, discord_link, user_id, created_at, profiles(username)')
       .order('created_at', { ascending: false })
 
     if (!error && data) setGuilds(data)
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      fetchGuilds()
+    })
+  }, [fetchGuilds])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -350,15 +350,13 @@ export default function Gildie() {
                       </p>
 
                       <div className="flex items-center gap-2">
-                        {guild.webhook_url && guild.webhook_url.trim() !== '' && (
-                          <button
-                            onClick={() => setSelectedGuildForApply(guild)}
-                            className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider text-[11px] transition shadow cursor-pointer flex items-center gap-1.5"
-                          >
-                            <Swords className="w-3.5 h-3.5" />
-                            <span>Aplikuj</span>
-                          </button>
-                        )}
+                        <button
+                          onClick={() => setSelectedGuildForApply(guild)}
+                          className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider text-[11px] transition shadow cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Swords className="w-3.5 h-3.5" />
+                          <span>Aplikuj</span>
+                        </button>
 
                         <a 
                           href={guild.discord_link} 

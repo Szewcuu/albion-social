@@ -1,5 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { 
@@ -35,56 +36,7 @@ export default function Wyprawy() {
   })
   const [activeExpeditionForSignup, setActiveExpeditionForSignup] = useState(null)
 
-  // 1. CZYSZCZENIE PRZETERMINOWANYCH WYPRAW
-  const cleanExpiredExpeditions = useCallback(async (expeditionsList) => {
-    const now = new Date()
-
-    for (const exp of expeditionsList) {
-      let shouldDelete = false
-
-      // Sprawdzamy czy od planowanego startu minęły 3 godziny
-      if (exp.start_time) {
-        const [hours, minutes] = exp.start_time.split(':').map(Number)
-        if (!isNaN(hours) && !isNaN(minutes)) {
-          const startTime = new Date(exp.created_at)
-          startTime.setUTCHours(hours, minutes, 0, 0)
-
-          const hoursPassedAfterStart = (now - startTime) / (1000 * 60 * 60)
-          if (hoursPassedAfterStart >= 3) {
-            shouldDelete = true
-          }
-        }
-      }
-
-      // Bezpiecznik: usuwamy jeśli wpis ma więcej niż 24h od utworzenia
-      const createdAt = new Date(exp.created_at)
-      const hoursSinceCreation = (now - createdAt) / (1000 * 60 * 60)
-      if (hoursSinceCreation >= 24) {
-        shouldDelete = true
-      }
-
-      if (shouldDelete) {
-        if (exp.discord_message_id || exp.full_party_message_id) {
-          try {
-            await fetch('/api/webhooks/expedition', {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                messageId: exp.discord_message_id,
-                fullPartyMessageId: exp.full_party_message_id 
-              })
-            })
-          } catch (err) {
-            console.error('Błąd kasowania wygasłej wyprawy z Discorda:', err)
-          }
-        }
-
-        await supabase.from('expeditions').delete().eq('id', exp.id)
-      }
-    }
-  }, [])
-
-  // 2. POBIERANIE WYPRAW Z BAZY
+  // POBIERANIE WYPRAW Z BAZY
   const fetchExpeditions = useCallback(async () => {
     setLoading(true)
     const { data } = await supabase
@@ -94,10 +46,9 @@ export default function Wyprawy() {
 
     if (data) {
       setExpeditions(data)
-      cleanExpiredExpeditions(data)
     }
     setLoading(false)
-  }, [cleanExpiredExpeditions])
+  }, [])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -114,8 +65,9 @@ export default function Wyprawy() {
             if (profile) setUserProfile(profile)
           })
       }
+
+      fetchExpeditions()
     })
-    fetchExpeditions()
   }, [fetchExpeditions])
 
   const openSignupModal = (exp) => {
@@ -154,45 +106,15 @@ export default function Wyprawy() {
       return
     }
 
-    const creatorName = userProfile?.ingame_nick || user?.user_metadata?.full_name || 'Gracz'
-    let discordMsgId = null
-
     // 1. Ustalamy właściwą nazwę aktywności
     const finalActivityType = formData.activity_type === 'Inna / Własna aktywność' 
       ? (formData.custom_activity.trim() || 'Inna Aktywność')
       : formData.activity_type
 
-    // 2. Wysyłamy powiadomienie na Discord
-    try {
-      const res = await fetch('/api/webhooks/expedition', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: formData.title,
-          activity_type: finalActivityType,
-          min_ip: formData.min_ip,
-          start_time: formData.start_time,
-          server: formData.server,
-          description: formData.description,
-          max_tanks: formData.max_tanks,
-          max_healers: formData.max_healers,
-          max_dps: formData.max_dps,
-          max_supports: formData.max_supports,
-          creator: creatorName
-        })
-      })
-      const resData = await res.json()
-      if (resData.messageId) {
-        discordMsgId = resData.messageId
-      }
-    } catch (err) {
-      console.error('Błąd Webhooka:', err)
-    }
-
-    // 3. Wyciągamy custom_activity, aby NIE wysyłać go jako nieistniejącą kolumnę do Supabase
+    // 2. Wyciągamy custom_activity, aby NIE wysyłać go jako nieistniejącą kolumnę do Supabase
     const { custom_activity, ...expeditionPayload } = formData
 
-    const { error } = await supabase.from('expeditions').insert([
+    const { data: createdExpedition, error } = await supabase.from('expeditions').insert([
       {
         ...expeditionPayload,
         activity_type: finalActivityType, // Zapisujemy ustaloną nazwę w activity_type
@@ -201,15 +123,28 @@ export default function Wyprawy() {
         max_healers: parseInt(formData.max_healers),
         max_dps: parseInt(formData.max_dps),
         max_supports: parseInt(formData.max_supports),
-        discord_message_id: discordMsgId,
         user_id: user.id
       }
-    ])
+    ]).select('id').single()
 
     if (error) {
       setFormMessage(`Błąd: ${error.message}`)
     } else {
-      setFormMessage('Wyprawa została ogłoszona na tablicy oraz na Discordzie!')
+      let discordPublished = false
+      try {
+        const response = await authenticatedFetch('/api/webhooks/expedition', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expeditionId: createdExpedition.id }),
+        })
+        discordPublished = response.ok
+      } catch (err) {
+        console.error('Błąd Webhooka:', err)
+      }
+
+      setFormMessage(discordPublished
+        ? 'Wyprawa została ogłoszona na tablicy oraz na Discordzie!'
+        : 'Wyprawa została zapisana, ale publikacja na Discordzie nie powiodła się.')
       setFormData({
         title: '',
         activity_type: 'Statyk T8',
@@ -290,25 +225,16 @@ export default function Wyprawy() {
         }
 
         try {
-          const res = await fetch('/api/webhooks/expedition', {
+          const res = await authenticatedFetch('/api/webhooks/expedition', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               type: 'PARTY_FULL',
-              title: activeExpeditionForSignup.title,
-              activity_type: activeExpeditionForSignup.activity_type,
-              start_time: activeExpeditionForSignup.start_time,
-              creator: activeExpeditionForSignup.profiles?.username || 'Lider'
+              expeditionId: activeExpeditionForSignup.id,
             })
           })
 
-          const resData = await res.json()
-          if (resData.messageId) {
-            await supabase
-              .from('expeditions')
-              .update({ full_party_message_id: resData.messageId })
-              .eq('id', activeExpeditionForSignup.id)
-          }
+          if (!res.ok) console.error('Discord odrzucił powiadomienie o pełnym składzie.')
         } catch (err) {
           console.error('Błąd powiadomienia o pełnym składzie:', err)
         }
@@ -326,25 +252,19 @@ export default function Wyprawy() {
     }
   }
 
-  const handleDeleteExpedition = async (expeditionId, discordMsgId, fullPartyMsgId) => {
+  const handleDeleteExpedition = async (expeditionId) => {
     if (confirm('Czy na pewno chcesz odwołać tę wyprawę? Wiadomości z Discorda zostaną również usunięte.')) {
-      if (discordMsgId || fullPartyMsgId) {
-        try {
-          await fetch('/api/webhooks/expedition', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              messageId: discordMsgId,
-              fullPartyMessageId: fullPartyMsgId
-            })
-          })
-        } catch (err) {
-          console.error('Błąd kasowania na Discordzie:', err)
-        }
-      }
+      try {
+        const response = await authenticatedFetch('/api/webhooks/expedition', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expeditionId }),
+        })
 
-      const { error } = await supabase.from('expeditions').delete().eq('id', expeditionId)
-      if (!error) fetchExpeditions()
+        if (response.ok) fetchExpeditions()
+      } catch (err) {
+        console.error('Błąd kasowania wyprawy:', err)
+      }
     }
   }
 
@@ -637,7 +557,7 @@ export default function Wyprawy() {
 
                       <div className="flex items-center gap-2">
                         {isOwner && (
-                          <button onClick={() => handleDeleteExpedition(exp.id, exp.discord_message_id, exp.full_party_message_id)} className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 font-bold px-3 py-1.5 rounded-xl uppercase text-[10px] tracking-wider transition cursor-pointer">
+                          <button onClick={() => handleDeleteExpedition(exp.id)} className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 font-bold px-3 py-1.5 rounded-xl uppercase text-[10px] tracking-wider transition cursor-pointer">
                             Odwołaj Wyprawę
                           </button>
                         )}

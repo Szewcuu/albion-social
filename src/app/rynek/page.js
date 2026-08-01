@@ -1,6 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ShoppingBag, Plus, Search, Tag, MapPin, Coins, Trash2, Globe } from 'lucide-react'
 
@@ -24,14 +24,7 @@ export default function Rynek() {
   })
   const [formMessage, setFormMessage] = useState('')
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-    fetchOffers()
-  }, [])
-
-  const fetchOffers = async () => {
+  const fetchOffers = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
       .from('market_items')
@@ -40,7 +33,14 @@ export default function Rynek() {
 
     if (!error && data) setOffers(data)
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      fetchOffers()
+    })
+  }, [fetchOffers])
 
   const handleCreateOffer = async (e) => {
     e.preventDefault()
