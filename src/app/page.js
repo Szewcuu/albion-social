@@ -22,7 +22,12 @@ import {
   Bell, 
   Check, 
   X, 
-  Coins 
+  Coins,
+  ArrowRight,
+  Users,
+  Crown,
+  Map,
+  Hammer
 } from 'lucide-react'
 import ChatBox from '@/components/ChatBox'
 
@@ -280,10 +285,13 @@ export default function Home() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#050305] text-xl font-mono tracking-widest">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#f3ba2f] border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(243,186,47,0.5)]"></div>
-          <p className="text-[#f3ba2f] font-bold text-sm">Ładowanie...</p>
+      <main className="aopp-shell flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-5">
+          <div className="relative h-16 w-16 overflow-hidden rounded-full border border-[#e2ba5c]/50 shadow-[0_0_40px_rgba(220,176,69,.2)]">
+            <Image src="/logo-256.webp" alt="Albion Social" fill sizes="64px" className="object-cover" />
+          </div>
+          <div className="h-0.5 w-28 overflow-hidden rounded-full bg-[#5c4a24]"><div className="h-full w-1/2 animate-pulse rounded-full bg-[#e2ba5c]" /></div>
+          <p className="text-[10px] font-black uppercase tracking-[.28em] text-[#cba84e]">Otwieranie bramy...</p>
         </div>
       </main>
     )
@@ -292,71 +300,79 @@ export default function Home() {
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   return (
-    <main 
-      className={`flex flex-col justify-between antialiased font-sans select-none relative text-gray-300 ${
-        !user 
-          ? 'h-screen overflow-hidden bg-no-repeat bg-center' 
-          : 'min-h-screen bg-[#050305]'
-      }`}
-      style={!user ? { 
-        backgroundImage: "url('/albion-bg.jpg')",
-        backgroundSize: 'cover' 
-      } : undefined}
-    >
-      {!user ? (
-        <div className="fixed inset-0 bg-[#050305]/80 z-0 pointer-events-none"></div>
-      ) : (
-        <>
-          <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
-          <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
-        </>
-      )}
-
-      <div className="w-full flex-1 flex flex-col items-center p-4 sm:p-6 lg:p-8 z-10 max-w-[1600px] mx-auto justify-center">
+    <main className="aopp-shell min-h-screen overflow-x-hidden text-[#eee8dc] antialiased selection:bg-[#d9aa3c] selection:text-[#17100a]">
+      <div className="aopp-world-bg" aria-hidden="true" />
+      <div className="aopp-grain" aria-hidden="true" />
+      <div className="relative z-10 mx-auto flex w-full max-w-[1540px] flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
         {!user ? (
-          <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto space-y-8 text-center my-auto">
-            <div className="w-full bg-[#0a0408]/95 border border-[#f3ba2f]/40 rounded-3xl p-8 sm:p-10 shadow-[0_0_50px_rgba(243,186,47,0.12)] space-y-7 relative overflow-hidden">
-              <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-48 h-24 bg-[#f3ba2f]/15 rounded-full blur-2xl pointer-events-none"></div>
-              <div className="flex justify-center relative z-10">
-                <div className="w-20 h-20 rounded-full border-2 border-[#f3ba2f]/60 overflow-hidden shrink-0 shadow-[0_0_25px_rgba(243,186,47,0.3)] bg-[#0a0408]">
+          <section className="relative my-auto flex min-h-[calc(100vh-2rem)] w-full items-center overflow-hidden rounded-[28px] border border-[#d2a84b]/35 bg-[#0b0b09] p-6 shadow-[0_35px_120px_rgba(0,0,0,.7)] sm:p-10 lg:p-16">
+            <Image src="/albion-social-hero.webp" alt="Fantastyczna kraina z warownym miastem" fill priority sizes="100vw" className="object-cover object-[66%_center]" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,10,8,.97)_0%,rgba(8,10,8,.76)_45%,rgba(8,10,8,.2)_75%,rgba(8,10,8,.58)_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(5,7,5,.94)_0%,transparent_55%)]" />
+            <div className="relative z-10 w-full max-w-2xl text-left">
+              <div className="absolute -top-20 left-0 h-24 w-48 rounded-full bg-[#f3ba2f]/15 blur-2xl pointer-events-none"></div>
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border border-[#f3ba2f]/60 bg-[#0a0408] shadow-[0_0_25px_rgba(243,186,47,0.3)]">
                   <Image src="/logo-256.webp" alt="Logo Albion Social" width={80} height={80} preload className="w-full h-full object-cover scale-105" />
+                </div>
+                <div>
+                  <p className="font-display text-xl font-black tracking-[.08em] text-white">ALBION SOCIAL</p>
+                  <p className="text-[10px] font-black uppercase tracking-[.26em] text-[#d9b45a]">Polska społeczność</p>
                 </div>
               </div>
 
-              <div className="space-y-2 relative z-10">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#f3ba2f] font-serif uppercase">Albion Online Portal</h1>
-                <p className="text-xs text-gray-400">Oficjalna platforma społecznościowa</p>
+              <div className="relative z-10 mt-14 space-y-5">
+                <p className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[.28em] text-[#e0bb61] before:h-px before:w-10 before:bg-[#e0bb61]">Twój świat. Twoje zasady.</p>
+                <h1 className="font-display text-5xl font-black leading-[.96] tracking-[-.035em] text-[#fffaf0] sm:text-6xl lg:text-7xl">Zbuduj legendę.<br /><span className="text-[#e4b94f]">Razem.</span></h1>
+                <p className="max-w-xl text-base leading-7 text-[#d6d0c4] sm:text-lg">Gildie, wyprawy, rynek i narzędzia bojowe polskiej społeczności — w jednym miejscu, zawsze gotowe przed kolejną wyprawą.</p>
               </div>
 
-              <div className="space-y-3 relative z-10">
-                <button onClick={loginWithDiscord} className="w-full bg-gradient-to-r from-[#5865F2] to-[#4752C4] text-white font-black py-3.5 rounded-xl uppercase text-xs cursor-pointer">
-                  Zaloguj przez Discord
+              <div className="relative z-10 mt-9 flex flex-col gap-3 sm:flex-row">
+                <button onClick={loginWithDiscord} className="aopp-primary-button group inline-flex min-h-14 items-center justify-center gap-3 px-7 text-sm font-black uppercase tracking-[.08em]">
+                  Wejdź przez Discord <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
+                <a href="#atuty" className="aopp-ghost-button inline-flex min-h-14 items-center justify-center px-7 text-sm font-bold uppercase tracking-[.08em]">Poznaj portal</a>
+              </div>
+
+              <div id="atuty" className="relative z-10 mt-14 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 backdrop-blur-sm">
+                {[['Gildie', 'Rekrutacja'], ['Wyprawy', 'Party finder'], ['Rynek', 'Handel P2P']].map(([title, label]) => (
+                  <div key={title} className="bg-black/45 px-3 py-4 sm:px-5">
+                    <p className="font-display text-base font-bold text-white sm:text-lg">{title}</p>
+                    <p className="mt-1 text-[9px] font-bold uppercase tracking-[.15em] text-[#c9a84f]">{label}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          </div>
+          </section>
         ) : (
           <div className="w-full space-y-6">
-            <header className="bg-[#0c0407] border border-[#2c1219] rounded-3xl p-6 sm:p-8 shadow-xl relative flex flex-col lg:flex-row items-center justify-between gap-6 z-30">
+            <header className="aopp-topbar sticky top-3 z-40 flex flex-col items-center justify-between gap-4 rounded-2xl px-4 py-3 sm:px-5 lg:flex-row">
               <div className="flex items-center gap-5 w-full lg:w-auto">
-                <div className="w-16 h-16 rounded-full border-2 border-[#f3ba2f]/50 overflow-hidden shrink-0 shadow-[0_0_15px_rgba(243,186,47,0.2)] bg-[#0c0407]">
-                  <Image src="/logo-256.webp" alt="Logo Albion Social" width={64} height={64} preload className="w-full h-full object-cover scale-105" />
+                <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-[#f3ba2f]/50 bg-[#0c0407] shadow-[0_0_15px_rgba(243,186,47,0.2)]">
+                  <Image src="/logo-256.webp" alt="Logo Albion Social" width={48} height={48} preload className="h-full w-full scale-105 object-cover" />
                 </div>
 
                 <div>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-2xl sm:text-3xl font-black text-white tracking-wide font-serif">
-                      Albion Online Polska Portal
+                    <h1 className="font-display text-xl font-black tracking-wide text-white sm:text-2xl">
+                      Albion Social
                     </h1>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-mono font-bold tracking-wider uppercase">
                       Online
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 font-mono mt-1">
-                    Autonomiczny Węzeł Handlowo-Bojowy • Sektor Główny
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[#9e998f]">
+                    Polska społeczność graczy
                   </p>
                 </div>
               </div>
+
+              <nav className="hidden items-center gap-1 xl:flex" aria-label="Główna nawigacja">
+                <Link href="/gildie" className="aopp-nav-link">Gildie</Link>
+                <Link href="/wyprawy" className="aopp-nav-link">Wyprawy</Link>
+                <Link href="/rynek" className="aopp-nav-link">Rynek</Link>
+                <Link href="/buildy" className="aopp-nav-link">Buildy</Link>
+              </nav>
 
               <div className="flex flex-wrap items-center justify-end gap-4 w-full lg:w-auto">
                 <div className="bg-[#070204] border border-[#240e14] rounded-2xl px-5 py-2.5 flex items-center gap-3">
@@ -480,9 +496,38 @@ export default function Home() {
               </div>
             </header>
 
+            <section className="aopp-hero relative min-h-[420px] overflow-hidden rounded-[28px] border border-[#cfa94e]/25 shadow-[0_28px_90px_rgba(0,0,0,.46)]">
+              <Image src="/albion-social-hero.webp" alt="Widok na fantastyczne miasto i dolinę" fill priority sizes="(max-width: 1540px) 100vw, 1540px" className="object-cover object-[68%_center] transition-transform duration-[1400ms] hover:scale-[1.015]" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,10,8,.95)_0%,rgba(8,10,8,.72)_43%,rgba(8,10,8,.12)_76%,rgba(8,10,8,.45)_100%)]" />
+              <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(7,8,7,.88)_0%,transparent_52%)]" />
+
+              <div className="relative z-10 flex min-h-[420px] max-w-3xl flex-col justify-center p-7 sm:p-10 lg:p-14">
+                <p className="mb-4 flex items-center gap-3 text-[10px] font-black uppercase tracking-[.28em] text-[#e0bb61] before:h-px before:w-9 before:bg-[#e0bb61]">
+                  Centrum dowodzenia • Europa
+                </p>
+                <h2 className="font-display text-4xl font-black leading-[1.02] tracking-[-.025em] text-[#fffaf0] sm:text-5xl lg:text-6xl">
+                  Zbierz drużynę.<br /><span className="text-[#e4b94f]">Zapisz własną legendę.</span>
+                </h2>
+                <p className="mt-5 max-w-xl text-sm leading-6 text-[#d2ccc0] sm:text-base">
+                  Wszystko, czego potrzebuje gracz i dowódca: ludzie, przygotowanie, handel i wspólna wyprawa — bez chaosu między narzędziami.
+                </p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Link href="/wyprawy" className="aopp-primary-button group inline-flex min-h-12 items-center justify-center gap-2 px-6 text-xs font-black uppercase tracking-[.1em]">
+                    Znajdź wyprawę <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                  <Link href="/gildie" className="aopp-ghost-button inline-flex min-h-12 items-center justify-center px-6 text-xs font-black uppercase tracking-[.1em]">Poznaj gildie</Link>
+                </div>
+              </div>
+
+              <div className="absolute bottom-5 right-5 z-10 hidden items-center gap-4 rounded-xl border border-white/10 bg-black/50 px-5 py-3 backdrop-blur-md sm:flex">
+                <span className="relative flex h-3 w-3"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" /><span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400" /></span>
+                <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#9f9a91]">Świat online</p><p className="font-display text-sm font-bold text-white">Przygoda trwa</p></div>
+              </div>
+            </section>
+
             {/* SEKCJA Z KARTAMI I STATYSTYKAMI */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+              <div className="aopp-stat flex items-center gap-4 rounded-2xl p-4">
                 <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400"><Globe className="w-5 h-5" /></div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase">Status Serwerów</span>
@@ -490,7 +535,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+              <div className="aopp-stat flex items-center gap-4 rounded-2xl p-4">
                 <div className="p-3 bg-[#f3ba2f]/10 border border-[#f3ba2f]/20 rounded-xl text-[#f3ba2f]"><ShoppingBag className="w-5 h-5" /></div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase">Aktywne oferty rynku</span>
@@ -498,7 +543,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="bg-[#0c0407] border border-[#281017] rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+              <div className="aopp-stat flex items-center gap-4 rounded-2xl p-4">
                 <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-purple-400"><Compass className="w-5 h-5" /></div>
                 <div>
                   <span className="text-[10px] font-mono text-gray-400 uppercase">Zarejestrowane gildie</span>
@@ -506,7 +551,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <a href="https://wiki.albiononline.com" target="_blank" rel="noopener noreferrer" className="bg-[#0c0407] border border-[#281017] hover:border-[#f3ba2f]/40 rounded-2xl p-4 flex items-center justify-between shadow-lg transition group cursor-pointer">
+              <a href="https://wiki.albiononline.com" target="_blank" rel="noopener noreferrer" className="aopp-stat group flex cursor-pointer items-center justify-between rounded-2xl p-4">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-xl text-sky-400"><ExternalLink className="w-5 h-5" /></div>
                   <div>
@@ -518,100 +563,123 @@ export default function Home() {
             </div>
 
             {/* SIATKA 6 MODUŁÓW PORTALU */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <section>
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[.24em] text-[#caa64d]">Wybierz swój kierunek</p>
+                  <h2 className="font-display mt-1 text-2xl font-black text-white sm:text-3xl">Narzędzia dla każdego stylu gry</h2>
+                </div>
+                <span className="hidden text-xs text-[#817d75] sm:block">Siedem dróg. Jedna społeczność.</span>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               
               {/* MODUŁ 01: GILDIE */}
-              <Link href="/gildie" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-[#f3ba2f]/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+              <Link href="/gildie" className="aopp-module-card group flex min-h-44 flex-col justify-between rounded-2xl p-5">
                 <div className="flex justify-between items-start">
-                  <div className="p-2.5 bg-[#f3ba2f]/10 rounded-xl text-[#f3ba2f] group-hover:scale-110 transition-transform">
-                    <Swords className="w-5 h-5" />
+                  <div className="rounded-xl border border-[#f3ba2f]/20 bg-[#f3ba2f]/10 p-3 text-[#f3ba2f] transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <Swords className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 01</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm group-hover:text-[#f3ba2f] transition-colors">Rejestr Gildii</h3>
-                  <p className="text-[11px] text-gray-400 mt-1">Formacje i rekrutacja.</p>
+                  <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-[#f3ba2f]">Rejestr Gildii</h3>
+                  <p className="mt-2 text-sm text-[#a9a49b]">Znajdź ludzi do wspólnej gry albo pokaż światu własny sztandar.</p>
                 </div>
               </Link>
 
               {/* MODUŁ 02: WYPRAWY */}
-              <Link href="/wyprawy" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-purple-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+              <Link href="/wyprawy" className="aopp-module-card group flex min-h-44 flex-col justify-between rounded-2xl p-5">
                 <div className="flex justify-between items-start">
-                  <div className="p-2.5 bg-purple-500/10 rounded-xl text-purple-400 group-hover:scale-110 transition-transform">
-                    <Shield className="w-5 h-5" />
+                  <div className="rounded-xl border border-purple-500/20 bg-purple-500/10 p-3 text-purple-400 transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <Shield className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 02</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm group-hover:text-purple-300 transition-colors">Wyprawy &amp; Party</h3>
-                  <p className="text-[11px] text-gray-400 mt-1">Zbiórki i Discord.</p>
+                  <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-purple-300">Wyprawy &amp; Party</h3>
+                  <p className="mt-2 text-sm text-[#a9a49b]">Zaplanuj aktywność, obsadź role i zsynchronizuj zbiórkę z Discordem.</p>
                 </div>
               </Link>
 
               {/* MODUŁ 03: RYNEK */}
-              <Link href="/rynek" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-sky-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+              <Link href="/rynek" className="aopp-module-card group flex min-h-44 flex-col justify-between rounded-2xl p-5">
                 <div className="flex justify-between items-start">
-                  <div className="p-2.5 bg-sky-500/10 rounded-xl text-sky-400 group-hover:scale-110 transition-transform">
-                    <ShoppingBag className="w-5 h-5" />
+                  <div className="rounded-xl border border-sky-500/20 bg-sky-500/10 p-3 text-sky-400 transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <ShoppingBag className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 03</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm group-hover:text-sky-300 transition-colors">Tablica Rynku</h3>
-                  <p className="text-[11px] text-gray-400 mt-1">Oferty i handel.</p>
+                  <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-sky-300">Tablica Rynku</h3>
+                  <p className="mt-2 text-sm text-[#a9a49b]">Kupuj i sprzedawaj bez zbędnego szumu — bezpośrednio między graczami.</p>
                 </div>
               </Link>
 
               {/* MODUŁ 04: LOOT SPLITTER */}
-              <Link href="/loot-split" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-emerald-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+              <Link href="/loot-split" className="aopp-module-card group flex min-h-44 flex-col justify-between rounded-2xl p-5">
                 <div className="flex justify-between items-start">
-                  <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400 group-hover:scale-110 transition-transform">
-                    <Coins className="w-5 h-5" />
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-emerald-400 transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <Coins className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 04</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm group-hover:text-emerald-300 transition-colors">Loot Splitter</h3>
-                  <p className="text-[11px] text-gray-400 mt-1">Podział zysków i regeary.</p>
+                  <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-emerald-300">Loot Splitter</h3>
+                  <p className="mt-2 text-sm text-[#a9a49b]">Policz udziały, zwroty i regeary bez arkusza pełnego pomyłek.</p>
                 </div>
               </Link>
 
               {/* MODUŁ 05: TIMERY */}
-              <Link href="/timery" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-amber-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+              <Link href="/timery" className="aopp-module-card group flex min-h-44 flex-col justify-between rounded-2xl p-5">
                 <div className="flex justify-between items-start">
-                  <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400 group-hover:scale-110 transition-transform">
-                    <Compass className="w-5 h-5" />
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-amber-400 transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <Compass className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 05</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm group-hover:text-amber-300 transition-colors">Timery ZvZ &amp; Core</h3>
-                  <p className="text-[11px] text-gray-400 mt-1">Odliczanie do bitew i respów.</p>
+                  <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-amber-300">Timery ZvZ &amp; Core</h3>
+                  <p className="mt-2 text-sm text-[#a9a49b]">Pilnuj bitew, respawnów i najważniejszych okien aktywności.</p>
                 </div>
               </Link>
 
               {/* MODUŁ 06: KILLBOARD */}
-              <Link href="/killboard" className="group bg-[#0c0407] hover:bg-[#15060b] border border-[#281017] hover:border-rose-500/50 rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between space-y-3 shadow-xl">
+              <Link href="/killboard" className="aopp-module-card group flex min-h-44 flex-col justify-between rounded-2xl p-5">
                 <div className="flex justify-between items-start">
-                  <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400 group-hover:scale-110 transition-transform">
-                    <Skull className="w-5 h-5" />
+                  <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-rose-400 transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <Skull className="h-6 w-6" />
                   </div>
                   <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 06</span>
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-sm group-hover:text-rose-300 transition-colors">Killboard Graczy</h3>
-                  <p className="text-[11px] text-gray-400 mt-1">Sprawdzaj K/D i PvP Fame.</p>
+                  <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-rose-300">Killboard Graczy</h3>
+                  <p className="mt-2 text-sm text-[#a9a49b]">Prześwietl historię walki, K/D oraz doświadczenie PvP gracza.</p>
                 </div>
               </Link>
 
-            </div>
+              <Link href="/buildy" className="aopp-module-card aopp-module-feature group flex min-h-36 flex-col justify-between rounded-2xl p-5 sm:flex-row sm:items-center lg:col-span-3">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-xl border border-orange-500/20 bg-orange-500/10 p-3 text-orange-300 transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <Hammer className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-mono uppercase text-gray-500">Moduł 07</p>
+                    <h3 className="font-display mt-1 text-xl font-bold text-white transition-colors group-hover:text-orange-200">Kuźnia Buildów</h3>
+                    <p className="mt-1 text-sm text-[#a9a49b]">Buduj, zapisuj i udostępniaj sprawdzone zestawy ekwipunku.</p>
+                  </div>
+                </div>
+                <span className="mt-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[.12em] text-[#d9b45a] sm:mt-0">Otwórz kuźnię <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
+              </Link>
+
+              </div>
+            </section>
 
             {/* SEKCJA DOLNA: KALKULATOR/ADMIN (LEWA) + CZAT/NEWSY (PRAWA) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               
               {/* LEWA KOLUMNA: KALKULATOR & ADMIN */}
               <div className="lg:col-span-6 space-y-6">
-                <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+                <div className="aopp-panel space-y-6 rounded-3xl p-6 sm:p-8">
                   <div className="flex items-center justify-between border-b border-[#200d13] pb-4">
                     <div className="flex gap-4 font-mono text-xs font-bold uppercase">
                       <button onClick={() => setRightTab('ECONOMY')} className={`pb-1 transition ${rightTab === 'ECONOMY' ? 'text-[#f3ba2f] border-b-2 border-[#f3ba2f]' : 'text-gray-500'}`}>Kalkulator Marż</button>
@@ -723,7 +791,7 @@ export default function Home() {
                 </div>
 
                 {/* KRONIKA NEWSÓW */}
-                <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-xl space-y-4">
+                <div className="aopp-panel space-y-4 rounded-3xl p-6 sm:p-8">
                   <div className="flex items-center justify-between border-b border-[#200d13] pb-3">
                     <span className="text-xs font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2"><Newspaper className="w-4 h-4" /> Goniec Królewski (Newsy)</span>
                     <span className="text-[10px] text-gray-500 font-mono">RSS Live</span>
@@ -768,7 +836,7 @@ export default function Home() {
       )}
 
       {/* FOOTER */}
-      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-8 text-center text-xs text-gray-500 relative z-20 shadow-[0_-30px_60px_#030102]">
+      <footer className="relative z-20 mt-10 w-full border-t border-[#c39b42]/15 bg-[#070807]/85 py-8 text-center text-xs text-gray-500 backdrop-blur-xl">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">

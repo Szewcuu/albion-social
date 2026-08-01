@@ -10,10 +10,11 @@ export default function PageBanner({
   activityType 
 }) {
   return (
-    <div className="relative bg-[#120a0c] border-2 border-[#c59b27]/80 p-6 sm:p-8 shadow-2xl overflow-hidden group">
+    <div className="aopp-panel group relative overflow-hidden rounded-[28px] p-6 sm:p-8">
       
       {/* Tło z gradientem i opcjonalną grafiką / poświatą */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#1b0a0d] via-[#120a0c]/90 to-[#080506] z-0"></div>
+      <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#252117] via-[#12130f]/90 to-[#090a08]"></div>
+      <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#f0cf77] via-[#b9872c] to-transparent"></div>
       
       {/* Dynamiczna poświata w zależności od typu aktywności (opcjonalnie) */}
       {activityType && (
@@ -24,11 +25,11 @@ export default function PageBanner({
       <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-[#0d0708] border border-[#3a1a1e] rounded shadow-inner text-[#c59b27]">
+          <div className="rounded-xl border border-[#d2a84b]/30 bg-black/30 p-3 text-[#e3b952] shadow-inner">
             <Icon className="w-8 h-8 sm:w-10 sm:h-10" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-100 uppercase tracking-wider font-serif">
+            <h1 className="font-display text-2xl font-black tracking-wide text-[#fffaf0] sm:text-3xl">
               {title}
             </h1>
             {subtitle && (
