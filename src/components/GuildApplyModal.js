@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swords, X, Send, Shield, Award, User } from 'lucide-react'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 export default function GuildApplyModal({ isOpen, onClose, guild, currentUser }) {
   const [formData, setFormData] = useState({
@@ -12,17 +13,10 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
   })
   const [status, setStatus] = useState({ loading: false, success: false, error: null })
 
-  // Automatyczne podpowiadanie nicku zalogowanego użytkownika
-  useEffect(() => {
-    if (currentUser) {
-      const defaultNick = 
-        currentUser.user_metadata?.custom_claims?.global_name || 
-        currentUser.user_metadata?.full_name || 
-        currentUser.user_metadata?.name || ''
-      
-      setFormData(prev => ({ ...prev, ingameNick: defaultNick }))
-    }
-  }, [currentUser])
+  const defaultNick = currentUser?.user_metadata?.custom_claims?.global_name
+    || currentUser?.user_metadata?.full_name
+    || currentUser?.user_metadata?.name
+    || ''
 
   if (!isOpen) return null
 
@@ -31,20 +25,13 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
     setStatus({ loading: true, success: false, error: null })
 
     try {
-      const res = await fetch('/api/apply', {
+      const res = await authenticatedFetch('/api/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          ingameNick: formData.ingameNick || defaultNick,
           guildId: guild?.id,
-          guildName: guild?.name,
-          guildOwnerId: guild?.user_id, // Wymagane do powiadomień Realtime na portalu
-          webhookUrl: guild?.webhook_url, // Webhook podpięty do danej gildii
-          userDiscord: 
-            currentUser?.user_metadata?.custom_claims?.global_name || 
-            currentUser?.user_metadata?.full_name || 
-            currentUser?.email || 
-            'Niezalogowany',
         }),
       })
 
@@ -75,6 +62,7 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
           {/* Przycisk Zamknięcia */}
           <button 
             onClick={onClose} 
+            aria-label="Zamknij formularz rekrutacyjny"
             className="absolute top-4 right-4 text-gray-400 hover:text-white transition p-1 rounded-lg hover:bg-[#2b181a]"
           >
             <X className="w-5 h-5" />
@@ -110,7 +98,7 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
                   type="text"
                   required
                   placeholder="np. SirLancelot"
-                  value={formData.ingameNick}
+                  value={formData.ingameNick || defaultNick}
                   onChange={(e) => setFormData({ ...formData, ingameNick: e.target.value })}
                   className="w-full bg-[#0b0708] border border-[#3a2023] p-2.5 text-gray-100 focus:border-[#c59b27] outline-none rounded-xl"
                 />

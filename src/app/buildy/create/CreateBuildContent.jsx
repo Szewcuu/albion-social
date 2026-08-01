@@ -71,7 +71,12 @@ function ValidationPanel({ errors }) {
 export default function CreateBuildPage() {
   const searchParams = useSearchParams()
   const [user, setUser] = useState(null)
-  const [build, setBuild] = useState(createEmptyBuild())
+  const [build, setBuild] = useState(() => {
+    const emptyBuild = createEmptyBuild()
+    const encoded = searchParams.get('build')
+    const loaded = encoded ? decodeBuildFromUrl(encoded) : null
+    return loaded ? { ...emptyBuild, ...loaded } : emptyBuild
+  })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
@@ -82,14 +87,6 @@ export default function CreateBuildPage() {
       setUser(session?.user ?? null)
     })
   }, [])
-
-  useEffect(() => {
-    const encoded = searchParams.get('build')
-    if (encoded) {
-      const loaded = decodeBuildFromUrl(encoded)
-      if (loaded) setBuild(prev => ({ ...prev, ...loaded }))
-    }
-  }, [searchParams])
 
   const updateBuild = useCallback((patch) => {
     setBuild(prev => ({ ...prev, ...patch }))

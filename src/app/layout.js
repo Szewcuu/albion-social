@@ -16,7 +16,8 @@ export const metadata = {
   title: "Albion Online Polska Portal",
   description: "Polski węzeł społecznościowy graczy Albion Online",
   icons: {
-    icon: '/icon.png',
+    icon: '/favicon.ico',
+    apple: '/logo-256.webp',
   },
 };
 

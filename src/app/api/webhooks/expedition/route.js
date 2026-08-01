@@ -1,130 +1,297 @@
 import { NextResponse } from 'next/server'
 
-// WYSYŁANIE NOWEJ WIADOMOŚCI LUB POWIADOMIENIA
-export async function POST(req) {
+import { checkRateLimit } from '@/lib/server/rateLimit'
+import {
+  createSupabaseAdminClient,
+  isPortalAdmin,
+  requireApiUser,
+} from '@/lib/server/supabaseAdmin'
+import { cleanText, isSafeDiscordWebhook } from '@/lib/server/validation'
+
+const jsonError = (message, status, headers) => (
+  NextResponse.json({ error: message }, { status, headers })
+)
+
+const discordText = (value, max) => String(value || '').trim().slice(0, max)
+
+function getWebhookUrl({ wait = false } = {}) {
+  const configuredUrl = process.env.DISCORD_EXPEDITIONS_WEBHOOK_URL
+  if (!configuredUrl || !isSafeDiscordWebhook(configuredUrl)) return null
+
+  const url = new URL(configuredUrl)
+  if (wait) url.searchParams.set('wait', 'true')
+  return url
+}
+
+async function loadExpedition(supabase, expeditionId) {
+  const { data, error } = await supabase
+    .from('expeditions')
+    .select(`
+      id,
+      user_id,
+      title,
+      activity_type,
+      min_ip,
+      start_time,
+      server,
+      description,
+      max_tanks,
+      max_healers,
+      max_dps,
+      max_supports,
+      discord_message_id,
+      full_party_message_id
+    `)
+    .eq('id', expeditionId)
+    .maybeSingle()
+
+  if (error) throw new Error('Nie udało się odczytać wyprawy.')
+  return data
+}
+
+async function canManageExpedition(supabase, userId, expedition) {
+  if (expedition.user_id === userId) return true
+  return isPortalAdmin(supabase, userId)
+}
+
+async function getCreatorName(supabase, userId) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('ingame_nick, username')
+    .eq('id', userId)
+    .maybeSingle()
+
+  return discordText(data?.ingame_nick || data?.username || 'Gracz', 100)
+}
+
+async function sendDiscordMessage(payload) {
+  const webhookUrl = getWebhookUrl({ wait: true })
+  if (!webhookUrl) return null
+
+  const response = await fetch(webhookUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    redirect: 'error',
+    signal: AbortSignal.timeout(8_000),
+    body: JSON.stringify({
+      allowed_mentions: { parse: [] },
+      ...payload,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Discord zwrócił status ${response.status}.`)
+  }
+
+  return response.json()
+}
+
+export async function POST(request) {
   try {
-    const body = await req.json()
-    const { 
-      title, activity_type, min_ip, start_time, server, description, creator,
-      max_tanks, max_healers, max_dps, max_supports, type 
-    } = body
+    const auth = await requireApiUser(request)
+    if (auth.error) return jsonError(auth.error, auth.status)
 
-    const webhookUrl = process.env.DISCORD_EXPEDITIONS_WEBHOOK_URL
-
-    if (!webhookUrl) {
-      return NextResponse.json({ message: 'Pominięto wysyłanie webhooka (brak URL)' }, { status: 200 })
-    }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://albion-social.vercel.app'
-    const urlWithWait = webhookUrl.includes('?') ? `${webhookUrl}&wait=true` : `${webhookUrl}?wait=true`
-
-    // 1. POWIADOMIENIE: PARTY FULL
-    if (type === 'PARTY_FULL') {
-      const partyFullRes = await fetch(urlWithWait, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: `🎉 **DRUŻYNA SKOMPLETOWANA!** Wyprawa **${title}** ma już pełny skład!`,
-          embeds: [{
-            title: `✅ PEŁNY SKŁAD: ${title}`,
-            url: `${appUrl}/wyprawy`,
-            description: `Szykujcie ekwipunek! Zbiórka zaplanowana na **${start_time}**.`,
-            color: 0x10b981,
-            fields: [
-              { name: '🎯 Aktywność', value: activity_type || 'Wyprawa', inline: true },
-              { name: '👑 Lider Drużyny', value: creator || 'Lider', inline: true },
-            ],
-            footer: { text: 'Albion Online Polska Portal • Dołącz do innych wypraw' },
-            timestamp: new Date().toISOString()
-          }]
-        })
-      })
-
-      if (partyFullRes.ok) {
-        const discordData = await partyFullRes.json()
-        return NextResponse.json({ success: true, messageId: discordData.id })
-      }
-
-      return NextResponse.json({ success: true })
-    }
-
-    // 2. NOWA WYPRAWA
-    let embedColor = 0xc59b27
-    if (activity_type?.includes('Statyk')) embedColor = 0x3b82f6
-    else if (activity_type?.includes('Karawana')) embedColor = 0xf59e0b
-    else if (activity_type?.includes('Ava') || activity_type?.includes('Hellgate')) embedColor = 0xa855f7
-    else if (activity_type?.includes('Ganking') || activity_type?.includes('Roaming')) embedColor = 0xef4444
-
-    const rolesList = [
-      max_tanks > 0 ? `🛡️ Tank: **${max_tanks}**` : null,
-      max_healers > 0 ? `💚 Heal: **${max_healers}**` : null,
-      max_dps > 0 ? `⚔️ DPS: **${max_dps}**` : null,
-      max_supports > 0 ? `🔮 Supp: **${max_supports}**` : null,
-    ].filter(Boolean).join(' • ') || 'Dowolny skład'
-
-    const discordEmbed = {
-      title: `⚔️ NOWA WYPRAWA: ${title}`,
-      url: `${appUrl}/wyprawy`,
-      description: description ? `> ${description}` : 'Brak dodatkowego opisu. Kliknij poniżej, aby dołączyć!',
-      color: embedColor,
-      fields: [
-        { name: '🎯 Aktywność', value: activity_type || 'Statyk', inline: true },
-        { name: '🌐 Serwer', value: server || 'Europa', inline: true },
-        { name: '⏰ Czas Zbiórki', value: start_time || '19:00 UTC', inline: true },
-        { name: '🛡️ Wymagane IP', value: `${min_ip || 1200}+`, inline: true },
-        { name: '👑 Lider Drużyny', value: creator || 'Gracz', inline: true },
-        { name: '👥 Poszukiwane Miejsca', value: rolesList, inline: false },
-      ],
-      footer: { text: 'Albion Online Polska Portal • Kliknij nagłówek, aby otworzyć wyprawy' },
-      timestamp: new Date().toISOString()
-    }
-
-    const discordRes = await fetch(urlWithWait, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: `📢 **Zwołano nową drużynę!** [👉 Kliknij tutaj, aby zarezerwować miejsce!](${appUrl}/wyprawy)`,
-        embeds: [discordEmbed]
-      })
+    const rateLimit = checkRateLimit(`expedition-webhook:${auth.user.id}`, {
+      limit: 10,
+      windowMs: 60 * 1000,
     })
 
-    if (discordRes.ok) {
-      const discordData = await discordRes.json()
-      return NextResponse.json({ success: true, messageId: discordData.id })
+    if (!rateLimit.allowed) {
+      return jsonError('Zbyt wiele operacji. Spróbuj ponownie za chwilę.', 429, {
+        'Retry-After': String(rateLimit.retryAfter),
+      })
     }
 
-    return NextResponse.json({ success: true })
+    const body = await request.json()
+    const expeditionId = cleanText(body.expeditionId, { min: 1, max: 100 })
+    const type = body.type === 'PARTY_FULL' ? 'PARTY_FULL' : 'CREATED'
+
+    if (!expeditionId) return jsonError('Nieprawidłowy identyfikator wyprawy.', 400)
+
+    const supabase = createSupabaseAdminClient()
+    const expedition = await loadExpedition(supabase, expeditionId)
+    if (!expedition) return jsonError('Nie znaleziono wyprawy.', 404)
+
+    const creator = await getCreatorName(supabase, expedition.user_id)
+
+    if (type === 'PARTY_FULL') {
+      const { data: signups, error: signupsError } = await supabase
+        .from('expedition_signups')
+        .select('user_id')
+        .eq('expedition_id', expedition.id)
+
+      if (signupsError) throw new Error('Nie udało się sprawdzić składu wyprawy.')
+
+      const isParticipant = signups?.some((signup) => signup.user_id === auth.user.id)
+      const canManage = await canManageExpedition(supabase, auth.user.id, expedition)
+      if (!isParticipant && !canManage) return jsonError('Brak uprawnień.', 403)
+
+      const totalMax = Number(expedition.max_tanks || 0)
+        + Number(expedition.max_healers || 0)
+        + Number(expedition.max_dps || 0)
+        + Number(expedition.max_supports || 0)
+
+      if (totalMax <= 0 || (signups?.length || 0) < totalMax) {
+        return jsonError('Skład tej wyprawy nie jest jeszcze pełny.', 409)
+      }
+
+      if (expedition.full_party_message_id) {
+        return NextResponse.json({
+          success: true,
+          messageId: expedition.full_party_message_id,
+          alreadySent: true,
+        })
+      }
+
+      const discordData = await sendDiscordMessage({
+        content: `🎉 **DRUŻYNA SKOMPLETOWANA!** Wyprawa **${discordText(expedition.title, 100)}** ma już pełny skład!`,
+        embeds: [
+          {
+            title: `✅ PEŁNY SKŁAD: ${discordText(expedition.title, 200)}`,
+            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://albion-social.vercel.app'}/wyprawy`,
+            description: `Szykujcie ekwipunek! Zbiórka zaplanowana na **${discordText(expedition.start_time, 50)}**.`,
+            color: 0x10b981,
+            fields: [
+              { name: '🎯 Aktywność', value: discordText(expedition.activity_type, 100) || 'Wyprawa', inline: true },
+              { name: '👑 Lider drużyny', value: creator, inline: true },
+            ],
+            footer: { text: 'Albion Online Polska Portal • Dołącz do innych wypraw' },
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      })
+
+      if (discordData?.id) {
+        const { error } = await supabase
+          .from('expeditions')
+          .update({ full_party_message_id: discordData.id })
+          .eq('id', expedition.id)
+
+        if (error) throw new Error('Nie udało się zapisać identyfikatora wiadomości Discord.')
+      }
+
+      return NextResponse.json({
+        success: true,
+        messageId: discordData?.id || null,
+        skipped: !discordData,
+      })
+    }
+
+    if (!(await canManageExpedition(supabase, auth.user.id, expedition))) {
+      return jsonError('Brak uprawnień.', 403)
+    }
+
+    if (expedition.discord_message_id) {
+      return NextResponse.json({
+        success: true,
+        messageId: expedition.discord_message_id,
+        alreadySent: true,
+      })
+    }
+
+    let embedColor = 0xc59b27
+    if (expedition.activity_type?.includes('Statyk')) embedColor = 0x3b82f6
+    else if (expedition.activity_type?.includes('Karawana')) embedColor = 0xf59e0b
+    else if (expedition.activity_type?.includes('Ava') || expedition.activity_type?.includes('Hellgate')) embedColor = 0xa855f7
+    else if (expedition.activity_type?.includes('Ganking') || expedition.activity_type?.includes('Roaming')) embedColor = 0xef4444
+
+    const rolesList = [
+      Number(expedition.max_tanks) > 0 ? `🛡️ Tank: **${expedition.max_tanks}**` : null,
+      Number(expedition.max_healers) > 0 ? `💚 Heal: **${expedition.max_healers}**` : null,
+      Number(expedition.max_dps) > 0 ? `⚔️ DPS: **${expedition.max_dps}**` : null,
+      Number(expedition.max_supports) > 0 ? `🔮 Supp: **${expedition.max_supports}**` : null,
+    ].filter(Boolean).join(' • ') || 'Dowolny skład'
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://albion-social.vercel.app'
+    const discordData = await sendDiscordMessage({
+      content: `📢 **Zwołano nową drużynę!** [👉 Kliknij tutaj, aby zarezerwować miejsce!](${appUrl}/wyprawy)`,
+      embeds: [
+        {
+          title: `⚔️ NOWA WYPRAWA: ${discordText(expedition.title, 200)}`,
+          url: `${appUrl}/wyprawy`,
+          description: expedition.description
+            ? `> ${discordText(expedition.description, 1000)}`
+            : 'Brak dodatkowego opisu. Kliknij poniżej, aby dołączyć!',
+          color: embedColor,
+          fields: [
+            { name: '🎯 Aktywność', value: discordText(expedition.activity_type, 100) || 'Statyk', inline: true },
+            { name: '🌐 Serwer', value: discordText(expedition.server, 50) || 'Europa', inline: true },
+            { name: '⏰ Czas zbiórki', value: discordText(expedition.start_time, 50) || '19:00 UTC', inline: true },
+            { name: '🛡️ Wymagane IP', value: `${Number(expedition.min_ip) || 1200}+`, inline: true },
+            { name: '👑 Lider drużyny', value: creator, inline: true },
+            { name: '👥 Poszukiwane miejsca', value: rolesList, inline: false },
+          ],
+          footer: { text: 'Albion Online Polska Portal • Kliknij nagłówek, aby otworzyć wyprawy' },
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    })
+
+    if (discordData?.id) {
+      const { error } = await supabase
+        .from('expeditions')
+        .update({ discord_message_id: discordData.id })
+        .eq('id', expedition.id)
+
+      if (error) throw new Error('Nie udało się zapisać identyfikatora wiadomości Discord.')
+    }
+
+    return NextResponse.json({
+      success: true,
+      messageId: discordData?.id || null,
+      skipped: !discordData,
+    })
   } catch (error) {
-    console.error('Błąd wywoływania Webhooka:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Błąd wywoływania webhooka wypraw:', error)
+    return jsonError('Wystąpił błąd integracji z Discordem.', 500)
   }
 }
 
-// AUTOMATYCZNE USUWANIE WIADOMOŚCI Z DISCORDA
-export async function DELETE(req) {
+export async function DELETE(request) {
   try {
-    const { messageId, fullPartyMessageId } = await req.json()
-    const webhookUrl = process.env.DISCORD_EXPEDITIONS_WEBHOOK_URL
+    const auth = await requireApiUser(request)
+    if (auth.error) return jsonError(auth.error, auth.status)
 
-    if (!webhookUrl) {
-      return NextResponse.json({ message: 'Brak adresu Webhooka' }, { status: 200 })
+    const body = await request.json()
+    const expeditionId = cleanText(body.expeditionId, { min: 1, max: 100 })
+    if (!expeditionId) return jsonError('Nieprawidłowy identyfikator wyprawy.', 400)
+
+    const supabase = createSupabaseAdminClient()
+    const expedition = await loadExpedition(supabase, expeditionId)
+    if (!expedition) return jsonError('Nie znaleziono wyprawy.', 404)
+
+    if (!(await canManageExpedition(supabase, auth.user.id, expedition))) {
+      return jsonError('Brak uprawnień.', 403)
     }
 
-    const cleanBaseUrl = webhookUrl.split('?')[0]
+    const webhookUrl = getWebhookUrl()
+    if (webhookUrl) {
+      webhookUrl.search = ''
+      const messageIds = [
+        expedition.discord_message_id,
+        expedition.full_party_message_id,
+      ].filter((id) => /^\d{15,25}$/.test(String(id || '')))
 
-    // 1. Usuwanie głównego ogłoszenia
-    if (messageId) {
-      await fetch(`${cleanBaseUrl}/messages/${messageId}`, { method: 'DELETE' })
+      await Promise.allSettled(messageIds.map((messageId) => {
+        const deleteUrl = new URL(`${webhookUrl.toString().replace(/\/$/, '')}/messages/${messageId}`)
+        return fetch(deleteUrl, {
+          method: 'DELETE',
+          redirect: 'error',
+          signal: AbortSignal.timeout(8_000),
+        })
+      }))
     }
 
-    // 2. Usuwanie powiadomienia o pełnej drużynie
-    if (fullPartyMessageId) {
-      await fetch(`${cleanBaseUrl}/messages/${fullPartyMessageId}`, { method: 'DELETE' })
-    }
+    const { error } = await supabase
+      .from('expeditions')
+      .delete()
+      .eq('id', expedition.id)
+
+    if (error) throw new Error('Nie udało się usunąć wyprawy.')
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Błąd usuwania z Discorda:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Błąd usuwania wyprawy:', error)
+    return jsonError('Wystąpił błąd podczas usuwania wyprawy.', 500)
   }
 }

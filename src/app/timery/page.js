@@ -155,7 +155,7 @@ export default function TimeryPage() {
         <div className="bg-[#0c0407] border border-[#281017] p-6 sm:p-8 rounded-3xl shadow-2xl space-y-5">
           <div className="flex items-center justify-between border-b border-[#200d13] pb-4">
             <h2 className="text-base font-black text-[#f3ba2f] uppercase tracking-wider font-serif flex items-center gap-2">
-              <Compass className="w-5 h-5" /> Harmonogram Prime Time'ów (Albion EU)
+              <Compass className="w-5 h-5" /> Harmonogram Prime Time&apos;ów (Albion EU)
             </h2>
             <span className="text-xs font-mono text-gray-400">Czas w formacie UTC</span>
           </div>

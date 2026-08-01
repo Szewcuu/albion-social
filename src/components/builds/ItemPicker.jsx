@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { Search, X, Plus } from 'lucide-react'
 import { itemImageUrl } from '@/lib/buildSlots'
 
@@ -35,12 +35,17 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
     }
   }, [category])
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchItems(search)
-      setCustomId(value || '')
-    }
-  }, [isOpen, search, fetchItems, value])
+  const openPicker = () => {
+    setIsOpen(true)
+    setCustomId(value || '')
+    fetchItems('')
+  }
+
+  const handleSearchChange = (event) => {
+    const query = event.target.value
+    setSearch(query)
+    fetchItems(query)
+  }
 
   const handleSelect = (itemId) => {
     onChange(itemId)
@@ -63,7 +68,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={openPicker}
         className={`group w-full bg-[#050204] border border-[#260f16] hover:border-[#f3ba2f]/50 rounded-xl transition text-left ${
           compact ? 'p-1.5' : 'p-2.5'
         }`}
@@ -97,7 +102,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
               <h3 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
                 <Search className="w-4 h-4" /> {label}
               </h3>
-              <button type="button" onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white p-1.5 rounded-xl bg-[#1a070d]">
+              <button type="button" onClick={() => setIsOpen(false)} aria-label="Zamknij wybór przedmiotu" className="text-gray-400 hover:text-white p-1.5 rounded-xl bg-[#1a070d]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -109,7 +114,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
                   type="text"
                   placeholder="Szukaj przedmiotu..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full bg-[#0c0407] border border-[#2b0e16] rounded-xl pl-10 pr-4 py-2.5 text-xs font-mono text-gray-100 outline-none focus:border-[#f3ba2f]"
                   autoFocus
                 />
