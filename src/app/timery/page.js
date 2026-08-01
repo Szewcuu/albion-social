@@ -1,204 +1,301 @@
 'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, Clock, Shield, Swords, Zap, Castle, Compass, AlertCircle } from 'lucide-react'
 
-// Konfiguracja głównych stref czasowych Prime Time w Albion EU (UTC)
-const PRIME_TIMES = [
-  { time: '12:00', label: 'Prime Time - Azja / Wczesna Europa' },
-  { time: '15:00', label: 'Prime Time - Wschodnia Europa' },
-  { time: '18:00', label: 'Główny Prime Time EU (Zamki & Terki)' },
-  { time: '21:00', label: 'Późny Prime Time EU / ZvZ' },
-  { time: '00:00', label: 'Prime Time Ameryka' }
-]
+import { useEffect, useMemo, useState } from 'react'
+import {
+  AlertTriangle,
+  BellRing,
+  CalendarClock,
+  Castle,
+  Check,
+  ChevronDown,
+  Clock3,
+  Compass,
+  Globe2,
+  Plus,
+  Shield,
+  Sparkles,
+  TimerReset,
+  Trash2,
+  Zap,
+} from 'lucide-react'
+import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+
+const CUSTOM_TIMERS_KEY = 'aopp-custom-timers-v2'
+
+const SERVER_CONFIG = {
+  Europa: {
+    code: 'EU',
+    timeZone: 'Europe/Warsaw',
+    color: 'sky',
+    windows: [
+      { hour: 12, label: 'Wczesne okno strategiczne', type: 'Terytoria' },
+      { hour: 15, label: 'Popołudniowe okno strategiczne', type: 'Gildie' },
+      { hour: 18, label: 'Główne okno europejskie', type: 'ZvZ' },
+      { hour: 21, label: 'Późne okno europejskie', type: 'Zamki' },
+    ],
+  },
+  Ameryka: {
+    code: 'AM',
+    timeZone: 'America/New_York',
+    color: 'violet',
+    windows: [
+      { hour: 0, label: 'Wczesne okno amerykańskie', type: 'Terytoria' },
+      { hour: 3, label: 'Główne okno amerykańskie', type: 'ZvZ' },
+      { hour: 5, label: 'Późne okno amerykańskie', type: 'Gildie' },
+      { hour: 21, label: 'Okno międzyregionalne', type: 'Zamki' },
+    ],
+  },
+  Azja: {
+    code: 'AS',
+    timeZone: 'Asia/Singapore',
+    color: 'emerald',
+    windows: [
+      { hour: 9, label: 'Wczesne okno azjatyckie', type: 'Terytoria' },
+      { hour: 12, label: 'Główne okno azjatyckie', type: 'ZvZ' },
+      { hour: 15, label: 'Późne okno azjatyckie', type: 'Gildie' },
+      { hour: 18, label: 'Okno międzyregionalne', type: 'Zamki' },
+    ],
+  },
+}
+
+function pad(value) {
+  return String(value).padStart(2, '0')
+}
+
+function getCountdown(target, now) {
+  const diff = Math.max(0, target.getTime() - now.getTime())
+  const totalSeconds = Math.floor(diff / 1000)
+  const days = Math.floor(totalSeconds / 86_400)
+  const hours = Math.floor((totalSeconds % 86_400) / 3_600)
+  const minutes = Math.floor((totalSeconds % 3_600) / 60)
+  const seconds = totalSeconds % 60
+  return {
+    totalSeconds,
+    formatted: days > 0 ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}` : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`,
+  }
+}
+
+function nextUtcHour(hour, now) {
+  const target = new Date(now)
+  target.setUTCHours(hour, 0, 0, 0)
+  if (target <= now) target.setUTCDate(target.getUTCDate() + 1)
+  return target
+}
+
+function nextCycle(hours, now) {
+  const target = new Date(now)
+  target.setUTCMinutes(0, 0, 0)
+  const currentHour = target.getUTCHours()
+  const nextHour = Math.floor(currentHour / hours) * hours + hours
+  target.setUTCHours(nextHour)
+  return target
+}
+
+function formatClock(date, timeZone = 'UTC') {
+  return date.toLocaleTimeString('pl-PL', { timeZone, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+function formatTimerDate(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Nieprawidłowa data'
+  return date.toLocaleString('pl-PL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
 
 export default function TimeryPage() {
-  const [utcTime, setUtcTime] = useState(new Date())
+  const [now, setNow] = useState(() => new Date())
   const [selectedServer, setSelectedServer] = useState('Europa')
+  const [customTimers, setCustomTimers] = useState([])
+  const [timerName, setTimerName] = useState('')
+  const [timerDate, setTimerDate] = useState('')
+  const [notice, setNotice] = useState('')
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setUtcTime(new Date())
-    }, 1000)
-    return () => clearInterval(timer)
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    const hydrationTimer = setTimeout(() => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(CUSTOM_TIMERS_KEY) || '[]')
+        if (Array.isArray(stored)) setCustomTimers(stored.filter((entry) => entry?.id && entry?.name && entry?.date).slice(0, 20))
+      } catch {
+        localStorage.removeItem(CUSTOM_TIMERS_KEY)
+      }
+    }, 0)
+
+    return () => {
+      clearInterval(timer)
+      clearTimeout(hydrationTimer)
+    }
   }, [])
 
-  // Obliczanie czasu do najbliższego wskazanego Prime Time (w UTC)
-  const getTimeRemaining = (targetHour) => {
-    const now = new Date(utcTime)
-    const target = new Date(now)
-    target.setUTCHours(targetHour, 0, 0, 0)
+  const server = SERVER_CONFIG[selectedServer]
+  const strategicWindows = useMemo(() => server.windows
+    .map((window) => {
+      const target = nextUtcHour(window.hour, now)
+      return { ...window, target, countdown: getCountdown(target, now) }
+    })
+    .sort((a, b) => a.target - b.target), [now, server.windows])
 
-    if (now > target) {
-      target.setUTCDate(target.getUTCDate() + 1)
-    }
+  const activeCustomTimers = useMemo(() => customTimers
+    .map((timer) => ({ ...timer, target: new Date(timer.date), countdown: getCountdown(new Date(timer.date), now) }))
+    .filter((timer) => !Number.isNaN(timer.target.getTime()))
+    .sort((a, b) => a.target - b.target), [customTimers, now])
 
-    const diff = target - now
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+  const nextWindow = strategicWindows[0]
+  const hourlyTarget = nextCycle(1, now)
+  const sixHourTarget = nextCycle(6, now)
 
-    return {
-      formatted: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`,
-      totalSeconds: diff / 1000
-    }
+  function saveCustomTimers(next) {
+    setCustomTimers(next)
+    localStorage.setItem(CUSTOM_TIMERS_KEY, JSON.stringify(next))
   }
 
-  // Obliczanie timera dla Vortex / Core (co 1 godzinę na przełomie)
-  const getNextVortexTime = () => {
-    const now = new Date(utcTime)
-    const next = new Date(now)
-    next.setUTCHours(now.getUTCHours() + 1, 0, 0, 0)
+  function addTimer(event) {
+    event.preventDefault()
+    const target = new Date(timerDate)
+    if (!timerName.trim() || Number.isNaN(target.getTime()) || target <= now) {
+      setNotice('Podaj nazwę i przyszłą datę wydarzenia.')
+      return
+    }
+    const next = [...customTimers, { id: crypto.randomUUID(), name: timerName.trim().slice(0, 80), date: target.toISOString() }].slice(-20)
+    saveCustomTimers(next)
+    setTimerName('')
+    setTimerDate('')
+    setNotice('Timer został zapisany na tym urządzeniu.')
+  }
 
-    const diff = next - now
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000)
-
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  function removeTimer(id) {
+    saveCustomTimers(customTimers.filter((timer) => timer.id !== id))
   }
 
   return (
-    <main className="min-h-screen bg-[#050305] text-gray-300 p-4 sm:p-6 lg:p-8 relative font-sans select-none">
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
+    <main className="aopp-shell min-h-screen text-[#d5d0c6]">
+      <div className="aopp-world-bg" />
+      <div className="aopp-grain" />
 
-      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-        
-        {/* POWRÓT */}
-        <div>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-black tracking-widest uppercase transition group">
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span>Powrót do Centrum Caerleon</span>
-          </Link>
-        </div>
+      <div className="relative z-10 mx-auto w-full max-w-[1380px] space-y-7 p-4 sm:p-6 lg:p-8">
+        <PortalSubpageHeader
+          eyebrow="Wieża zegarowa • Planer strategiczny"
+          title={<>Każda sekunda ma znaczenie,<br /><span className="text-violet-300">gdy armia czeka na rozkaz.</span></>}
+          description="Śledź cykle, orientacyjne okna strategiczne i własne wydarzenia w jednym centrum dowodzenia."
+          icon={CalendarClock}
+          tone="violet"
+          stats={[
+            { label: 'Serwer', value: `${selectedServer} ${server.code}` },
+            { label: 'Najbliższe okno', value: `${pad(nextWindow.hour)}:00 UTC` },
+            { label: 'Własne timery', value: activeCustomTimers.length },
+          ]}
+          imagePosition="72% center"
+        />
 
-        {/* NAGŁÓWEK Z ZEGAREM SERVERA */}
-        <header className="bg-[#0c0407] border border-[#2c1219] p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-[#f3ba2f] shrink-0 shadow-[0_0_15px_rgba(243,186,47,0.2)]">
-              <Clock className="w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider font-serif">
-                Timery Czarnych Stref &amp; ZvZ
-              </h1>
-              <p className="text-xs text-gray-400 font-mono mt-1">
-                Licznik wydarzeń strategicznych, zamków, terytoriów oraz rdzeni energii (Power Cores)
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-[#050204] border border-[#220e14] px-6 py-4 rounded-2xl text-center space-y-1 shadow-inner">
-            <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest block">Aktualny Czas UTC</span>
-            <div className="text-2xl sm:text-3xl font-black text-[#f3ba2f] font-mono tracking-wider">
-              {utcTime.toLocaleTimeString('pl-PL', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            </div>
-          </div>
-        </header>
-
-        {/* SIATKA TIMERÓW EVENTOWYCH */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          {/* CARD 1: POWER CORES & VORTEX */}
-          <div className="bg-[#0c0407] border border-[#281017] p-5 rounded-3xl shadow-xl space-y-3 relative overflow-hidden">
-            <div className="flex justify-between items-center border-b border-[#200d13] pb-3">
-              <span className="text-xs font-mono font-bold text-amber-400 uppercase flex items-center gap-2">
-                <Zap className="w-4 h-4" /> Power Cores / Vortex
-              </span>
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-            </div>
-            <p className="text-xs text-gray-400 leading-snug">Sprawny resp rdzeni energii i orbi na Rubieżach (Outlands).</p>
-            <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl text-center">
-              <span className="text-[10px] font-mono text-gray-500 uppercase block">Następna Faza Respów za</span>
-              <div className="text-2xl font-black text-amber-400 font-mono mt-1">
-                {getNextVortexTime()}
-              </div>
-            </div>
-          </div>
-
-          {/* CARD 2: ZAMKI I POSTERUNKI */}
-          <div className="bg-[#0c0407] border border-[#281017] p-5 rounded-3xl shadow-xl space-y-3">
-            <div className="flex justify-between items-center border-b border-[#200d13] pb-3">
-              <span className="text-xs font-mono font-bold text-purple-400 uppercase flex items-center gap-2">
-                <Castle className="w-4 h-4" /> Skrzynie Zamkowe
-              </span>
-              <span className="text-[10px] bg-purple-950 text-purple-300 font-mono px-2 py-0.5 rounded border border-purple-800/40">Co 6h</span>
-            </div>
-            <p className="text-xs text-gray-400 leading-snug">Otwarcie skrzyń w Zamkach i Posterunkach (Castle Outposts).</p>
-            <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl text-center">
-              <span className="text-[10px] font-mono text-gray-500 uppercase block">Główny Resp (18:00 UTC) za</span>
-              <div className="text-2xl font-black text-purple-300 font-mono mt-1">
-                {getTimeRemaining(18).formatted}
-              </div>
-            </div>
-          </div>
-
-          {/* CARD 3: RESET TERYTORIÓW */}
-          <div className="bg-[#0c0407] border border-[#281017] p-5 rounded-3xl shadow-xl space-y-3">
-            <div className="flex justify-between items-center border-b border-[#200d13] pb-3">
-              <span className="text-xs font-mono font-bold text-rose-400 uppercase flex items-center gap-2">
-                <Shield className="w-4 h-4" /> Walce Terytorialne (ZvZ)
-              </span>
-              <span className="text-[10px] bg-rose-950 text-rose-300 font-mono px-2 py-0.5 rounded border border-rose-800/40">Prime Time</span>
-            </div>
-            <p className="text-xs text-gray-400 leading-snug">Okienko ataku terytorialnego i walk gilidyjnych na EU.</p>
-            <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl text-center">
-              <span className="text-[10px] font-mono text-gray-500 uppercase block">Start Okienka (18:00 UTC) za</span>
-              <div className="text-2xl font-black text-rose-400 font-mono mt-1">
-                {getTimeRemaining(18).formatted}
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* HARMONOGRAM STREF PRIME TIME */}
-        <div className="bg-[#0c0407] border border-[#281017] p-6 sm:p-8 rounded-3xl shadow-2xl space-y-5">
-          <div className="flex items-center justify-between border-b border-[#200d13] pb-4">
-            <h2 className="text-base font-black text-[#f3ba2f] uppercase tracking-wider font-serif flex items-center gap-2">
-              <Compass className="w-5 h-5" /> Harmonogram Prime Time&apos;ów (Albion EU)
-            </h2>
-            <span className="text-xs font-mono text-gray-400">Czas w formacie UTC</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 font-mono text-xs">
-            {PRIME_TIMES.map((pt, idx) => {
-              const hour = parseInt(pt.time.split(':')[0])
-              const remaining = getTimeRemaining(hour)
-              const isClose = remaining.totalSeconds <= 3600 // poniżej 1h
-
-              return (
-                <div 
-                  key={idx} 
-                  className={`p-4 rounded-2xl border transition flex flex-col justify-between space-y-3 ${
-                    isClose 
-                      ? 'bg-[#1a0c0a] border-rose-900/60 shadow-[0_0_15px_rgba(225,29,72,0.15)]' 
-                      : 'bg-[#050204] border border-[#220e14]'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <span className="text-lg font-black text-white">{pt.time} UTC</span>
-                    {isClose && (
-                      <span className="bg-rose-950 text-rose-300 text-[9px] font-bold px-2 py-0.5 rounded border border-rose-800/50 uppercase flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> Blisko!
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-gray-400 leading-tight">{pt.label}</p>
-
-                  <div className="pt-2 border-t border-[#1c0b10] flex justify-between items-center text-[10px]">
-                    <span className="text-gray-500">Odliczanie:</span>
-                    <span className={`font-bold font-mono ${isClose ? 'text-rose-400' : 'text-[#f3ba2f]'}`}>
-                      {remaining.formatted}
-                    </span>
-                  </div>
+        <section className="aopp-panel overflow-hidden rounded-[28px]">
+          <div className="grid lg:grid-cols-[1.15fr_.85fr]">
+            <div className="border-b border-white/8 p-5 sm:p-7 lg:border-b-0 lg:border-r">
+              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[.22em] text-violet-300">Synchronizacja czasu</p>
+                  <h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Zegary dowódcy</h2>
+                  <p className="mt-2 text-xs text-[#8f8a81]">Czas aktualizowany co sekundę na podstawie zegara urządzenia.</p>
                 </div>
+                <label className="relative min-w-44 text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Region
+                  <select value={selectedServer} onChange={(event) => setSelectedServer(event.target.value)} className="mt-1.5 w-full appearance-none rounded-xl border px-3 py-2.5 text-xs normal-case tracking-normal text-[#eee7d9] outline-none">
+                    {Object.keys(SERVER_CONFIG).map((name) => <option key={name}>{name}</option>)}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute bottom-3 right-3 h-3.5 w-3.5" />
+                </label>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <ClockMetric label="UTC" value={formatClock(now)} icon={Globe2} />
+                <ClockMetric label="Twój czas" value={formatClock(now, Intl.DateTimeFormat().resolvedOptions().timeZone)} icon={Clock3} tone="sky" />
+                <ClockMetric label={`Strefa ${server.code}`} value={formatClock(now, server.timeZone)} icon={Compass} tone="violet" />
+              </div>
+            </div>
+
+            <div className="relative flex flex-col justify-center bg-[radial-gradient(circle_at_100%_0%,rgba(167,139,250,.12),transparent_60%)] p-6 sm:p-8">
+              <p className="text-[9px] font-black uppercase tracking-[.22em] text-violet-300">Najbliższy punkt zbiórki</p>
+              <div className="mt-3 flex items-end justify-between gap-4">
+                <div><p className="font-display text-xl font-black text-[#fff8e8]">{nextWindow.label}</p><p className="mt-1 text-xs text-[#8f8a81]">{pad(nextWindow.hour)}:00 UTC · {nextWindow.type}</p></div>
+                <BellRing className="h-6 w-6 shrink-0 text-violet-300" />
+              </div>
+              <p className="mt-5 font-mono text-3xl font-black tracking-[.06em] text-[#e5bb55] sm:text-4xl" suppressHydrationWarning>{nextWindow.countdown.formatted}</p>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-[#e5bb55]" style={{ width: `${Math.max(2, 100 - (nextWindow.countdown.totalSeconds / 86_400) * 100)}%` }} /></div>
+            </div>
+          </div>
+        </section>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <CycleCard icon={Zap} eyebrow="Cykl godzinowy" title="Następna pełna godzina" target={hourlyTarget} countdown={getCountdown(hourlyTarget, now)} tone="amber" description="Uniwersalny punkt odniesienia dla cyklicznych aktywności i zbiórek." />
+          <CycleCard icon={Castle} eyebrow="Cykl sześciogodzinny" title="Następny blok 6h" target={sixHourTarget} countdown={getCountdown(sixHourTarget, now)} tone="violet" description="Pomocnicze odliczanie dla aktywności rozliczanych w większych blokach." />
+          <CycleCard icon={Shield} eyebrow={`Strategia ${server.code}`} title={nextWindow.type} target={nextWindow.target} countdown={nextWindow.countdown} tone="rose" description="Najbliższe orientacyjne okno strategiczne wybranego regionu." />
+        </div>
+
+        <section className="aopp-panel rounded-[28px] p-5 sm:p-7">
+          <div className="flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
+            <div><p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Mapa operacyjna</p><h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Okna strategiczne · {selectedServer}</h2><p className="mt-2 text-xs text-[#8f8a81]">Najbliższe wystąpienie każdego orientacyjnego bloku czasu.</p></div>
+            <span className="w-fit rounded-lg border border-sky-400/20 bg-sky-400/8 px-3 py-2 text-[9px] font-black uppercase tracking-[.14em] text-sky-300">Godziny UTC</span>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {strategicWindows.map((window, index) => {
+              const urgent = window.countdown.totalSeconds <= 3_600
+              return (
+                <article key={`${selectedServer}-${window.hour}`} className={`relative overflow-hidden rounded-2xl border p-4 ${urgent ? 'border-rose-400/30 bg-rose-400/8' : index === 0 ? 'border-[#e5bb55]/30 bg-[#e5bb55]/[.055]' : 'border-white/8 bg-black/15'}`}>
+                  <div className="flex items-start justify-between gap-3"><div><p className="font-display text-2xl font-black text-[#fff8e8]">{pad(window.hour)}:00</p><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">UTC</p></div>{urgent ? <span className="rounded-md border border-rose-400/25 bg-rose-400/10 px-2 py-1 text-[8px] font-black uppercase text-rose-300">Blisko</span> : index === 0 ? <Sparkles className="h-4 w-4 text-[#e5bb55]" /> : null}</div>
+                  <h3 className="mt-5 text-xs font-bold text-[#d8d2c8]">{window.label}</h3>
+                  <p className="mt-1 text-[9px] text-[#77736c]">{window.type}</p>
+                  <div className="mt-4 border-t border-white/8 pt-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">Do rozpoczęcia</p><p className={`mt-1 font-mono text-sm font-bold ${urgent ? 'text-rose-300' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{window.countdown.formatted}</p></div>
+                </article>
               )
             })}
           </div>
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
+          <section className="aopp-panel rounded-[28px] p-5 sm:p-6">
+            <div className="border-b border-white/8 pb-4"><p className="text-[9px] font-black uppercase tracking-[.2em] text-[#e5bb55]">Własny alarm</p><h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Dodaj wydarzenie</h2><p className="mt-2 text-xs leading-5 text-[#8f8a81]">Timer zapisze się lokalnie na tym urządzeniu.</p></div>
+            <form onSubmit={addTimer} className="mt-5 space-y-4">
+              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Nazwa wydarzenia<input type="text" maxLength={80} value={timerName} onChange={(event) => setTimerName(event.target.value)} placeholder="np. Zbiórka pod hideoutem" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
+              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Data i godzina<input type="datetime-local" value={timerDate} onChange={(event) => setTimerDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
+              <button type="submit" className="aopp-primary-button flex w-full items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em]"><Plus className="h-4 w-4" /> Dodaj timer</button>
+            </form>
+            {notice && <p role="status" aria-live="polite" className="mt-3 flex items-start gap-2 rounded-xl border border-white/8 bg-black/20 p-3 text-[10px] leading-5 text-[#a9a49b]"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300" />{notice}</p>}
+          </section>
+
+          <section className="aopp-panel rounded-[28px] p-5 sm:p-6">
+            <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Osobisty harmonogram</p><h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Twoje wydarzenia</h2></div><span className="rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-[9px] font-bold text-[#8f8a81]">{activeCustomTimers.length}/20</span></div>
+            <div className="mt-4 space-y-2">
+              {activeCustomTimers.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 px-5 py-12 text-center"><TimerReset className="mx-auto h-6 w-6 text-[#77736c]" /><p className="mt-3 text-xs font-bold text-[#a9a49b]">Brak własnych timerów.</p><p className="mt-1 text-[10px] text-[#6f6a63]">Dodaj datę zbiórki, CTA lub transportu.</p></div>
+              ) : activeCustomTimers.map((timer) => {
+                const expired = timer.target <= now
+                return (
+                  <article key={timer.id} className={`flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between ${expired ? 'border-white/6 bg-black/10 opacity-55' : 'border-white/8 bg-black/20'}`}>
+                    <div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{timer.name}</p><p className="mt-1 text-[9px] text-[#77736c]">{formatTimerDate(timer.date)}</p></div>
+                    <div className="flex items-center justify-between gap-3 sm:justify-end"><span className={`font-mono text-xs font-bold ${expired ? 'text-[#77736c]' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{expired ? 'Zakończony' : timer.countdown.formatted}</span><button type="button" onClick={() => removeTimer(timer.id)} aria-label={`Usuń timer ${timer.name}`} className="rounded-lg border border-rose-400/15 bg-rose-400/5 p-2 text-rose-300 hover:bg-rose-400/10"><Trash2 className="h-3.5 w-3.5" /></button></div>
+                  </article>
+                )
+              })}
+            </div>
+          </section>
         </div>
 
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/7 p-4 text-[10px] leading-5 text-amber-100/75"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" /><p>Okna strategiczne są planerem orientacyjnym, nie oficjalnym harmonogramem gry. Rzeczywiste godziny zależą od regionu, strefy, sezonu i aktualnych zasad Albion Online — przed CTA potwierdź je na mapie oraz w interfejsie gry.</p></div>
       </div>
     </main>
+  )
+}
+
+function ClockMetric({ label, value, icon: Icon, tone = 'gold' }) {
+  const color = tone === 'sky' ? 'text-sky-300' : tone === 'violet' ? 'text-violet-300' : 'text-[#e5bb55]'
+  return <div className="rounded-2xl border border-white/8 bg-black/20 p-4"><div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[.16em] text-[#77736c]"><Icon className={`h-3.5 w-3.5 ${color}`} />{label}</div><p className={`mt-2 font-mono text-lg font-black ${color}`} suppressHydrationWarning>{value}</p></div>
+}
+
+function CycleCard({ icon: Icon, eyebrow, title, target, countdown, tone, description }) {
+  const toneClasses = tone === 'violet' ? 'text-violet-300 border-violet-400/20 bg-violet-400/7' : tone === 'rose' ? 'text-rose-300 border-rose-400/20 bg-rose-400/7' : 'text-amber-300 border-amber-400/20 bg-amber-400/7'
+  return (
+    <article className="aopp-panel rounded-[24px] p-5">
+      <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.18em] text-[#77736c]">{eyebrow}</p><h2 className="font-display mt-1 text-lg font-black text-[#fff8e8]">{title}</h2></div><span className={`rounded-xl border p-2 ${toneClasses}`}><Icon className="h-4 w-4" /></span></div>
+      <p className="mt-3 text-[10px] leading-5 text-[#8f8a81]">{description}</p>
+      <div className="mt-4 rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">{target.toLocaleString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC</p><p className="mt-1 font-mono text-xl font-black text-[#e5bb55]" suppressHydrationWarning>{countdown.formatted}</p></div>
+    </article>
   )
 }

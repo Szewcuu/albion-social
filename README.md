@@ -73,10 +73,10 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### P3 — kolejne ekrany UI/UX
 
-- [ ] przebudować Profil gracza
-- [ ] przebudować Timery
-- [ ] przebudować Loot Split i poprawić przepływ rozliczenia grupy
-- [ ] dopracować strony Regulamin i Prywatność
+- [x] przebudować Profil gracza
+- [x] przebudować Timery
+- [x] przebudować Loot Split i poprawić przepływ rozliczenia grupy
+- [x] dopracować strony Regulamin i Prywatność
 - [ ] wykonać pełny przegląd mobile 360–430 px
 - [ ] ujednolicić skeletony, komunikaty błędów, puste stany i potwierdzenia akcji
 - [ ] przeprowadzić audyt dostępności klawiatury, kontrastu i etykiet formularzy

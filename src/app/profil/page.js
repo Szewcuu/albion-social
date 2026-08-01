@@ -1,64 +1,101 @@
 'use client'
-import { supabase } from '@/lib/supabase'
-import { useEffect, useState, useCallback } from 'react'
+
+import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, User, Shield, Swords, Save, Check, ShoppingBag, Server, Globe, Award } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Activity,
+  AlertTriangle,
+  Award,
+  Check,
+  ChevronRight,
+  CircleUserRound,
+  ExternalLink,
+  Gamepad2,
+  Globe2,
+  LoaderCircle,
+  Save,
+  Shield,
+  ShoppingBag,
+  Swords,
+  UserRoundCheck,
+} from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+
+const INITIAL_FORM = {
+  ingame_nick: '',
+  main_server: 'Europa',
+  guild_name: '',
+  main_role: 'DPS',
+  avg_ip: 1400,
+}
+
+const ROLE_STYLES = {
+  Tank: 'border-sky-400/25 bg-sky-400/8 text-sky-300',
+  Healer: 'border-emerald-400/25 bg-emerald-400/8 text-emerald-300',
+  DPS: 'border-rose-400/25 bg-rose-400/8 text-rose-300',
+  Support: 'border-violet-400/25 bg-violet-400/8 text-violet-300',
+}
+
+function formatDate(value) {
+  if (!value) return 'Termin nieustalony'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function ProfileSkeleton() {
+  return (
+    <main className="aopp-shell min-h-screen text-[#d5d0c6]">
+      <div className="aopp-world-bg" />
+      <div className="aopp-grain" />
+      <div className="relative z-10 mx-auto w-full max-w-[1380px] space-y-6 p-4 sm:p-6 lg:p-8">
+        <div className="h-5 w-44 animate-pulse rounded bg-white/8" />
+        <div className="h-[310px] animate-pulse rounded-[28px] border border-white/8 bg-white/[.035]" />
+        <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
+          <div className="h-96 animate-pulse rounded-[28px] border border-white/8 bg-white/[.035]" />
+          <div className="h-96 animate-pulse rounded-[28px] border border-white/8 bg-white/[.035]" />
+        </div>
+      </div>
+    </main>
+  )
+}
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [savedSuccess, setSavedSuccess] = useState(false)
-
-  // Formularz danych postaci
-  const [formData, setFormData] = useState({
-    ingame_nick: '',
-    main_server: 'Europa',
-    guild_name: '',
-    main_role: 'DPS',
-    avg_ip: 1400
-  })
-
-  // Moje aktywności
+  const [formData, setFormData] = useState(INITIAL_FORM)
   const [myExpeditions, setMyExpeditions] = useState([])
   const [myOffers, setMyOffers] = useState([])
+  const [notice, setNotice] = useState(null)
 
   const fetchProfileData = useCallback(async (userId) => {
-    // 1. Pobranie danych profilu
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    setLoading(true)
+    const [profileResult, expeditionsResult, marketResult] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+      supabase.from('expeditions').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('market_items').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+    ])
 
-    if (profile) {
+    if (profileResult.data) {
       setFormData({
-        ingame_nick: profile.ingame_nick || '',
-        main_server: profile.main_server || 'Europa',
-        guild_name: profile.guild_name || '',
-        main_role: profile.main_role || 'DPS',
-        avg_ip: profile.avg_ip || 1400
+        ingame_nick: profileResult.data.ingame_nick || '',
+        main_server: profileResult.data.main_server || 'Europa',
+        guild_name: profileResult.data.guild_name || '',
+        main_role: profileResult.data.main_role || 'DPS',
+        avg_ip: profileResult.data.avg_ip || 1400,
       })
     }
 
-    // 2. Pobranie moich wypraw
-    const { data: exp } = await supabase
-      .from('expeditions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
+    setMyExpeditions(expeditionsResult.data || [])
+    setMyOffers(marketResult.data || [])
 
-    if (exp) setMyExpeditions(exp)
-
-    // 3. Pobranie moich ofert z rynku
-    const { data: mkt } = await supabase
-      .from('market_items')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-
-    if (mkt) setMyOffers(mkt)
-
+    const firstError = profileResult.error || expeditionsResult.error || marketResult.error
+    if (firstError) {
+      setNotice({ type: 'error', text: 'Nie udało się pobrać części danych profilu. Spróbuj odświeżyć stronę.' })
+    }
     setLoading(false)
   }, [])
 
@@ -66,247 +103,222 @@ export default function ProfilePage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
-      if (currentUser) {
-        fetchProfileData(currentUser.id)
-      } else {
-        setLoading(false)
-      }
+      if (currentUser) fetchProfileData(currentUser.id)
+      else setLoading(false)
     })
   }, [fetchProfileData])
 
-  const handleSaveProfile = async (e) => {
-    e.preventDefault()
-    if (!user) return
-    setSaving(true)
-    setSavedSuccess(false)
+  const completion = useMemo(() => {
+    const fields = [formData.ingame_nick, formData.main_server, formData.guild_name, formData.main_role, Number(formData.avg_ip) > 0]
+    return Math.round((fields.filter(Boolean).length / fields.length) * 100)
+  }, [formData])
 
+  async function handleSaveProfile(event) {
+    event.preventDefault()
+    if (!user || saving) return
+
+    const nick = formData.ingame_nick.trim()
+    const guild = formData.guild_name.trim()
+    const avgIp = Number(formData.avg_ip)
+
+    if (nick.length > 80 || guild.length > 100 || !Number.isInteger(avgIp) || avgIp < 0 || avgIp > 3000) {
+      setNotice({ type: 'error', text: 'Sprawdź długość nazw i podaj Item Power od 0 do 3000.' })
+      return
+    }
+
+    setSaving(true)
+    setNotice(null)
     const { error } = await supabase
       .from('profiles')
       .update({
-        ingame_nick: formData.ingame_nick.trim(),
+        ingame_nick: nick,
         main_server: formData.main_server,
-        guild_name: formData.guild_name.trim(),
+        guild_name: guild,
         main_role: formData.main_role,
-        avg_ip: parseInt(formData.avg_ip) || 0
+        avg_ip: avgIp,
       })
       .eq('id', user.id)
 
     setSaving(false)
-    if (!error) {
-      setSavedSuccess(true)
-      setTimeout(() => setSavedSuccess(false), 3000)
-    }
+    setNotice(error
+      ? { type: 'error', text: 'Nie udało się zapisać karty postaci. Spróbuj ponownie.' }
+      : { type: 'success', text: 'Karta postaci została zapisana.' })
   }
 
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#050305] text-mono">
-        <div className="w-10 h-10 border-4 border-[#f3ba2f] border-t-transparent rounded-full animate-spin"></div>
-      </main>
-    )
-  }
+  if (loading) return <ProfileSkeleton />
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#050305] flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <p className="text-gray-400 font-mono">Musisz być zalogowany, aby zobaczyć swój profil.</p>
-          <Link href="/" className="inline-block bg-[#f3ba2f] text-black font-extrabold px-6 py-3 rounded-xl uppercase text-xs">
-            Wróć na Stronę Główną
-          </Link>
+      <main className="aopp-shell min-h-screen text-[#d5d0c6]">
+        <div className="aopp-world-bg" />
+        <div className="aopp-grain" />
+        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-3xl items-center p-4 sm:p-6">
+          <section className="aopp-panel w-full rounded-[28px] p-7 text-center sm:p-10">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#d8ad4a]/25 bg-[#d8ad4a]/10 text-[#e5bb55]"><CircleUserRound className="h-8 w-8" /></div>
+            <p className="mt-6 text-[9px] font-black uppercase tracking-[.22em] text-[#d9b45a]">Karta bohatera</p>
+            <h1 className="font-display mt-2 text-3xl font-black text-[#fff8e8]">Zaloguj się, aby otworzyć profil.</h1>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[#8f8a81]">Profil łączy Twoją tożsamość Discord z postacią Albionu, wyprawami i ofertami handlowymi.</p>
+            <Link href="/" className="aopp-primary-button mt-7 inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-[.12em]">Przejdź do logowania <ChevronRight className="h-4 w-4" /></Link>
+          </section>
         </div>
       </main>
     )
   }
 
+  const displayName = (user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz').replace(/#0$/, '')
+  const avatarUrl = user.user_metadata?.avatar_url
+
   return (
-    <main className="min-h-screen bg-[#050305] text-gray-300 p-4 sm:p-6 lg:p-8 relative">
-      <div className="max-w-5xl mx-auto space-y-8">
-        
-        {/* POWRÓT */}
-        <div className="flex items-center justify-between border-b border-[#200d13] pb-4">
-          <Link href="/" className="flex items-center gap-2 text-xs font-mono font-bold text-gray-400 hover:text-[#f3ba2f] transition">
-            <ArrowLeft className="w-4 h-4" /> Powrót do Portalu
-          </Link>
-          <span className="text-xs font-mono font-bold text-[#f3ba2f] uppercase tracking-wider">Karta Postaci Gracza</span>
-        </div>
+    <main className="aopp-shell min-h-screen text-[#d5d0c6]">
+      <div className="aopp-world-bg" />
+      <div className="aopp-grain" />
 
-        {/* KARTA PROFILU */}
-        <div className="bg-[#0c0407] border border-[#2c1219] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-8 relative overflow-hidden">
-          
-          <div className="flex flex-col sm:flex-row items-center gap-6 border-b border-[#200d13] pb-6">
-            <div className="relative shrink-0">
-              <img 
-                src={user.user_metadata?.avatar_url || '/logo.png'} 
-                alt="Avatar" 
-                className="w-24 h-20 rounded-2xl object-cover border-2 border-[#f3ba2f] shadow-[0_0_20px_rgba(243,186,47,0.3)]"
-              />
-              <span className="absolute -bottom-2 -right-2 bg-emerald-500 text-black text-[9px] font-mono font-black px-2 py-0.5 rounded-full border border-[#0c0407]">
-                ONLINE
-              </span>
-            </div>
+      <div className="relative z-10 mx-auto w-full max-w-[1380px] space-y-7 p-4 sm:p-6 lg:p-8">
+        <PortalSubpageHeader
+          eyebrow="Karta bohatera • Centrum gracza"
+          title={<>Twoja historia zaczyna się<br /><span className="text-[#e5bb55]">od dobrze opisanej postaci.</span></>}
+          description="Uzupełnij dane postaci, kontroluj własne aktywności i przechodź bezpośrednio do narzędzi przygotowanych dla Twojej roli."
+          icon={CircleUserRound}
+          tone="gold"
+          stats={[
+            { label: 'Kompletność', value: `${completion}%` },
+            { label: 'Wyprawy', value: myExpeditions.length },
+            { label: 'Oferty P2P', value: myOffers.length },
+          ]}
+          imagePosition="68% center"
+        />
 
-            <div className="space-y-1 text-center sm:text-left">
-              <h1 className="text-2xl sm:text-3xl font-black text-white font-serif tracking-wide">
-                {(user.user_metadata?.full_name || 'Gracz').replace(/#0$/, '')}
-              </h1>
-              <p className="text-xs text-gray-400 font-mono">{user.email}</p>
-              <div className="pt-1 flex flex-wrap justify-center sm:justify-start gap-2">
-                <span className="text-[10px] font-mono font-bold bg-[#1c0a10] border border-[#3d1823] text-[#f3ba2f] px-2.5 py-1 rounded-lg">
-                  {formData.guild_name ? `Gildia: ${formData.guild_name}` : 'Bez Gildii'}
-                </span>
-                <span className="text-[10px] font-mono font-bold bg-purple-950/60 border border-purple-800/40 text-purple-300 px-2.5 py-1 rounded-lg">
-                  Serwer: {formData.main_server}
-                </span>
-              </div>
-            </div>
+        {notice && (
+          <div role="status" aria-live="polite" className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-xs ${notice.type === 'success' ? 'border-emerald-400/25 bg-emerald-400/8 text-emerald-200' : 'border-rose-400/25 bg-rose-400/8 text-rose-200'}`}>
+            {notice.type === 'success' ? <Check className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+            {notice.text}
           </div>
+        )}
 
-          {/* FORMULARZ EDYCJI DANYCH W GRZE */}
-          <form onSubmit={handleSaveProfile} className="space-y-6">
-            <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
-              <User className="w-4 h-4" /> Dane Postaci z Albion Online
-            </h2>
+        <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
+          <aside className="space-y-5">
+            <section className="aopp-panel overflow-hidden rounded-[28px]">
+              <div className="relative h-24 border-b border-[#d8ad4a]/15 bg-[radial-gradient(circle_at_50%_0%,rgba(216,173,74,.2),transparent_70%)]" />
+              <div className="px-5 pb-6 text-center sm:px-6">
+                <div className="relative mx-auto -mt-12 h-24 w-24 overflow-hidden rounded-2xl border-2 border-[#e5bb55]/60 bg-[#0b0c0a] shadow-[0_10px_35px_rgba(0,0,0,.5)]">
+                  {avatarUrl ? (
+                    <Image src={avatarUrl} alt={`Awatar ${displayName}`} fill sizes="96px" className="object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[#e5bb55]"><CircleUserRound className="h-10 w-10" /></div>
+                  )}
+                </div>
+                <div className="mt-4 flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-[.15em] text-emerald-300"><UserRoundCheck className="h-3.5 w-3.5" /> Discord połączony</div>
+                <h2 className="font-display mt-2 truncate text-2xl font-black text-[#fff8e8]">{displayName}</h2>
+                <p className="mt-1 truncate text-[10px] text-[#77736c]">{user.email}</p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs font-mono">
-              <div>
-                <label className="block text-gray-400 mb-1.5 uppercase">Nick w grze (IGN)</label>
-                <input 
-                  type="text" 
-                  placeholder="np. Szewczykos"
-                  value={formData.ingame_nick}
-                  onChange={e => setFormData({ ...formData, ingame_nick: e.target.value })}
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 outline-none focus:border-[#f3ba2f]"
-                />
+                <div className="mt-5 grid grid-cols-2 gap-2 text-left">
+                  <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.15em] text-[#77736c]">Postać</p><p className="mt-1 truncate text-xs font-bold text-[#eee7d9]">{formData.ingame_nick || 'Nieprzypisana'}</p></div>
+                  <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.15em] text-[#77736c]">Item Power</p><p className="font-display mt-1 text-lg font-black text-[#e5bb55]">{formData.avg_ip || '—'}</p></div>
+                </div>
+
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35" aria-label={`Kompletność profilu ${completion}%`}><div className="h-full rounded-full bg-gradient-to-r from-[#b9872c] to-[#f0cf77]" style={{ width: `${completion}%` }} /></div>
+                <p className="mt-2 text-[9px] text-[#77736c]">Kompletność karty: {completion}%</p>
+              </div>
+            </section>
+
+            <nav className="aopp-panel rounded-[24px] p-3" aria-label="Skróty profilu">
+              {[
+                ['/killboard', Swords, 'Otwórz Killboard', 'Historia walk i statystyki'],
+                ['/wyprawy', Shield, 'Zarządzaj wyprawami', `${myExpeditions.length} utworzonych`],
+                ['/rynek', ShoppingBag, 'Moje stoisko', `${myOffers.length} ofert P2P`],
+              ].map(([href, Icon, label, detail]) => (
+                <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-white/5">
+                  <span className="rounded-lg border border-white/8 bg-black/20 p-2 text-sky-300"><Icon className="h-4 w-4" /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#d8d2c8]">{label}</span><span className="block text-[9px] text-[#77736c]">{detail}</span></span>
+                  <ChevronRight className="h-4 w-4 text-[#5f5b55] transition group-hover:translate-x-0.5 group-hover:text-[#e5bb55]" />
+                </Link>
+              ))}
+            </nav>
+          </aside>
+
+          <div className="space-y-6">
+            <section className="aopp-panel rounded-[28px] p-5 sm:p-7">
+              <div className="flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
+                <div><p className="text-[9px] font-black uppercase tracking-[.22em] text-[#e5bb55]">Tożsamość w Albionie</p><h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Karta postaci</h2><p className="mt-2 text-xs leading-5 text-[#8f8a81]">Dane pomagają organizatorom wypraw ocenić skład grupy. Nie weryfikujemy ich automatycznie w grze.</p></div>
+                <span className={`w-fit rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.14em] ${ROLE_STYLES[formData.main_role] || ROLE_STYLES.DPS}`}>{formData.main_role}</span>
               </div>
 
-              <div>
-                <label className="block text-gray-400 mb-1.5 uppercase">Serwer</label>
-                <select 
-                  value={formData.main_server}
-                  onChange={e => setFormData({ ...formData, main_server: e.target.value })}
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 outline-none focus:border-[#f3ba2f] cursor-pointer"
-                >
-                  <option value="Europa">Europa (Albion EU)</option>
-                  <option value="Ameryka">Ameryka (Albion NA)</option>
-                  <option value="Azja">Azja (Albion Asia)</option>
-                </select>
-              </div>
+              <form onSubmit={handleSaveProfile} className="mt-6 space-y-6">
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81]">Nick w grze
+                    <input type="text" maxLength={80} value={formData.ingame_nick} onChange={(event) => setFormData({ ...formData, ingame_nick: event.target.value })} placeholder="np. Szewczykos" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" />
+                  </label>
+                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81]">Serwer główny
+                    <select value={formData.main_server} onChange={(event) => setFormData({ ...formData, main_server: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none">
+                      <option value="Europa">Europa</option><option value="Ameryka">Ameryka</option><option value="Azja">Azja</option>
+                    </select>
+                  </label>
+                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81]">Nazwa gildii
+                    <input type="text" maxLength={100} value={formData.guild_name} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" />
+                  </label>
+                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81]">Główna rola
+                    <select value={formData.main_role} onChange={(event) => setFormData({ ...formData, main_role: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none">
+                      <option value="Tank">Tank</option><option value="Healer">Healer</option><option value="DPS">DPS</option><option value="Support">Support / Utility</option>
+                    </select>
+                  </label>
+                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81]">Średnie Item Power
+                    <input type="number" min="0" max="3000" value={formData.avg_ip} onChange={(event) => setFormData({ ...formData, avg_ip: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[#eee7d9] outline-none" />
+                  </label>
+                </div>
 
-              <div>
-                <label className="block text-gray-400 mb-1.5 uppercase">Nazwa Gildii</label>
-                <input 
-                  type="text" 
-                  placeholder="np. Polish Hussars"
-                  value={formData.guild_name}
-                  onChange={e => setFormData({ ...formData, guild_name: e.target.value })}
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 outline-none focus:border-[#f3ba2f]"
-                />
-              </div>
+                <div className="flex flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="flex items-start gap-2 text-[10px] leading-5 text-[#77736c]"><Gamepad2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" /> Nick i statystyki są deklarowane przez użytkownika.</p>
+                  <button type="submit" disabled={saving} className="aopp-primary-button inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.12em] disabled:cursor-wait disabled:opacity-60">
+                    {saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? 'Zapisywanie' : 'Zapisz kartę'}
+                  </button>
+                </div>
+              </form>
+            </section>
 
-              <div>
-                <label className="block text-gray-400 mb-1.5 uppercase">Główna Rola</label>
-                <select 
-                  value={formData.main_role}
-                  onChange={e => setFormData({ ...formData, main_role: e.target.value })}
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 outline-none focus:border-[#f3ba2f] cursor-pointer"
-                >
-                  <option value="Tank">🛡️ Tank</option>
-                  <option value="Healer">💚 Healer</option>
-                  <option value="DPS">⚔️ DPS</option>
-                  <option value="Support">✨ Support / Utility</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-gray-400 mb-1.5 uppercase">Średnie Item Power (IP)</label>
-                <input 
-                  type="number" 
-                  placeholder="1400"
-                  value={formData.avg_ip}
-                  onChange={e => setFormData({ ...formData, avg_ip: e.target.value })}
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 outline-none focus:border-[#f3ba2f]"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 pt-2">
-              <button 
-                type="submit" 
-                disabled={saving}
-                className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-6 py-3 rounded-xl uppercase text-xs tracking-wider transition cursor-pointer flex items-center gap-2 shadow-lg"
-              >
-                <Save className="w-4 h-4" />
-                <span>{saving ? 'Zapisywanie...' : 'Zapisz Kartę Postaci'}</span>
-              </button>
-
-              {savedSuccess && (
-                <span className="text-emerald-400 text-xs font-mono font-bold flex items-center gap-1.5">
-                  <Check className="w-4 h-4" /> Zapisano pomyślnie!
-                </span>
-              )}
-            </div>
-          </form>
-        </div>
-
-        {/* MOJE AKTYWNOŚCI */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
-          {/* MOJE WYPRAWY */}
-          <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#200d13] pb-3">
-              <span className="text-xs font-mono font-bold text-purple-400 uppercase flex items-center gap-2">
-                <Shield className="w-4 h-4" /> Stworzone przeze mnie Wyprawy ({myExpeditions.length})
-              </span>
-              <Link href="/wyprawy" className="text-[10px] text-gray-400 hover:text-white font-mono">Przejdź &rarr;</Link>
-            </div>
-
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1 text-xs">
-              {myExpeditions.length === 0 ? (
-                <p className="text-gray-500 italic text-center py-6">Nie utworzyłeś jeszcze żadnej wyprawy.</p>
-              ) : (
-                myExpeditions.map(e => (
-                  <div key={e.id} className="bg-[#050204] border border-[#220e14] p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                      <h4 className="font-bold text-white">{e.title}</h4>
-                      <p className="text-[10px] text-gray-400 font-mono">{e.activity_type} • Start: {e.start_time}</p>
-                    </div>
-                    <span className="text-[10px] font-mono bg-purple-950 text-purple-300 px-2 py-0.5 rounded border border-purple-800/40">Aktywna</span>
+            <div className="grid gap-6 xl:grid-cols-2">
+              <ActivityPanel title="Twoje wyprawy" eyebrow="Dowodzenie" icon={Shield} tone="violet" href="/wyprawy" empty="Nie utworzyłeś jeszcze żadnej wyprawy.">
+                {myExpeditions.slice(0, 4).map((expedition) => (
+                  <div key={expedition.id} className="rounded-xl border border-white/8 bg-black/20 p-3">
+                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{expedition.title}</p><p className="mt-1 text-[9px] text-[#77736c]">{expedition.activity_type || 'Aktywność'} · {formatDate(expedition.start_time)}</p></div><span className="rounded-md border border-violet-400/20 bg-violet-400/8 px-2 py-1 text-[8px] font-black uppercase text-violet-300">Wyprawa</span></div>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
+                ))}
+              </ActivityPanel>
 
-          {/* MOJE OFERTY RYNKU */}
-          <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-[#200d13] pb-3">
-              <span className="text-xs font-mono font-bold text-sky-400 uppercase flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4" /> Moje Oferty Handlowe ({myOffers.length})
-              </span>
-              <Link href="/rynek" className="text-[10px] text-gray-400 hover:text-white font-mono">Przejdź &rarr;</Link>
-            </div>
-
-            <div className="space-y-2 max-h-60 overflow-y-auto pr-1 text-xs">
-              {myOffers.length === 0 ? (
-                <p className="text-gray-500 italic text-center py-6">Nie masz aktywnych ofert na rynku.</p>
-              ) : (
-                myOffers.map(o => (
-                  <div key={o.id} className="bg-[#050204] border border-[#220e14] p-3 rounded-xl flex justify-between items-center">
-                    <div>
-                      <h4 className="font-bold text-white">{o.title || o.item_name}</h4>
-                      <p className="text-[10px] text-[#f3ba2f] font-mono">{parseInt(o.price).toLocaleString('pl-PL')} Silver</p>
-                    </div>
-                    <span className="text-[10px] font-mono bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800/40">{o.city || 'Rynek'}</span>
+              <ActivityPanel title="Oferty handlowe" eyebrow="Twoje stoisko" icon={ShoppingBag} tone="sky" href="/rynek" empty="Nie masz aktywnych ofert na rynku P2P.">
+                {myOffers.slice(0, 4).map((offer) => (
+                  <div key={offer.id} className="rounded-xl border border-white/8 bg-black/20 p-3">
+                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{offer.title || offer.item_name || 'Oferta'}</p><p className="mt-1 font-mono text-[10px] text-[#e5bb55]">{Number(offer.price || 0).toLocaleString('pl-PL')} silver</p></div><span className="rounded-md border border-sky-400/20 bg-sky-400/8 px-2 py-1 text-[8px] font-black uppercase text-sky-300">{offer.city || 'Albion'}</span></div>
                   </div>
-                ))
-              )}
+                ))}
+              </ActivityPanel>
             </div>
-          </div>
 
+            <section className="aopp-panel grid gap-4 rounded-[24px] p-5 sm:grid-cols-3">
+              {[
+                [Globe2, 'Serwer', formData.main_server],
+                [Award, 'Rola', formData.main_role],
+                [Activity, 'Aktywności', myExpeditions.length + myOffers.length],
+              ].map(([Icon, label, value]) => (
+                <div key={label} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/15 p-3"><Icon className="h-4 w-4 text-[#e5bb55]" /><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">{label}</p><p className="mt-0.5 text-xs font-bold text-[#d8d2c8]">{value}</p></div></div>
+              ))}
+            </section>
+          </div>
         </div>
 
+        <footer className="flex flex-col gap-2 border-t border-white/8 py-5 text-[10px] text-[#6f6a63] sm:flex-row sm:items-center sm:justify-between"><p>Profil wykorzystuje dane konta Discord oraz informacje zapisane w Supabase.</p><Link href="/prywatnosc" className="inline-flex items-center gap-1 font-bold text-sky-300 hover:text-sky-200">Polityka prywatności <ExternalLink className="h-3 w-3" /></Link></footer>
       </div>
     </main>
+  )
+}
+
+function ActivityPanel({ title, eyebrow, icon: Icon, tone, href, empty, children }) {
+  const count = Array.isArray(children) ? children.length : children ? 1 : 0
+  const toneClass = tone === 'sky' ? 'text-sky-300' : 'text-violet-300'
+  return (
+    <section className="aopp-panel rounded-[24px] p-5 sm:p-6">
+      <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className={`text-[9px] font-black uppercase tracking-[.18em] ${toneClass}`}>{eyebrow}</p><h3 className="font-display mt-1 text-xl font-black text-[#fff8e8]">{title}</h3></div><Icon className={`h-5 w-5 ${toneClass}`} /></div>
+      <div className="mt-4 space-y-2">{count ? children : <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-xs text-[#77736c]">{empty}</div>}</div>
+      <Link href={href} className="mt-4 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[.14em] text-[#a9a49b] hover:text-[#e5bb55]">Zobacz cały moduł <ChevronRight className="h-3.5 w-3.5" /></Link>
+    </section>
   )
 }
