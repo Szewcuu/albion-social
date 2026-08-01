@@ -4,9 +4,10 @@ import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { 
-  ArrowLeft, Swords, Shield, Heart, UserCheck, Plus, 
+  Swords, Shield, Heart, UserCheck, Plus,
   Clock, Users, Trash2 
 } from 'lucide-react'
+import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 export default function Wyprawy() {
   const [user, setUser] = useState(null)
@@ -268,42 +269,38 @@ export default function Wyprawy() {
     }
   }
 
+  const totalSignups = expeditions.reduce((sum, expedition) => sum + (expedition.expedition_signups?.length || 0), 0)
+
   return (
-    <main className="min-h-screen flex flex-col justify-between antialiased font-sans select-none relative bg-[#050305] text-gray-300">
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
+    <main className="aopp-shell min-h-screen text-[#ddd8ce]">
+      <div className="aopp-world-bg" aria-hidden="true" />
+      <div className="aopp-grain" aria-hidden="true" />
 
-      <div className="max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 flex-1 z-10 text-sm">
-        <div>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-black tracking-widest uppercase transition group">
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span>Powrót do Centrum Caerleon</span>
-          </Link>
-        </div>
+      <div className="relative z-10 mx-auto w-full max-w-[1480px] space-y-6 p-4 text-sm sm:p-6 lg:p-8">
+        <PortalSubpageHeader
+          eyebrow="Tablica mobilizacji • Party finder"
+          title={<>Każda wyprawa zaczyna się<br /><span className="text-violet-300">od właściwej drużyny.</span></>}
+          description="Zwołaj ekipę, określ wymagane role i przygotuj zbiórkę zsynchronizowaną z Discordem — od statyka po ZvZ i karawanę."
+          icon={Users}
+          tone="violet"
+          stats={[
+            { label: 'Aktywne wyprawy', value: expeditions.length },
+            { label: 'Zapisani gracze', value: totalSignups },
+            { label: 'Synchronizacja', value: 'Discord' },
+          ]}
+          imagePosition="82% center"
+        />
 
-        <header className="bg-[#0c0407] border border-[#2c1219] p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-purple-400 shrink-0">
-            <Users className="w-8 h-8" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider font-serif">
-              Wyprawy &amp; Karawany Handlowe
-            </h1>
-            <p className="text-xs text-gray-400 font-mono mt-1">
-              Zwołuj drużynę na statyki, grupy gankowe, Ava Dungeons lub bezpieczny transport do Caerleon
-            </p>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
           {/* FORMULARZ WYPRAWY */}
           <div className="lg:col-span-4">
-            <div className="bg-[#0c0407] border border-[#281017] p-6 rounded-3xl shadow-2xl sticky top-6 space-y-4">
-              <h2 className="text-sm font-black text-[#f3ba2f] uppercase tracking-wider font-serif border-b border-[#200d13] pb-3 flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                <span>Zwołaj Wyprawę</span>
-              </h2>
+            <div className="aopp-panel sticky top-6 space-y-5 rounded-3xl p-6">
+              <div className="border-b border-white/[.07] pb-4">
+                <p className="text-[9px] font-black uppercase tracking-[.2em] text-[#9e998f]">Dla organizatorów</p>
+                <h2 className="font-display mt-1 flex items-center gap-2 text-xl font-black text-violet-200"><Plus className="h-5 w-5" /> Zwołaj wyprawę</h2>
+                <p className="mt-2 text-xs leading-5 text-[#8f8b83]">Ustal cel, wymagania i skład. Resztę ogłosimy drużynie.</p>
+              </div>
 
               {!user ? (
                 <p className="text-xs text-gray-400 italic bg-[#050204] p-4 rounded-2xl border border-[#200d13]">
@@ -442,7 +439,7 @@ export default function Wyprawy() {
                     />
                   </div>
 
-                  <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider transition text-xs cursor-pointer shadow-md">
+                  <button type="submit" className="aopp-primary-button w-full py-3.5 text-xs font-extrabold uppercase tracking-wider">
                     Ogłoś Wyprawę
                   </button>
                   {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs">{formMessage}</p>}
@@ -453,10 +450,14 @@ export default function Wyprawy() {
 
           {/* LISTA WYPRAW */}
           <div className="lg:col-span-8 space-y-4">
+            <div className="aopp-panel flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4">
+              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#8f8b83]">Aktualna mobilizacja</p><h2 className="font-display text-xl font-bold text-white">Otwarte drużyny</h2></div>
+              <div className="flex items-center gap-2 text-xs"><span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" /></span><span className="font-bold text-[#bcb6ab]">{expeditions.length} aktywnych ogłoszeń</span></div>
+            </div>
             {loading ? (
               <p className="text-center py-12 text-gray-500 font-mono animate-pulse">Ładowanie aktywnych wypraw...</p>
             ) : expeditions.length === 0 ? (
-              <p className="text-center py-12 text-gray-500 italic bg-[#0c0407] border border-[#281017] rounded-3xl">Brak aktywnych ogłoszeń wypraw.</p>
+              <div className="aopp-panel rounded-3xl py-14 text-center"><Users className="mx-auto h-9 w-9 text-violet-300/35" /><p className="font-display mt-4 text-lg font-bold text-[#c7c1b7]">Tablica jest teraz pusta</p><p className="mt-1 text-xs text-[#817d75]">Zwołaj pierwszą wyprawę i rozpocznij mobilizację.</p></div>
             ) : (
               expeditions.map((exp) => {
                 const signups = exp.expedition_signups || []
@@ -467,17 +468,19 @@ export default function Wyprawy() {
 
                 const mySignup = signups.find(s => s.user_id === user?.id)
                 const isOwner = user?.id === exp.user_id
+                const totalSlots = Number(exp.max_tanks || 0) + Number(exp.max_healers || 0) + Number(exp.max_dps || 0) + Number(exp.max_supports || 0)
+                const fillPercent = totalSlots > 0 ? Math.min(100, Math.round((signups.length / totalSlots) * 100)) : 0
 
                 return (
-                  <div key={exp.id} className="bg-[#0c0407] border border-[#281017] hover:border-[#f3ba2f]/40 p-6 rounded-3xl shadow-xl transition space-y-4 relative">
+                  <div key={exp.id} className="aopp-list-card group relative space-y-5 overflow-hidden rounded-3xl p-6">
                     
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#200d13] pb-3">
+                    <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[.07] pb-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-mono font-bold uppercase">{exp.activity_type}</span>
                           <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono font-bold uppercase">[{exp.server}]</span>
                         </div>
-                        <h3 className="text-lg font-black text-white font-serif tracking-wide">{exp.title}</h3>
+                        <h3 className="font-display text-2xl font-black tracking-wide text-white">{exp.title}</h3>
                       </div>
 
                       <div className="flex items-center gap-3 text-xs font-mono">
@@ -490,14 +493,19 @@ export default function Wyprawy() {
                       </div>
                     </div>
 
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[.14em]"><span className="text-[#8f8b83]">Gotowość drużyny</span><span className="text-violet-200">{signups.length}/{totalSlots} graczy</span></div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-black/45"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-[#e4b94f] transition-all" style={{ width: `${fillPercent}%` }} /></div>
+                    </div>
+
                     {exp.description && (
-                      <p className="text-xs text-gray-300 bg-[#050204] p-3 rounded-2xl border border-[#220e14] leading-relaxed font-sans">
+                      <p className="rounded-2xl border border-white/[.06] bg-black/25 p-4 text-sm leading-6 text-[#c7c1b7]">
                         {exp.description}
                       </p>
                     )}
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                      <div className="bg-[#050204] p-3 rounded-2xl border border-[#220e14] space-y-1.5">
+                      <div className="aopp-role-card space-y-2 rounded-2xl p-3">
                         <div className="flex justify-between items-center border-b border-[#1c0b10] pb-1.5">
                           <span className="font-bold text-sky-400 flex items-center gap-1 font-mono text-[11px]"><Shield className="w-3 h-3" /> Tank</span>
                           <span className="font-mono text-[10px] text-gray-400">{tanksJoined.length}/{exp.max_tanks}</span>
@@ -510,7 +518,7 @@ export default function Wyprawy() {
                         ))}
                       </div>
 
-                      <div className="bg-[#050204] p-3 rounded-2xl border border-[#220e14] space-y-1.5">
+                      <div className="aopp-role-card space-y-2 rounded-2xl p-3">
                         <div className="flex justify-between items-center border-b border-[#1c0b10] pb-1.5">
                           <span className="font-bold text-emerald-400 flex items-center gap-1 font-mono text-[11px]"><Heart className="w-3 h-3" /> Healer</span>
                           <span className="font-mono text-[10px] text-gray-400">{healersJoined.length}/{exp.max_healers}</span>
@@ -523,7 +531,7 @@ export default function Wyprawy() {
                         ))}
                       </div>
 
-                      <div className="bg-[#050204] p-3 rounded-2xl border border-[#220e14] space-y-1.5">
+                      <div className="aopp-role-card space-y-2 rounded-2xl p-3">
                         <div className="flex justify-between items-center border-b border-[#1c0b10] pb-1.5">
                           <span className="font-bold text-rose-400 flex items-center gap-1 font-mono text-[11px]"><Swords className="w-3 h-3" /> DPS</span>
                           <span className="font-mono text-[10px] text-gray-400">{dpsJoined.length}/{exp.max_dps}</span>
@@ -536,7 +544,7 @@ export default function Wyprawy() {
                         ))}
                       </div>
 
-                      <div className="bg-[#050204] p-3 rounded-2xl border border-[#220e14] space-y-1.5">
+                      <div className="aopp-role-card space-y-2 rounded-2xl p-3">
                         <div className="flex justify-between items-center border-b border-[#1c0b10] pb-1.5">
                           <span className="font-bold text-purple-400 flex items-center gap-1 font-mono text-[11px]"><UserCheck className="w-3 h-3" /> Support</span>
                           <span className="font-mono text-[10px] text-gray-400">{supportsJoined.length}/{exp.max_supports}</span>
@@ -550,7 +558,7 @@ export default function Wyprawy() {
                       </div>
                     </div>
 
-                    <div className="border-t border-[#200d13] pt-3 flex flex-wrap justify-between items-center text-xs gap-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[.07] pt-4 text-xs">
                       <span className="text-gray-500 font-mono">
                         Lider: <b className="text-emerald-400">{exp.profiles?.username || 'Gracz'}</b>
                       </span>
@@ -567,7 +575,7 @@ export default function Wyprawy() {
                             <Trash2 className="w-3 h-3" /> Opuść Drużynę
                           </button>
                         ) : user ? (
-                          <button onClick={() => openSignupModal(exp)} className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider text-[11px] transition shadow cursor-pointer">
+                          <button onClick={() => openSignupModal(exp)} className="aopp-primary-button px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider">
                             Dołącz do Ekipy
                           </button>
                         ) : (
@@ -587,9 +595,9 @@ export default function Wyprawy() {
 
       {/* MODAL ZAPISU DO DRUŻYNY */}
       {activeExpeditionForSignup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-[#0c0407] border border-[#f3ba2f]/40 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-4 text-gray-200 relative">
-            <h3 className="text-lg font-black text-[#f3ba2f] uppercase tracking-wider font-serif border-b border-[#200d13] pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="aopp-panel relative w-full max-w-md space-y-4 rounded-3xl p-6 text-gray-200 sm:p-8">
+            <h3 className="font-display border-b border-white/[.07] pb-3 text-xl font-black text-[#f0c75e]">
               Dołącz do Wyprawy: {activeExpeditionForSignup.title}
             </h3>
 
@@ -663,7 +671,7 @@ export default function Wyprawy() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <button type="submit" className="flex-1 bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3 rounded-xl uppercase tracking-wider text-xs cursor-pointer shadow">
+                <button type="submit" className="aopp-primary-button flex-1 py-3 text-xs font-extrabold uppercase tracking-wider">
                   Potwierdź Zgłoszenie
                 </button>
                 <button type="button" onClick={() => setActiveExpeditionForSignup(null)} className="bg-[#1a080d] text-rose-300 hover:bg-rose-950/80 border border-rose-900/40 font-bold px-4 py-3 rounded-xl uppercase text-xs cursor-pointer">
@@ -675,7 +683,7 @@ export default function Wyprawy() {
         </div>
       )}
 
-      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-500">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">

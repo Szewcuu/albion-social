@@ -2,8 +2,9 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Swords, Shield, Globe, MapPin, Search, ArrowLeft, ExternalLink, HelpCircle, Plus } from 'lucide-react'
+import { Swords, Shield, Globe, MapPin, Search, ExternalLink, HelpCircle } from 'lucide-react'
 import GuildApplyModal from '@/components/GuildApplyModal'
+import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 export default function Gildie() {
   const [guilds, setGuilds] = useState([])
@@ -120,46 +121,35 @@ export default function Gildie() {
   })
 
   return (
-    <main className="min-h-screen bg-[#050305] text-gray-300 flex flex-col justify-between antialiased font-sans select-none relative">
-      
-      {/* TŁO KRWISTO-ZŁOTE */}
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
-      <div className="fixed inset-0 opacity-10 bg-[radial-gradient(#f3ba2f_1px,transparent_1px)] [background-size:24px_24px] z-0 pointer-events-none"></div>
+    <main className="aopp-shell min-h-screen text-[#ddd8ce]">
+      <div className="aopp-world-bg" aria-hidden="true" />
+      <div className="aopp-grain" aria-hidden="true" />
 
-      <div className="max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6 flex-1 z-10 text-sm">
+      <div className="relative z-10 mx-auto w-full max-w-[1480px] space-y-6 p-4 text-sm sm:p-6 lg:p-8">
         
-        {/* POWRÓT */}
-        <div>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-black tracking-widest uppercase transition group">
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span>Powrót do Centrum Caerleon</span>
-          </Link>
-        </div>
+        <PortalSubpageHeader
+          eyebrow="Sala chorągwi • Rejestr sojuszy"
+          title={<>Znajdź sztandar,<br /><span className="text-[#e4b94f]">pod którym ruszysz do walki.</span></>}
+          description="Poznaj aktywne polskie formacje, porównaj doktryny i miasta bazowe albo opublikuj manifest własnej gildii."
+          icon={Swords}
+          stats={[
+            { label: 'Zarejestrowane gildie', value: guilds.length },
+            { label: 'Pasujące wyniki', value: filteredGuilds.length },
+            { label: 'Główny serwer', value: filterServer === 'ALL' ? 'Wszystkie' : filterServer },
+          ]}
+          imagePosition="76% center"
+        />
 
-        {/* NAGŁÓWEK */}
-        <header className="bg-[#0c0407] border border-[#2c1219] p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-[#f3ba2f] shrink-0 shadow-[0_0_15px_rgba(243,186,47,0.2)]">
-            <Swords className="w-8 h-8" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider font-serif">
-              Rejestr Dekretów &amp; Sojuszy Gildyjnych
-            </h1>
-            <p className="text-xs text-gray-400 font-mono mt-1">
-              Oficjalny rejestr polskich formacji w Albion Online. Dołącz do ZvZ, małych grup lub zarejestruj własną gildię.
-            </p>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
           {/* LEWA STRONA: FORMULARZ */}
           <div className="lg:col-span-4">
-            <div className="bg-[#0c0407] border border-[#281017] p-6 rounded-3xl shadow-2xl sticky top-6 space-y-4">
-              <h2 className="text-sm font-black text-[#f3ba2f] uppercase tracking-wider font-serif border-b border-[#200d13] pb-3 flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <span>Zarejestruj Gildię</span>
-              </h2>
+            <div className="aopp-panel sticky top-6 space-y-5 rounded-3xl p-6">
+              <div className="border-b border-white/[.07] pb-4">
+                <p className="text-[9px] font-black uppercase tracking-[.2em] text-[#9e998f]">Dla liderów</p>
+                <h2 className="font-display mt-1 flex items-center gap-2 text-xl font-black text-[#f0c75e]"><Shield className="h-5 w-5" /> Opublikuj manifest</h2>
+                <p className="mt-2 text-xs leading-5 text-[#8f8b83]">Pokaż graczom profil formacji i otwórz rekrutację.</p>
+              </div>
               
               {!user ? (
                 <p className="text-xs text-gray-400 italic bg-[#050204] p-4 rounded-2xl border border-[#200d13]">
@@ -243,7 +233,7 @@ export default function Gildie() {
                     <textarea name="description" rows="4" maxLength="600" value={formData.description} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none resize-none text-xs" placeholder="Opisz godziny aktywności, wymagany Fame..." />
                   </div>
 
-                  <button type="submit" className="w-full bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold py-3.5 rounded-xl uppercase tracking-wider transition text-xs cursor-pointer shadow-md">
+                  <button type="submit" className="aopp-primary-button w-full py-3.5 text-xs font-extrabold uppercase tracking-wider">
                     Opublikuj Manifest
                   </button>
                   {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs font-mono">{formMessage}</p>}
@@ -256,7 +246,11 @@ export default function Gildie() {
           <div className="lg:col-span-8 space-y-4">
             
             {/* FILTRY */}
-            <div className="bg-[#0c0407] border border-[#281017] p-4 rounded-3xl shadow-xl space-y-3 font-mono text-xs">
+            <div className="aopp-panel space-y-3 rounded-3xl p-4 font-mono text-xs">
+              <div className="flex items-center justify-between gap-3 px-1">
+                <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#8f8b83]">Archiwum chorągwi</p><h2 className="font-display text-lg font-bold text-white">Przeglądaj formacje</h2></div>
+                <span className="rounded-lg border border-[#d8ad4a]/20 bg-[#d8ad4a]/10 px-3 py-1 text-[10px] font-black text-[#e4b94f]">{filteredGuilds.length} {filteredGuilds.length === 1 ? 'wynik' : 'wyników'}</span>
+              </div>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
                 <input 
@@ -311,19 +305,23 @@ export default function Gildie() {
                   Otwieranie archiwów gildyjnych...
                 </div>
               ) : filteredGuilds.length === 0 ? (
-                <div className="text-gray-500 italic text-center bg-[#0c0407] border border-[#281017] p-12 rounded-3xl">
-                  Brak zarejestrowanych sojuszy spełniających te kryteria.
+                <div className="aopp-panel rounded-3xl p-12 text-center">
+                  <Swords className="mx-auto h-8 w-8 text-[#7e6932]" />
+                  <p className="font-display mt-4 text-lg font-bold text-[#c7c1b7]">Żadna chorągiew nie odpowiada filtrom</p>
+                  <p className="mt-1 text-xs text-[#817d75]">Zmień serwer, miasto lub doktrynę i spróbuj ponownie.</p>
                 </div>
               ) : (
                 filteredGuilds.map((guild) => (
                   <div 
                     key={guild.id} 
-                    className="bg-[#0c0407] border border-[#281017] hover:border-[#f3ba2f]/40 p-6 rounded-3xl shadow-xl transition space-y-4 relative overflow-hidden"
+                    className="aopp-list-card group relative space-y-5 overflow-hidden rounded-3xl p-6"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#200d13] pb-3">
-                      <h3 className="text-xl font-black text-white uppercase tracking-wide font-serif">
-                        {guild.name}
-                      </h3>
+                    <div className="pointer-events-none absolute -right-2 -top-8 font-display text-[9rem] font-black leading-none text-[#d8ad4a]/[.035]">{guild.name.charAt(0)}</div>
+                    <div className="relative flex flex-wrap items-start justify-between gap-4 border-b border-white/[.07] pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#d8ad4a]/25 bg-[#d8ad4a]/10 font-display text-xl font-black text-[#e4b94f]">{guild.name.charAt(0)}</div>
+                        <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#817d75]">Chorągiew gildyjna</p><h3 className="font-display mt-0.5 text-2xl font-black tracking-wide text-white">{guild.name}</h3></div>
+                      </div>
 
                       <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold">
                         <span className="flex items-center gap-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full uppercase">
@@ -340,19 +338,19 @@ export default function Gildie() {
                       </div>
                     </div>
 
-                    <p className="text-xs text-gray-300 bg-[#050204] p-3.5 rounded-2xl border border-[#220e14] leading-relaxed font-sans whitespace-pre-wrap">
+                    <p className="relative whitespace-pre-wrap rounded-2xl border border-white/[.06] bg-black/25 p-4 text-sm leading-6 text-[#c7c1b7]">
                       {guild.description}
                     </p>
 
-                    <div className="flex flex-wrap items-center justify-between border-t border-[#200d13] pt-3 text-xs text-gray-500 gap-3 font-mono">
-                      <p>
-                        Lider: <b className="text-emerald-400">{guild.profiles?.username || 'Gracz'}</b>
+                    <div className="relative flex flex-wrap items-center justify-between gap-3 border-t border-white/[.07] pt-4 text-xs text-gray-500">
+                      <p className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" /> Lider: <b className="text-[#e3ded3]">{(guild.profiles?.username || 'Gracz').replace(/#0$/, '')}</b>
                       </p>
 
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setSelectedGuildForApply(guild)}
-                          className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-4 py-2 rounded-xl uppercase tracking-wider text-[11px] transition shadow cursor-pointer flex items-center gap-1.5"
+                          className="aopp-primary-button flex items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider"
                         >
                           <Swords className="w-3.5 h-3.5" />
                           <span>Aplikuj</span>
@@ -377,7 +375,7 @@ export default function Gildie() {
         </div>
       </div>
 
-      <footer className="w-full bg-[#030102] border-t border-[#200d13] py-6 text-center text-xs text-gray-500 mt-12 relative z-10">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-500">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <p className="font-mono text-[10px] text-gray-600">Rejestr Gildii &amp; Rekrutacja</p>
