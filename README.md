@@ -21,12 +21,13 @@ Gotowe i wdrożone:
 - [x] podstawowe pobieranie cen przedmiotów
 - [x] wspólna, zabezpieczona warstwa Gameinfo dla trzech regionów
 - [x] Killboard 2.0 z wyborem gracza, historią PvP, wyposażeniem i kontekstem gildii
+- [x] Market Intelligence z pełnym katalogiem, porównaniem miast, trendami i kalkulatorami
 
 ## Najbliższy krok
 
-> **Etap 5: Market Intelligence**
+> **Etap 6: kolejne ekrany UI/UX**
 
-Fundament integracji API oraz główny zakres Killboardu 2.0 są gotowe. Następnym etapem jest rozszerzenie rynku o pełny katalog przedmiotów, wiarygodną informację o świeżości danych, porównanie miast, historię cen i kalkulatory ekonomiczne.
+Market Intelligence jest gotowy. Następnym etapem jest przebudowa Profilu gracza, Timerów i Loot Splitu oraz pełny przegląd responsywności i dostępności całego portalu.
 
 ## Roadmapa / TODO
 
@@ -58,17 +59,17 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### P2 — Market Intelligence
 
-- [ ] rozszerzyć `/api/prices` o region, wiele miast, jakość i wiele przedmiotów
-- [ ] dodać wyszukiwarkę pełnego katalogu przedmiotów zamiast krótkiej listy lokalnej
-- [ ] pokazywać sell price, buy price oraz czas ostatniego odczytu danych
-- [ ] ostrzegać, gdy cena jest nieaktualna lub nie ma wystarczających danych
-- [ ] dodać porównanie cen pomiędzy miastami
-- [ ] dodać historię ceny: 24 godziny, 7 dni i 30 dni
-- [ ] dodać kurs złota i prosty wykres zmian
-- [ ] dodać kalkulator marży po podatku i opłacie za wystawienie
-- [ ] dodać kalkulator transportu/arbitrażu pomiędzy miastami
-- [ ] umożliwić zapis ulubionych przedmiotów i obserwowanych cen
-- [ ] połączyć wyceny API z ofertami P2P bez sugerowania, że dane są rzeczywistym live marketem
+- [x] rozszerzyć `/api/prices` o region, wiele miast, jakość i wiele przedmiotów
+- [x] dodać wyszukiwarkę pełnego katalogu przedmiotów zamiast krótkiej listy lokalnej
+- [x] pokazywać sell price, buy price oraz czas ostatniego odczytu danych
+- [x] ostrzegać, gdy cena jest nieaktualna lub nie ma wystarczających danych
+- [x] dodać porównanie cen pomiędzy miastami
+- [x] dodać historię ceny: 24 godziny, 7 dni i 30 dni
+- [x] dodać kurs złota i prosty wykres zmian
+- [x] dodać kalkulator marży po podatku i opłacie za wystawienie
+- [x] dodać kalkulator transportu/arbitrażu pomiędzy miastami
+- [x] umożliwić zapis ulubionych przedmiotów i obserwowanych cen
+- [x] połączyć wyceny API z ofertami P2P bez sugerowania, że dane są rzeczywistym live marketem
 
 ### P3 — kolejne ekrany UI/UX
 

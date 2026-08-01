@@ -16,6 +16,20 @@ export const MARKET_CITIES = [
   'Brecilien',
 ]
 
+export const MARKET_QUALITIES = {
+  1: 'Normalna',
+  2: 'Dobra',
+  3: 'Znakomita',
+  4: 'Doskonała',
+  5: 'Arcydzieło',
+}
+
+export const MARKET_RANGES = {
+  '24h': { days: 1, timeScale: 1, goldCount: 24 },
+  '7d': { days: 7, timeScale: 6, goldCount: 168 },
+  '30d': { days: 30, timeScale: 24, goldCount: 720 },
+}
+
 export function isSafeItemId(value) {
   return typeof value === 'string'
     && value.length >= 3
@@ -23,21 +37,19 @@ export function isSafeItemId(value) {
     && /^[A-Z0-9_@]+$/.test(value)
 }
 
-export async function getCurrentMarketPrices({ itemId, city, region }) {
-  const host = MARKET_REGIONS[region]
-  if (!host) throw new Error('INVALID_REGION')
+function toDateParameter(date) {
+  return date.toISOString().slice(0, 10)
+}
 
-  const locations = city === 'Caerleon' ? city : `${city},Caerleon`
-  const url = `${host}/api/v2/stats/prices/${encodeURIComponent(itemId)}.json?locations=${encodeURIComponent(locations)}`
-
+async function fetchMarketJson(url, { revalidate = 60 } = {}) {
   try {
     const response = await fetch(url, {
       headers: {
         Accept: 'application/json',
         'User-Agent': 'Albion-Social/1.0 (+https://albion-social.vercel.app)',
       },
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(8000),
+      next: { revalidate },
+      signal: AbortSignal.timeout(10_000),
     })
 
     if (!response.ok) throw new Error(`UPSTREAM_${response.status}`)
@@ -46,4 +58,51 @@ export async function getCurrentMarketPrices({ itemId, city, region }) {
     if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new Error('UPSTREAM_TIMEOUT')
     throw error
   }
+}
+
+export async function getCurrentMarketPrices({ itemIds, cities, qualities, region }) {
+  const host = MARKET_REGIONS[region]
+  if (!host) throw new Error('INVALID_REGION')
+
+  const itemPath = itemIds.map(encodeURIComponent).join(',')
+  const params = new URLSearchParams({
+    locations: cities.join(','),
+    qualities: qualities.join(','),
+  })
+
+  return fetchMarketJson(`${host}/api/v2/stats/prices/${itemPath}.json?${params}`, { revalidate: 60 })
+}
+
+export async function getMarketHistory({ itemId, city, quality, region, range }) {
+  const host = MARKET_REGIONS[region]
+  const rangeConfig = MARKET_RANGES[range]
+  if (!host) throw new Error('INVALID_REGION')
+  if (!rangeConfig) throw new Error('INVALID_RANGE')
+
+  const end = new Date()
+  const start = new Date(end)
+  start.setUTCDate(start.getUTCDate() - rangeConfig.days)
+
+  const params = new URLSearchParams({
+    locations: city,
+    qualities: String(quality),
+    'time-scale': String(rangeConfig.timeScale),
+    date: toDateParameter(start),
+    'end-date': toDateParameter(end),
+  })
+
+  return fetchMarketJson(
+    `${host}/api/v2/stats/history/${encodeURIComponent(itemId)}.json?${params}`,
+    { revalidate: 300 },
+  )
+}
+
+export async function getGoldHistory({ region, range }) {
+  const host = MARKET_REGIONS[region]
+  const rangeConfig = MARKET_RANGES[range]
+  if (!host) throw new Error('INVALID_REGION')
+  if (!rangeConfig) throw new Error('INVALID_RANGE')
+
+  const params = new URLSearchParams({ count: String(rangeConfig.goldCount) })
+  return fetchMarketJson(`${host}/api/v2/stats/gold.json?${params}`, { revalidate: 300 })
 }
