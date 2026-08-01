@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import {
@@ -70,6 +70,7 @@ function ValidationPanel({ errors }) {
 }
 
 export default function CreateBuildPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [user, setUser] = useState(null)
   const [build, setBuild] = useState(() => {
@@ -127,11 +128,12 @@ export default function CreateBuildPage() {
     setSaving(true)
     const payload = buildToDbPayload(build, user.id)
 
-    let { error } = await supabase.from('builds').insert([payload])
+    let { data, error } = await supabase.from('builds').insert([payload]).select('id').single()
 
     if (error?.message?.includes('build_data')) {
       const { build_data, ...corePayload } = payload
-      const fallback = await supabase.from('builds').insert([corePayload])
+      const fallback = await supabase.from('builds').insert([corePayload]).select('id').single()
+      data = fallback.data
       error = fallback.error
     }
 
@@ -141,6 +143,7 @@ export default function CreateBuildPage() {
     } else {
       setSaved(true)
       setErrors([])
+      router.push(`/buildy/${data.id}`)
     }
   }
 

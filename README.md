@@ -28,7 +28,16 @@ Gotowe i wdrożone:
 
 > **P4.1: publiczna strona buildu i fundament interakcji społecznościowych**
 
-Etap P3 jest zamknięty. Wszystkie publiczne widoki przeszły audyt 360, 390 i 430 px, kontrolę poziomego overflow, etykiet formularzy, minimalnych celów dotykowych, fokusu klawiatury oraz kontrastu. Następny sprint rozpoczyna P4: osobna, publiczna strona szczegółów buildu, przygotowanie modelu jednego głosu na użytkownika i zapis buildów do ulubionych.
+Etap P3 jest zamknięty. Sprint P4.1 buduje pierwszy pełny pion społecznościowy: publiczny URL szczegółów buildu, poprawny model jednego głosu użytkownika, prywatne ulubione oraz dynamiczne metadata do udostępniania zestawu.
+
+### Aktywny sprint P4.1
+
+- [x] dodać dynamiczną trasę `/buildy/[id]` z pełnym wyposażeniem i opisem doktryny
+- [x] połączyć katalog i kreator z publicznym URL-em zapisanego buildu
+- [x] dodać wersjonowaną migrację `build_votes` i `build_favorites` z RLS
+- [x] zabezpieczyć jeden głos użytkownika unikalnym indeksem w bazie
+- [x] dodać API oraz dostępne klawiaturą kontrolki głosu, ulubionych i udostępniania
+- [ ] przetestować pełny przepływ, wdrożyć PR i wykonać smoke test produkcji
 
 ### Zakończony sprint P3.2
 
@@ -102,9 +111,9 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### P4 — funkcje społecznościowe
 
-- [ ] dodać osobną stronę szczegółów buildu z linkiem publicznym
-- [ ] zabezpieczyć głosowanie na build: jeden głos użytkownika na build
-- [ ] dodać zapisywanie buildów do ulubionych
+- [x] dodać osobną stronę szczegółów buildu z linkiem publicznym
+- [x] zabezpieczyć głosowanie na build: jeden głos użytkownika na build
+- [x] dodać zapisywanie buildów do ulubionych
 - [ ] dodać komentarze i zgłaszanie nadużyć pod buildami
 - [ ] dodać wygasanie, odnawianie i archiwizację ofert rynkowych
 - [ ] dodać szczegóły oferty i bezpieczny przepływ kontaktu ze sprzedawcą

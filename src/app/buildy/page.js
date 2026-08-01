@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame } from 'lucide-react'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, ArrowUpRight } from 'lucide-react'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { buildFromDbRow, itemImageUrl } from '@/lib/buildSlots'
@@ -25,7 +25,7 @@ export default function BuildyPage() {
     try {
       const { data, error } = await supabase
         .from('builds')
-        .select('*, profiles(username, avatar_url)')
+        .select('*, profiles(username, avatar_url), build_votes(id, vote_type)')
         .order('created_at', { ascending: false })
 
       if (!error && data) setBuilds(data)
@@ -46,15 +46,6 @@ export default function BuildyPage() {
   const handleDeleteBuild = async (id) => {
     if (!confirm('Czy na pewno chcesz usunąć ten zestaw?')) return
     const { error } = await supabase.from('builds').delete().eq('id', id)
-    if (!error) fetchBuilds()
-  }
-
-  const handleUpvote = async (id, currentLikes) => {
-    if (!user) return
-    const { error } = await supabase
-      .from('builds')
-      .update({ likes: (currentLikes || 0) + 1 })
-      .eq('id', id)
     if (!error) fetchBuilds()
   }
 
@@ -97,7 +88,7 @@ export default function BuildyPage() {
           stats={[
             { label: 'Zapisane buildy', value: builds.length },
             { label: 'Widoczne zestawy', value: filteredBuilds.length },
-            { label: 'Głosy społeczności', value: builds.reduce((sum, build) => sum + (build.likes || 0), 0) },
+            { label: 'Głosy społeczności', value: builds.reduce((sum, build) => sum + (build.build_votes || []).filter((vote) => vote.vote_type === 'up').length, 0) },
           ]}
           imagePosition="68% center"
         />
@@ -146,6 +137,10 @@ export default function BuildyPage() {
             filteredBuilds.map((b) => {
               const parsed = buildFromDbRow(b)
               const hasExtended = b.build_data && Object.keys(b.build_data).length > 0
+              const voteCount = Math.max(
+                (b.build_votes || []).filter((vote) => vote.vote_type === 'up').length,
+                b.votes_count || 0,
+              )
 
               return (
                 <article key={b.id} className="aopp-list-card group flex flex-col justify-between space-y-5 overflow-hidden p-5 sm:p-6">
@@ -158,7 +153,9 @@ export default function BuildyPage() {
                         {new Date(b.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <h3 className="font-display mt-3 text-xl font-black leading-tight text-[#fff8e8] transition group-hover:text-orange-100">{b.title}</h3>
+                    <h3 className="font-display mt-3 text-xl font-black leading-tight text-[#fff8e8] transition group-hover:text-orange-100">
+                      <Link href={`/buildy/${b.id}`} className="rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-300">{b.title}</Link>
+                    </h3>
                     <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#99938a]">{b.description || 'Brak opisu taktycznego.'}</p>
 
                     {hasExtended && parsed.tags?.activities?.length > 0 && (
@@ -178,12 +175,12 @@ export default function BuildyPage() {
                     ) : (
                       <>
                         <div className="grid grid-cols-3 gap-2">
-                          {renderItemSlot(b.main_weapon, 'Broń')}
+                          {renderItemSlot(b.weapon, 'Broń')}
                           {renderItemSlot(b.armor, 'Zbroja')}
-                          {renderItemSlot(b.helmet, 'Hełm')}
+                          {renderItemSlot(b.head || b.helmet, 'Hełm')}
                         </div>
                         <div className="grid grid-cols-2 gap-2 w-2/3 mx-auto">
-                          {renderItemSlot(b.boots, 'Buty')}
+                          {renderItemSlot(b.shoes, 'Buty')}
                           {renderItemSlot(b.cape, 'Peleryna')}
                         </div>
                       </>
@@ -199,18 +196,24 @@ export default function BuildyPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleUpvote(b.id, b.likes)}
-                        className="flex items-center gap-1 bg-[#1a070d] hover:bg-[#280c14] border border-[#3b131f] text-amber-400 px-3 py-1.5 rounded-xl text-xs font-bold transition"
-                      >
+                      <span className="flex min-h-10 items-center gap-1 rounded-xl border border-[#3b131f] bg-[#1a070d] px-3 py-1.5 text-xs font-bold text-amber-300" title="Głosy społeczności">
                         <ThumbsUp className="w-3.5 h-3.5" />
-                        <span>{b.likes || 0}</span>
-                      </button>
+                        <span>{voteCount}</span>
+                      </span>
+
+                      <Link
+                        href={`/buildy/${b.id}`}
+                        aria-label={`Otwórz build: ${b.title}`}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-orange-300/20 bg-orange-300/8 text-orange-100 transition hover:border-orange-300/40 hover:bg-orange-300/12"
+                      >
+                        <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
 
                       {user && user.id === b.user_id && (
                         <button
                           onClick={() => handleDeleteBuild(b.id)}
-                          className="bg-rose-950/60 hover:bg-rose-900 text-rose-300 p-2 rounded-xl transition"
+                          aria-label={`Usuń build: ${b.title}`}
+                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-950/60 text-rose-300 transition hover:bg-rose-900"
                           title="Usuń build"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
