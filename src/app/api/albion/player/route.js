@@ -1,82 +1,85 @@
 import { NextResponse } from 'next/server'
+import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerOverview, searchAlbionPlayers } from '@/lib/server/albionApi'
+import { checkRateLimit } from '@/lib/server/rateLimit'
+import { cleanAlbionId, cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
+
+const CACHE_SECONDS = {
+  search: 45,
+  overview: 90,
+}
+
+function getClientKey(request) {
+  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+  return forwarded || request.headers.get('x-real-ip') || 'anonymous'
+}
+
+function apiResponse(data, { region, mode, status = 200, warnings = [] } = {}) {
+  return NextResponse.json({
+    data,
+    meta: {
+      source: 'Albion Online Gameinfo',
+      region,
+      mode,
+      fetchedAt: new Date().toISOString(),
+      cacheSeconds: CACHE_SECONDS[mode] || 0,
+      warnings,
+    },
+  }, { status })
+}
+
+function apiError(message, { code, status = 500, retryAfter = null } = {}) {
+  const headers = retryAfter ? { 'Retry-After': String(retryAfter) } : undefined
+  return NextResponse.json({ error: { message, code: code || 'INTERNAL_ERROR' } }, { status, headers })
+}
 
 export async function GET(request) {
+  const clientKey = getClientKey(request)
+  const rateLimit = checkRateLimit(`albion-player:${clientKey}`, { limit: 30, windowMs: 60_000 })
+
+  if (!rateLimit.allowed) {
+    return apiError('Zbyt wiele zapytań. Spróbuj ponownie za chwilę.', {
+      code: 'RATE_LIMITED',
+      status: 429,
+      retryAfter: rateLimit.retryAfter,
+    })
+  }
+
   const { searchParams } = new URL(request.url)
-  const rawNick = searchParams.get('nick')
-  const region = searchParams.get('region') || 'europe' // Domyślnie Europa
+  const mode = cleanEnum(searchParams.get('mode') || 'search', ['search', 'overview'])
+  const region = cleanEnum(searchParams.get('region') || 'europe', Object.keys(ALBION_REGIONS))
 
-  if (!rawNick || rawNick.trim().length < 2) {
-    return NextResponse.json({ error: 'Nick musi mieć co najmniej 2 znaki' }, { status: 400 })
-  }
-
-  const cleanNick = rawNick.trim()
-
-  // Dobieramy odpowiednią subdomenę API Albiona zależnie od regionu
-  let baseUrl = 'https://gameinfo-ams.albiononline.com/api/gameinfo' // Europa (AMS)
-  if (region === 'america') {
-    baseUrl = 'https://gameinfo.albiononline.com/api/gameinfo' // Ameryka (West)
-  } else if (region === 'asia') {
-    baseUrl = 'https://gameinfo-sgp.albiononline.com/api/gameinfo' // Azja (SGP)
-  }
+  if (!mode) return apiError('Nieobsługiwany tryb zapytania.', { code: 'INVALID_MODE', status: 400 })
+  if (!region) return apiError('Nieobsługiwany region Albionu.', { code: 'INVALID_REGION', status: 400 })
 
   try {
-    // 1. Zapytanie wyszukujące gracza
-    const searchUrl = `${baseUrl}/search?q=${encodeURIComponent(cleanNick)}`
-    
-    const searchRes = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-      },
-      cache: 'no-store'
-    })
+    if (mode === 'search') {
+      const query = cleanText(searchParams.get('query') || searchParams.get('nick'), { min: 2, max: 30 })
+      if (!query) {
+        return apiError('Nick musi mieć od 2 do 30 znaków.', { code: 'INVALID_QUERY', status: 400 })
+      }
 
-    if (!searchRes.ok) {
-      return NextResponse.json({ error: 'Błąd odpowiedzi z serwera Albiona' }, { status: searchRes.status })
+      const players = await searchAlbionPlayers(query, region)
+      if (players.length === 0) {
+        return apiError(`Nie znaleziono gracza „${query}” w wybranym regionie.`, { code: 'PLAYER_NOT_FOUND', status: 404 })
+      }
+
+      return apiResponse({ players }, { region, mode })
     }
 
-    const searchData = await searchRes.json()
+    const playerId = cleanAlbionId(searchParams.get('id'))
+    const limit = cleanInteger(searchParams.get('limit') || '6', { min: 1, max: 10 })
 
-    if (!searchData || !searchData.players || searchData.players.length === 0) {
-      return NextResponse.json({ 
-        error: `Nie znaleziono gracza "${cleanNick}" na serwerze ${region.toUpperCase()}. Sprawdź poprawność nicku lub wybierz inny serwer.` 
-      }, { status: 404 })
+    if (!playerId) return apiError('Nieprawidłowy identyfikator gracza.', { code: 'INVALID_PLAYER_ID', status: 400 })
+    if (!limit) return apiError('Limit historii musi mieścić się w zakresie 1–10.', { code: 'INVALID_LIMIT', status: 400 })
+
+    const overview = await getAlbionPlayerOverview(playerId, region, limit)
+    return apiResponse(overview, { region, mode, warnings: overview.warnings })
+  } catch (error) {
+    if (error instanceof AlbionApiError) {
+      return apiError(error.message, { code: error.code, status: error.status })
     }
 
-    // Dopasowanie nazwy postaci
-    const playerData = searchData.players.find(
-      p => p.Name.toLowerCase() === cleanNick.toLowerCase()
-    ) || searchData.players[0]
-
-    // 2. Pobranie szczegółowych statystyk po ID
-    const statsUrl = `${baseUrl}/players/${playerData.Id}`
-    const statsRes = await fetch(statsUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-      },
-      cache: 'no-store'
-    })
-
-    if (statsRes.ok) {
-      const fullStats = await statsRes.json()
-      return NextResponse.json(fullStats)
-    }
-
-    // Fallback z danymi z wyszukiwarki
-    return NextResponse.json({
-      Id: playerData.Id,
-      Name: playerData.Name,
-      GuildName: playerData.GuildName || 'Bez Gildii',
-      AllianceName: playerData.AllianceName || '',
-      KillFame: playerData.KillFame || 0,
-      DeathFame: playerData.DeathFame || 0,
-      FameRatio: playerData.FameRatio || 0,
-      LifetimeStatistics: { PvE: { Total: 0 } }
-    })
-
-  } catch (err) {
-    console.error('Błąd w routcie Killboardu:', err)
-    return NextResponse.json({ error: 'Błąd połączenia z serwerami Albiona' }, { status: 500 })
+    console.error('Nieoczekiwany błąd adaptera Albion API:', error)
+    return apiError('Nieoczekiwany błąd serwera.', { code: 'INTERNAL_ERROR', status: 500 })
   }
 }

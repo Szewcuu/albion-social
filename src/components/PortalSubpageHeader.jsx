@@ -7,6 +7,7 @@ const toneClasses = {
   violet: 'text-violet-300 border-violet-400/25 bg-violet-400/10',
   sky: 'text-sky-300 border-sky-400/25 bg-sky-400/10',
   ember: 'text-orange-200 border-orange-400/25 bg-orange-400/10',
+  crimson: 'text-rose-300 border-rose-400/25 bg-rose-400/10',
 }
 
 export default function PortalSubpageHeader({

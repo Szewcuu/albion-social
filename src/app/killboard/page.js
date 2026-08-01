@@ -1,190 +1,336 @@
 'use client'
+
 import { useState } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, Search, Skull, Swords, Shield, Flame, UserCheck, Globe } from 'lucide-react'
+import {
+  AlertTriangle,
+  ChevronRight,
+  ExternalLink,
+  Fish,
+  Flame,
+  Globe2,
+  Hammer,
+  Pickaxe,
+  RefreshCw,
+  Search,
+  Shield,
+  Skull,
+  Swords,
+  Trophy,
+  Users,
+  Wheat,
+} from 'lucide-react'
+import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+import CombatEventCard from '@/components/killboard/CombatEventCard'
+
+const REGIONS = [
+  { id: 'europe', label: 'Europa', short: 'EU' },
+  { id: 'america', label: 'Ameryka', short: 'NA' },
+  { id: 'asia', label: 'Azja', short: 'ASIA' },
+]
+
+const FAME_STATS = [
+  { key: 'pve', label: 'PvE Fame', icon: Shield, tone: 'text-violet-300' },
+  { key: 'gathering', label: 'Gathering', icon: Pickaxe, tone: 'text-emerald-300' },
+  { key: 'crafting', label: 'Crafting', icon: Hammer, tone: 'text-orange-200' },
+  { key: 'fishing', label: 'Fishing', icon: Fish, tone: 'text-sky-300' },
+  { key: 'farming', label: 'Farming', icon: Wheat, tone: 'text-lime-300' },
+]
+
+function formatNumber(value) {
+  return new Intl.NumberFormat('pl-PL', { notation: 'compact', maximumFractionDigits: 1 }).format(value || 0)
+}
+
+function getErrorMessage(payload, fallback) {
+  return payload?.error?.message || payload?.error || fallback
+}
 
 export default function KillboardPage() {
   const [searchNick, setSearchNick] = useState('')
-  const [region, setRegion] = useState('europe') // Domyślnie Europa
-  const [loading, setLoading] = useState(false)
-  const [playerData, setPlayerData] = useState(null)
+  const [region, setRegion] = useState('europe')
+  const [searching, setSearching] = useState(false)
+  const [loadingPlayer, setLoadingPlayer] = useState(false)
+  const [searchResults, setSearchResults] = useState([])
+  const [overview, setOverview] = useState(null)
+  const [meta, setMeta] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [activeHistory, setActiveHistory] = useState('kills')
 
-  const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!searchNick.trim()) return
-
-    setLoading(true)
+  const resetResults = () => {
+    setSearchResults([])
+    setOverview(null)
+    setMeta(null)
     setErrorMsg('')
-    setPlayerData(null)
+  }
+
+  const handleRegionChange = (value) => {
+    setRegion(value)
+    resetResults()
+  }
+
+  const handleSearch = async (event) => {
+    event.preventDefault()
+    const query = searchNick.trim()
+    if (query.length < 2) return
+
+    setSearching(true)
+    setErrorMsg('')
+    setOverview(null)
+    setMeta(null)
 
     try {
-      const res = await fetch(`/api/albion/player?nick=${encodeURIComponent(searchNick.trim())}&region=${region}`)
-      const data = await res.json()
+      const response = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(query)}&region=${region}`)
+      const payload = await response.json()
 
-      if (!res.ok) {
-        setErrorMsg(data.error || 'Nie udało się pobrać danych gracza.')
-      } else {
-        setPlayerData(data)
-      }
-    } catch (err) {
-      setErrorMsg('Błąd serwera. Spróbuj ponownie później.')
+      if (!response.ok) throw new Error(getErrorMessage(payload, 'Nie udało się wyszukać gracza.'))
+
+      const players = payload.data?.players || []
+      const sorted = [...players].sort((a, b) => {
+        const exactA = a.name.toLowerCase() === query.toLowerCase() ? 1 : 0
+        const exactB = b.name.toLowerCase() === query.toLowerCase() ? 1 : 0
+        return exactB - exactA || b.killFame - a.killFame
+      })
+      setSearchResults(sorted)
+      setMeta(payload.meta)
+    } catch (error) {
+      setSearchResults([])
+      setErrorMsg(error.message || 'Błąd połączenia. Spróbuj ponownie później.')
     } finally {
-      setLoading(false)
+      setSearching(false)
     }
   }
 
-  const pvpKillFame = playerData?.KillFame || 0
-  const pvpDeathFame = playerData?.DeathFame || 1
-  const kdRatio = (pvpKillFame / Math.max(1, pvpDeathFame)).toFixed(2)
+  const loadPlayer = async (player) => {
+    setLoadingPlayer(true)
+    setErrorMsg('')
+    setActiveHistory('kills')
+
+    try {
+      const response = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(player.id)}&region=${region}&limit=6`)
+      const payload = await response.json()
+      if (!response.ok) throw new Error(getErrorMessage(payload, 'Nie udało się pobrać profilu gracza.'))
+
+      setOverview(payload.data)
+      setMeta(payload.meta)
+      setSearchResults([])
+    } catch (error) {
+      setOverview(null)
+      setErrorMsg(error.message || 'Błąd połączenia. Spróbuj ponownie później.')
+    } finally {
+      setLoadingPlayer(false)
+    }
+  }
+
+  const player = overview?.player
+  const currentRegion = REGIONS.find(item => item.id === region)
+  const history = activeHistory === 'kills' ? overview?.kills || [] : overview?.deaths || []
+  const calculatedRatio = player ? player.killFame / Math.max(1, player.deathFame) : 0
 
   return (
-    <main className="min-h-screen bg-[#050305] text-gray-300 p-4 sm:p-6 lg:p-8 relative font-sans select-none">
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1d0b12] via-[#050305] to-[#020102] z-0 pointer-events-none"></div>
+    <main className="aopp-shell min-h-screen text-[#d5d0c6]">
+      <div className="aopp-world-bg" />
+      <div className="aopp-grain" />
 
-      <div className="max-w-5xl mx-auto space-y-6 relative z-10">
-        
-        {/* POWRÓT */}
-        <div>
-          <Link href="/" className="inline-flex items-center gap-2 text-[#f3ba2f] hover:text-[#fcd053] text-xs font-black tracking-widest uppercase transition group font-mono">
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-            <span>Powrót do Portalu</span>
-          </Link>
+      <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-col gap-7 p-4 sm:p-6 lg:p-8">
+        <PortalSubpageHeader
+          eyebrow="Kroniki wojny • Gameinfo"
+          title={<>Każda walka<br /><span className="text-rose-300">zostawia ślad.</span></>}
+          description="Odszukaj wojownika na dowolnym serwerze, przeanalizuj jego sławę, ostatnie starcia, wyposażenie oraz gildyjnych towarzyszy."
+          icon={Skull}
+          tone="crimson"
+          stats={[
+            { label: 'Obsługiwane regiony', value: '3 serwery' },
+            { label: 'Historia starć', value: 'Kills + Deaths' },
+            { label: 'Źródło', value: 'Gameinfo' },
+          ]}
+          imagePosition="72% center"
+        />
+
+        <section className="aopp-panel p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-[.22em] text-rose-300">Archiwum wojowników</p>
+              <h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Znajdź gracza po nicku</h2>
+            </div>
+            <p className="text-[10px] text-[#77736c]">Wybierz region, w którym znajduje się postać.</p>
+          </div>
+
+          <form onSubmit={handleSearch} className="grid gap-3 sm:grid-cols-[210px_1fr_auto]">
+            <label className="sr-only" htmlFor="killboard-region">Region Albionu</label>
+            <select
+              id="killboard-region"
+              value={region}
+              onChange={event => handleRegionChange(event.target.value)}
+              className="rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-xs font-bold text-[#e2c36f] outline-none focus:border-[#d8ad4a]/60"
+            >
+              {REGIONS.map(item => <option key={item.id} value={item.id}>{item.label} ({item.short})</option>)}
+            </select>
+
+            <label className="relative" htmlFor="killboard-player">
+              <span className="sr-only">Nick gracza</span>
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666159]" />
+              <input
+                id="killboard-player"
+                type="search"
+                minLength={2}
+                maxLength={30}
+                autoComplete="off"
+                placeholder="Wpisz nick gracza..."
+                value={searchNick}
+                onChange={event => setSearchNick(event.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-black/35 py-3 pl-11 pr-4 text-xs text-[#f2ede3] outline-none placeholder:text-[#5f5a53] focus:border-rose-300/45"
+              />
+            </label>
+
+            <button type="submit" disabled={searching || searchNick.trim().length < 2} className="aopp-primary-button inline-flex items-center justify-center gap-2 px-7 py-3 text-[10px] font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40">
+              {searching ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {searching ? 'Przeszukuję' : 'Szukaj'}
+            </button>
+          </form>
+        </section>
+
+        <div aria-live="polite">
+          {errorMsg && (
+            <div className="flex items-start gap-3 rounded-2xl border border-rose-400/25 bg-rose-950/25 p-4 text-xs text-rose-200">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div><p className="font-bold">Nie udało się otworzyć kroniki.</p><p className="mt-1 text-rose-200/65">{errorMsg}</p></div>
+            </div>
+          )}
+
+          {loadingPlayer && (
+            <div className="aopp-panel flex items-center justify-center gap-3 py-16 text-xs text-[#8e8980]">
+              <RefreshCw className="h-5 w-5 animate-spin text-[#d8ad4a]" /> Pobieram profil, historię starć i dane gildii...
+            </div>
+          )}
         </div>
 
-        {/* NAGŁÓWEK */}
-        <header className="bg-[#0c0407] border border-[#2c1219] p-6 sm:p-8 rounded-3xl shadow-xl flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-rose-500 shrink-0 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-            <Skull className="w-8 h-8" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider font-serif">
-              Wyszukiwarka Graczy &amp; Killboard
-            </h1>
-            <p className="text-xs text-gray-400 font-mono mt-1">
-              Sprawdzaj statystyki PvP, K/D Ratio oraz Fame graczy na serwerach Europa, Ameryka i Azja.
-            </p>
-          </div>
-        </header>
+        {!loadingPlayer && searchResults.length > 0 && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[.2em] text-[#d8ad4a]">Wyniki wyszukiwania</p>
+                <h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Wybierz właściwego wojownika</h2>
+              </div>
+              <span className="text-[10px] text-[#6f6b64]">{searchResults.length} wyników • {currentRegion?.label}</span>
+            </div>
 
-        {/* FORMULARZ Z WYBOREM SERWERA */}
-        <form onSubmit={handleSearch} className="bg-[#0c0407] border border-[#281017] p-4 rounded-3xl shadow-2xl space-y-3 sm:space-y-0 sm:flex sm:gap-3">
-          
-          {/* SELECT SERWERA */}
-          <div className="sm:w-48 shrink-0">
-            <select 
-              value={region} 
-              onChange={e => setRegion(e.target.value)}
-              className="w-full bg-[#050204] border border-[#220e14] text-[#f3ba2f] font-mono text-xs font-bold rounded-2xl px-4 py-3 outline-none cursor-pointer focus:border-[#f3ba2f]"
-            >
-              <option value="europe">🌍 Europa (EU)</option>
-              <option value="america">🌎 Ameryka (NA)</option>
-              <option value="asia">🌏 Azja (Asia)</option>
-            </select>
-          </div>
-
-          {/* INPUT NICKU */}
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-4 top-3.5 text-gray-500" />
-            <input 
-              type="text" 
-              placeholder="Wpisz nick gracza..." 
-              value={searchNick} 
-              onChange={e => setSearchNick(e.target.value)} 
-              className="w-full bg-[#050204] border border-[#220e14] rounded-2xl pl-11 pr-4 py-3 text-xs text-gray-100 focus:border-[#f3ba2f] outline-none font-mono"
-            />
-          </div>
-
-          <button 
-            type="submit" 
-            disabled={loading || !searchNick.trim()}
-            className="w-full sm:w-auto bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black font-extrabold px-8 py-3 rounded-2xl uppercase tracking-wider text-xs transition shadow-md disabled:opacity-40 cursor-pointer font-serif flex items-center justify-center gap-2"
-          >
-            {loading ? 'Szukanie...' : 'Szukaj'}
-          </button>
-        </form>
-
-        {errorMsg && (
-          <p className="text-center font-bold text-rose-400 bg-rose-950/40 border border-rose-900/60 p-4 rounded-2xl text-xs font-mono">
-            {errorMsg}
-          </p>
+            <div className="grid gap-3 md:grid-cols-2">
+              {searchResults.map(result => (
+                <button key={result.id} type="button" onClick={() => loadPlayer(result)} className="aopp-list-card group flex items-center justify-between gap-4 p-4 text-left sm:p-5">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-rose-400/20 bg-rose-400/8 text-rose-300"><Skull className="h-5 w-5" /></div>
+                    <div className="min-w-0">
+                      <p className="font-display truncate text-lg font-black text-[#fff8e8]">{result.name}</p>
+                      <p className="truncate text-[10px] text-[#77736c]">{result.guildName || 'Bez gildii'}{result.allianceName ? ` • ${result.allianceName}` : ''}</p>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <div className="text-right"><p className="text-[8px] font-black uppercase tracking-[.12em] text-[#625e57]">Kill Fame</p><p className="text-xs font-bold text-rose-200">{formatNumber(result.killFame)}</p></div>
+                    <ChevronRight className="h-4 w-4 text-[#5d5952] transition group-hover:translate-x-1 group-hover:text-[#d8ad4a]" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
         )}
 
-        {/* WYNIKI */}
-        {playerData && (
-          <div className="bg-[#0c0407] border border-[#281017] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-            
-            <div className="flex flex-col sm:flex-row items-center justify-between border-b border-[#200d13] pb-6 gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-[#1c0a10] border border-[#3d1823] flex items-center justify-center text-[#f3ba2f]">
-                  <UserCheck className="w-7 h-7" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black text-white font-serif">{playerData.Name}</h2>
-                  <div className="flex flex-wrap items-center gap-2 mt-1 font-mono text-[11px]">
-                    <span className="text-gray-400">Gildia: <b className="text-gray-200">{playerData.GuildName || 'Bez Gildii'}</b></span>
-                    {playerData.AllianceName && <span className="bg-[#1c0a10] border border-[#3d1823] text-amber-400 px-2 py-0.5 rounded uppercase font-bold">[{playerData.AllianceName}]</span>}
-                    <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded uppercase font-bold flex items-center gap-1">
-                      <Globe className="w-3 h-3" /> {region.toUpperCase()}
-                    </span>
+        {!loadingPlayer && player && (
+          <div className="space-y-6">
+            {overview.warnings?.length > 0 && (
+              <div className="rounded-2xl border border-amber-400/20 bg-amber-950/15 p-4 text-[10px] text-amber-200/75">
+                {overview.warnings.join(' ')} Pozostałe dane profilu są nadal dostępne.
+              </div>
+            )}
+
+            <section className="aopp-panel overflow-hidden">
+              <div className="flex flex-col gap-5 border-b border-white/8 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-rose-400/20 bg-[radial-gradient(circle,rgba(244,63,94,.14),rgba(0,0,0,.3))] text-rose-300"><Trophy className="h-7 w-7" /></div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[.2em] text-rose-300">Profil wojownika • {currentRegion?.short}</p>
+                    <h2 className="font-display mt-1 text-3xl font-black text-[#fff8e8]">{player.name}</h2>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-[#8e8980]">
+                      <span>{player.guildName || 'Bez gildii'}</span>
+                      {player.allianceTag && <span className="rounded border border-[#d8ad4a]/20 bg-[#d8ad4a]/8 px-1.5 text-[#d9b45a]">[{player.allianceTag}]</span>}
+                      <span className="flex items-center gap-1"><Globe2 className="h-3 w-3" /> {currentRegion?.label}</span>
+                    </div>
                   </div>
                 </div>
+                <a href={`https://albiononline.com/killboard/player/${player.id}`} target="_blank" rel="noopener noreferrer" className="aopp-ghost-button inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[9px] font-black uppercase tracking-[.12em]">
+                  Oficjalna kronika <ExternalLink className="h-3.5 w-3.5" />
+                </a>
               </div>
 
-              <a 
-                href={`https://albiononline.com/killboard/player/${playerData.Id}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-[#1c0a10] hover:bg-[#2c1219] border border-[#3d1823] text-[#f3ba2f] text-xs font-mono font-bold px-4 py-2 rounded-xl transition uppercase flex items-center gap-2"
-              >
-                Oficjalny Profil &rarr;
-              </a>
-            </div>
+              <div className="grid gap-px bg-white/8 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  { label: 'PvP Kill Fame', value: formatNumber(player.killFame), icon: Swords, tone: 'text-rose-300' },
+                  { label: 'Death Fame', value: formatNumber(player.deathFame), icon: Skull, tone: 'text-[#b6b0a7]' },
+                  { label: 'Fame Ratio', value: calculatedRatio.toFixed(2), icon: Flame, tone: 'text-orange-200' },
+                  { label: 'Średnie IP', value: player.averageItemPower || '—', icon: Shield, tone: 'text-sky-300' },
+                ].map(stat => {
+                  const Icon = stat.icon
+                  return <div key={stat.label} className="bg-[#0c0e0c]/95 p-5"><p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.14em] text-[#6f6b64]"><Icon className={`h-3.5 w-3.5 ${stat.tone}`} /> {stat.label}</p><p className={`font-display mt-2 text-2xl font-black ${stat.tone}`}>{stat.value}</p></div>
+                })}
+              </div>
+            </section>
 
-            {/* KARTY STATYSTYKI */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
-              
-              <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl space-y-1">
-                <span className="text-[10px] text-gray-500 uppercase font-bold flex items-center gap-1.5">
-                  <Swords className="w-3.5 h-3.5 text-rose-400" /> PvP Kill Fame
-                </span>
-                <div className="text-xl font-black text-rose-400">
-                  {(playerData.KillFame || 0).toLocaleString('pl-PL')}
+            <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
+              <div className="space-y-4">
+                <div className="aopp-panel flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setActiveHistory('kills')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'kills' ? 'border border-emerald-300/30 bg-emerald-300/10 text-emerald-200' : 'border border-white/8 bg-black/20 text-[#77736c]'}`}>Zabójstwa ({overview.kills.length})</button>
+                    <button type="button" onClick={() => setActiveHistory('deaths')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'deaths' ? 'border border-rose-300/30 bg-rose-300/10 text-rose-200' : 'border border-white/8 bg-black/20 text-[#77736c]'}`}>Zgony ({overview.deaths.length})</button>
+                  </div>
+                  <p className="text-[9px] text-[#625e57]">Ostatnie zdarzenia z Gameinfo</p>
                 </div>
+
+                {history.length > 0 ? history.map(event => <CombatEventCard key={`${event.perspective}-${event.id}`} event={event} />) : (
+                  <div className="aopp-panel py-14 text-center"><Skull className="mx-auto mb-3 h-7 w-7 text-[#625e57]" /><p className="font-display text-lg font-bold text-[#bcb5aa]">Brak zapisanych zdarzeń.</p><p className="mt-1 text-[10px] text-[#666159]">Źródło nie zwróciło historii dla tej postaci.</p></div>
+                )}
               </div>
 
-              <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl space-y-1">
-                <span className="text-[10px] text-gray-500 uppercase font-bold flex items-center gap-1.5">
-                  <Skull className="w-3.5 h-3.5 text-gray-400" /> Death Fame
-                </span>
-                <div className="text-xl font-black text-gray-300">
-                  {(playerData.DeathFame || 0).toLocaleString('pl-PL')}
-                </div>
-              </div>
+              <aside className="space-y-4">
+                <section className="aopp-panel p-5">
+                  <p className="text-[9px] font-black uppercase tracking-[.18em] text-violet-300">Sława profesji</p>
+                  <div className="mt-4 space-y-3">
+                    {FAME_STATS.map(stat => {
+                      const Icon = stat.icon
+                      return <div key={stat.key} className="flex items-center justify-between rounded-xl border border-white/8 bg-black/20 p-3"><p className="flex items-center gap-2 text-[10px] font-bold text-[#918c83]"><Icon className={`h-4 w-4 ${stat.tone}`} /> {stat.label}</p><p className={`font-display font-black ${stat.tone}`}>{formatNumber(player.fame?.[stat.key])}</p></div>
+                    })}
+                  </div>
+                </section>
 
-              <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl space-y-1">
-                <span className="text-[10px] text-gray-500 uppercase font-bold flex items-center gap-1.5">
-                  <Flame className="w-3.5 h-3.5 text-amber-400" /> K/D Fame Ratio
-                </span>
-                <div className="text-xl font-black text-amber-400">
-                  {kdRatio}
-                </div>
-              </div>
+                {overview.guild && (
+                  <section className="aopp-panel p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#d8ad4a]">Gildia wojownika</p><h3 className="font-display mt-1 text-xl font-black text-[#fff8e8]">{overview.guild.name}</h3></div>
+                      <Users className="h-5 w-5 text-[#d8ad4a]" />
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 text-center">
+                      <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] uppercase tracking-[.12em] text-[#625e57]">Członkowie</p><p className="font-display mt-1 font-black text-[#e2ddd3]">{overview.guild.memberCount}</p></div>
+                      <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] uppercase tracking-[.12em] text-[#625e57]">Kill Fame</p><p className="font-display mt-1 font-black text-rose-200">{formatNumber(overview.guild.killFame)}</p></div>
+                    </div>
+                    {overview.guild.topMembers.length > 0 && <div className="mt-4 space-y-1.5"><p className="mb-2 text-[8px] font-black uppercase tracking-[.14em] text-[#625e57]">Najaktywniejsi PvP</p>{overview.guild.topMembers.slice(0, 6).map(member => <button type="button" key={member.id} onClick={() => loadPlayer(member)} className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-[10px] text-[#9c968d] transition hover:bg-white/5 hover:text-[#fff8e8]"><span className="truncate">{member.name}</span><span className="shrink-0 text-rose-200/70">{formatNumber(member.killFame)}</span></button>)}</div>}
+                  </section>
+                )}
 
-              <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl space-y-1">
-                <span className="text-[10px] text-gray-500 uppercase font-bold flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-purple-400" /> PvE Fame
-                </span>
-                <div className="text-xl font-black text-purple-300">
-                  {(playerData.LifetimeStatistics?.PvE?.Total || 0).toLocaleString('pl-PL')}
-                </div>
-              </div>
-
-            </div>
-
+                {meta && <p className="px-2 text-[8px] leading-4 text-[#514e49]">Źródło: {meta.source}. Dane pobrano {new Date(meta.fetchedAt).toLocaleString('pl-PL')}. Cache: {meta.cacheSeconds}s.</p>}
+              </aside>
+            </section>
           </div>
         )}
 
+        {!searching && !loadingPlayer && searchResults.length === 0 && !player && !errorMsg && (
+          <section className="aopp-panel grid gap-4 p-6 md:grid-cols-3">
+            {[
+              { icon: Search, title: 'Precyzyjne wyszukiwanie', text: 'Wybierasz właściwy profil spośród graczy o podobnych nazwach.' },
+              { icon: Swords, title: 'Historia starć', text: 'Ostatnie zabójstwa i zgony pokazują przeciwników, fame oraz pełne zestawy.' },
+              { icon: Users, title: 'Kontekst gildii', text: 'Profil łączy wojownika z jego gildią i najaktywniejszymi członkami.' },
+            ].map(item => {
+              const Icon = item.icon
+              return <div key={item.title} className="aopp-role-card p-5"><Icon className="h-5 w-5 text-rose-300" /><h3 className="font-display mt-4 text-lg font-black text-[#fff8e8]">{item.title}</h3><p className="mt-2 text-xs leading-5 text-[#817c73]">{item.text}</p></div>
+            })}
+          </section>
+        )}
       </div>
     </main>
   )
