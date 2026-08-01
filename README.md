@@ -26,18 +26,18 @@ Gotowe i wdrożone:
 
 ## Najbliższy krok
 
-> **Etap 6.1 / P3.1: mobile, dostępność i spójność interakcji**
+> **Etap 6.2 / P3.2: końcowy audyt wizualny i kontrastu**
 
-Główne ekrany P3 są już wdrożone. Teraz domykamy jakość całego portalu: widoki 360–430 px, obsługę klawiaturą, etykiety i stany ARIA, wspólne puste stany oraz bezpieczne potwierdzenia akcji. Po zakończeniu sprintu P3.1 przechodzimy do P4, zaczynając od publicznej strony szczegółów buildu, ulubionych i bezpiecznego głosowania.
+Zakres kodowy P3.1 jest wdrożony: krytyczne układy mobilne nie generują poziomego overflow, interakcje mają etykiety i stany ARIA, a wspólne puste stany oraz potwierdzenia są gotowe. Do pełnego zamknięcia P3 pozostał ręczny przegląd wizualny najważniejszych przepływów przy 360, 390 i 430 px oraz pomiar kontrastu. Następnie przechodzimy do P4, zaczynając od publicznej strony szczegółów buildu, ulubionych i bezpiecznego głosowania.
 
-### Aktywny sprint P3.1
+### Zakończony sprint P3.1
 
 - [x] dodać wspólne komponenty pustych stanów, komunikatów i potwierdzeń akcji
 - [x] poprawić krytyczne układy i kontrolki dla szerokości 360, 390 i 430 px
 - [x] sprawdzić kod pod kątem nawigacji klawiaturą, fokusu, etykiet formularzy i stanów ARIA
 - [x] usunąć pozostałe ostrzeżenia `no-img-element` bez pogorszenia wydajności
 - [x] wykonać lint, build i lokalny test wszystkich publicznych tras
-- [ ] wdrożyć sprint przez GitHub/Vercel i wykonać końcowy test produkcji
+- [x] wdrożyć sprint przez GitHub/Vercel i wykonać końcowy test produkcji
 
 ## Roadmapa / TODO
 
