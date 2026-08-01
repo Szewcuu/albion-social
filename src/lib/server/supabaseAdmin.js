@@ -14,6 +14,51 @@ function readServerConfig() {
   return { url, anonKey, serviceRoleKey }
 }
 
+function readPublicConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !anonKey) {
+    throw new Error('Brak publicznej konfiguracji Supabase po stronie serwera.')
+  }
+
+  return { url, anonKey }
+}
+
+function readBearerToken(request) {
+  const authorization = request.headers.get('authorization') || ''
+  return authorization.startsWith('Bearer ')
+    ? authorization.slice('Bearer '.length).trim()
+    : ''
+}
+
+export function createSupabasePublicServerClient() {
+  const { url, anonKey } = readPublicConfig()
+
+  return createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
+
+export function createSupabaseRequestClient(request) {
+  const token = readBearerToken(request)
+  if (!token) throw new Error('Brak tokenu użytkownika.')
+
+  const { url, anonKey } = readPublicConfig()
+  return createClient(url, anonKey, {
+    global: {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+}
+
 export function createSupabaseAdminClient() {
   const { url, serviceRoleKey } = readServerConfig()
 
@@ -26,16 +71,13 @@ export function createSupabaseAdminClient() {
 }
 
 export async function requireApiUser(request) {
-  const authorization = request.headers.get('authorization') || ''
-  const token = authorization.startsWith('Bearer ')
-    ? authorization.slice('Bearer '.length).trim()
-    : ''
+  const token = readBearerToken(request)
 
   if (!token) {
     return { error: 'Brak autoryzacji.', status: 401 }
   }
 
-  const { url, anonKey } = readServerConfig()
+  const { url, anonKey } = readPublicConfig()
   const authClient = createClient(url, anonKey, {
     auth: {
       autoRefreshToken: false,
