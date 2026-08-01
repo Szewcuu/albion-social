@@ -1,5 +1,6 @@
 'use client'
 import { useState, useCallback } from 'react'
+import Image from 'next/image'
 import { Search, X, Plus } from 'lucide-react'
 import { itemImageUrl } from '@/lib/buildSlots'
 
@@ -78,9 +79,12 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
         )}
         <div className="flex items-center justify-center">
           {value ? (
-            <img
+            <Image
               src={itemImageUrl(value)}
-              alt=""
+              alt={`Wybrany przedmiot: ${value}`}
+              width={compact ? 40 : 48}
+              height={compact ? 40 : 48}
+              unoptimized
               className={`object-contain drop-shadow-lg group-hover:scale-110 transition-transform ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}
               onError={(e) => { e.target.style.display = 'none' }}
             />
@@ -152,7 +156,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
                       }`}
                     >
                       {item.id ? (
-                        <img src={itemImageUrl(item.id)} alt="" className="w-8 h-8 object-contain shrink-0" onError={(e) => { e.target.style.display = 'none' }} />
+                        <Image src={itemImageUrl(item.id)} alt="" width={32} height={32} unoptimized className="w-8 h-8 object-contain shrink-0" onError={(e) => { e.target.style.display = 'none' }} />
                       ) : (
                         <div className="w-8 h-8 rounded bg-[#15060b] flex items-center justify-center text-gray-600 text-xs">—</div>
                       )}

@@ -450,7 +450,7 @@ export default function Home() {
                       <div className="flex items-center gap-3.5 border-b border-[#200d13] pb-4">
                         <div className="relative shrink-0">
                           {user.user_metadata?.avatar_url ? (
-                            <img src={user.user_metadata.avatar_url} alt="Avatar" className="w-12 h-12 rounded-2xl object-cover border-2 border-[#f3ba2f] shadow-[0_0_12px_rgba(243,186,47,0.3)]" />
+                            <Image src={user.user_metadata.avatar_url} alt="Avatar użytkownika" width={48} height={48} className="w-12 h-12 rounded-2xl object-cover border-2 border-[#f3ba2f] shadow-[0_0_12px_rgba(243,186,47,0.3)]" />
                           ) : (
                             <div className="w-12 h-12 rounded-2xl bg-[#2a1118] border-2 border-[#f3ba2f] flex items-center justify-center font-bold text-[#f3ba2f]">?</div>
                           )}

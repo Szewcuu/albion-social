@@ -1,5 +1,6 @@
 'use client'
 import ItemPicker from './ItemPicker'
+import Image from 'next/image'
 import { EQUIPMENT_SLOTS, isTwoHandedWeapon, itemImageUrl } from '@/lib/buildSlots'
 import { Lock } from 'lucide-react'
 
@@ -86,11 +87,14 @@ export function EquipmentPreview({ slots, size = 'md' }) {
         const itemId = slots[key]?.main
         if (!itemId) return null
         return (
-          <img
+          <Image
             key={key}
             src={itemImageUrl(itemId)}
-            alt={key}
+            alt={`Przedmiot w slocie ${key}`}
             title={key}
+            width={size === 'sm' ? 32 : 40}
+            height={size === 'sm' ? 32 : 40}
+            unoptimized
             className={`${iconSize} object-contain drop-shadow-md`}
             onError={(e) => { e.target.style.display = 'none' }}
           />

@@ -1,6 +1,6 @@
 'use client'
-/* eslint-disable @next/next/no-img-element */
 
+import Image from 'next/image'
 import { Skull, Swords, Users } from 'lucide-react'
 
 const EQUIPMENT_ORDER = ['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes', 'Cape', 'Potion', 'Food']
@@ -18,7 +18,7 @@ function EquipmentStrip({ equipment }) {
         return (
           <div key={key} className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-white/8 bg-black/35">
             {item?.type ? (
-              <img src={itemImageUrl(item)} alt="" title={item.type} className="h-9 w-9 object-contain" loading="lazy" />
+              <Image src={itemImageUrl(item)} alt="" title={item.type} width={36} height={36} unoptimized className="h-9 w-9 object-contain" />
             ) : (
               <span className="text-[9px] text-[#3e3b36]">—</span>
             )}
