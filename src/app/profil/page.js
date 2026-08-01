@@ -5,9 +5,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Activity,
-  AlertTriangle,
   Award,
-  Check,
   ChevronRight,
   CircleUserRound,
   ExternalLink,
@@ -22,6 +20,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
 
 const INITIAL_FORM = {
   ingame_nick: '',
@@ -51,11 +50,11 @@ function ProfileSkeleton() {
       <div className="aopp-world-bg" />
       <div className="aopp-grain" />
       <div className="relative z-10 mx-auto w-full max-w-[1380px] space-y-6 p-4 sm:p-6 lg:p-8">
-        <div className="h-5 w-44 animate-pulse rounded bg-white/8" />
-        <div className="h-[310px] animate-pulse rounded-[28px] border border-white/8 bg-white/[.035]" />
+        <SkeletonBlock className="h-5 w-44 rounded" />
+        <SkeletonBlock className="h-[310px] rounded-[28px]" />
         <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
-          <div className="h-96 animate-pulse rounded-[28px] border border-white/8 bg-white/[.035]" />
-          <div className="h-96 animate-pulse rounded-[28px] border border-white/8 bg-white/[.035]" />
+          <SkeletonBlock className="h-96 rounded-[28px]" />
+          <SkeletonBlock className="h-96 rounded-[28px]" />
         </div>
       </div>
     </main>
@@ -188,12 +187,7 @@ export default function ProfilePage() {
           imagePosition="68% center"
         />
 
-        {notice && (
-          <div role="status" aria-live="polite" className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-xs ${notice.type === 'success' ? 'border-emerald-400/25 bg-emerald-400/8 text-emerald-200' : 'border-rose-400/25 bg-rose-400/8 text-rose-200'}`}>
-            {notice.type === 'success' ? <Check className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-            {notice.text}
-          </div>
-        )}
+        {notice && <StatusNotice type={notice.type === 'success' ? 'success' : 'error'}>{notice.text}</StatusNotice>}
 
         <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           <aside className="space-y-5">
@@ -317,7 +311,7 @@ function ActivityPanel({ title, eyebrow, icon: Icon, tone, href, empty, children
   return (
     <section className="aopp-panel rounded-[24px] p-5 sm:p-6">
       <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className={`text-[9px] font-black uppercase tracking-[.18em] ${toneClass}`}>{eyebrow}</p><h3 className="font-display mt-1 text-xl font-black text-[#fff8e8]">{title}</h3></div><Icon className={`h-5 w-5 ${toneClass}`} /></div>
-      <div className="mt-4 space-y-2">{count ? children : <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-xs text-[#77736c]">{empty}</div>}</div>
+      <div className="mt-4 space-y-2">{count ? children : <EmptyState icon={Icon} title="Jeszcze tu pusto" description={empty} compact />}</div>
       <Link href={href} className="mt-4 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[.14em] text-[#a9a49b] hover:text-[#e5bb55]">Zobacz cały moduł <ChevronRight className="h-3.5 w-3.5" /></Link>
     </section>
   )

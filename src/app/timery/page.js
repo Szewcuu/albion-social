@@ -6,7 +6,6 @@ import {
   BellRing,
   CalendarClock,
   Castle,
-  Check,
   ChevronDown,
   Clock3,
   Compass,
@@ -19,6 +18,7 @@ import {
   Zap,
 } from 'lucide-react'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
 
 const CUSTOM_TIMERS_KEY = 'aopp-custom-timers-v2'
 
@@ -257,14 +257,14 @@ export default function TimeryPage() {
               <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Data i godzina<input type="datetime-local" value={timerDate} onChange={(event) => setTimerDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
               <button type="submit" className="aopp-primary-button flex w-full items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em]"><Plus className="h-4 w-4" /> Dodaj timer</button>
             </form>
-            {notice && <p role="status" aria-live="polite" className="mt-3 flex items-start gap-2 rounded-xl border border-white/8 bg-black/20 p-3 text-[10px] leading-5 text-[#a9a49b]"><Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300" />{notice}</p>}
+            {notice && <StatusNotice type="success" className="mt-3">{notice}</StatusNotice>}
           </section>
 
           <section className="aopp-panel rounded-[28px] p-5 sm:p-6">
             <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Osobisty harmonogram</p><h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Twoje wydarzenia</h2></div><span className="rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-[9px] font-bold text-[#8f8a81]">{activeCustomTimers.length}/20</span></div>
             <div className="mt-4 space-y-2">
               {activeCustomTimers.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 px-5 py-12 text-center"><TimerReset className="mx-auto h-6 w-6 text-[#77736c]" /><p className="mt-3 text-xs font-bold text-[#a9a49b]">Brak własnych timerów.</p><p className="mt-1 text-[10px] text-[#6f6a63]">Dodaj datę zbiórki, CTA lub transportu.</p></div>
+                <EmptyState icon={TimerReset} title="Brak własnych timerów" description="Dodaj datę zbiórki, CTA lub transportu." />
               ) : activeCustomTimers.map((timer) => {
                 const expired = timer.target <= now
                 return (

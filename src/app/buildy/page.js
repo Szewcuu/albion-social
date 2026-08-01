@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame } from 'lucide-react'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
@@ -65,9 +66,12 @@ export default function BuildyPage() {
     <div className="flex flex-col items-center bg-[#050204] border border-[#260f16] rounded-2xl p-2 text-center relative group shadow-inner">
       <span className="text-[9px] text-gray-500 font-mono uppercase mb-1">{label}</span>
       {itemName ? (
-        <img
+        <Image
           src={itemImageUrl(itemName)}
           alt={itemName}
+          width={48}
+          height={48}
+          unoptimized
           className="w-12 h-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110"
           title={itemName}
           onError={(e) => { e.target.style.display = 'none' }}

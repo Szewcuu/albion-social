@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { Radio, Send, Trash2 } from 'lucide-react'
 
@@ -134,7 +135,7 @@ export default function ChatBox({ user, isAdmin }) {
               return (
                 <div key={msg.id} className="flex items-start gap-3 rounded-2xl border border-white/[.06] bg-black/25 p-3.5 transition-colors hover:border-[#cba84e]/20 hover:bg-black/35">
                   {userAvatar && msg.channel !== 'SYSTEM' ? (
-                    <img src={userAvatar} alt="Avatar" className="w-9 h-9 rounded-xl object-cover border border-[#3d1823] shrink-0 shadow" />
+                    <Image src={userAvatar} alt={`Avatar użytkownika ${cleanDisplayName}`} width={36} height={36} className="w-9 h-9 rounded-xl object-cover border border-[#3d1823] shrink-0 shadow" />
                   ) : (
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 bg-[#12070a] border border-[#3d1823] text-[#f3ba2f]">
                       {cleanDisplayName.charAt(0).toUpperCase()}

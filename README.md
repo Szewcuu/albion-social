@@ -22,12 +22,22 @@ Gotowe i wdrożone:
 - [x] wspólna, zabezpieczona warstwa Gameinfo dla trzech regionów
 - [x] Killboard 2.0 z wyborem gracza, historią PvP, wyposażeniem i kontekstem gildii
 - [x] Market Intelligence z pełnym katalogiem, porównaniem miast, trendami i kalkulatorami
+- [x] nowe ekrany Profilu, Timerów, Loot Splitu, Regulaminu i Prywatności
 
 ## Najbliższy krok
 
-> **Etap 6: kolejne ekrany UI/UX**
+> **Etap 6.1 / P3.1: mobile, dostępność i spójność interakcji**
 
-Market Intelligence jest gotowy. Następnym etapem jest przebudowa Profilu gracza, Timerów i Loot Splitu oraz pełny przegląd responsywności i dostępności całego portalu.
+Główne ekrany P3 są już wdrożone. Teraz domykamy jakość całego portalu: widoki 360–430 px, obsługę klawiaturą, etykiety i stany ARIA, wspólne puste stany oraz bezpieczne potwierdzenia akcji. Po zakończeniu sprintu P3.1 przechodzimy do P4, zaczynając od publicznej strony szczegółów buildu, ulubionych i bezpiecznego głosowania.
+
+### Aktywny sprint P3.1
+
+- [x] dodać wspólne komponenty pustych stanów, komunikatów i potwierdzeń akcji
+- [x] poprawić krytyczne układy i kontrolki dla szerokości 360, 390 i 430 px
+- [x] sprawdzić kod pod kątem nawigacji klawiaturą, fokusu, etykiet formularzy i stanów ARIA
+- [x] usunąć pozostałe ostrzeżenia `no-img-element` bez pogorszenia wydajności
+- [x] wykonać lint, build i lokalny test wszystkich publicznych tras
+- [ ] wdrożyć sprint przez GitHub/Vercel i wykonać końcowy test produkcji
 
 ## Roadmapa / TODO
 
@@ -78,7 +88,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] przebudować Loot Split i poprawić przepływ rozliczenia grupy
 - [x] dopracować strony Regulamin i Prywatność
 - [ ] wykonać pełny przegląd mobile 360–430 px
-- [ ] ujednolicić skeletony, komunikaty błędów, puste stany i potwierdzenia akcji
+- [x] ujednolicić skeletony, komunikaty błędów, puste stany i potwierdzenia akcji
 - [ ] przeprowadzić audyt dostępności klawiatury, kontrastu i etykiet formularzy
 
 ### P4 — funkcje społecznościowe
@@ -107,7 +117,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 - [ ] dodać testy end-to-end kluczowych przepływów
 - [ ] dodać automatyczny lint i build w GitHub Actions
-- [ ] usunąć ostrzeżenia `no-img-element` tam, gdzie optymalizacja Next Image jest bezpieczna
+- [x] usunąć ostrzeżenia `no-img-element` tam, gdzie optymalizacja Next Image jest bezpieczna
 - [ ] dodać unikalne metadata, Open Graph i canonical URL dla podstron
 - [ ] przygotować sitemapę i robots.txt
 - [ ] dodać PWA: manifest, ikony i podstawowy tryb offline

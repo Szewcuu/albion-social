@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Calculator,
-  Check,
   ClipboardCopy,
   Coins,
   FileCheck2,
@@ -21,6 +20,8 @@ import {
   WalletCards,
 } from 'lucide-react'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
 
 const DRAFT_KEY = 'aopp-loot-split-draft-v2'
 
@@ -56,6 +57,7 @@ export default function LootSplit() {
   const [regearNick, setRegearNick] = useState('')
   const [regearAmount, setRegearAmount] = useState('')
   const [notice, setNotice] = useState(null)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
   useEffect(() => {
     const hydrationTimer = setTimeout(() => {
@@ -132,7 +134,6 @@ export default function LootSplit() {
   }
 
   function resetDraft() {
-    if (!window.confirm('Wyczyścić całe rozliczenie i zapisany szkic?')) return
     setEventName('')
     setTotalValue('')
     setGuildTaxPercent('10')
@@ -142,6 +143,8 @@ export default function LootSplit() {
     setRegearAmount('')
     setNotice(null)
     localStorage.removeItem(DRAFT_KEY)
+    setResetDialogOpen(false)
+    setNotice({ type: 'success', text: 'Rozliczenie i zapisany szkic zostały wyczyszczone.' })
   }
 
   function reportText() {
@@ -209,11 +212,7 @@ export default function LootSplit() {
           imagePosition="70% center"
         />
 
-        {notice && (
-          <div role="status" aria-live="polite" className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-xs ${notice.type === 'success' ? 'border-emerald-400/25 bg-emerald-400/8 text-emerald-200' : 'border-rose-400/25 bg-rose-400/8 text-rose-200'}`}>
-            {notice.type === 'success' ? <Check className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}{notice.text}
-          </div>
-        )}
+        {notice && <StatusNotice type={notice.type === 'success' ? 'success' : 'error'}>{notice.text}</StatusNotice>}
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_410px]">
           <div className="space-y-6">
@@ -257,7 +256,7 @@ export default function LootSplit() {
 
               <div className="mt-5 space-y-2">
                 {regearList.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center text-xs text-[#77736c]">Brak zwrotów — cała pula po podatku trafi do równych udziałów.</div>
+                  <EmptyState icon={ShieldAlert} title="Brak zwrotów" description="Cała pula po podatku trafi do równych udziałów." compact />
                 ) : regearList.map((item) => (
                   <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-rose-400/12 bg-rose-400/[.035] p-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{item.nick}</p><p className="mt-0.5 font-mono text-[10px] text-rose-300">+{silver(item.amount)} zwrotu</p></div><button type="button" onClick={() => setRegearList((current) => current.filter((entry) => entry.id !== item.id))} aria-label={`Usuń regear gracza ${item.nick}`} className="rounded-lg border border-rose-400/15 p-2 text-rose-300 hover:bg-rose-400/10"><Trash2 className="h-3.5 w-3.5" /></button></div>
                 ))}
@@ -270,7 +269,7 @@ export default function LootSplit() {
               <SectionTitle icon={FileCheck2} eyebrow="Krok 4" title="Lista wypłat" description="Każdy gracz otrzymuje bazowy udział oraz przypisany zwrot za sprzęt." badge={`${calculation.payoutRows.length} przelewów`} tone="emerald" />
               <div className="mt-5 overflow-hidden rounded-2xl border border-white/8">
                 <div className="hidden grid-cols-[1fr_.8fr_.8fr_.8fr] gap-3 border-b border-white/8 bg-white/[.025] px-4 py-3 text-[8px] font-black uppercase tracking-[.14em] text-[#77736c] sm:grid"><span>Gracz</span><span>Udział</span><span>Regear</span><span>Razem</span></div>
-                {calculation.payoutRows.length === 0 ? <div className="px-5 py-10 text-center text-xs text-[#77736c]">Dodaj uczestników, aby wygenerować listę wypłat.</div> : calculation.payoutRows.map((row) => (
+                {calculation.payoutRows.length === 0 ? <EmptyState icon={Users} title="Lista wypłat jest pusta" description="Dodaj uczestników, aby wygenerować przelewy." className="m-4" /> : calculation.payoutRows.map((row) => (
                   <div key={row.nick.toLocaleLowerCase('pl')} className="grid gap-2 border-b border-white/6 px-4 py-4 last:border-b-0 sm:grid-cols-[1fr_.8fr_.8fr_.8fr] sm:items-center"><p className="flex items-center gap-2 text-xs font-bold text-[#eee7d9]"><UserRoundCheck className="h-4 w-4 text-sky-300" />{row.nick}</p><p className="text-[10px] text-[#a9a49b]"><span className="mr-1 text-[#6f6a63] sm:hidden">Udział:</span>{silver(row.basePayout)}</p><p className="text-[10px] text-rose-300"><span className="mr-1 text-[#6f6a63] sm:hidden">Regear:</span>{row.reimbursement ? `+${silver(row.reimbursement)}` : '—'}</p><p className="font-mono text-xs font-black text-emerald-300"><span className="mr-1 text-[#6f6a63] sm:hidden">Razem:</span>{silver(row.total)}</p></div>
                 ))}
               </div>
@@ -293,7 +292,7 @@ export default function LootSplit() {
                 {calculation.roundingRemainder > 0 && <p className="flex items-start gap-2 text-[9px] leading-4 text-[#77736c]"><Coins className="mt-0.5 h-3 w-3 shrink-0 text-[#e5bb55]" /> Pozostałość po zaokrągleniu: {silver(calculation.roundingRemainder)}. Zostaje w banku rozliczenia.</p>}
 
                 <button type="button" onClick={copyReport} disabled={!calculation.totalLoot || !calculation.players.length || calculation.deficit > 0 || calculation.unassignedRegears.length > 0} className="aopp-primary-button flex w-full items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40"><ClipboardCopy className="h-4 w-4" /> Kopiuj raport</button>
-                <div className="grid grid-cols-2 gap-2"><button type="button" onClick={saveDraft} className="aopp-ghost-button flex items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Save className="h-3.5 w-3.5" /> Zapisz szkic</button><button type="button" onClick={resetDraft} className="flex items-center justify-center gap-2 rounded-xl border border-rose-400/15 bg-rose-400/5 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-rose-300 hover:bg-rose-400/10"><RotateCcw className="h-3.5 w-3.5" /> Wyczyść</button></div>
+                <div className="grid gap-2 sm:grid-cols-2"><button type="button" onClick={saveDraft} className="aopp-ghost-button flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Save className="h-3.5 w-3.5" /> Zapisz szkic</button><button type="button" onClick={() => setResetDialogOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-400/15 bg-rose-400/5 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-rose-300 hover:bg-rose-400/10"><RotateCcw className="h-3.5 w-3.5" /> Wyczyść</button></div>
               </div>
             </section>
 
@@ -301,6 +300,14 @@ export default function LootSplit() {
           </aside>
         </div>
       </div>
+      <ConfirmDialog
+        open={resetDialogOpen}
+        title="Wyczyścić rozliczenie?"
+        description="Usuniemy wszystkie kwoty, uczestników, zwroty oraz szkic zapisany na tym urządzeniu. Tej operacji nie można cofnąć."
+        confirmLabel="Wyczyść wszystko"
+        onConfirm={resetDraft}
+        onOpenChange={setResetDialogOpen}
+      />
     </main>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import {
   AlertTriangle,
   ArrowRight,
@@ -409,8 +410,7 @@ export default function MarketIntelligence() {
                     <div className="flex items-center justify-center gap-2 px-3 py-8 text-xs text-[#8f8a81]"><LoaderCircle className="h-4 w-4 animate-spin" /> Przeszukuję katalog...</div>
                   ) : searchResults.length ? searchResults.map((item) => (
                     <button key={item.id} type="button" onClick={() => selectItem(item)} className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition hover:bg-white/5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={itemImageUrl(item.id)} alt="" className="h-10 w-10 object-contain" />
+                      <Image src={itemImageUrl(item.id)} alt="" width={40} height={40} unoptimized className="h-10 w-10 object-contain" />
                       <span className="min-w-0">
                         <span className="block truncate text-xs font-bold text-[#eee7d9]">{item.name}</span>
                         <span className="block truncate font-mono text-[9px] text-[#77736c]">{item.id}</span>
@@ -427,13 +427,12 @@ export default function MarketIntelligence() {
           </div>
 
           <div className="flex items-center gap-3 rounded-2xl border border-[#d8ad4a]/15 bg-[#d8ad4a]/5 p-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={itemImageUrl(selectedItem.id, quality)} alt="" className="h-14 w-14 object-contain drop-shadow-xl" />
+            <Image src={itemImageUrl(selectedItem.id, quality)} alt="" width={56} height={56} unoptimized className="h-14 w-14 object-contain drop-shadow-xl" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-[#fff8e8]">{selectedItem.name}</p>
               <p className="mt-1 truncate font-mono text-[9px] text-[#77736c]">{selectedItem.id}</p>
             </div>
-            <button type="button" onClick={toggleFavorite} aria-label={isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'} className={`rounded-xl border p-2 transition ${isFavorite ? 'border-[#e5bb55]/40 bg-[#e5bb55]/10 text-[#e5bb55]' : 'border-white/10 text-[#77736c] hover:text-[#e5bb55]'}`}>
+            <button type="button" onClick={toggleFavorite} aria-label={isFavorite ? 'Usuń z ulubionych' : 'Dodaj do ulubionych'} aria-pressed={isFavorite} className={`rounded-xl border p-2 transition ${isFavorite ? 'border-[#e5bb55]/40 bg-[#e5bb55]/10 text-[#e5bb55]' : 'border-white/10 text-[#77736c] hover:text-[#e5bb55]'}`}>
               <Star className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
             </button>
           </div>
@@ -454,13 +453,13 @@ export default function MarketIntelligence() {
               <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.16em] text-[#8f8a81]"><BellRing className="h-3.5 w-3.5 text-[#e5bb55]" /> Obserwowana cena</p>
               {activeWatch && <span className="text-[8px] font-bold uppercase text-emerald-300">Zapisana</span>}
             </div>
-            <div className="grid grid-cols-[100px_1fr_auto] gap-1.5">
-              <select value={watchDirection} onChange={(event) => setWatchDirection(event.target.value)} className="rounded-lg border border-white/10 bg-[#080605] px-2 text-[9px] text-[#b8b1a7] outline-none">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[100px_1fr_auto]">
+              <label><span className="sr-only">Warunek obserwowanej ceny</span><select value={watchDirection} onChange={(event) => setWatchDirection(event.target.value)} className="min-h-10 w-full rounded-lg border border-white/10 bg-[#080605] px-2 text-[9px] text-[#b8b1a7] outline-none">
                 <option value="below">Sprzedaż ≤</option>
                 <option value="above">Kupno ≥</option>
-              </select>
-              <input type="number" min="0" value={watchTarget} onChange={(event) => setWatchTarget(event.target.value)} placeholder="Cena" className="min-w-0 rounded-lg border border-white/10 bg-[#080605] px-2 py-2 font-mono text-[10px] text-[#eee7d9] outline-none focus:border-[#e5bb55]/40" />
-              <button type="button" onClick={savePriceWatch} className="rounded-lg border border-[#e5bb55]/20 bg-[#e5bb55]/8 px-2.5 text-[9px] font-black uppercase text-[#e5bb55] hover:bg-[#e5bb55]/12">Zapisz</button>
+              </select></label>
+              <label><span className="sr-only">Próg ceny w silver</span><input type="number" min="0" value={watchTarget} onChange={(event) => setWatchTarget(event.target.value)} placeholder="Cena" className="min-h-10 w-full min-w-0 rounded-lg border border-white/10 bg-[#080605] px-2 py-2 font-mono text-[10px] text-[#eee7d9] outline-none focus:border-[#e5bb55]/40" /></label>
+              <button type="button" onClick={savePriceWatch} className="min-h-10 rounded-lg border border-[#e5bb55]/20 bg-[#e5bb55]/8 px-3 text-[9px] font-black uppercase text-[#e5bb55] hover:bg-[#e5bb55]/12">Zapisz</button>
             </div>
             <p className="mt-2 text-[9px] leading-4 text-[#6f6a63]">Próg jest zapisany lokalnie. Ponowne uruchomienie analizy sprawdza, czy został osiągnięty.</p>
           </div>
@@ -495,7 +494,7 @@ export default function MarketIntelligence() {
               {CITIES.map((city) => {
                 const active = activeCities.includes(city)
                 return (
-                  <button key={city} type="button" onClick={() => toggleCity(city)} className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-[10px] transition ${active ? 'border-sky-400/25 bg-sky-400/8 text-sky-200' : 'border-white/8 bg-black/15 text-[#77736c]'}`}>
+                  <button key={city} type="button" onClick={() => toggleCity(city)} aria-pressed={active} className={`flex min-h-10 items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-[10px] transition ${active ? 'border-sky-400/25 bg-sky-400/8 text-sky-200' : 'border-white/8 bg-black/15 text-[#77736c]'}`}>
                     <span className={`flex h-3.5 w-3.5 items-center justify-center rounded border ${active ? 'border-sky-300 bg-sky-300 text-black' : 'border-white/15'}`}>{active && <Check className="h-2.5 w-2.5" />}</span>
                     <span className="truncate">{city}</span>
                   </button>
@@ -504,7 +503,7 @@ export default function MarketIntelligence() {
             </div>
           </div>
 
-          <div className="grid grid-cols-[1fr_auto] gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
             <label className="relative">
               <span className="sr-only">Zakres historii</span>
               <select value={range} onChange={(event) => setRange(event.target.value)} className="h-full w-full appearance-none rounded-xl border border-white/10 bg-[#080605] px-3 py-3 text-xs text-[#d8d2c8] outline-none">
@@ -514,7 +513,7 @@ export default function MarketIntelligence() {
               </select>
               <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77736c]" />
             </label>
-            <button type="button" onClick={analyzeMarket} disabled={loading} className="aopp-primary-button min-w-32 justify-center disabled:cursor-wait disabled:opacity-60">
+            <button type="button" onClick={analyzeMarket} disabled={loading} className="aopp-primary-button min-h-11 w-full justify-center disabled:cursor-wait disabled:opacity-60 sm:min-w-32">
               {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
               {loading ? 'Analizuję' : 'Analizuj'}
             </button>
