@@ -141,7 +141,7 @@ export default function KillboardPage() {
               </a>
             </div>
 
-            {/* KARTY STATYSTYK */}
+            {/* KARTY STATYSTYKI */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
               
               <div className="bg-[#050204] border border-[#220e14] p-4 rounded-2xl space-y-1">
