@@ -254,20 +254,22 @@ export default function Rynek() {
                 <span className="rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.14em] text-[#a9a49b]">{filteredOffers.length} ofert</span>
               </div>
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
+                <label htmlFor="market-offer-search" className="sr-only">Szukaj przedmiotów na rynku</label>
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input 
+                  id="market-offer-search"
                   type="text" 
                   placeholder="Szukaj przedmiotów na rynku..." 
                   value={searchTerm} 
                   onChange={e => setSearchTerm(e.target.value)} 
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl pl-9 pr-4 py-2.5 text-xs text-gray-100 focus:border-[#f3ba2f] outline-none"
+                  className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Miasto</label>
-                  <select value={filterCity} onChange={e => setFilterCity(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-gray-300 outline-none cursor-pointer">
+                  <label htmlFor="market-city-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Miasto</label>
+                  <select id="market-city-filter" value={filterCity} onChange={e => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Miasta</option>
                     <option value="Caerleon">Caerleon</option>
                     <option value="Martlock">Martlock</option>
@@ -280,8 +282,8 @@ export default function Rynek() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] text-gray-400 font-bold uppercase mb-1">Kategoria</label>
-                  <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-gray-300 outline-none cursor-pointer">
+                  <label htmlFor="market-category-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Kategoria</label>
+                  <select id="market-category-filter" value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Kategorie</option>
                     <option value="Ekwipunek">Ekwipunek</option>
                     <option value="Wierzchowce">Wierzchowce</option>
@@ -301,7 +303,7 @@ export default function Rynek() {
                 <div className="aopp-panel py-14 text-center">
                   <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-sky-300/70" />
                   <p className="font-display text-lg font-bold text-[#d8d2c8]">Stragany czekają na pierwszą ofertę.</p>
-                  <p className="mt-1 text-xs text-[#77736c]">Zmień filtry albo wystaw własne ogłoszenie.</p>
+                  <p className="mt-1 text-xs text-[#918b82]">Zmień filtry albo wystaw własne ogłoszenie.</p>
                 </div>
               ) : (
                 filteredOffers.map(offer => {
@@ -322,7 +324,7 @@ export default function Rynek() {
                         </div>
 
                         <h3 className="font-display text-xl font-black leading-tight text-[#fff8e8]">{offer.title}</h3>
-                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#77736c]">Sprzedawca: <span className="text-[#b8b1a7]">{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span></p>
+                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#918b82]">Sprzedawca: <span className="text-[#b8b1a7]">{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span></p>
                         
                         {offer.contact_info && (
                           <p className="text-xs text-gray-400 font-mono">
@@ -361,10 +363,10 @@ export default function Rynek() {
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#716d66]">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">
         <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
-          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.16em] text-[#5f5b55]"><HandCoins className="h-3.5 w-3.5" /> Giełda Handlowa &amp; Czarny Rynek</p>
+          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.16em] text-[#918b82]"><HandCoins className="h-3.5 w-3.5" /> Giełda Handlowa &amp; Czarny Rynek</p>
         </div>
       </footer>
     </main>

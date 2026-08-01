@@ -21,7 +21,7 @@ export default function PortalSubpageHeader({
 }) {
   return (
     <>
-      <Link href="/" className="group inline-flex w-fit items-center gap-2 text-[10px] font-black uppercase tracking-[.2em] text-[#caaa52] transition hover:text-[#f0cf77]">
+      <Link href="/" className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-lg pr-2 text-[10px] font-black uppercase tracking-[.2em] text-[#caaa52] transition hover:text-[#f0cf77]">
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
         Centrum dowodzenia
       </Link>

@@ -57,25 +57,25 @@ export default function CombatEventCard({ event }) {
             <h3 className="font-display mt-1 text-lg font-black text-[#fff8e8]">
               {ownSide?.name} <span className="px-1 text-[#615d56]">vs</span> {opponent?.name}
             </h3>
-            <p className="mt-1 text-[10px] text-[#77736c]">{formatDate(event.timestamp)}</p>
+            <p className="mt-1 text-[10px] text-[#918b82]">{formatDate(event.timestamp)}</p>
           </div>
         </div>
 
         <div className="text-right">
-          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Fame wydarzenia</p>
+          <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Fame wydarzenia</p>
           <p className="font-display text-xl font-black text-[#e5bb55]">{(event.fame || 0).toLocaleString('pl-PL')}</p>
-          <p className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#77736c]"><Users className="h-3 w-3" /> {event.participantCount} uczestników</p>
+          <p className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#918b82]"><Users className="h-3 w-3" /> {event.participantCount} uczestników</p>
         </div>
       </div>
 
       <div className="grid gap-3 border-t border-white/8 pt-4 lg:grid-cols-2">
         <div>
-          <p className="mb-2 text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Zestaw {ownSide?.name}</p>
+          <p className="mb-2 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Zestaw {ownSide?.name}</p>
           <EquipmentStrip equipment={ownSide?.equipment} />
           <p className="mt-2 text-[9px] text-[#625f59]">Średnie IP: <span className="text-[#aaa39a]">{ownSide?.averageItemPower || '—'}</span></p>
         </div>
         <div>
-          <p className="mb-2 text-[9px] font-black uppercase tracking-[.14em] text-[#77736c]">Zestaw {opponent?.name}</p>
+          <p className="mb-2 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Zestaw {opponent?.name}</p>
           <EquipmentStrip equipment={opponent?.equipment} />
           <p className="mt-2 text-[9px] text-[#625f59]">Średnie IP: <span className="text-[#aaa39a]">{opponent?.averageItemPower || '—'}</span></p>
         </div>

@@ -22,9 +22,10 @@ function SlotCell({ slot, slotData, onChange, offHandBlocked }) {
           type="number"
           min={1}
           max={999}
+          aria-label={`Liczba sztuk: ${slot.label}`}
           value={slotData?.amount || 10}
           onChange={(e) => onChange({ ...slotData, amount: parseInt(e.target.value) || 1 })}
-          className="w-12 bg-[#050204] border border-[#260f16] rounded-lg text-center text-[10px] font-mono text-gray-300 py-0.5"
+          className="min-h-8 w-12 rounded-lg border border-[#260f16] bg-[#050204] text-center font-mono text-[10px] text-gray-300"
         />
       )}
       {disabled && (

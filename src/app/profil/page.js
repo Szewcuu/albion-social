@@ -203,15 +203,15 @@ export default function ProfilePage() {
                 </div>
                 <div className="mt-4 flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-[.15em] text-emerald-300"><UserRoundCheck className="h-3.5 w-3.5" /> Discord połączony</div>
                 <h2 className="font-display mt-2 truncate text-2xl font-black text-[#fff8e8]">{displayName}</h2>
-                <p className="mt-1 truncate text-[10px] text-[#77736c]">{user.email}</p>
+                <p className="mt-1 truncate text-[10px] text-[#918b82]">{user.email}</p>
 
                 <div className="mt-5 grid grid-cols-2 gap-2 text-left">
-                  <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.15em] text-[#77736c]">Postać</p><p className="mt-1 truncate text-xs font-bold text-[#eee7d9]">{formData.ingame_nick || 'Nieprzypisana'}</p></div>
-                  <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.15em] text-[#77736c]">Item Power</p><p className="font-display mt-1 text-lg font-black text-[#e5bb55]">{formData.avg_ip || '—'}</p></div>
+                  <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.15em] text-[#918b82]">Postać</p><p className="mt-1 truncate text-xs font-bold text-[#eee7d9]">{formData.ingame_nick || 'Nieprzypisana'}</p></div>
+                  <div className="rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.15em] text-[#918b82]">Item Power</p><p className="font-display mt-1 text-lg font-black text-[#e5bb55]">{formData.avg_ip || '—'}</p></div>
                 </div>
 
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35" aria-label={`Kompletność profilu ${completion}%`}><div className="h-full rounded-full bg-gradient-to-r from-[#b9872c] to-[#f0cf77]" style={{ width: `${completion}%` }} /></div>
-                <p className="mt-2 text-[9px] text-[#77736c]">Kompletność karty: {completion}%</p>
+                <p className="mt-2 text-[9px] text-[#918b82]">Kompletność karty: {completion}%</p>
               </div>
             </section>
 
@@ -223,7 +223,7 @@ export default function ProfilePage() {
               ].map(([href, Icon, label, detail]) => (
                 <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-white/5">
                   <span className="rounded-lg border border-white/8 bg-black/20 p-2 text-sky-300"><Icon className="h-4 w-4" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#d8d2c8]">{label}</span><span className="block text-[9px] text-[#77736c]">{detail}</span></span>
+                  <span className="min-w-0 flex-1"><span className="block text-xs font-bold text-[#d8d2c8]">{label}</span><span className="block text-[9px] text-[#918b82]">{detail}</span></span>
                   <ChevronRight className="h-4 w-4 text-[#5f5b55] transition group-hover:translate-x-0.5 group-hover:text-[#e5bb55]" />
                 </Link>
               ))}
@@ -261,7 +261,7 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="flex items-start gap-2 text-[10px] leading-5 text-[#77736c]"><Gamepad2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" /> Nick i statystyki są deklarowane przez użytkownika.</p>
+                  <p className="flex items-start gap-2 text-[10px] leading-5 text-[#918b82]"><Gamepad2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" /> Nick i statystyki są deklarowane przez użytkownika.</p>
                   <button type="submit" disabled={saving} className="aopp-primary-button inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.12em] disabled:cursor-wait disabled:opacity-60">
                     {saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? 'Zapisywanie' : 'Zapisz kartę'}
                   </button>
@@ -273,7 +273,7 @@ export default function ProfilePage() {
               <ActivityPanel title="Twoje wyprawy" eyebrow="Dowodzenie" icon={Shield} tone="violet" href="/wyprawy" empty="Nie utworzyłeś jeszcze żadnej wyprawy.">
                 {myExpeditions.slice(0, 4).map((expedition) => (
                   <div key={expedition.id} className="rounded-xl border border-white/8 bg-black/20 p-3">
-                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{expedition.title}</p><p className="mt-1 text-[9px] text-[#77736c]">{expedition.activity_type || 'Aktywność'} · {formatDate(expedition.start_time)}</p></div><span className="rounded-md border border-violet-400/20 bg-violet-400/8 px-2 py-1 text-[8px] font-black uppercase text-violet-300">Wyprawa</span></div>
+                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{expedition.title}</p><p className="mt-1 text-[9px] text-[#918b82]">{expedition.activity_type || 'Aktywność'} · {formatDate(expedition.start_time)}</p></div><span className="rounded-md border border-violet-400/20 bg-violet-400/8 px-2 py-1 text-[8px] font-black uppercase text-violet-300">Wyprawa</span></div>
                   </div>
                 ))}
               </ActivityPanel>
@@ -293,13 +293,13 @@ export default function ProfilePage() {
                 [Award, 'Rola', formData.main_role],
                 [Activity, 'Aktywności', myExpeditions.length + myOffers.length],
               ].map(([Icon, label, value]) => (
-                <div key={label} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/15 p-3"><Icon className="h-4 w-4 text-[#e5bb55]" /><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#77736c]">{label}</p><p className="mt-0.5 text-xs font-bold text-[#d8d2c8]">{value}</p></div></div>
+                <div key={label} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/15 p-3"><Icon className="h-4 w-4 text-[#e5bb55]" /><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">{label}</p><p className="mt-0.5 text-xs font-bold text-[#d8d2c8]">{value}</p></div></div>
               ))}
             </section>
           </div>
         </div>
 
-        <footer className="flex flex-col gap-2 border-t border-white/8 py-5 text-[10px] text-[#6f6a63] sm:flex-row sm:items-center sm:justify-between"><p>Profil wykorzystuje dane konta Discord oraz informacje zapisane w Supabase.</p><Link href="/prywatnosc" className="inline-flex items-center gap-1 font-bold text-sky-300 hover:text-sky-200">Polityka prywatności <ExternalLink className="h-3 w-3" /></Link></footer>
+        <footer className="flex flex-col gap-2 border-t border-white/8 py-5 text-[10px] text-[#9b958b] sm:flex-row sm:items-center sm:justify-between"><p>Profil wykorzystuje dane konta Discord oraz informacje zapisane w Supabase.</p><Link href="/prywatnosc" className="inline-flex items-center gap-1 font-bold text-sky-300 hover:text-sky-200">Polityka prywatności <ExternalLink className="h-3 w-3" /></Link></footer>
       </div>
     </main>
   )

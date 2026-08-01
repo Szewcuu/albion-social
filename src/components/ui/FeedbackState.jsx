@@ -7,9 +7,9 @@ export function SkeletonBlock({ className = '' }) {
 export function EmptyState({ icon: Icon = Info, title, description, compact = false, className = '' }) {
   return (
     <div className={`flex flex-col items-center justify-center rounded-xl border border-dashed border-white/10 text-center ${compact ? 'px-4 py-6' : 'px-5 py-9'} ${className}`}>
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/8 bg-white/[.025] text-[#77736c]"><Icon className="h-4 w-4" /></span>
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/8 bg-white/[.025] text-[#918b82]"><Icon className="h-4 w-4" /></span>
       {title && <p className="mt-3 text-xs font-bold text-[#b8b1a7]">{title}</p>}
-      {description && <p className="mt-1 max-w-md text-[10px] leading-5 text-[#77736c]">{description}</p>}
+      {description && <p className="mt-1 max-w-md text-[10px] leading-5 text-[#918b82]">{description}</p>}
     </div>
   )
 }

@@ -683,7 +683,7 @@ export default function Wyprawy() {
         </div>
       )}
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-500">
+      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-400">
         <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
           <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
           <div className="flex gap-4 text-xs font-mono text-gray-400">

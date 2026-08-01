@@ -250,6 +250,12 @@ a {
   box-shadow: 0 0 0 3px rgba(213, 171, 73, 0.08);
 }
 
+footer a {
+  display: inline-flex;
+  min-height: 1.5rem;
+  align-items: center;
+}
+
 .chat-message-text {
   font-size: 1rem;
   line-height: 1.55;
