@@ -15,6 +15,21 @@ export function cleanPositiveNumber(value, { min = 0, max }) {
   return parsed
 }
 
+export function cleanInteger(value, { min = 0, max }) {
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed < min || parsed > max) return null
+  return parsed
+}
+
+export function cleanEnum(value, allowedValues) {
+  return typeof value === 'string' && allowedValues.includes(value) ? value : null
+}
+
+export function cleanAlbionId(value) {
+  const cleaned = cleanText(value, { min: 8, max: 64 })
+  return cleaned && /^[A-Za-z0-9_-]+$/.test(cleaned) ? cleaned : null
+}
+
 export function isSafeDiscordWebhook(value) {
   if (!value) return false
 

@@ -1,36 +1,211 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Albion Online Polska Portal
 
-## Getting Started
+Polski portal społecznościowy dla graczy Albion Online. Projekt łączy wyszukiwanie graczy i gildii, organizację wypraw, rynek ogłoszeń P2P, buildy społeczności, timery oraz narzędzia pomocnicze w jednym interfejsie inspirowanym światem Albionu.
 
-First, run the development server:
+Produkcja: [albion-social.vercel.app](https://albion-social.vercel.app/)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
+
+## Stan projektu
+
+Gotowe i wdrożone:
+
+- [x] audyt pierwszej wersji projektu i podstawowe utwardzenie backendu
+- [x] nowy ekran główny i wspólny system wizualny AOPP
+- [x] przebudowa modułów Gildie i Wyprawy
+- [x] przebudowa Rynku, katalogu Buildów i kreatora buildu
+- [x] logowanie Discord przez Supabase
+- [x] integracja ogłoszeń gildii, wypraw, rynku i buildów z Supabase
+- [x] powiadomienia Discord dla wypraw i zgłoszeń
+- [x] podstawowe wyszukiwanie gracza Albion Online
+- [x] podstawowe pobieranie cen przedmiotów
+- [x] wspólna, zabezpieczona warstwa Gameinfo dla trzech regionów
+- [x] Killboard 2.0 z wyborem gracza, historią PvP, wyposażeniem i kontekstem gildii
+
+## Najbliższy krok
+
+> **Etap 5: Market Intelligence**
+
+Fundament integracji API oraz główny zakres Killboardu 2.0 są gotowe. Następnym etapem jest rozszerzenie rynku o pełny katalog przedmiotów, wiarygodną informację o świeżości danych, porównanie miast, historię cen i kalkulatory ekonomiczne.
+
+## Roadmapa / TODO
+
+Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odhaczamy jeden etap przed rozpoczęciem następnego.
+
+### P0 — fundament techniczny API
+
+- [x] utworzyć wspólny adapter regionów: Europa, Ameryka i Azja
+- [x] dodać timeout, kontrolowane ponowienia i zunifikowane komunikaty błędów
+- [x] dodać cache po stronie Next.js dla danych, które nie muszą być pobierane przy każdym wejściu
+- [x] dodać rate limiting do publicznych tras `/api/albion/*` i `/api/prices`
+- [x] walidować identyfikatory przedmiotów, miast, regionów i parametrów paginacji
+- [x] zwracać informację o źródle danych i czasie ostatniej aktualizacji
+- [ ] dodać testy adapterów z mockami odpowiedzi zewnętrznych API
+- [ ] przygotować monitoring błędów integracji i czasu odpowiedzi
+
+### P1 — Killboard 2.0
+
+- [x] przebudować UI Killboardu zgodnie z systemem wizualnym AOPP
+- [x] rozdzielić wyszukiwanie gracza od pobierania pełnego profilu
+- [x] dodać wybór wyniku, gdy API zwróci kilka podobnych nicków
+- [x] wyświetlać PvP Fame, PvE Fame, Gathering, Crafting i Fame Ratio
+- [x] dodać ostatnie zabójstwa i zgony z wyposażeniem uczestników
+- [ ] wyceniać utracony ekwipunek na podstawie Albion Online Data Project
+- [x] dodać filtrowanie historii po typie zdarzenia i regionie
+- [x] dodać profil gildii: podstawowe statystyki i lista członków
+- [ ] umożliwić przypięcie postaci Albionu do profilu portalu
+- [x] przygotować czytelne stany: ładowanie, brak danych, timeout i awaria źródła
+
+### P2 — Market Intelligence
+
+- [ ] rozszerzyć `/api/prices` o region, wiele miast, jakość i wiele przedmiotów
+- [ ] dodać wyszukiwarkę pełnego katalogu przedmiotów zamiast krótkiej listy lokalnej
+- [ ] pokazywać sell price, buy price oraz czas ostatniego odczytu danych
+- [ ] ostrzegać, gdy cena jest nieaktualna lub nie ma wystarczających danych
+- [ ] dodać porównanie cen pomiędzy miastami
+- [ ] dodać historię ceny: 24 godziny, 7 dni i 30 dni
+- [ ] dodać kurs złota i prosty wykres zmian
+- [ ] dodać kalkulator marży po podatku i opłacie za wystawienie
+- [ ] dodać kalkulator transportu/arbitrażu pomiędzy miastami
+- [ ] umożliwić zapis ulubionych przedmiotów i obserwowanych cen
+- [ ] połączyć wyceny API z ofertami P2P bez sugerowania, że dane są rzeczywistym live marketem
+
+### P3 — kolejne ekrany UI/UX
+
+- [ ] przebudować Profil gracza
+- [ ] przebudować Timery
+- [ ] przebudować Loot Split i poprawić przepływ rozliczenia grupy
+- [ ] dopracować strony Regulamin i Prywatność
+- [ ] wykonać pełny przegląd mobile 360–430 px
+- [ ] ujednolicić skeletony, komunikaty błędów, puste stany i potwierdzenia akcji
+- [ ] przeprowadzić audyt dostępności klawiatury, kontrastu i etykiet formularzy
+
+### P4 — funkcje społecznościowe
+
+- [ ] dodać osobną stronę szczegółów buildu z linkiem publicznym
+- [ ] zabezpieczyć głosowanie na build: jeden głos użytkownika na build
+- [ ] dodać zapisywanie buildów do ulubionych
+- [ ] dodać komentarze i zgłaszanie nadużyć pod buildami
+- [ ] dodać wygasanie, odnawianie i archiwizację ofert rynkowych
+- [ ] dodać szczegóły oferty i bezpieczny przepływ kontaktu ze sprzedawcą
+- [ ] dodać publiczne strony gildii i kalendarz wydarzeń
+- [ ] dodać centrum powiadomień w portalu
+- [ ] dodać role moderatora i panel moderacji treści
+
+### P5 — Supabase i bezpieczeństwo danych
+
+- [ ] zapisać schemat bazy jako wersjonowane migracje w repozytorium
+- [ ] przeprowadzić audyt RLS wszystkich tabel i polityk dostępu
+- [ ] dodać indeksy dla najczęstszych filtrów, sortowania i relacji
+- [ ] wymusić reguły własności rekordów po stronie bazy, nie tylko interfejsu
+- [ ] dodać tabele głosów, ulubionych, zgłoszeń i powiadomień
+- [ ] określić retencję danych i procedurę usunięcia konta
+- [ ] sprawdzić logi pod kątem wycieku danych użytkownika lub sekretów
+
+### P6 — jakość, SEO i wydajność
+
+- [ ] dodać testy end-to-end kluczowych przepływów
+- [ ] dodać automatyczny lint i build w GitHub Actions
+- [ ] usunąć ostrzeżenia `no-img-element` tam, gdzie optymalizacja Next Image jest bezpieczna
+- [ ] dodać unikalne metadata, Open Graph i canonical URL dla podstron
+- [ ] przygotować sitemapę i robots.txt
+- [ ] dodać PWA: manifest, ikony i podstawowy tryb offline
+- [ ] dodać pomiar błędów frontendowych i Core Web Vitals
+- [ ] wykonać ponowny audyt Lighthouse po zakończeniu głównych ekranów
+
+## Audyt dostępnych API Albion Online
+
+Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
+
+| Źródło | Dostępne dane | Status w projekcie | Decyzja |
+| --- | --- | --- | --- |
+| [Albion Online Data Project](https://www.albion-online-data.com/api/) | aktualne buy/sell orders, historia cen sprzedaży, kurs złota; regiony Europe/Americas/Asia | używamy podstawowego endpointu cen | główne źródło danych ekonomicznych |
+| Gameinfo API Albion Online | wyszukiwanie, profile graczy, kill/death events, wydarzenia, gildie i członkowie | używamy wyszukiwarki i profilu gracza | używać przez własny adapter, cache i fallback; API jest nieudokumentowane i bez gwarancji stabilności |
+| [Render Service](https://wiki.albiononline.com/wiki/API%3ARender_service) | ikony przedmiotów, zaklęć, wardrobe, Destiny Board i logotypy gildii | używamy ikon przedmiotów | rozszerzyć o skille i elementy profilu gildii |
+| [ao-bin-dumps](https://github.com/ao-data/ao-bin-dumps/tree/master/formatted) | identyfikatory oraz metadane przedmiotów i świata | mamy lokalny, ograniczony katalog | przygotować okresowo aktualizowany katalog wyszukiwania |
+| [OpenAlbion](https://openalbion.com/) | bronie, pancerze, akcesoria, consumables, statystyki i spelle | brak integracji | opcjonalne wzbogacenie kreatora buildów; nie uzależniać od niego krytycznych funkcji |
+| MurderLedger / społecznościowe kill API | przetworzone dane PvP i matchupy | brak integracji | na razie nie używać jako fundamentu; stabilność i świeżość bywają zależne od Gameinfo |
+
+### Potwierdzone endpointy, które możemy wykorzystać
+
+#### Albion Online Data Project
+
+```text
+GET https://{region}.albion-online-data.com/api/v2/stats/prices/{item_ids}.json
+GET https://{region}.albion-online-data.com/api/v2/stats/history/{item_ids}.json
+GET https://{region}.albion-online-data.com/api/v2/stats/gold.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Hosty regionów: `europe`, `west`, `east`. Dokumentacja podaje limity 180 zapytań/minutę i 300 zapytań/5 minut oraz limit długości URL 4096 znaków. Dane pochodzą od społeczności korzystającej z klienta AODP, dlatego każda cena musi pokazywać timestamp i nie może być przedstawiana jako gwarantowana cena live.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+#### Gameinfo
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```text
+Europa:  https://gameinfo-ams.albiononline.com/api/gameinfo
+Ameryka: https://gameinfo.albiononline.com/api/gameinfo
+Azja:    https://gameinfo-sgp.albiononline.com/api/gameinfo
 
-## Learn More
+GET /search?q={name}
+GET /players/{player_id}
+GET /players/{player_id}/kills
+GET /players/{player_id}/deaths
+GET /events?limit={limit}&offset={offset}
+GET /events/{event_id}
+GET /guilds/{guild_id}
+GET /guilds/{guild_id}/members
+GET /guilds/{guild_id}/data
+```
 
-To learn more about Next.js, take a look at the following resources:
+Te ścieżki odpowiadały podczas audytu. Niektóre inne, spotykane w starych bibliotekach i poradnikach (`matches`, wybrane `battles`, stare rankingi gildii), zwracały błędy 404. Nie dodajemy ich do produktu bez osobnego adaptera eksperymentalnego i fallbacku.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+#### Render Service
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+GET https://render.albiononline.com/v1/item/{identifier}.png
+GET https://render.albiononline.com/v1/spell/{identifier}.png
+GET https://render.albiononline.com/v1/wardrobe/{identifier}.png
+GET https://render.albiononline.com/v1/destiny/{identifier}.png
+```
 
-## Deploy on Vercel
+Obsługuje m.in. parametry `quality`, `size` i `locale`. Ikony zawsze powinny mieć lokalny fallback, ponieważ nie każdy historyczny lub nowy identyfikator musi być dostępny.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Architektura
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 16 / React 19
+- Tailwind CSS 4
+- Supabase: PostgreSQL, Auth i RLS
+- Vercel: hosting i automatyczne wdrożenia
+- Discord OAuth i webhooki
+- Albion Online Data Project, Gameinfo i Render Service
+
+## Uruchomienie lokalne
+
+```bash
+npm install
+npm run dev
+```
+
+Następnie otwórz [http://localhost:3000](http://localhost:3000).
+
+Wymagane zmienne środowiskowe opisuje `.env.example`:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+DISCORD_EXPEDITIONS_WEBHOOK_URL
+NEXT_PUBLIC_APP_URL
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` i webhook Discorda są sekretami serwerowymi — nie wolno nadawać im prefiksu `NEXT_PUBLIC_` ani umieszczać ich w repozytorium.
+
+## Kontrola jakości
+
+Przed każdym wdrożeniem:
+
+```bash
+npm run lint
+npm run build
+```
+
+Zmiany wdrażamy przez osobną gałąź, pull request i automatyczny deployment Vercel. Produkcja jest scalana dopiero po poprawnym buildzie i sprawdzeniu najważniejszych widoków.
