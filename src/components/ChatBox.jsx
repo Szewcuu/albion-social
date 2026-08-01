@@ -93,7 +93,7 @@ export default function ChatBox({ user, isAdmin }) {
   }
 
   return (
-    <div className="bg-[#0c0407]/90 backdrop-blur-md border border-[#281017] rounded-3xl p-6 sm:p-8 h-[600px] flex flex-col justify-between shadow-2xl">
+    <div className="aopp-panel flex h-[600px] flex-col justify-between rounded-3xl p-6 sm:p-8">
       <div className="flex items-center justify-between border-b border-[#200d13] pb-4 mb-3 flex-wrap gap-2">
         <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#f3ba2f]">
           <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -132,7 +132,7 @@ export default function ChatBox({ user, isAdmin }) {
               const cleanDisplayName = (msg.username || 'System').replace(/#0$/, '');
 
               return (
-                <div key={msg.id} className="flex items-start gap-3 bg-[#070204]/60 border border-[#1c0b10] p-3.5 rounded-2xl">
+                <div key={msg.id} className="flex items-start gap-3 rounded-2xl border border-white/[.06] bg-black/25 p-3.5 transition-colors hover:border-[#cba84e]/20 hover:bg-black/35">
                   {userAvatar && msg.channel !== 'SYSTEM' ? (
                     <img src={userAvatar} alt="Avatar" className="w-9 h-9 rounded-xl object-cover border border-[#3d1823] shrink-0 shadow" />
                   ) : (
@@ -165,7 +165,7 @@ export default function ChatBox({ user, isAdmin }) {
         )}
       </div>
 
-      <form onSubmit={handleSendChatMessage} className="mt-2 flex gap-2 items-center bg-[#050204] border border-[#200d13] rounded-2xl p-2.5 pl-4">
+      <form onSubmit={handleSendChatMessage} className="mt-2 flex items-center gap-2 rounded-2xl border border-[#cba84e]/15 bg-black/35 p-2.5 pl-4 transition-colors focus-within:border-[#cba84e]/50">
         <input
           type="text"
           maxLength="120"
