@@ -404,10 +404,11 @@ export default function Gildie() {
       />
 
       <GuildZvZInspectorModal
+        key={inspectedGuild ? `guild-${inspectedGuild.name}-${inspectedGuild.server}` : 'closed'}
         isOpen={!!inspectedGuild}
         onClose={() => setInspectedGuild(null)}
         guildName={inspectedGuild?.name || ''}
-        defaultServer={inspectedGuild?.server || 'Europa'}
+        server={inspectedGuild?.server || 'Europa'}
       />
     </main>
   )

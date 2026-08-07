@@ -1,10 +1,17 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Shield, Swords, Skull, Trophy, Users, X, LoaderCircle, AlertCircle, ExternalLink, Globe2 } from 'lucide-react'
+import { Shield, Swords, Skull, Trophy, Users, X, LoaderCircle, AlertCircle, Globe2 } from 'lucide-react'
 
-export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = '', defaultServer = 'Europa' }) {
-  const [region, setRegion] = useState(defaultServer.toLowerCase().includes('ameryka') ? 'america' : defaultServer.toLowerCase().includes('azja') ? 'asia' : 'europe')
+function getRegionFromServer(serverStr = '') {
+  const s = (serverStr || '').toLowerCase()
+  if (s.includes('ameryka') || s.includes('america') || s === 'na') return 'america'
+  if (s.includes('azja') || s.includes('asia')) return 'asia'
+  return 'europe'
+}
+
+export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = '', server = 'Europa' }) {
+  const region = getRegionFromServer(server)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [candidates, setCandidates] = useState([])
@@ -44,14 +51,15 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
       const data = await res.json()
 
       if (!res.ok || data.error) {
-        throw new Error(data.error?.message || 'Nie znaleziono gildii w wybranym regionie.')
+        throw new Error(data.error?.message || 'Nie znaleziono gildii w rejestrze API.')
       }
 
       const guildsList = data.data?.guilds || []
       if (guildsList.length === 0) {
-        setError(`Nie znaleziono gildii „${searchQuery}” w rejestrze Gameinfo API dla serwera ${region.toUpperCase()}.`)
+        const regLabel = region === 'america' ? 'Ameryka (NWA)' : region === 'asia' ? 'Azja (SGP)' : 'Europa (AMS)'
+        setError(`Nie znaleziono gildii „${searchQuery}” w rejestrze Gameinfo API dla serwera ${regLabel}.`)
       } else if (guildsList.length === 1) {
-        handleInspectGuild(guildsList[0])
+        await handleInspectGuild(guildsList[0])
       } else {
         setCandidates(guildsList)
       }
@@ -73,6 +81,8 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
 
   if (!isOpen) return null
 
+  const serverLabel = region === 'america' ? 'Ameryka (NWA)' : region === 'asia' ? 'Azja (SGP)' : 'Europa (AMS)'
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[#d8ad4a]/30 bg-[#0a0508] p-6 shadow-2xl space-y-5 text-gray-200 font-sans">
@@ -91,27 +101,17 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
           </button>
         </div>
 
-        {/* WYSZUKIWARKA & REKLAMA SERWERA */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#050204] p-3 rounded-2xl border border-[#200d14]">
+        {/* PODSUMOWANIE GILDII I AUTOMATYCZNEGO SERWERA */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-[#050204] p-3.5 rounded-2xl border border-[#200d14]">
           <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-amber-400" />
             <span className="text-[10px] font-mono text-gray-400 uppercase">Gildia:</span>
-            <span className="text-xs font-bold text-amber-200">{guildName || 'Wyszukaj gildie'}</span>
+            <span className="text-xs font-bold text-amber-200">{guildName}</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-gray-400 uppercase">Serwer:</span>
-            <select
-              value={region}
-              onChange={(e) => {
-                setRegion(e.target.value)
-                if (guildName) handleSearch(guildName)
-              }}
-              className="bg-[#0b0509] border border-[#331520] text-amber-300 text-xs rounded-xl px-3 py-1.5 font-mono outline-none cursor-pointer"
-            >
-              <option value="europe">Europa (AMS)</option>
-              <option value="america">Ameryka (NWA)</option>
-              <option value="asia">Azja (SGP)</option>
-            </select>
+          <div className="flex items-center gap-1.5 bg-[#0e070c] border border-[#2e131d] px-3 py-1.5 rounded-xl text-xs font-mono text-amber-300 font-bold">
+            <Globe2 className="w-3.5 h-3.5 text-amber-400" />
+            <span>Serwer: {serverLabel}</span>
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
         {loading && (
           <div className="py-12 text-center space-y-3 font-mono text-xs text-amber-400">
             <LoaderCircle className="w-8 h-8 animate-spin mx-auto text-amber-400" />
-            <div>Pobieranie rejestru bitew ZvZ i statystyk gildii z API Albionu...</div>
+            <div>Pobieranie rejestru bitew ZvZ i statystyk gildii z oficjalnego API Albionu...</div>
           </div>
         )}
 
@@ -177,7 +177,7 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
                 <div className="text-xs font-bold text-rose-300">
                   {Number(overview.guild.killFame || 0).toLocaleString('pl-PL')}
                 </div>
-                <div className="text-[9px] text-gray-400">Światowy wynik PvP</div>
+                <div className="text-[9px] text-gray-400">Wynik PvP gildii</div>
               </div>
 
               <div className="bg-[#0c0609] p-3.5 rounded-2xl border border-[#240e16]">
