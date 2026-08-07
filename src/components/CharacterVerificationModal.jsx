@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, Shield, UserCheck } from 'lucide-react'
+import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, UserCheck } from 'lucide-react'
 
 export default function CharacterVerificationModal({ isOpen, onClose, defaultNick = '', defaultServer = 'Europa', onVerifySuccess }) {
   const [nick, setNick] = useState(defaultNick)
-  const [region, setRegion] = useState(defaultServer.toLowerCase() === 'ameryka' ? 'west' : defaultServer.toLowerCase() === 'azja' ? 'east' : 'europe')
+  const [region, setRegion] = useState(defaultServer.toLowerCase() === 'ameryka' ? 'america' : defaultServer.toLowerCase() === 'azja' ? 'asia' : 'europe')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [candidates, setCandidates] = useState([])
@@ -54,7 +54,8 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
     setError(null)
 
     try {
-      const res = await fetch(`/api/albion/player?mode=overview&id=${candidate.Id}&region=${region}`)
+      const playerId = candidate.id || candidate.Id
+      const res = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(playerId)}&region=${region}`)
       const data = await res.json()
 
       if (!res.ok || data.error) {
@@ -73,14 +74,15 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
     if (!selectedCandidate || !overview) return
 
     setVerifying(true)
+    const player = overview.player || {}
 
     const verificationData = {
-      ingame_nick: selectedCandidate.Name,
-      guild_name: selectedCandidate.GuildName || '',
-      verified_player_id: selectedCandidate.Id,
+      ingame_nick: player.name || selectedCandidate.name || selectedCandidate.Name,
+      guild_name: player.guildName || selectedCandidate.guildName || selectedCandidate.GuildName || '',
+      verified_player_id: player.id || selectedCandidate.id || selectedCandidate.Id,
       verified_server: region,
-      pvp_fame: overview.player?.KillFame || 0,
-      pve_fame: overview.player?.LifetimeStatistics?.PvE?.Total || 0,
+      pvp_fame: player.killFame || selectedCandidate.killFame || 0,
+      pve_fame: player.fame?.pve || 0,
       is_verified: true,
       verified_at: new Date().toISOString(),
     }
@@ -124,7 +126,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
                 type="text"
                 value={nick}
                 onChange={(e) => setNick(e.target.value)}
-                placeholder="np. Szewcuu"
+                placeholder="np. GandalfRudowlosy"
                 className="w-full bg-[#050204] border border-[#331520] text-gray-100 text-xs rounded-xl p-3 outline-none focus:border-[#f3ba2f]"
               />
             </div>
@@ -139,8 +141,8 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
                 className="w-full bg-[#050204] border border-[#331520] text-amber-200 text-xs rounded-xl p-3 outline-none focus:border-[#f3ba2f] font-mono"
               >
                 <option value="europe">Europa (AMS)</option>
-                <option value="west">Ameryka (NWA)</option>
-                <option value="east">Azja (SGP)</option>
+                <option value="america">Ameryka (NWA)</option>
+                <option value="asia">Azja (SGP)</option>
               </select>
             </div>
           </div>
@@ -172,18 +174,18 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
             <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
               {candidates.map((c) => (
                 <button
-                  key={c.Id}
+                  key={c.id || c.Id}
                   onClick={() => handleSelectCandidate(c)}
                   className="w-full flex items-center justify-between p-3 rounded-xl bg-[#070305] border border-[#220e14] hover:border-amber-500/50 hover:bg-[#12070c] transition text-left"
                 >
                   <div>
-                    <div className="text-xs font-bold text-gray-200">{c.Name}</div>
+                    <div className="text-xs font-bold text-gray-200">{c.name || c.Name}</div>
                     <div className="text-[10px] text-gray-400 font-mono">
-                      {c.GuildName ? `Gildia: ${c.GuildName}` : 'Brak gildii'}
+                      {c.guildName || c.GuildName ? `Gildia: ${c.guildName || c.GuildName}` : 'Brak gildii'}
                     </div>
                   </div>
                   <div className="text-right font-mono text-[10px] text-amber-400">
-                    <div>PvP Fame: {Number(c.KillFame || 0).toLocaleString('pl-PL')}</div>
+                    <div>PvP Fame: {Number(c.killFame || c.KillFame || 0).toLocaleString('pl-PL')}</div>
                   </div>
                 </button>
               ))}
@@ -202,12 +204,12 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
             <div className="grid grid-cols-2 gap-3 text-left font-mono">
               <div className="bg-[#0d0609] p-3 rounded-xl border border-[#200d14]">
                 <div className="text-[9px] text-gray-400 uppercase">Nick postaci</div>
-                <div className="text-sm font-bold text-amber-200">{selectedCandidate.Name}</div>
+                <div className="text-sm font-bold text-amber-200">{overview.player?.name || selectedCandidate.name}</div>
               </div>
 
               <div className="bg-[#0d0609] p-3 rounded-xl border border-[#200d14]">
                 <div className="text-[9px] text-gray-400 uppercase">Gildia</div>
-                <div className="text-xs font-bold text-gray-200">{selectedCandidate.GuildName || 'Brak'}</div>
+                <div className="text-xs font-bold text-gray-200">{overview.player?.guildName || selectedCandidate.guildName || 'Brak'}</div>
               </div>
 
               <div className="bg-[#0d0609] p-3 rounded-xl border border-[#200d14]">
@@ -215,7 +217,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
                   <Swords className="w-3 h-3 text-rose-400" /> PvP Fame
                 </div>
                 <div className="text-xs font-bold text-rose-300">
-                  {Number(overview.player?.KillFame || 0).toLocaleString('pl-PL')}
+                  {Number(overview.player?.killFame || 0).toLocaleString('pl-PL')}
                 </div>
               </div>
 
@@ -224,7 +226,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
                   <Trophy className="w-3 h-3 text-amber-400" /> PvE Fame
                 </div>
                 <div className="text-xs font-bold text-amber-300">
-                  {Number(overview.player?.LifetimeStatistics?.PvE?.Total || 0).toLocaleString('pl-PL')}
+                  {Number(overview.player?.fame?.pve || 0).toLocaleString('pl-PL')}
                 </div>
               </div>
             </div>
