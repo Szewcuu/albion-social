@@ -183,15 +183,19 @@ function normalizeSearchPlayer(player) {
 
 function normalizeGuild(guild, members = []) {
   if (!guild) return null
+  const killFame = Number(guild.killFame ?? guild.KillFame ?? 0)
+  const deathFame = Number(guild.deathFame ?? guild.DeathFame ?? 0)
+  const fameRatio = deathFame > 0 ? (killFame / deathFame) : Number(guild.fameRatio ?? guild.FameRatio ?? 0)
+
   return {
-    id: guild.Id || '',
-    name: guild.Name || '',
-    allianceId: guild.AllianceId || '',
-    allianceTag: guild.AllianceTag || '',
-    killFame: guild.KillFame || 0,
-    deathFame: guild.DeathFame || 0,
-    fameRatio: Number(guild.FameRatio || 0),
-    memberCount: members.length,
+    id: guild.Id || guild.id || '',
+    name: guild.Name || guild.name || '',
+    allianceId: guild.AllianceId || guild.allianceId || '',
+    allianceTag: guild.AllianceTag || guild.allianceTag || '',
+    killFame,
+    deathFame,
+    fameRatio,
+    memberCount: guild.MemberCount || members.length,
     topMembers: members
       .map(normalizeSearchPlayer)
       .sort((a, b) => b.killFame - a.killFame)
