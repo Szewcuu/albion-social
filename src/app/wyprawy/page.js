@@ -7,7 +7,7 @@ import {
   Swords, Shield, Heart, UserCheck, Plus,
   Clock, Users, Trash2, AlertTriangle 
 } from 'lucide-react'
-import HyperHudHeader from '@/components/HyperHudHeader'
+import ModernHeader from '@/components/ModernHeader'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 export default function Wyprawy() {
@@ -273,10 +273,10 @@ export default function Wyprawy() {
   const totalSignups = expeditions.reduce((sum, expedition) => sum + (expedition.expedition_signups?.length || 0), 0)
 
   return (
-    <main className="hud-shell min-h-screen text-[#f3f4f6] pb-12">
-      <HyperHudHeader user={user} />
+    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
+      <ModernHeader user={user} />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1580px] space-y-6 p-4 text-sm sm:p-6 lg:p-8 mt-4">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
         <PortalSubpageHeader
           eyebrow="Tablica mobilizacji • Party finder"
           title={<>Każda wyprawa zaczyna się<br /><span className="text-violet-300">od właściwej drużyny.</span></>}

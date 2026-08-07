@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } from 'lucide-react'
-import HyperHudHeader from '@/components/HyperHudHeader'
+import ModernHeader from '@/components/ModernHeader'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
@@ -100,10 +100,10 @@ export default function Rynek() {
   })
 
   return (
-    <main className="hud-shell min-h-screen text-[#f3f4f6] pb-12">
-      <HyperHudHeader user={user} />
+    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
+      <ModernHeader user={user} />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1580px] space-y-6 p-4 text-sm sm:p-6 lg:p-8 mt-4">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
         <PortalSubpageHeader
           eyebrow="Plac targowy • Handel P2P"
           title={<>Dobry interes zaczyna się<br /><span className="text-sky-300">od właściwej oferty.</span></>}

@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #030206;
+  --background: #090c10;
   --foreground: #f3f4f6;
-  --neon-gold: #fbbf24;
-  --neon-cyan: #06b6d4;
-  --neon-purple: #a855f7;
-  --neon-rose: #f43f5e;
-  --neon-emerald: #10b981;
-  --hud-bg: rgba(10, 8, 18, 0.94);
-  --hud-border: rgba(251, 191, 36, 0.3);
-  --font-display: "Outfit", "Inter", sans-serif;
+  --emerald: #10b981;
+  --emerald-hover: #059669;
+  --cyan: #06b6d4;
+  --amber: #f59e0b;
+  --rose: #f43f5e;
+  --card-bg: rgba(15, 23, 42, 0.75);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --font-sans: "Inter", "Outfit", system-ui, -apple-system, sans-serif;
   --font-mono: "Fira Code", monospace;
 }
 
@@ -27,140 +27,125 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: #030206;
+  background: #090c10;
   color: var(--foreground);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-/* HYPER GAMING HUD SHELL */
-.hud-shell {
+/* MODERN SHELL */
+.modern-shell {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.15), transparent 45rem),
-    radial-gradient(circle at 10% 40%, rgba(251, 191, 36, 0.1), transparent 40rem),
-    radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.1), transparent 40rem),
-    #030206;
+    radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.08), transparent 50rem),
+    radial-gradient(ellipse at 80% 100%, rgba(6, 182, 212, 0.06), transparent 45rem),
+    #090c10;
 }
 
-/* FLOATING HYPER HUD TOPBAR */
-.hud-topbar {
-  background: rgba(12, 9, 20, 0.92);
-  border: 1px solid rgba(251, 191, 36, 0.35);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(28px) saturate(1.2);
-  border-radius: 1.5rem;
+/* HEADER & NAVBAR */
+.modern-header {
+  background: rgba(13, 17, 23, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
 }
 
-.hud-nav-item {
+.modern-nav-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.1rem;
-  border-radius: 1rem;
-  color: #a1a1aa;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid transparent;
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.75rem;
+  color: #9ca3af;
+  font-size: 0.825rem;
+  font-weight: 600;
+  transition: all 180ms ease;
 }
 
-.hud-nav-item:hover,
-.hud-nav-item.active {
-  background: rgba(251, 191, 36, 0.15);
-  border-color: rgba(251, 191, 36, 0.5);
-  color: #fbbf24;
-  box-shadow: 0 0 20px rgba(251, 191, 36, 0.25);
+.modern-nav-link:hover,
+.modern-nav-link.active {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.modern-nav-link.active {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* CARDS & BENTO */
+.modern-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  transition: all 220ms ease;
+}
+
+.modern-card:hover {
+  border-color: rgba(16, 185, 129, 0.35);
   transform: translateY(-2px);
-}
-
-/* HYPER GAMING BENTO CARDS */
-.hud-card {
-  background: linear-gradient(145deg, rgba(16, 12, 26, 0.95), rgba(8, 6, 14, 0.97));
-  border: 1px solid rgba(251, 191, 36, 0.25);
-  border-radius: 1.5rem;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(24px);
-  transition: all 280ms cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.hud-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  border-color: rgba(251, 191, 36, 0.75);
-  box-shadow: 0 35px 90px rgba(0, 0, 0, 0.85), 0 0 35px rgba(251, 191, 36, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.1);
 }
 
 /* BUTTONS */
-.hud-btn-primary {
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  color: #030206;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 1rem;
-  padding: 0.75rem 1.75rem;
-  box-shadow: 0 0 25px rgba(251, 191, 36, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  transition: all 220ms ease;
-  cursor: pointer;
-  border: 1px solid #ffe07d;
-}
-
-.hud-btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0 40px rgba(251, 191, 36, 0.7);
-  background: linear-gradient(135deg, #ffe07d 0%, #f59e0b 100%);
-}
-
-.hud-btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  color: #f3f4f6;
+.modern-btn-primary {
+  background: #10b981;
+  color: #04140e;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border-radius: 1rem;
-  padding: 0.75rem 1.5rem;
-  backdrop-filter: blur(14px);
-  transition: all 220ms ease;
+  border-radius: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  transition: all 180ms ease;
   cursor: pointer;
 }
 
-.hud-btn-secondary:hover {
-  transform: translateY(-3px);
-  border-color: rgba(251, 191, 36, 0.7);
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.12);
-  box-shadow: 0 0 25px rgba(251, 191, 36, 0.25);
+.modern-btn-primary:hover {
+  background: #34d399;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+  transform: translateY(-1px);
+}
+
+.modern-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f3f4f6;
+  font-weight: 600;
+  border-radius: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  transition: all 180ms ease;
+  cursor: pointer;
+}
+
+.modern-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 /* FORM CONTROLS */
 input, select, textarea {
-  background: rgba(12, 9, 20, 0.85) !important;
-  border: 1px solid rgba(251, 191, 36, 0.25) !important;
+  background: rgba(13, 17, 23, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #f9fafb !important;
-  border-radius: 1rem !important;
+  border-radius: 0.75rem !important;
 }
 
 input:focus, select:focus, textarea:focus {
-  border-color: rgba(251, 191, 36, 0.85) !important;
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.25), 0 0 20px rgba(251, 191, 36, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
 }
 
 /* SCROLLBAR */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #030206;
+  background: #090c10;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(251, 191, 36, 0.35);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
 }

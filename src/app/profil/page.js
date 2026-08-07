@@ -24,7 +24,7 @@ import {
   UserRoundCheck,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import HyperHudHeader from '@/components/HyperHudHeader'
+import ModernHeader from '@/components/ModernHeader'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import CharacterVerificationModal from '@/components/CharacterVerificationModal'
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
@@ -256,10 +256,10 @@ export default function ProfilePage() {
   const avatarUrl = user.user_metadata?.avatar_url
 
   return (
-    <main className="hud-shell min-h-screen text-[#f3f4f6] pb-12">
-      <HyperHudHeader user={user} />
+    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
+      <ModernHeader user={user} />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1580px] space-y-7 p-4 sm:p-6 lg:p-8 mt-4">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
         <PortalSubpageHeader
           eyebrow="Karta bohatera • Centrum gracza"
           title={<>Twoja historia zaczyna się<br /><span className="text-[#e5bb55]">od dobrze opisanej postaci.</span></>}

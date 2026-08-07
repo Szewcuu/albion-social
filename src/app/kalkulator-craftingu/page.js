@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Hammer, Sparkles, TrendingUp, TrendingDown, Coins, Percent, Zap, LoaderCircle, AlertCircle, RefreshCw } from 'lucide-react'
-import HyperHudHeader from '@/components/HyperHudHeader'
+import ModernHeader from '@/components/ModernHeader'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 const RESOURCES = [
@@ -114,10 +114,10 @@ export default function CraftingCalculatorPage() {
   const profitPerItem = quantity > 0 ? Math.round(netProfit / quantity) : 0
 
   return (
-    <main className="hud-shell min-h-screen text-[#f3f4f6] pb-12">
-      <HyperHudHeader />
+    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
+      <ModernHeader />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1580px] space-y-7 p-4 sm:p-6 lg:p-8 mt-4">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
         <PortalSubpageHeader
           eyebrow="Kalkulator Ekonomii • Albion Online Polska"
           title={<>Kalkulator Zysku z Craftingu<br /><span className="text-[#e5bb55]">&amp; Przetwarzania Surowców</span></>}
