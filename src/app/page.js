@@ -428,18 +428,18 @@ export default function Home() {
 
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                 <div className="lg:col-span-8 space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#f3ba2f]/10 border border-[#f3ba2f]/30 text-[#f3ba2f] text-[10px] font-mono font-bold uppercase tracking-wider">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#c89d3c]/10 border border-[#c89d3c]/40 text-[#e5b74c] text-[10px] font-mono font-bold uppercase tracking-widest">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Witaj z powrotem w Albion Social Portal 2.0</span>
+                    <span>Wielki Kodeks Gildii &amp; Karczma Albion Online 3.0</span>
                   </div>
 
-                  <h2 className="font-display text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
-                    Centrum Dowodzenia<br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ffe07d] via-[#f3ba2f] to-[#d87631]">Wybierz Swój Cel Bitewny</span>
+                  <h2 className="font-display text-4xl font-black leading-tight text-[#f0e4d0] sm:text-5xl lg:text-6xl">
+                    Księga Przygód i Zwiadu<br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f0cf77] via-[#c89d3c] to-[#9e6d24]">Gromadź Wojska i Zasoby</span>
                   </h2>
 
-                  <p className="max-w-2xl text-sm leading-6 text-gray-300 sm:text-base">
-                    Gildyjny rekruter, wycena rynkowa P2P z Albion Data Project, kalkulatory craftingu oraz organizator wypraw – wszystko pod Twoim dowództwem.
+                  <p className="max-w-2xl text-sm leading-6 text-[#c5b59c] sm:text-base">
+                    Rejestr formacji gildyjnych, wycena rynków królewskich, kalkulator rzemiosła oraz tablica wypraw woskowych – wszystko w jednym kodeksie.
                   </p>
 
                   <div className="pt-2 flex flex-wrap gap-3">
