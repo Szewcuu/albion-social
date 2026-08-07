@@ -2,6 +2,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
+import PwaRegister from "@/components/PwaRegister";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -15,10 +17,15 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Albion Online Polska Portal",
   description: "Polski węzeł społecznościowy graczy Albion Online",
+  manifest: "/manifest.json",
   icons: {
     icon: '/favicon.ico',
     apple: '/logo-256.webp',
   },
+};
+
+export const viewport = {
+  themeColor: "#c59b27",
 };
 
 export default function RootLayout({ children }) {
@@ -38,6 +45,7 @@ export default function RootLayout({ children }) {
           {children}
         </div>
 
+        <PwaRegister />
         <SpeedInsights />
       </body>
     </html>
