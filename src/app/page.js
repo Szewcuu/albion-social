@@ -497,7 +497,7 @@ export default function Home() {
             </header>
 
             <section className="aopp-hero relative min-h-[420px] overflow-hidden rounded-[28px] border border-[#cfa94e]/25 shadow-[0_28px_90px_rgba(0,0,0,.46)]">
-              <Image src="/albion-social-hero.webp" alt="Widok na fantastyczne miasto i dolinę" fill priority sizes="(max-width: 1540px) 100vw, 1540px" className="object-cover object-[68%_center] transition-transform duration-[1400ms] hover:scale-[1.015]" />
+              <Image src="/albion-social-hero.webp" alt="Widok na fantastyczne miasto i dolinę" fill priority fetchPriority="high" sizes="(max-width: 1540px) 100vw, 1540px" className="object-cover object-[68%_center] transition-transform duration-[1400ms] hover:scale-[1.015]" />
               <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,10,8,.95)_0%,rgba(8,10,8,.72)_43%,rgba(8,10,8,.12)_76%,rgba(8,10,8,.45)_100%)]" />
               <div className="absolute inset-0 bg-[linear-gradient(0deg,rgba(7,8,7,.88)_0%,transparent_52%)]" />
 

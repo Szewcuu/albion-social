@@ -150,7 +150,7 @@ export default function ChatBox({ user, isAdmin }) {
                       <span className="text-[10px] text-gray-500 font-mono">{messageTime}</span>
 
                       {isAdmin && msg.channel !== 'SYSTEM' && (
-                        <button onClick={() => deleteChatMessage(msg.id)} className="text-rose-400 hover:text-rose-300 text-xs ml-auto cursor-pointer">
+                        <button onClick={() => deleteChatMessage(msg.id)} aria-label="Usuń wiadomość" title="Usuń wiadomość" className="text-rose-400 hover:text-rose-300 text-xs ml-auto cursor-pointer">
                           <Trash2 className="w-3.5 h-3.5 inline" />
                         </button>
                       )}

@@ -34,10 +34,15 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
-          // Wymusza połączenie szyfrowane HTTPS (HSTS)
+          // Wymusza połączenie szyfrowane HTTPS (HSTS) z wymogiem wpisu do listy preload
           {
             key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
+          // Izolacja kontekstu najwyższego poziomu (COOP)
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin',
           },
           // Blokuje niechciane funkcje przeglądarki (geolokalizacja, mikrofon, kamera)
           {

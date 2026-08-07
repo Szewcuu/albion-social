@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import BuildDetailEquipment from '@/components/builds/BuildDetailEquipment'
+import BuildComments from '@/components/builds/BuildComments'
 import BuildSocialActions from '@/components/builds/BuildSocialActions'
 import { EmptyState } from '@/components/ui/FeedbackState'
 import { buildFromDbRow } from '@/lib/buildSlots'
@@ -216,6 +217,8 @@ export default async function BuildDetailPage({ params }) {
             </Link>
           </aside>
         </div>
+
+        <BuildComments buildId={row.id} />
       </div>
 
       <footer className="relative z-10 mt-12 border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">

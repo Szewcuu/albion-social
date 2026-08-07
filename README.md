@@ -28,7 +28,16 @@ Gotowe i wdrożone:
 
 > **P4.2: komentarze i zgłaszanie nadużyć pod buildami**
 
-P4.1 jest wdrożone: publikacja prowadzi do publicznego URL-a buildu, głosowanie jest ograniczone do jednego rekordu użytkownika, a ulubione są prywatne i chronione przez RLS. Następny sprint rozbuduje stronę buildu o moderowalne komentarze i bezpieczne zgłoszenia nadużyć.
+P4.1 jest wdrożone: publikacja prowadzi do publicznego URL-a buildu, głosowanie jest ograniczone do jednego rekordu użytkownika, a ulubione są prywatne i chronione przez RLS. P4.2 jest w trakcie wdrożenia i rozbudowuje stronę buildu o moderowalne komentarze oraz prywatne zgłoszenia nadużyć.
+
+### Aktywny sprint P4.2
+
+- [x] dodać wersjonowaną migrację `build_comments` i `build_reports`
+- [x] ograniczyć odczyt komentarzy do treści widocznych i zgłoszeń do właściciela lub moderatora przez RLS
+- [x] dodać walidowane i limitowane API publikacji oraz usuwania własnych komentarzy
+- [x] dodać prywatne zgłoszenia buildu lub konkretnego komentarza z deduplikacją
+- [x] przygotować responsywny UI komentarzy, pustych stanów, potwierdzeń i dostępnego dialogu zgłoszenia
+- [ ] przetestować pełny przepływ na preview, wdrożyć PR i wykonać smoke test produkcji
 
 ### Zakończony sprint P4.1
 
