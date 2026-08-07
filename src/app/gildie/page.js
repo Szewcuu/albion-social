@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Swords, Shield, Globe, MapPin, Search, ExternalLink, HelpCircle } from 'lucide-react'
 import GuildApplyModal from '@/components/GuildApplyModal'
+import GuildZvZInspectorModal from '@/components/guilds/GuildZvZInspectorModal'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 export default function Gildie() {
@@ -11,8 +12,9 @@ export default function Gildie() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // Stan dla okna aplikacji do gildii
+  // Stan dla okna aplikacji do gildii oraz podglądu ZvZ API
   const [selectedGuildForApply, setSelectedGuildForApply] = useState(null)
+  const [inspectedGuild, setInspectedGuild] = useState(null)
 
   // Filtry
   const [searchTerm, setSearchTerm] = useState('')
@@ -349,7 +351,17 @@ export default function Gildie() {
                         <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" /> Lider: <b className="text-[#e3ded3]">{(guild.profiles?.username || 'Gracz').replace(/#0$/, '')}</b>
                       </p>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setInspectedGuild({ name: guild.name, server: guild.server || 'Europa' })}
+                          className="flex min-h-11 cursor-pointer items-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-950/20 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-rose-300 transition hover:bg-rose-900/40 hover:text-white"
+                          title="Podgląd statystyk ZvZ i fragów z oficjalnego API Albionu"
+                        >
+                          <Swords className="w-3.5 h-3.5 text-rose-400" />
+                          <span>Statystyki ZvZ</span>
+                        </button>
+
                         <button
                           onClick={() => setSelectedGuildForApply(guild)}
                           className="aopp-primary-button flex min-h-11 items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider"
@@ -389,6 +401,13 @@ export default function Gildie() {
         onClose={() => setSelectedGuildForApply(null)}
         guild={selectedGuildForApply}
         currentUser={user}
+      />
+
+      <GuildZvZInspectorModal
+        isOpen={!!inspectedGuild}
+        onClose={() => setInspectedGuild(null)}
+        guildName={inspectedGuild?.name || ''}
+        defaultServer={inspectedGuild?.server || 'Europa'}
       />
     </main>
   )

@@ -283,3 +283,39 @@ export async function getAlbionPlayerOverview(playerId, region, limit = 6) {
 
   return { player: profile, kills, deaths, guild, warnings }
 }
+
+export async function searchAlbionGuilds(query, region) {
+  const result = await fetchAlbionJson(`/search?q=${encodeURIComponent(query)}`, {
+    region,
+    revalidate: 60,
+    timeoutMs: 7000,
+  })
+
+  return (result?.guilds || []).slice(0, 10).map((g) => ({
+    id: g.Id,
+    name: g.Name,
+    allianceId: g.AllianceId || '',
+    allianceTag: g.AllianceTag || '',
+    killFame: g.KillFame || 0,
+    region,
+  }))
+}
+
+export async function getAlbionGuildOverview(guildId, region, limit = 10) {
+  const safeId = encodeURIComponent(guildId)
+  const [guildResult, membersResult, battlesResult] = await Promise.allSettled([
+    fetchAlbionJson(`/guilds/${safeId}`, { region, revalidate: 300, timeoutMs: 8000 }),
+    fetchAlbionJson(`/guilds/${safeId}/members`, { region, revalidate: 300, timeoutMs: 12000 }),
+    fetchAlbionJson(`/events?guildId=${safeId}&limit=${limit}&offset=0`, { region, revalidate: 120, timeoutMs: 10000 }),
+  ])
+
+  if (guildResult.status === 'rejected') throw guildResult.reason
+
+  const members = membersResult.status === 'fulfilled' && Array.isArray(membersResult.value) ? membersResult.value : []
+  const guild = normalizeGuild(guildResult.value, members)
+  const battles = battlesResult.status === 'fulfilled' && Array.isArray(battlesResult.value)
+    ? battlesResult.value.map((event) => normalizeEvent(event, 'kill'))
+    : []
+
+  return { guild, membersCount: members.length, battles }
+}
