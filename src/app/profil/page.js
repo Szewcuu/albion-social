@@ -94,10 +94,11 @@ export default function ProfilePage() {
         main_role: profileResult.data.main_role || 'DPS',
         avg_ip: profileResult.data.avg_ip || 1400,
       })
-      if (profileResult.data.is_verified || profileResult.data.verified_player_id) {
+      if (profileResult.data.is_verified || profileResult.data.verified_player_id || profileResult.data.ingame_nick) {
         setVerifiedState({
           is_verified: true,
-          verified_player_id: profileResult.data.verified_player_id,
+          verified_player_id: profileResult.data.verified_player_id || profileResult.data.ingame_nick,
+          verified_server: profileResult.data.verified_server || profileResult.data.main_server || 'Europa',
           pvp_fame: profileResult.data.pvp_fame || 0,
           pve_fame: profileResult.data.pve_fame || 0,
         })

@@ -23,11 +23,11 @@ import {
   Check, 
   X, 
   Coins,
+  Hammer,
   ArrowRight,
   Users,
   Crown,
   Map,
-  Hammer
 } from 'lucide-react'
 import ChatBox from '@/components/ChatBox'
 
@@ -655,6 +655,20 @@ export default function Home() {
                 <div>
                   <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-rose-300">Killboard Graczy</h3>
                   <p className="mt-2 text-sm text-[#a9a49b]">Prześwietl historię walki, K/D oraz doświadczenie PvP gracza.</p>
+                </div>
+              </Link>
+
+              {/* MODUŁ 07: CRAFTING */}
+              <Link href="/kalkulator-craftingu" className="aopp-module-card group flex min-h-44 flex-col justify-between rounded-2xl p-5">
+                <div className="flex justify-between items-start">
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 text-amber-400 transition-transform group-hover:-rotate-3 group-hover:scale-110">
+                    <Hammer className="h-6 w-6" />
+                  </div>
+                  <span className="text-[10px] font-mono text-gray-500 uppercase">Moduł 07</span>
+                </div>
+                <div>
+                  <h3 className="font-display text-xl font-bold text-white transition-colors group-hover:text-amber-300">Kalkulator Craftingu</h3>
+                  <p className="mt-2 text-sm text-[#a9a49b]">Wyliczaj zysk netto z wytwarzania z aktualnymi cenami z rynków królewskich.</p>
                 </div>
               </Link>
 
