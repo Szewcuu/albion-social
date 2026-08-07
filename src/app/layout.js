@@ -3,6 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 import PwaRegister from "@/components/PwaRegister";
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
         </div>
 
         <PwaRegister />
+        <MobileBottomNav />
         <SpeedInsights />
       </body>
     </html>

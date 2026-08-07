@@ -148,34 +148,36 @@ a {
 .aopp-panel,
 .aopp-stat,
 .aopp-module-card {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(216, 173, 74, 0.22);
   background:
-    linear-gradient(145deg, rgba(24, 25, 20, 0.94), rgba(10, 12, 10, 0.94)),
-    radial-gradient(circle at 100% 0%, rgba(216, 173, 74, 0.08), transparent 15rem);
-  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.3), inset 0 1px rgba(255, 255, 255, 0.025);
-  backdrop-filter: blur(18px);
+    linear-gradient(145deg, rgba(18, 14, 17, 0.92), rgba(8, 6, 8, 0.94)),
+    radial-gradient(circle at 100% 0%, rgba(243, 186, 47, 0.12), transparent 18rem);
+  box-shadow: 0 18px 55px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(243, 186, 47, 0.15);
+  backdrop-filter: blur(24px);
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1), border-color 250ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 250ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aopp-glass-card {
-  border-color: rgba(229, 193, 105, 0.28);
-  border-radius: 1rem;
-  background: rgba(8, 10, 8, 0.74);
+  border-color: rgba(243, 186, 47, 0.35);
+  border-radius: 1.25rem;
+  background: rgba(8, 5, 7, 0.82);
 }
 
 .aopp-stat {
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aopp-stat:hover {
-  transform: translateY(-2px);
-  border-color: rgba(216, 173, 74, 0.38);
+  transform: translateY(-3px) scale(1.015);
+  border-color: rgba(243, 186, 47, 0.65);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(243, 186, 47, 0.2);
 }
 
 .aopp-module-card {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), border-color 260ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aopp-module-card::after {
@@ -183,45 +185,45 @@ a {
   right: -4rem;
   bottom: -5rem;
   z-index: -1;
-  width: 11rem;
-  height: 11rem;
+  width: 12rem;
+  height: 12rem;
   border-radius: 999px;
-  background: rgba(214, 172, 73, 0.08);
-  filter: blur(32px);
+  background: rgba(243, 186, 47, 0.14);
+  filter: blur(35px);
   content: "";
-  transition: transform 300ms ease, opacity 300ms ease;
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1), opacity 350ms ease;
 }
 
 .aopp-module-card:hover {
-  transform: translateY(-5px);
-  border-color: rgba(229, 190, 93, 0.48);
-  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(229, 190, 93, 0.04);
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(243, 186, 47, 0.7);
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.6), 0 0 30px rgba(243, 186, 47, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .aopp-module-card:hover::after {
-  transform: scale(1.25);
-  opacity: 1.6;
+  transform: scale(1.4);
+  opacity: 2;
 }
 
 .aopp-module-feature {
   background:
-    linear-gradient(110deg, rgba(28, 24, 17, 0.98), rgba(12, 13, 11, 0.94)),
-    radial-gradient(circle at 80% 30%, rgba(210, 146, 45, 0.16), transparent 20rem);
+    linear-gradient(110deg, rgba(28, 20, 24, 0.98), rgba(12, 8, 11, 0.94)),
+    radial-gradient(circle at 80% 30%, rgba(243, 186, 47, 0.2), transparent 22rem);
 }
 
 .aopp-list-card {
-  border: 1px solid rgba(213, 171, 73, 0.18);
+  border: 1px solid rgba(243, 186, 47, 0.22);
   background:
-    linear-gradient(145deg, rgba(20, 22, 18, 0.96), rgba(9, 11, 9, 0.96)),
-    radial-gradient(circle at 100% 0%, rgba(216, 173, 74, 0.08), transparent 17rem);
-  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.28), inset 0 1px rgba(255, 255, 255, 0.025);
-  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    linear-gradient(145deg, rgba(16, 12, 15, 0.96), rgba(7, 4, 6, 0.96)),
+    radial-gradient(circle at 100% 0%, rgba(243, 186, 47, 0.1), transparent 18rem);
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(243, 186, 47, 0.12);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), border-color 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .aopp-list-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(226, 185, 87, 0.38);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.36), inset 0 1px rgba(255, 255, 255, 0.035);
+  transform: translateY(-4px);
+  border-color: rgba(243, 186, 47, 0.6);
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.5), 0 0 25px rgba(243, 186, 47, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .aopp-role-card {
