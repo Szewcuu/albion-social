@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { 
   Swords, Shield, Heart, UserCheck, Plus,
-  Clock, Users, Trash2 
+  Clock, Users, Trash2, AlertTriangle 
 } from 'lucide-react'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
@@ -669,6 +669,13 @@ export default function Wyprawy() {
                   className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs font-mono" 
                 />
               </div>
+
+              {Number(signupData.player_ip) < activeExpeditionForSignup.min_ip && (
+                <div className="text-[10px] font-mono text-rose-400 bg-rose-950/40 border border-rose-800/40 p-2.5 rounded-xl flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
+                  <span>Uwaga: Twoje IP ({signupData.player_ip}) jest niższe niż wymagane minimum wyprawy ({activeExpeditionForSignup.min_ip} IP).</span>
+                </div>
+              )}
 
               <div className="flex gap-2 pt-2">
                 <button type="submit" className="aopp-primary-button flex-1 py-3 text-xs font-extrabold uppercase tracking-wider">
