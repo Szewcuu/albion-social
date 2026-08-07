@@ -53,7 +53,7 @@ export default function CraftingCalculatorPage() {
     const region = server.toLowerCase().includes('ameryka') ? 'america' : server.toLowerCase().includes('azja') ? 'asia' : 'europe'
 
     try {
-      const res = await fetch(`/api/prices?mode=prices&items=${encodeURIComponent(itemId)}&region=${region}`)
+      const res = await fetch(`/api/prices?mode=current&items=${encodeURIComponent(itemId)}&region=${region}&cities=Caerleon,Martlock,Lymhurst,Bridgewatch,Fort%20Sterling,Thetford,Brecilien`)
       const data = await res.json()
 
       if (!res.ok || data.error) {

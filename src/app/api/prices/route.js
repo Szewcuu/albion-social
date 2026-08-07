@@ -49,8 +49,9 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url)
-  const mode = cleanEnum(searchParams.get('mode') || 'current', ['current', 'history', 'gold'])
-  const region = cleanEnum(searchParams.get('region') || 'europe', Object.keys(MARKET_REGIONS))
+  const rawMode = searchParams.get('mode') || 'current'
+  const modeKey = rawMode === 'prices' ? 'current' : rawMode
+  const mode = cleanEnum(modeKey, ['current', 'history', 'gold'])
 
   if (!mode) return errorResponse('Nieobsługiwany tryb danych.', 'INVALID_MODE', 400)
   if (!region) return errorResponse('Nieobsługiwany region rynku.', 'INVALID_REGION', 400)
