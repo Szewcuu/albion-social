@@ -372,6 +372,7 @@ export default function Home() {
                 <Link href="/wyprawy" className="aopp-nav-link">Wyprawy</Link>
                 <Link href="/rynek" className="aopp-nav-link">Rynek</Link>
                 <Link href="/buildy" className="aopp-nav-link">Buildy</Link>
+                <Link href="/kalkulator-craftingu" className="aopp-nav-link">Crafting</Link>
               </nav>
 
               <div className="flex flex-wrap items-center justify-end gap-4 w-full lg:w-auto">
