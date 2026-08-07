@@ -165,6 +165,7 @@ export default function ProfilePage() {
       ...prev,
       ingame_nick: data.ingame_nick,
       guild_name: data.guild_name,
+      main_server: data.verified_server || prev.main_server,
     }))
     setVerifiedState({
       is_verified: true,
@@ -173,11 +174,13 @@ export default function ProfilePage() {
       pve_fame: data.pve_fame,
     })
 
-    const { error } = await supabase
+    // 1. Spróbuj pełnego zapisu z nowymi kolumnami
+    let { error } = await supabase
       .from('profiles')
       .update({
         ingame_nick: data.ingame_nick,
         guild_name: data.guild_name,
+        main_server: data.verified_server || 'Europa',
         verified_player_id: data.verified_player_id,
         verified_server: data.verified_server,
         pvp_fame: data.pvp_fame,
@@ -187,8 +190,22 @@ export default function ProfilePage() {
       })
       .eq('id', user.id)
 
+    // 2. Jeśli baza zgłosi brak kolumn przed migracją 004, wykonaj bezpieczny fallback
+    if (error) {
+      const fallbackResult = await supabase
+        .from('profiles')
+        .update({
+          ingame_nick: data.ingame_nick,
+          guild_name: data.guild_name,
+          main_server: data.verified_server || 'Europa',
+        })
+        .eq('id', user.id)
+
+      error = fallbackResult.error
+    }
+
     setNotice(error
-      ? { type: 'error', text: 'Weryfikacja udana w API, ale nie udało się zapisać danych w profilu.' }
+      ? { type: 'error', text: 'Nie udało się zapisać profilu. Spróbuj ponownie.' }
       : { type: 'success', text: `Postać „${data.ingame_nick}” została oficjalnie zweryfikowana w API Albion Online!` })
   }
 

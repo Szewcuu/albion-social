@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, UserCheck, Globe2 } from 'lucide-react'
+import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, UserCheck, Globe2, Clock } from 'lucide-react'
 
 function getInitialRegion(server) {
   const s = (server || '').toLowerCase()
@@ -133,6 +133,12 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
           Wyszukaj swoją postać w oficjalnym rejestrze Albion Online API. Po potwierdzeniu Twój profil otrzyma status <strong className="text-emerald-400 font-bold">Oficjalnie Zweryfikowany</strong> ze statystykami PvP/PvE.
         </p>
 
+        {/* CZAS OCZEKIWANIA INFO */}
+        <div className="flex items-center gap-2 text-[10px] font-mono text-amber-200/90 bg-[#050204] border border-[#260f17] px-3.5 py-2 rounded-xl">
+          <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>Odpowiedź z serwerów Gameinfo API trwa zwykle od <strong>1 do 3 sekund</strong>.</span>
+        </div>
+
         {/* FORMULARZ WYSZUKIWANIA */}
         <form onSubmit={handleSearch} className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -171,7 +177,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
             className="w-full aopp-primary-button flex items-center justify-center gap-2 py-3 text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 cursor-pointer"
           >
             {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            {loading ? 'Wyszukiwanie w Gameinfo API...' : 'Szukaj postaci w API'}
+            {loading ? 'Wyszukiwanie w Gameinfo API... (~1-3s)' : 'Szukaj postaci w API'}
           </button>
         </form>
 
