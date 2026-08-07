@@ -206,7 +206,39 @@ export async function searchAlbionPlayers(query, region) {
     timeoutMs: 7000,
   })
 
-  return (result?.players || []).slice(0, 10).map(normalizeSearchPlayer)
+  return (result?.players || []).slice(0, 10).map((player) => ({
+    ...normalizeSearchPlayer(player),
+    region,
+  }))
+}
+
+export async function searchAlbionPlayersAllRegions(query, preferredRegion = 'europe') {
+  const regions = ['europe', 'america', 'asia']
+  const results = await Promise.allSettled(
+    regions.map((r) => searchAlbionPlayers(query, r))
+  )
+
+  const allPlayers = []
+  results.forEach((res) => {
+    if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+      allPlayers.push(...res.value)
+    }
+  })
+
+  const queryLower = query.toLowerCase()
+  allPlayers.sort((a, b) => {
+    const exactA = (a.name || '').toLowerCase() === queryLower ? 1 : 0
+    const exactB = (b.name || '').toLowerCase() === queryLower ? 1 : 0
+    if (exactA !== exactB) return exactB - exactA
+
+    const prefA = a.region === preferredRegion ? 1 : 0
+    const prefB = b.region === preferredRegion ? 1 : 0
+    if (prefA !== prefB) return prefB - prefA
+
+    return (b.killFame || 0) - (a.killFame || 0)
+  })
+
+  return allPlayers
 }
 
 export async function getAlbionPlayerOverview(playerId, region, limit = 6) {

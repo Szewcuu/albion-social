@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerOverview, searchAlbionPlayers } from '@/lib/server/albionApi'
+import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerOverview, searchAlbionPlayers, searchAlbionPlayersAllRegions } from '@/lib/server/albionApi'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { cleanAlbionId, cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
 
@@ -58,12 +58,23 @@ export async function GET(request) {
         return apiError('Nick musi mieć od 2 do 30 znaków.', { code: 'INVALID_QUERY', status: 400 })
       }
 
-      const players = await searchAlbionPlayers(query, region)
-      if (players.length === 0) {
-        return apiError(`Nie znaleziono gracza „${query}” w wybranym regionie.`, { code: 'PLAYER_NOT_FOUND', status: 404 })
+      let players = []
+      try {
+        players = await searchAlbionPlayers(query, region)
+      } catch {
+        players = []
       }
 
-      return apiResponse({ players }, { region, mode })
+      if (players.length === 0) {
+        players = await searchAlbionPlayersAllRegions(query, region)
+      }
+
+      if (players.length === 0) {
+        return apiError(`Nie znaleziono gracza „${query}” na żadnym serwerze (Europa, Ameryka, Azja).`, { code: 'PLAYER_NOT_FOUND', status: 404 })
+      }
+
+      const activeRegion = players[0]?.region || region
+      return apiResponse({ players }, { region: activeRegion, mode })
     }
 
     const playerId = cleanAlbionId(searchParams.get('id'))

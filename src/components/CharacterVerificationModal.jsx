@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, UserCheck, Globe2 } from 'lucide-react'
 
 function getInitialRegion(server) {
@@ -36,41 +36,26 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
     setOverview(null)
 
     try {
-      // 1. Próba w wybranym regionie
-      let res = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(query)}&region=${region}`)
-      let data = await res.json()
-      let playersList = data.data?.players || []
+      const res = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(query)}&region=${region}`)
+      const data = await res.json()
 
-      let activeRegion = region
+      if (!res.ok || data.error) {
+        throw new Error(data.error?.message || `Nie znaleziono gracza „${query}” w rejestrze API.`)
+      }
 
-      // 2. Jeśli nie znaleziono w wybranym regionie, sprawdzamy automatycznie pozostałe serwery
-      if (playersList.length === 0) {
-        const otherRegions = ['europe', 'america', 'asia'].filter((r) => r !== region)
+      const playersList = data.data?.players || []
+      const returnedRegion = data.meta?.region || region
 
-        for (const otherReg of otherRegions) {
-          try {
-            const fallbackRes = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(query)}&region=${otherReg}`)
-            const fallbackData = await fallbackRes.json()
-            const found = fallbackData.data?.players || []
-
-            if (found.length > 0) {
-              playersList = found
-              activeRegion = otherReg
-              const regLabel = otherReg === 'america' ? 'Ameryka (NWA)' : otherReg === 'asia' ? 'Azja (SGP)' : 'Europa (AMS)'
-              setRegion(otherReg)
-              setInfoMsg(`Znaleziono gracza na serwerze ${regLabel}! Przełączono region.`)
-              break
-            }
-          } catch {
-            // Ignorujemy błędy fallbacku
-          }
-        }
+      if (returnedRegion !== region) {
+        setRegion(returnedRegion)
+        const regLabel = returnedRegion === 'america' ? 'Ameryka (NWA)' : returnedRegion === 'asia' ? 'Azja (SGP)' : 'Europa (AMS)'
+        setInfoMsg(`Znaleziono gracza na serwerze ${regLabel}!`)
       }
 
       if (playersList.length === 0) {
-        setError(`Nie znaleziono gracza „${query}” na żadnym serwerze (Europa, Ameryka, Azja). Sprawdź pisownię.`)
+        setError(`Nie znaleziono gracza „${query}” na żadnym serwerze. Sprawdź pisownię.`)
       } else if (playersList.length === 1) {
-        handleSelectCandidate(playersList[0], activeRegion)
+        handleSelectCandidate(playersList[0], returnedRegion)
       } else {
         setCandidates(playersList)
       }
@@ -223,6 +208,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
                     <div className="text-xs font-bold text-gray-200">{c.name || c.Name}</div>
                     <div className="text-[10px] text-gray-400 font-mono">
                       {c.guildName || c.GuildName ? `Gildia: ${c.guildName || c.GuildName}` : 'Brak gildii'}
+                      <span className="ml-2 uppercase text-amber-400">({c.region || region})</span>
                     </div>
                   </div>
                   <div className="text-right font-mono text-[10px] text-amber-400">
