@@ -1,15 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #060407;
-  --foreground: #e6dfd5;
-  --amber-glow: #f59e0b;
-  --gold-accent: #f3ba2f;
-  --gold-bright: #ffd700;
-  --ruby-glow: #e11d48;
-  --emerald-glow: #10b981;
-  --sky-glow: #0284c7;
-  --font-display: "Cinzel", "Outfit", "Palatino Linotype", Georgia, serif;
+  --background: #050508;
+  --foreground: #f1f5f9;
+  --accent-amber: #f59e0b;
+  --accent-emerald: #10b981;
+  --accent-[#f3ba2f]: #f3ba2f;
+  --card-bg: rgba(15, 17, 23, 0.92);
+  --card-border: rgba(245, 158, 11, 0.25);
+  --font-display: "Outfit", "Inter", sans-serif;
   --font-mono: "Fira Code", monospace;
 }
 
@@ -26,176 +25,124 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(243, 186, 47, 0.15), transparent 50rem),
-    radial-gradient(ellipse at 80% 100%, rgba(225, 29, 72, 0.08), transparent 45rem),
-    linear-gradient(180deg, #090508 0%, #050304 40%, #030203 100%);
+  background: #050508;
   color: var(--foreground);
-  font-size: 16px;
+  font-family: var(--font-display);
+  font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-/* CYBER-GLOW BUTTONS & CONTROLS */
-.aopp-primary-button,
-.aopp-btn-glow {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 1rem;
-  border: 1px solid rgba(243, 186, 47, 0.8);
-  background: linear-gradient(180deg, #f3ba2f 0%, #b8820c 100%);
-  box-shadow: 0 0 20px rgba(243, 186, 47, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  color: #0c0703;
-  font-family: var(--font-display);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-}
-
-.aopp-primary-button:hover,
-.aopp-btn-glow:hover {
-  transform: translateY(-3px) scale(1.02);
-  background: linear-gradient(180deg, #ffd700 0%, #d49511 100%);
-  box-shadow: 0 0 35px rgba(243, 186, 47, 0.6), 0 10px 25px rgba(0, 0, 0, 0.5);
-  border-color: #ffffff;
-}
-
-.aopp-ghost-button,
-.aopp-btn-glass {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 1rem;
-  border: 1px solid rgba(243, 186, 47, 0.3);
-  background: rgba(12, 7, 10, 0.65);
-  color: #e6dfd5;
-  backdrop-filter: blur(14px);
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-}
-
-.aopp-ghost-button:hover,
-.aopp-btn-glass:hover {
-  transform: translateY(-3px);
-  border-color: rgba(243, 186, 47, 0.7);
-  background: rgba(24, 14, 20, 0.85);
-  color: #f3ba2f;
-  box-shadow: 0 0 25px rgba(243, 186, 47, 0.25), 0 8px 20px rgba(0, 0, 0, 0.4);
-}
-
-/* TOPBAR & FLOATING DOCK */
-.aopp-topbar {
-  border: 1px solid rgba(243, 186, 47, 0.35);
-  background: linear-gradient(180deg, rgba(20, 10, 15, 0.92), rgba(10, 5, 8, 0.94));
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(243, 186, 47, 0.2);
-  backdrop-filter: blur(28px) saturate(1.2);
-}
-
-.aopp-nav-link {
-  border-radius: 0.85rem;
-  padding: 0.65rem 1rem;
-  color: #b8b0a5;
-  font-family: var(--font-display);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-  transition: all 220ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.aopp-nav-link:hover {
-  background: rgba(243, 186, 47, 0.12);
-  border-color: rgba(243, 186, 47, 0.4);
-  color: #f3ba2f;
-  box-shadow: 0 0 18px rgba(243, 186, 47, 0.2);
-}
-
-/* BENTO CARDS & GLASS CONTAINERS */
-.aopp-glass-card,
-.aopp-panel,
-.aopp-stat,
-.aopp-module-card {
-  border: 1px solid rgba(243, 186, 47, 0.25);
+/* REBORN SHELL & CONTAINER */
+.reborn-shell {
+  min-height: 100vh;
   background:
-    linear-gradient(145deg, rgba(22, 12, 17, 0.94), rgba(8, 4, 6, 0.96)),
-    radial-gradient(circle at 100% 0%, rgba(243, 186, 47, 0.15), transparent 22rem);
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(243, 186, 47, 0.18);
-  backdrop-filter: blur(24px);
-  transition: all 280ms cubic-bezier(0.16, 1, 0.3, 1);
+    radial-gradient(ellipse at 20% 0%, rgba(245, 158, 11, 0.12), transparent 45rem),
+    radial-gradient(ellipse at 80% 100%, rgba(16, 185, 129, 0.08), transparent 45rem),
+    #050508;
 }
 
-.aopp-module-card {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  border-radius: 1.5rem;
+/* LEFT SIDEBAR NAVIGATION */
+.reborn-sidebar {
+  background: rgba(10, 12, 16, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
 }
 
-.aopp-module-card::after {
-  position: absolute;
-  right: -3.5rem;
-  bottom: -4.5rem;
-  z-index: -1;
-  width: 12rem;
-  height: 12rem;
-  border-radius: 999px;
-  background: rgba(243, 186, 47, 0.18);
-  filter: blur(35px);
-  content: "";
-  transition: transform 380ms ease, opacity 380ms ease;
-}
-
-.aopp-module-card:hover {
-  transform: translateY(-6px) scale(1.01);
-  border-color: rgba(243, 186, 47, 0.75);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75), 0 0 35px rgba(243, 186, 47, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.aopp-module-card:hover::after {
-  transform: scale(1.4);
-  opacity: 2;
-}
-
-/* FORM INPUTS & SELECTS */
-.aopp-panel input,
-.aopp-panel select,
-.aopp-panel textarea {
-  border-color: rgba(243, 186, 47, 0.22);
-  background-color: rgba(6, 3, 5, 0.65);
-  color: #f3f0e8;
+.reborn-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.85rem;
   transition: all 200ms ease;
+  border: 1px solid transparent;
 }
 
-.aopp-panel input:focus,
-.aopp-panel select:focus,
-.aopp-panel textarea:focus {
-  border-color: rgba(243, 186, 47, 0.85);
-  box-shadow: 0 0 0 3px rgba(243, 186, 47, 0.25), 0 0 20px rgba(243, 186, 47, 0.2);
-  background-color: rgba(12, 6, 9, 0.85);
+.reborn-nav-item:hover,
+.reborn-nav-item.active {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
 }
 
-/* ANIMATIONS & SCROLLBAR */
+/* CARDS & PANELS */
+.reborn-card {
+  background: rgba(13, 16, 22, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(16px);
+  transition: all 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reborn-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.75), 0 0 25px rgba(245, 158, 11, 0.15);
+}
+
+/* BUTTONS */
+.reborn-btn-primary {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #000000;
+  font-weight: 800;
+  border-radius: 0.85rem;
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.reborn-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px rgba(245, 158, 11, 0.5);
+  background: linear-gradient(135deg, #fbbf24 0%, #b45309 100%);
+}
+
+.reborn-btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  font-weight: 700;
+  border-radius: 0.85rem;
+  padding: 0.75rem 1.5rem;
+  transition: all 200ms ease;
+  cursor: pointer;
+}
+
+.reborn-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+}
+
+/* INPUTS */
+input, select, textarea {
+  background: rgba(8, 10, 14, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #f8fafc !important;
+  border-radius: 0.85rem !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(245, 158, 11, 0.7) !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2) !important;
+}
+
+/* SCROLLBAR */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #060407;
+  background: #050508;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(243, 186, 47, 0.4);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(243, 186, 47, 0.8);
+  background: rgba(245, 158, 11, 0.3);
+  border-radius: 3px;
 }
