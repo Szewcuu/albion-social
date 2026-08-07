@@ -100,6 +100,15 @@ export default function ProfilePage() {
           pvp_fame: profileResult.data.pvp_fame || 0,
           pve_fame: profileResult.data.pve_fame || 0,
         })
+      } else if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem(`aopp_verified_${userId}`)
+          if (cached) {
+            setVerifiedState(JSON.parse(cached))
+          }
+        } catch {
+          // ignore
+        }
       }
     }
 
@@ -167,12 +176,23 @@ export default function ProfilePage() {
       guild_name: data.guild_name,
       main_server: data.verified_server || prev.main_server,
     }))
-    setVerifiedState({
+    const verifiedPayload = {
       is_verified: true,
       verified_player_id: data.verified_player_id,
+      verified_server: data.verified_server,
       pvp_fame: data.pvp_fame,
       pve_fame: data.pve_fame,
-    })
+      verified_at: data.verified_at,
+    }
+    setVerifiedState(verifiedPayload)
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`aopp_verified_${user.id}`, JSON.stringify(verifiedPayload))
+      }
+    } catch {
+      // ignore
+    }
 
     // 1. Spróbuj pełnego zapisu z nowymi kolumnami
     let { error } = await supabase

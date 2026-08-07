@@ -136,7 +136,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
         {/* CZAS OCZEKIWANIA INFO */}
         <div className="flex items-center gap-2 text-[10px] font-mono text-amber-200/90 bg-[#050204] border border-[#260f17] px-3.5 py-2 rounded-xl">
           <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span>Odpowiedź z serwerów Gameinfo API trwa zwykle od <strong>1 do 3 sekund</strong>.</span>
+          <span>Oficjalne API Albionu bywa obciążone. Odpowiedź trwa zwykle <strong>1–3 s</strong>, a przy obciążeniu serwerów gier do <strong>15–30 s</strong>.</span>
         </div>
 
         {/* FORMULARZ WYSZUKIWANIA */}
