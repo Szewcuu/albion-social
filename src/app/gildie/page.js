@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Swords, Shield, Globe, MapPin, Search, ExternalLink, HelpCircle } from 'lucide-react'
 import GuildApplyModal from '@/components/GuildApplyModal'
 import GuildZvZInspectorModal from '@/components/guilds/GuildZvZInspectorModal'
+import HyperHudHeader from '@/components/HyperHudHeader'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 export default function Gildie() {
@@ -123,11 +124,10 @@ export default function Gildie() {
   })
 
   return (
-    <main className="aopp-shell min-h-screen text-[#ddd8ce]">
-      <div className="aopp-world-bg" aria-hidden="true" />
-      <div className="aopp-grain" aria-hidden="true" />
+    <main className="hud-shell min-h-screen text-[#f3f4f6] pb-12">
+      <HyperHudHeader user={user} />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1480px] space-y-6 p-4 text-sm sm:p-6 lg:p-8">
+      <div className="relative z-10 mx-auto w-full max-w-[1580px] space-y-6 p-4 text-sm sm:p-6 lg:p-8 mt-4">
         
         <PortalSubpageHeader
           eyebrow="Sala chorągwi • Rejestr sojuszy"

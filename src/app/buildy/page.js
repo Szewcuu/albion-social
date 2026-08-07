@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, ArrowUpRight } from 'lucide-react'
+import HyperHudHeader from '@/components/HyperHudHeader'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { buildFromDbRow, itemImageUrl } from '@/lib/buildSlots'
@@ -74,11 +75,10 @@ export default function BuildyPage() {
   )
 
   return (
-    <main className="aopp-shell flex min-h-screen flex-col justify-between text-[#d5d0c6]">
-      <div className="aopp-world-bg" />
-      <div className="aopp-grain" />
+    <main className="hud-shell min-h-screen text-[#f3f4f6] pb-12">
+      <HyperHudHeader user={user} />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col gap-7 p-4 sm:p-6 lg:p-8">
+      <div className="relative z-10 mx-auto w-full max-w-[1580px] space-y-6 p-4 text-sm sm:p-6 lg:p-8 mt-4">
         <PortalSubpageHeader
           eyebrow="Kuźnia doktryn • Buildy społeczności"
           title={<>Wykuj zestaw,<br /><span className="text-orange-200">który przetrwa bitwę.</span></>}
