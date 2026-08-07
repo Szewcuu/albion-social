@@ -42,21 +42,28 @@ function toDateParameter(date) {
 }
 
 async function fetchMarketJson(url, { revalidate = 60 } = {}) {
-  try {
-    const response = await fetch(url, {
-      headers: {
-        Accept: 'application/json',
-        'User-Agent': 'Albion-Social/1.0 (+https://albion-social.vercel.app)',
-      },
-      next: { revalidate },
-      signal: AbortSignal.timeout(10_000),
-    })
+  let attempt = 0
+  while (attempt < 2) {
+    attempt++
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Albion-Social/1.0',
+        },
+        next: { revalidate },
+        signal: AbortSignal.timeout(12_000),
+      })
 
-    if (!response.ok) throw new Error(`UPSTREAM_${response.status}`)
-    return await response.json()
-  } catch (error) {
-    if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new Error('UPSTREAM_TIMEOUT')
-    throw error
+      if (!response.ok) throw new Error(`UPSTREAM_${response.status}`)
+      return await response.json()
+    } catch (error) {
+      if (attempt >= 2) {
+        if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new Error('UPSTREAM_TIMEOUT')
+        throw error
+      }
+      await new Promise((r) => setTimeout(r, 500))
+    }
   }
 }
 

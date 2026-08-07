@@ -50,24 +50,32 @@ export default function CraftingCalculatorPage() {
     setLoading(true)
     setError(null)
     const itemId = getItemId()
-    const region = server.toLowerCase().includes('ameryka') ? 'america' : server.toLowerCase().includes('azja') ? 'asia' : 'europe'
+    const regionKey = server.toLowerCase().includes('ameryka') ? 'america' : server.toLowerCase().includes('azja') ? 'asia' : 'europe'
 
     try {
-      const res = await fetch(`/api/prices?mode=current&items=${encodeURIComponent(itemId)}&region=${region}&cities=Caerleon,Martlock,Lymhurst,Bridgewatch,Fort%20Sterling,Thetford,Brecilien`)
-      let data = {}
+      let rawPrices = []
       try {
-        data = await res.json()
+        const res = await fetch(`/api/prices?mode=current&items=${encodeURIComponent(itemId)}&region=${regionKey}&cities=Caerleon,Martlock,Lymhurst,Bridgewatch,Fort%20Sterling,Thetford,Brecilien`)
+        if (res.ok) {
+          const data = await res.json()
+          rawPrices = data.data || []
+        }
       } catch {
-        throw new Error('Serwer cen jest chwilowo niedostępny. Spróbuj ponownie za chwilę.')
+        rawPrices = []
       }
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error?.message || 'Nie udało się pobrać cen z Albion Data Project API.')
+      // Fallback pobierający dane bezpośrednio w przeglądarce jeśli serwer pośredniczący zasygnalizuje błąd
+      if (!rawPrices || rawPrices.length === 0) {
+        const host = regionKey === 'america' ? 'west' : regionKey === 'asia' ? 'east' : 'europe'
+        const directRes = await fetch(`https://${host}.albion-online-data.com/api/v2/stats/prices/${encodeURIComponent(itemId)}.json?locations=Caerleon,Martlock,Lymhurst,Bridgewatch,FortSterling,Thetford,Brecilien`)
+        if (directRes.ok) {
+          rawPrices = await directRes.json()
+        }
       }
 
-      const validPrices = (data.data || []).filter(p => p.sell_price_min > 0)
+      const validPrices = (rawPrices || []).filter(p => p.sell_price_min > 0)
       if (validPrices.length === 0) {
-        setError(`Brak danych cenowych dla przedmiotu ${itemId} na serwerze ${server}.`)
+        setError(`Brak aktywnych danych cenowych dla przedmiotu ${itemId} na serwerze ${server}. (Cena nie została jeszcze zeskanowana przez graczy)`)
         setPriceData(null)
       } else {
         validPrices.sort((a, b) => a.sell_price_min - b.sell_price_min)
@@ -81,7 +89,7 @@ export default function CraftingCalculatorPage() {
         })
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Błąd pobierania cen.')
       setPriceData(null)
     } finally {
       setLoading(false)
