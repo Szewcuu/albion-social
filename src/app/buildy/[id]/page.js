@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import BuildDetailEquipment from '@/components/builds/BuildDetailEquipment'
+import BuildStatsCalculator from '@/components/builds/BuildStatsCalculator'
 import BuildComments from '@/components/builds/BuildComments'
 import BuildSocialActions from '@/components/builds/BuildSocialActions'
 import { EmptyState } from '@/components/ui/FeedbackState'
@@ -142,6 +143,12 @@ export default async function BuildDetailPage({ params }) {
         </header>
 
         <BuildDetailEquipment slots={build.slots} />
+
+        <BuildStatsCalculator
+          slots={build.slots}
+          quality={build.quality || 1}
+          specBonus={build.specBonus || 0}
+        />
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-5">

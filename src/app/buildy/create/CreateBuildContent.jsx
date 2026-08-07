@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import PageBanner from '@/components/PageBanner'
 import EquipmentGrid from '@/components/builds/EquipmentGrid'
+import BuildStatsCalculator from '@/components/builds/BuildStatsCalculator'
 import TagSelector from '@/components/builds/TagSelector'
 import ItemPicker from '@/components/builds/ItemPicker'
 import {
@@ -458,6 +459,13 @@ export default function CreateBuildPage() {
 
           <div className="xl:sticky xl:top-6 xl:self-start space-y-4">
             <EquipmentGrid slots={build.slots} onSlotChange={updateSlot} />
+            <BuildStatsCalculator
+              slots={build.slots}
+              quality={build.quality || 1}
+              specBonus={build.specBonus || 0}
+              onQualityChange={(quality) => updateBuild({ quality })}
+              onSpecChange={(specBonus) => updateBuild({ specBonus })}
+            />
 
             <div className="aopp-panel space-y-2 p-4">
               <h3 className="text-[10px] font-black uppercase tracking-[.18em] text-orange-200/70">Rytuał kucia</h3>
