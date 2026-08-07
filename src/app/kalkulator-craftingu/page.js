@@ -54,7 +54,12 @@ export default function CraftingCalculatorPage() {
 
     try {
       const res = await fetch(`/api/prices?mode=current&items=${encodeURIComponent(itemId)}&region=${region}&cities=Caerleon,Martlock,Lymhurst,Bridgewatch,Fort%20Sterling,Thetford,Brecilien`)
-      const data = await res.json()
+      let data = {}
+      try {
+        data = await res.json()
+      } catch {
+        throw new Error('Serwer cen jest chwilowo niedostępny. Spróbuj ponownie za chwilę.')
+      }
 
       if (!res.ok || data.error) {
         throw new Error(data.error?.message || 'Nie udało się pobrać cen z Albion Data Project API.')
