@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } from 'lucide-react'
 import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
+import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
@@ -159,6 +160,23 @@ export default function Rynek() {
                       placeholder="np. Sprzedam Mamuta Transportowego T8" 
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">ID Przedmiotu (opcjonalnie do wyceny API)</label>
+                    <input 
+                      type="text" 
+                      value={formData.item_name} 
+                      onChange={e => setFormData({ ...formData, item_name: e.target.value })} 
+                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-amber-200 focus:border-[#f3ba2f] outline-none text-xs font-mono" 
+                      placeholder="np. T8_BAG, T4_BAG, T8_MAIN_SWORD" 
+                    />
+                  </div>
+
+                  <LiveMarketPriceEstimator
+                    itemId={formData.item_name}
+                    userPrice={formData.price}
+                    server={formData.server}
+                  />
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
