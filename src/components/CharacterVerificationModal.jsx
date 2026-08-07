@@ -55,7 +55,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
       if (playersList.length === 0) {
         setError(`Nie znaleziono gracza „${query}” na żadnym serwerze. Sprawdź pisownię.`)
       } else if (playersList.length === 1) {
-        handleSelectCandidate(playersList[0], returnedRegion)
+        await handleSelectCandidate(playersList[0], returnedRegion)
       } else {
         setCandidates(playersList)
       }
