@@ -12,6 +12,7 @@ import {
   Gamepad2,
   Globe2,
   LoaderCircle,
+  Lock,
   Save,
   Shield,
   ShieldCheck,
@@ -372,8 +373,30 @@ export default function ProfilePage() {
 
               <form onSubmit={handleSaveProfile} className="mt-6 space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81]">Nick w grze
-                    <input type="text" maxLength={80} value={formData.ingame_nick} onChange={(event) => setFormData({ ...formData, ingame_nick: event.target.value })} placeholder="np. Szewczykos" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" />
+                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81] block">
+                    <span className="flex items-center justify-between">
+                      <span>Nick w grze</span>
+                      {verifiedState?.is_verified && (
+                        <span className="text-[8px] text-amber-400/90 font-mono font-normal normal-case flex items-center gap-1">
+                          <Lock className="w-3 h-3 text-amber-400" /> Zablokowano (Zweryfikowano w API)
+                        </span>
+                      )}
+                    </span>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      value={formData.ingame_nick}
+                      readOnly={Boolean(verifiedState?.is_verified)}
+                      disabled={Boolean(verifiedState?.is_verified)}
+                      onChange={(event) => setFormData({ ...formData, ingame_nick: event.target.value })}
+                      placeholder="np. Szewczykos"
+                      title={verifiedState?.is_verified ? "Nick został Oficjalnie Zweryfikowany z API. Użyj przycisku 'Zaktualizuj Weryfikację', aby zmienić postać." : "Nick w grze"}
+                      className={`mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal outline-none ${
+                        verifiedState?.is_verified
+                          ? 'bg-[#080406] border-amber-500/30 text-amber-200/80 cursor-not-allowed select-none'
+                          : 'text-[#eee7d9]'
+                      }`}
+                    />
                   </label>
                   <label className="text-[9px] font-black uppercase tracking-[.14em] text-[#8f8a81]">Serwer główny
                     <select value={formData.main_server} onChange={(event) => setFormData({ ...formData, main_server: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none">
