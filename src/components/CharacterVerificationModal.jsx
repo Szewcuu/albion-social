@@ -1,13 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, UserCheck } from 'lucide-react'
+import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, UserCheck, Globe2 } from 'lucide-react'
+
+function getInitialRegion(server) {
+  const s = (server || '').toLowerCase()
+  if (s.includes('ameryka') || s.includes('america') || s === 'na') return 'america'
+  if (s.includes('azja') || s.includes('asia')) return 'asia'
+  return 'europe'
+}
 
 export default function CharacterVerificationModal({ isOpen, onClose, defaultNick = '', defaultServer = 'Europa', onVerifySuccess }) {
   const [nick, setNick] = useState(defaultNick)
-  const [region, setRegion] = useState(defaultServer.toLowerCase() === 'ameryka' ? 'america' : defaultServer.toLowerCase() === 'azja' ? 'asia' : 'europe')
+  const [region, setRegion] = useState(() => getInitialRegion(defaultServer))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [infoMsg, setInfoMsg] = useState(null)
   const [candidates, setCandidates] = useState([])
   const [selectedCandidate, setSelectedCandidate] = useState(null)
   const [overview, setOverview] = useState(null)
@@ -16,46 +24,71 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
   if (!isOpen) return null
 
   const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!nick.trim() || loading) return
+    if (e) e.preventDefault()
+    const query = nick.trim()
+    if (!query || loading) return
 
     setLoading(true)
     setError(null)
+    setInfoMsg(null)
     setCandidates([])
     setSelectedCandidate(null)
     setOverview(null)
 
     try {
-      const res = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(nick.trim())}&region=${region}`)
-      const data = await res.json()
+      // 1. Próba w wybranym regionie
+      let res = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(query)}&region=${region}`)
+      let data = await res.json()
+      let playersList = data.data?.players || []
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error?.message || 'Nie znaleziono postaci w wybranym regionie.')
+      let activeRegion = region
+
+      // 2. Jeśli nie znaleziono w wybranym regionie, sprawdzamy automatycznie pozostałe serwery
+      if (playersList.length === 0) {
+        const otherRegions = ['europe', 'america', 'asia'].filter((r) => r !== region)
+
+        for (const otherReg of otherRegions) {
+          try {
+            const fallbackRes = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(query)}&region=${otherReg}`)
+            const fallbackData = await fallbackRes.json()
+            const found = fallbackData.data?.players || []
+
+            if (found.length > 0) {
+              playersList = found
+              activeRegion = otherReg
+              const regLabel = otherReg === 'america' ? 'Ameryka (NWA)' : otherReg === 'asia' ? 'Azja (SGP)' : 'Europa (AMS)'
+              setRegion(otherReg)
+              setInfoMsg(`Znaleziono gracza na serwerze ${regLabel}! Przełączono region.`)
+              break
+            }
+          } catch {
+            // Ignorujemy błędy fallbacku
+          }
+        }
       }
 
-      const playersList = data.data?.players || []
       if (playersList.length === 0) {
-        setError(`Nie znaleziono gracza „${nick}” w tym regionie Albionu. Sprawdź pisownię.`)
+        setError(`Nie znaleziono gracza „${query}” na żadnym serwerze (Europa, Ameryka, Azja). Sprawdź pisownię.`)
       } else if (playersList.length === 1) {
-        handleSelectCandidate(playersList[0])
+        handleSelectCandidate(playersList[0], activeRegion)
       } else {
         setCandidates(playersList)
       }
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Błąd połączenia z API Albionu.')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSelectCandidate = async (candidate) => {
+  const handleSelectCandidate = async (candidate, targetRegion = region) => {
     setSelectedCandidate(candidate)
     setLoading(true)
     setError(null)
 
     try {
       const playerId = candidate.id || candidate.Id
-      const res = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(playerId)}&region=${region}`)
+      const res = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(playerId)}&region=${targetRegion}`)
       const data = await res.json()
 
       if (!res.ok || data.error) {
@@ -80,7 +113,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
       ingame_nick: player.name || selectedCandidate.name || selectedCandidate.Name,
       guild_name: player.guildName || selectedCandidate.guildName || selectedCandidate.GuildName || '',
       verified_player_id: player.id || selectedCandidate.id || selectedCandidate.Id,
-      verified_server: region,
+      verified_server: region === 'america' ? 'Ameryka' : region === 'asia' ? 'Azja' : 'Europa',
       pvp_fame: player.killFame || selectedCandidate.killFame || 0,
       pve_fame: player.fame?.pve || 0,
       is_verified: true,
@@ -104,7 +137,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
           <button
             onClick={onClose}
             aria-label="Zamknij okno weryfikacji"
-            className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition"
+            className="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -138,7 +171,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
               <select
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
-                className="w-full bg-[#050204] border border-[#331520] text-amber-200 text-xs rounded-xl p-3 outline-none focus:border-[#f3ba2f] font-mono"
+                className="w-full bg-[#050204] border border-[#331520] text-amber-200 text-xs rounded-xl p-3 outline-none focus:border-[#f3ba2f] font-mono cursor-pointer"
               >
                 <option value="europe">Europa (AMS)</option>
                 <option value="america">Ameryka (NWA)</option>
@@ -150,12 +183,20 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
           <button
             type="submit"
             disabled={loading || !nick.trim()}
-            className="w-full aopp-primary-button flex items-center justify-center gap-2 py-3 text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50"
+            className="w-full aopp-primary-button flex items-center justify-center gap-2 py-3 text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 cursor-pointer"
           >
             {loading ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             {loading ? 'Wyszukiwanie w Gameinfo API...' : 'Szukaj postaci w API'}
           </button>
         </form>
+
+        {/* POWIADOMIENIE INFO (np. przełączenie serwera) */}
+        {infoMsg && (
+          <div className="flex items-center gap-2 bg-amber-950/40 border border-amber-500/40 p-3 rounded-xl text-amber-300 text-xs font-mono">
+            <Globe2 className="w-4 h-4 shrink-0 text-amber-400" />
+            <span>{infoMsg}</span>
+          </div>
+        )}
 
         {/* KOMUNIKAT BŁĘDU */}
         {error && (
@@ -176,7 +217,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
                 <button
                   key={c.id || c.Id}
                   onClick={() => handleSelectCandidate(c)}
-                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#070305] border border-[#220e14] hover:border-amber-500/50 hover:bg-[#12070c] transition text-left"
+                  className="w-full flex items-center justify-between p-3 rounded-xl bg-[#070305] border border-[#220e14] hover:border-amber-500/50 hover:bg-[#12070c] transition text-left cursor-pointer"
                 >
                   <div>
                     <div className="text-xs font-bold text-gray-200">{c.name || c.Name}</div>

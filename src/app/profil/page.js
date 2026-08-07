@@ -399,6 +399,7 @@ export default function ProfilePage() {
       </div>
 
       <CharacterVerificationModal
+        key={isVerifyModalOpen ? `verify-${formData.main_server}-${formData.ingame_nick}` : 'closed'}
         isOpen={isVerifyModalOpen}
         onClose={() => setIsVerifyModalOpen(false)}
         defaultNick={formData.ingame_nick}
