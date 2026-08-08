@@ -157,28 +157,32 @@ export default function AppShell({ children }) {
     <div className={`app-shell ${guestLanding ? 'guest-landing' : ''} ${authReady ? 'auth-ready' : 'auth-pending'}`}>
       <a href="#main-content" className="skip-link">Przejdź do treści</a>
       <div className="world-backdrop" aria-hidden="true" />
-      <AppSidebar
-        isOpen={sidebarOpen}
-        isAdmin={isAdmin}
-        onClose={() => setSidebarOpen(false)}
-      />
+      {!guestLanding && (
+        <AppSidebar
+          isOpen={sidebarOpen}
+          isAdmin={isAdmin}
+          onClose={() => setSidebarOpen(false)}
+        />
+      )}
 
       <div className="app-main">
-        <TopBar
-          user={user}
-          logout={logout}
-          notifications={notifications}
-          notificationState={notificationState}
-          markAllAsRead={markAllAsRead}
-          refreshNotifications={() => user?.id && fetchNotifications(user.id)}
-          loginWithDiscord={loginWithDiscord}
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-        />
+        {!guestLanding && (
+          <TopBar
+            user={user}
+            logout={logout}
+            notifications={notifications}
+            notificationState={notificationState}
+            markAllAsRead={markAllAsRead}
+            refreshNotifications={() => user?.id && fetchNotifications(user.id)}
+            loginWithDiscord={loginWithDiscord}
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          />
+        )}
 
         <main id="main-content" className="app-content">{children}</main>
       </div>
 
-      <MobileBottomNav />
+      {!guestLanding && <MobileBottomNav />}
     </div>
   )
 }
