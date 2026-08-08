@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS public.loot_split_drafts (
 ALTER TABLE public.loot_split_drafts ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users manage own loot split draft" ON public.loot_split_drafts;
 CREATE POLICY "Users manage own loot split draft" ON public.loot_split_drafts FOR ALL TO authenticated
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+USING ((SELECT auth.uid()) = user_id)
+WITH CHECK ((SELECT auth.uid()) = user_id);
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.loot_split_drafts TO authenticated;
 
 CREATE TABLE IF NOT EXISTS public.loot_split_reports (
@@ -84,13 +84,13 @@ ON public.loot_split_reports (user_id, created_at DESC);
 ALTER TABLE public.loot_split_reports ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users read own loot split reports" ON public.loot_split_reports;
 CREATE POLICY "Users read own loot split reports" ON public.loot_split_reports FOR SELECT TO authenticated
-USING (auth.uid() = user_id);
+USING ((SELECT auth.uid()) = user_id);
 DROP POLICY IF EXISTS "Users create own loot split reports" ON public.loot_split_reports;
 CREATE POLICY "Users create own loot split reports" ON public.loot_split_reports FOR INSERT TO authenticated
-WITH CHECK (auth.uid() = user_id);
+WITH CHECK ((SELECT auth.uid()) = user_id);
 DROP POLICY IF EXISTS "Users delete own loot split reports" ON public.loot_split_reports;
 CREATE POLICY "Users delete own loot split reports" ON public.loot_split_reports FOR DELETE TO authenticated
-USING (auth.uid() = user_id);
+USING ((SELECT auth.uid()) = user_id);
 GRANT SELECT, INSERT, DELETE ON public.loot_split_reports TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.save_loot_split_report(
@@ -100,15 +100,16 @@ CREATE OR REPLACE FUNCTION public.save_loot_split_report(
 )
 RETURNS public.loot_split_reports
 LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
+SECURITY INVOKER
+SET search_path = ''
 AS $$
 DECLARE
   clean_title TEXT := btrim(p_title);
+  current_user_id UUID := auth.uid();
   next_version INTEGER;
   saved_report public.loot_split_reports;
 BEGIN
-  IF auth.uid() IS NULL THEN
+  IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'Brak autoryzacji.' USING ERRCODE = '42501';
   END IF;
   IF clean_title IS NULL OR char_length(clean_title) NOT BETWEEN 1 AND 100 THEN
@@ -121,13 +122,13 @@ BEGIN
     RAISE EXCEPTION 'Nieprawidłowa treść raportu.' USING ERRCODE = '22023';
   END IF;
 
-  PERFORM pg_advisory_xact_lock(hashtext(auth.uid()::text || ':' || lower(clean_title)));
+  PERFORM pg_advisory_xact_lock(hashtext(current_user_id::text || ':' || lower(clean_title)));
   SELECT COALESCE(max(version), 0) + 1 INTO next_version
   FROM public.loot_split_reports
-  WHERE user_id = auth.uid() AND lower(title) = lower(clean_title);
+  WHERE user_id = current_user_id AND lower(title) = lower(clean_title);
 
   INSERT INTO public.loot_split_reports (user_id, title, version, payload, report_text)
-  VALUES (auth.uid(), clean_title, next_version, p_payload, p_report_text)
+  VALUES (current_user_id, clean_title, next_version, p_payload, p_report_text)
   RETURNING * INTO saved_report;
 
   RETURN saved_report;
