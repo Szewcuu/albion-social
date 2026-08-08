@@ -3,14 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
+  Activity,
   BookOpenCheck,
   CheckCircle2,
+  Clock3,
   EyeOff,
   FileWarning,
   Layers3,
   MessageSquareText,
   RefreshCw,
   RotateCcw,
+  ServerCog,
   ShieldCheck,
   Swords,
   Trash2,
@@ -54,6 +57,20 @@ const AUDIT_ACTIONS = {
   dismiss_report: 'Odrzucono zgłoszenie',
 }
 
+const INTEGRATION_NAMES = {
+  supabase: 'Supabase',
+  discord: 'Discord',
+  albion_api: 'Gameinfo Albion',
+  market_api: 'Albion Data Project',
+}
+
+const INTEGRATION_STATUSES = {
+  operational: 'Działa',
+  degraded: 'Obniżona jakość',
+  down: 'Awaria',
+  not_configured: 'Brak konfiguracji',
+}
+
 export default function AdminPage() {
   const [dashboard, setDashboard] = useState({ stats: null, reports: [], role: 'member' })
   const [state, setState] = useState({ loading: true, error: '', forbidden: false })
@@ -66,6 +83,7 @@ export default function AdminPage() {
   const [selectedReportIds, setSelectedReportIds] = useState([])
   const [auditEntries, setAuditEntries] = useState([])
   const [roleUsers, setRoleUsers] = useState([])
+  const [health, setHealth] = useState({ checks: [], events: [] })
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(null)
@@ -134,6 +152,26 @@ export default function AdminPage() {
     }
   }, [])
 
+  const loadHealth = useCallback(async (runChecks = false) => {
+    setBusy(true)
+    try {
+      if (runChecks) {
+        const checkResponse = await authenticatedFetch('/api/admin/health', { method: 'POST' })
+        const checkPayload = await checkResponse.json().catch(() => ({}))
+        if (!checkResponse.ok) throw new Error(checkPayload.error || 'Kontrola integracji nie powiodła się.')
+      }
+      const response = await authenticatedFetch('/api/admin/health', { cache: 'no-store' })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się pobrać monitoringu.')
+      setHealth({ checks: payload.checks || [], events: payload.events || [] })
+      setNotice(runChecks ? { type: 'success', text: 'Kontrola integracji została zakończona.' } : null)
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    } finally {
+      setBusy(false)
+    }
+  }, [])
+
   useEffect(() => {
     const timer = window.setTimeout(loadDashboard, 0)
     return () => window.clearTimeout(timer)
@@ -144,10 +182,11 @@ export default function AdminPage() {
     const timer = window.setTimeout(() => {
       if (activeTab === 'content') loadContent()
       if (activeTab === 'audit') loadAudit()
+      if (activeTab === 'health') loadHealth()
       if (activeTab === 'roles' && dashboard.role === 'admin') loadRoles()
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [activeTab, dashboard.role, loadAudit, loadContent, loadRoles, state.forbidden, state.loading])
+  }, [activeTab, dashboard.role, loadAudit, loadContent, loadHealth, loadRoles, state.forbidden, state.loading])
 
   const visibleReports = useMemo(() => (
     reportFilter === 'all' ? dashboard.reports : dashboard.reports.filter((report) => report.status === reportFilter)
@@ -265,6 +304,7 @@ export default function AdminPage() {
   const tabs = [
     ['reports', 'Zgłoszenia', FileWarning],
     ['content', 'Treści', Layers3],
+    ['health', 'Stan usług', ServerCog],
     ['audit', 'Dziennik', BookOpenCheck],
     ...(dashboard.role === 'admin' ? [['roles', 'Role', UserCog]] : []),
   ]
@@ -287,8 +327,36 @@ export default function AdminPage() {
 
       {activeTab === 'reports' && <ReportsPanel reports={visibleReports} filter={reportFilter} setFilter={(value) => { setReportFilter(value); setSelectedReportIds([]) }} selectedIds={selectedReportIds} reason={reason} busy={busy} onSelect={setSelectedReportIds} onReason={setReason} onModerate={moderateReport} onModerateBatch={moderateReportsBatch} />}
       {activeTab === 'content' && <ContentPanel items={contentItems} type={contentType} status={contentStatus} selectedIds={selectedIds} reason={reason} busy={busy} onType={setContentType} onStatus={setContentStatus} onSelect={setSelectedIds} onReason={setReason} onModerate={moderateContent} onRefresh={loadContent} />}
+      {activeTab === 'health' && <HealthPanel health={health} busy={busy} onRefresh={() => loadHealth(false)} onRun={() => loadHealth(true)} />}
       {activeTab === 'audit' && <AuditPanel entries={auditEntries} busy={busy} onRefresh={loadAudit} />}
       {activeTab === 'roles' && dashboard.role === 'admin' && <RolesPanel users={roleUsers} reason={reason} busy={busy} onReason={setReason} onChangeRole={changeRole} onRefresh={loadRoles} />}
+    </div>
+  )
+}
+
+function HealthPanel({ health, busy, onRefresh, onRun }) {
+  return (
+    <div className="space-y-5">
+      <section className="panel overflow-hidden">
+        <PanelHeading eyebrow="Monitoring zależności" title="Stan usług">
+          <button type="button" onClick={onRefresh} disabled={busy} className="btn btn-ghost btn-sm"><RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} /> Odśwież</button>
+          <button type="button" onClick={onRun} disabled={busy} className="btn btn-primary btn-sm"><Activity className="h-3.5 w-3.5" /> Sprawdź teraz</button>
+        </PanelHeading>
+        <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-4">
+          {health.checks.length === 0 ? <EmptyState icon={ServerCog} title="Brak pomiarów" description="Uruchom pierwszą kontrolę integracji." className="sm:col-span-2 xl:col-span-4" /> : health.checks.map((check) => {
+            const healthy = check.status === 'operational'
+            const tone = healthy ? 'border-emerald-400/20 bg-emerald-400/6' : check.status === 'down' ? 'border-rose-400/25 bg-rose-400/7' : 'border-amber-400/20 bg-amber-400/6'
+            return <article key={check.service} className={`rounded-2xl border p-4 ${tone}`}><div className="flex items-center justify-between gap-3"><strong className="text-sm text-white">{INTEGRATION_NAMES[check.service] || check.service}</strong><span className={`status-dot ${healthy ? 'online' : ''}`} /></div><p className="mt-3 text-[10px] font-black uppercase tracking-[.12em] text-[var(--text-secondary)]">{INTEGRATION_STATUSES[check.status] || check.status}</p><p className="mt-2 min-h-10 text-xs leading-5 text-[var(--text-secondary)]">{check.message}</p><div className="mt-3 flex items-center justify-between text-[9px] text-[var(--text-muted)]"><span>{check.latency_ms ?? '—'} ms</span><time>{new Date(check.checked_at).toLocaleString('pl-PL')}</time></div></article>
+          })}
+        </div>
+      </section>
+
+      <section className="panel overflow-hidden">
+        <PanelHeading eyebrow="Frontend i backend" title="Ostatnie błędy" />
+        <div className="space-y-2 p-4">
+          {health.events.length === 0 ? <EmptyState icon={CheckCircle2} title="Brak zarejestrowanych awarii" description="Nowe błędy aplikacji i integracji pojawią się tutaj." /> : health.events.map((event) => <article key={event.id} className="grid gap-3 rounded-xl border border-[var(--border)] bg-black/15 p-4 sm:grid-cols-[130px_1fr_auto]"><span className={`badge ${event.level === 'error' ? 'badge-rose' : 'badge-amber'} w-fit`}>{event.source}</span><div><strong className="text-xs text-white">{event.event_type}</strong><p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{event.message}</p></div><time className="flex items-center gap-1 text-[9px] text-[var(--text-muted)]"><Clock3 className="h-3 w-3" /> {new Date(event.created_at).toLocaleString('pl-PL')}</time></article>)}
+        </div>
+      </section>
     </div>
   )
 }

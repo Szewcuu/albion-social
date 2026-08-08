@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { checkRateLimit } from '@/lib/server/rateLimit'
+import { recordSystemEvent } from '@/lib/server/monitoring'
 import {
   createSupabaseAdminClient,
   createSupabaseRequestClient,
@@ -264,6 +265,11 @@ export async function POST(request) {
     })
   } catch (error) {
     console.error('Błąd wywoływania webhooka wypraw:', error)
+    await recordSystemEvent({
+      source: 'discord',
+      eventType: 'expedition_webhook_failed',
+      message: error?.message || 'Nieznany błąd webhooka wypraw.',
+    })
     return jsonError('Wystąpił błąd integracji z Discordem.', 500)
   }
 }
@@ -304,6 +310,11 @@ export async function DELETE(request) {
     })
   } catch (error) {
     console.error('Błąd usuwania wyprawy:', error)
+    await recordSystemEvent({
+      source: 'backend',
+      eventType: 'expedition_delete_failed',
+      message: error?.message || 'Nieznany błąd usuwania wyprawy.',
+    })
     return jsonError('Wystąpił błąd podczas usuwania wyprawy.', 500)
   }
 }
