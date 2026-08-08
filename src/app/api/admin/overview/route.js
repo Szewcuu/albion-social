@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 
 import {
   createSupabaseRequestClient,
-  isPortalAdmin,
+  getPortalRole,
+  isPortalStaff,
   requireApiUser,
 } from '@/lib/server/supabaseAdmin'
 
@@ -14,8 +15,8 @@ export async function GET(request) {
     if (auth.error) return jsonError(auth.error, auth.status)
 
     const supabase = createSupabaseRequestClient(request)
-    if (!(await isPortalAdmin(supabase, auth.user.id))) {
-      return jsonError('Nie masz uprawnień administratora.', 403)
+    if (!(await isPortalStaff(supabase, auth.user.id))) {
+      return jsonError('Nie masz uprawnień personelu moderacyjnego.', 403)
     }
 
     const [reportsResult, pendingResult, allReportsResult, commentsResult, buildsResult] = await Promise.all([
@@ -53,6 +54,7 @@ export async function GET(request) {
     const commentsById = new Map((commentsLookup.data || []).map((comment) => [comment.id, comment]))
 
     return NextResponse.json({
+      role: await getPortalRole(supabase, auth.user.id),
       stats: {
         pendingReports: pendingResult.count || 0,
         allReports: allReportsResult.count || 0,

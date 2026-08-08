@@ -21,7 +21,7 @@ export async function POST(request, { params }) {
     const { id } = await params
     if (!isBuildId(id)) return jsonError('Nieprawidłowy identyfikator buildu.', 400)
 
-    const rateLimit = checkRateLimit(`build-report:${auth.user.id}`, {
+    const rateLimit = await checkRateLimit(`build-report:${auth.user.id}`, {
       limit: 5,
       windowMs: 10 * 60 * 1000,
     })

@@ -93,16 +93,25 @@ export async function requireApiUser(request) {
   return { user: data.user }
 }
 
-export async function isPortalAdmin(adminClient, userId) {
-  const { data, error } = await adminClient
+export async function getPortalRole(supabaseClient, userId) {
+  const { data, error } = await supabaseClient
     .from('profiles')
-    .select('is_admin')
+    .select('role, is_admin')
     .eq('id', userId)
     .maybeSingle()
 
   if (error) {
-    throw new Error('Nie udało się sprawdzić uprawnień administratora.')
+    throw new Error('Nie udało się sprawdzić roli użytkownika.')
   }
 
-  return data?.is_admin === true
+  if (data?.is_admin === true) return 'admin'
+  return ['member', 'moderator', 'admin'].includes(data?.role) ? data.role : 'member'
+}
+
+export async function isPortalAdmin(supabaseClient, userId) {
+  return (await getPortalRole(supabaseClient, userId)) === 'admin'
+}
+
+export async function isPortalStaff(supabaseClient, userId) {
+  return ['moderator', 'admin'].includes(await getPortalRole(supabaseClient, userId))
 }

@@ -96,7 +96,7 @@ export async function POST(request) {
     const auth = await requireApiUser(request)
     if (auth.error) return jsonError(auth.error, auth.status)
 
-    const rateLimit = checkRateLimit(`expedition-webhook:${auth.user.id}`, {
+    const rateLimit = await checkRateLimit(`expedition-webhook:${auth.user.id}`, {
       limit: 10,
       windowMs: 60 * 1000,
     })

@@ -51,7 +51,7 @@ export default function Home() {
   const readAdminStatus = useCallback(async (userId) => {
     const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).maybeSingle()
     if (!error) {
-      setIsAdmin(data?.role === 'admin')
+      setIsAdmin(['moderator', 'admin'].includes(data?.role))
       return
     }
     const { data: legacyProfile } = await supabase.from('profiles').select('is_admin').eq('id', userId).maybeSingle()

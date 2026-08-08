@@ -43,7 +43,7 @@ function commonMeta({ mode, region, cacheSeconds }) {
 }
 
 export async function GET(request) {
-  const rateLimit = checkRateLimit(`albion-prices:${getClientKey(request)}`, { limit: 50, windowMs: 60_000 })
+  const rateLimit = await checkRateLimit(`albion-prices:${getClientKey(request)}`, { limit: 50, windowMs: 60_000 })
   if (!rateLimit.allowed) {
     return errorResponse('Zbyt wiele zapytań o ceny. Spróbuj ponownie za chwilę.', 'RATE_LIMITED', 429, rateLimit.retryAfter)
   }

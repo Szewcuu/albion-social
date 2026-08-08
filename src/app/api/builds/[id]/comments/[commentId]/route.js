@@ -17,7 +17,7 @@ export async function DELETE(request, { params }) {
       return jsonError('Nieprawidłowy identyfikator komentarza.', 400)
     }
 
-    const rateLimit = checkRateLimit(`build-comment-delete:${auth.user.id}`, {
+    const rateLimit = await checkRateLimit(`build-comment-delete:${auth.user.id}`, {
       limit: 12,
       windowMs: 60 * 1000,
     })

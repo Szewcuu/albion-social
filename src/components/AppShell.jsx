@@ -20,11 +20,11 @@ export default function AppShell({ children }) {
   const readAdminStatus = useCallback(async (userId) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('is_admin')
+      .select('role, is_admin')
       .eq('id', userId)
       .maybeSingle()
 
-    setIsAdmin(!error && data?.is_admin === true)
+    setIsAdmin(!error && (data?.is_admin === true || ['moderator', 'admin'].includes(data?.role)))
   }, [])
 
   const loginWithDiscord = async () => {

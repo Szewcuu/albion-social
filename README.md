@@ -37,9 +37,20 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **Priorytet A: bezpieczeństwo i moderacja całego portalu**
+> **Priorytet B: stabilność kluczowych przepływów**
 
-P4.2 jest zakończone implementacyjnie: strona buildu obsługuje moderowalne komentarze i prywatne zgłoszenia nadużyć, a administrator otrzymał chronioną kolejkę moderacji. Następny etap rozszerzy te zabezpieczenia na czat, buildy, rynek, gildie i wyprawy oraz wprowadzi osobną rolę moderatora, dziennik działań i pełny audyt RLS.
+P4.2 i Priorytet A są wdrożone. Portal ma role personelu, wspólną kolejkę moderacji wszystkich typów treści, zbiorczą obsługę zgłoszeń, przywracanie ukrytych rekordów, dziennik audytowy oraz trwałą ochronę antyspamową. Następny etap koncentruje się na testach end-to-end, monitoringu awarii i niezawodności integracji z Discordem.
+
+### Zakończony Priorytet A
+
+- [x] dodać role member, moderator i admin z rozdzielonym zakresem uprawnień
+- [x] objąć wspólną moderacją czat, buildy, rynek, gildie, wyprawy i komentarze
+- [x] dodać ukrywanie, przywracanie i logiczne usuwanie pojedynczych oraz wielu rekordów
+- [x] dodać zbiorczą obsługę zgłoszeń z transakcyjnym zapisem decyzji
+- [x] zapisywać nieusuwalny z poziomu klienta dziennik akcji personelu
+- [x] przeprowadzić audyt RLS i ograniczyć bezpośrednie uprawnienia do tabel technicznych
+- [x] zastąpić pamięciowy limiter trwałymi kubełkami Supabase oraz triggerami zapisów treści
+- [x] zweryfikować migrację, wszystkie kolejki panelu, lint i build produkcyjny
 
 ### Zakończony sprint P4.2
 
@@ -50,7 +61,7 @@ P4.2 jest zakończone implementacyjnie: strona buildu obsługuje moderowalne kom
 - [x] przygotować responsywny UI komentarzy, pustych stanów, potwierdzeń i dostępnego dialogu zgłoszenia
 - [x] dodać chroniony panel administratora z kolejką zgłoszeń i akcjami moderacji komentarzy
 - [x] wykonać lint i pełny build produkcyjny wszystkich tras
-- [ ] scalić PR, sprawdzić preview Vercel i wykonać końcowy smoke test produkcji
+- [x] scalić PR, sprawdzić preview Vercel i wykonać końcowy smoke test produkcji
 
 ### Zakończony sprint P4.1
 
@@ -85,12 +96,12 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 
 ### Priorytet A — bezpieczeństwo i moderacja
 
-- [ ] rozszerzyć panel administratora o moderację czatu, buildów, ofert rynku, gildii i wypraw
-- [ ] dodać osobną rolę moderatora z mniejszym zakresem uprawnień niż administrator
-- [ ] zapisywać dziennik akcji administracyjnych: kto, co i kiedy ukrył, usunął lub przywrócił
-- [ ] dodać możliwość przywrócenia ukrytego komentarza oraz zbiorcze akcje na zgłoszeniach
-- [ ] przeprowadzić pełny audyt RLS i uprawnień `GRANT` dla każdej tabeli Supabase
-- [ ] dodać ochronę antyspamową opartą o trwały magazyn zamiast pamięci pojedynczej instancji Vercel
+- [x] rozszerzyć panel administratora o moderację czatu, buildów, ofert rynku, gildii i wypraw
+- [x] dodać osobną rolę moderatora z mniejszym zakresem uprawnień niż administrator
+- [x] zapisywać dziennik akcji administracyjnych: kto, co i kiedy ukrył, usunął lub przywrócił
+- [x] dodać możliwość przywrócenia ukrytego komentarza oraz zbiorcze akcje na zgłoszeniach
+- [x] przeprowadzić pełny audyt RLS i uprawnień `GRANT` dla każdej tabeli Supabase
+- [x] dodać ochronę antyspamową opartą o trwały magazyn zamiast pamięci pojedynczej instancji Vercel
 
 ### Priorytet B — stabilność kluczowych przepływów
 
@@ -190,14 +201,14 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [ ] dodać publiczne strony gildii i kalendarz wydarzeń
 - [ ] dodać centrum powiadomień w portalu
 - [x] dodać podstawowy panel administratora i moderację zgłoszonych komentarzy
-- [ ] rozszerzyć panel o role moderatora i pozostałe typy treści
+- [x] rozszerzyć panel o role moderatora i pozostałe typy treści
 
 ### P5 — Supabase i bezpieczeństwo danych
 
 - [ ] zapisać schemat bazy jako wersjonowane migracje w repozytorium
-- [ ] przeprowadzić audyt RLS wszystkich tabel i polityk dostępu
+- [x] przeprowadzić audyt RLS wszystkich tabel i polityk dostępu
 - [ ] dodać indeksy dla najczęstszych filtrów, sortowania i relacji
-- [ ] wymusić reguły własności rekordów po stronie bazy, nie tylko interfejsu
+- [x] wymusić reguły własności rekordów po stronie bazy, nie tylko interfejsu
 - [ ] dodać tabele głosów, ulubionych, zgłoszeń i powiadomień
 - [ ] określić retencję danych i procedurę usunięcia konta
 - [ ] sprawdzić logi pod kątem wycieku danych użytkownika lub sekretów

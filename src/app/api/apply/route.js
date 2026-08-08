@@ -19,7 +19,7 @@ export async function POST(request) {
     const auth = await requireApiUser(request)
     if (auth.error) return jsonError(auth.error, auth.status)
 
-    const rateLimit = checkRateLimit(`guild-apply:${auth.user.id}`, {
+    const rateLimit = await checkRateLimit(`guild-apply:${auth.user.id}`, {
       limit: 3,
       windowMs: 15 * 60 * 1000,
     })
