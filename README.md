@@ -37,9 +37,9 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **Priorytet B: stabilność kluczowych przepływów**
+> **Priorytet B: stabilność kluczowych przepływów — implementacja gotowa do wdrożenia**
 
-P4.2 i Priorytet A są wdrożone. Portal ma role personelu, wspólną kolejkę moderacji wszystkich typów treści, zbiorczą obsługę zgłoszeń, przywracanie ukrytych rekordów, dziennik audytowy oraz trwałą ochronę antyspamową. Następny etap koncentruje się na testach end-to-end, monitoringu awarii i niezawodności integracji z Discordem.
+P4.2 i Priorytet A są wdrożone. Gałąź Priorytetu B dodaje testy przeglądarkowe, monitoring błędów i zależności, status usług w panelu personelu oraz trwałe szkice i wersje raportów Loot Splitu. Migracja `008_priority_b_stability.sql` została wdrożona i zweryfikowana na produkcyjnym projekcie Supabase, a `CRON_SECRET` jest skonfigurowany w Preview i Production Vercela. Do zamknięcia etapu pozostają produkcyjny smoke test oraz pełne testy zalogowanego użytkownika z osobnym kontem E2E w sekretach GitHub.
 
 ### Zakończony Priorytet A
 
@@ -105,12 +105,19 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 
 ### Priorytet B — stabilność kluczowych przepływów
 
-- [ ] dodać testy end-to-end: logowanie, czat, publikacja buildu, komentarz, wyprawa, rynek i podział łupów
-- [ ] dodać monitoring błędów frontend/backend oraz alerty dla awarii Supabase, Discorda i API Albionu
-- [ ] uruchomić cykliczne testy webhooka Discord i czytelny status integracji w panelu administratora
-- [ ] przenieść szkice podziału łupów do kont użytkownika, pozostawiając `localStorage` jako tryb offline
-- [ ] dodać wersjonowanie i eksport raportów podziału łupów do historii grupy lub gildii
-- [ ] dodać kontrolowane ponowienie publikacji wyprawy na Discordzie bez ponownego tworzenia ogłoszenia
+- [ ] uruchomić pełne testy E2E zalogowanego użytkownika po dodaniu dedykowanego konta `E2E_USER_*` do GitHub Actions
+  - [x] dodać Playwright, test logowania i testy kluczowych ekranów: czat, build, wyprawa, rynek oraz Loot Split
+  - [x] dodać publiczne testy bramki logowania, Regulaminu i Prywatności
+  - [x] uruchamiać lint, build i publiczne E2E automatycznie w CI
+- [x] dodać monitoring błędów frontend/backend oraz rejestr zdarzeń w Supabase
+- [x] monitorować Supabase, Discord oraz API Albionu i rynku dla Europy, Ameryki i Azji
+- [x] dodać codzienny test integracji zgodny z limitem Vercel Hobby i czytelny status usług w panelu personelu
+- [x] przenieść szkice podziału łupów do kont użytkownika, pozostawiając `localStorage` jako tryb offline
+- [x] dodać wersjonowanie, historię konta oraz eksport TXT raportów podziału łupów
+- [x] dodać kontrolowane ponowienie publikacji wyprawy na Discordzie bez ponownego tworzenia ogłoszenia
+- [x] wdrożyć i zweryfikować migrację `supabase/migrations/008_priority_b_stability.sql` na produkcyjnym Supabase
+- [x] zweryfikować `CRON_SECRET` dla środowisk Preview i Production Vercela
+- [ ] wykonać produkcyjny smoke test po wdrożeniu gałęzi
 
 ### Priorytet C — funkcje społecznościowe
 
@@ -305,10 +312,15 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 DISCORD_EXPEDITIONS_WEBHOOK_URL
+CRON_SECRET
 NEXT_PUBLIC_APP_URL
+E2E_USER_EMAIL
+E2E_USER_PASSWORD
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY` i webhook Discorda są sekretami serwerowymi — nie wolno nadawać im prefiksu `NEXT_PUBLIC_` ani umieszczać ich w repozytorium.
+
+Zmienne `E2E_USER_EMAIL` i `E2E_USER_PASSWORD` są opcjonalne lokalnie. W GitHub Actions powinny wskazywać osobne konto testowe bez roli moderatora lub administratora.
 
 ## Kontrola jakości
 
@@ -317,6 +329,9 @@ Przed każdym wdrożeniem:
 ```bash
 npm run lint
 npm run build
+npm run test:e2e:public
 ```
+
+Pełny pakiet zalogowanego użytkownika uruchamia `npm run test:e2e:auth` po skonfigurowaniu konta `E2E_USER_*`.
 
 Zmiany wdrażamy przez osobną gałąź, pull request i automatyczny deployment Vercel. Produkcja jest scalana dopiero po poprawnym buildzie i sprawdzeniu najważniejszych widoków.

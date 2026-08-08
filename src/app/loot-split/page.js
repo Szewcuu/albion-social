@@ -1,12 +1,15 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Calculator,
   ClipboardCopy,
+  Cloud,
   Coins,
+  Download,
   FileCheck2,
+  History,
   HandCoins,
   Plus,
   ReceiptText,
@@ -21,6 +24,7 @@ import {
 } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const DRAFT_KEY = 'aopp-loot-split-draft-v2'
 
@@ -57,19 +61,26 @@ export default function LootSplit() {
   const [regearAmount, setRegearAmount] = useState('')
   const [notice, setNotice] = useState(null)
   const [draftSavedAt, setDraftSavedAt] = useState(null)
+  const [syncState, setSyncState] = useState('loading')
+  const [reportHistory, setReportHistory] = useState([])
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
 
+  const applyDraft = useCallback((draft) => {
+    setEventName(typeof draft.eventName === 'string' ? draft.eventName : '')
+    setTotalValue(typeof draft.totalValue === 'string' ? draft.totalValue : '')
+    setGuildTaxPercent(typeof draft.guildTaxPercent === 'string' ? draft.guildTaxPercent : '10')
+    setPlayerNicks(typeof draft.playerNicks === 'string' ? draft.playerNicks : '')
+    setRegearList(Array.isArray(draft.regearList) ? draft.regearList.slice(0, 50) : [])
+    setDraftSavedAt(typeof draft.savedAt === 'string' ? draft.savedAt : null)
+  }, [])
+
   useEffect(() => {
-    const hydrationTimer = setTimeout(() => {
+    let active = true
+    const hydrationTimer = setTimeout(async () => {
+      let localDraft = null
       try {
-        const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null')
-        if (!draft || typeof draft !== 'object') return
-        setEventName(typeof draft.eventName === 'string' ? draft.eventName : '')
-        setTotalValue(typeof draft.totalValue === 'string' ? draft.totalValue : '')
-        setGuildTaxPercent(typeof draft.guildTaxPercent === 'string' ? draft.guildTaxPercent : '10')
-        setPlayerNicks(typeof draft.playerNicks === 'string' ? draft.playerNicks : '')
-        setRegearList(Array.isArray(draft.regearList) ? draft.regearList.slice(0, 50) : [])
-        setDraftSavedAt(typeof draft.savedAt === 'string' ? draft.savedAt : null)
+        localDraft = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null')
+        if (localDraft && typeof localDraft === 'object') applyDraft(localDraft)
       } catch {
         try {
           localStorage.removeItem(DRAFT_KEY)
@@ -77,9 +88,30 @@ export default function LootSplit() {
           // Pamięć lokalna może być całkowicie zablokowana przez przeglądarkę.
         }
       }
+
+      try {
+        const response = await authenticatedFetch('/api/loot-split', { cache: 'no-store' })
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload.error || 'Synchronizacja konta jest niedostępna.')
+        if (!active) return
+        setReportHistory(payload.reports || [])
+        const cloudDraft = payload.draft?.payload
+        const localTime = Date.parse(localDraft?.savedAt || '') || 0
+        const cloudTime = Date.parse(payload.draft?.updated_at || cloudDraft?.savedAt || '') || 0
+        if (cloudDraft && cloudTime > localTime) {
+          applyDraft({ ...cloudDraft, savedAt: payload.draft.updated_at })
+          localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...cloudDraft, savedAt: payload.draft.updated_at }))
+        }
+        setSyncState('synced')
+      } catch {
+        if (active) setSyncState('offline')
+      }
     }, 0)
-    return () => clearTimeout(hydrationTimer)
-  }, [])
+    return () => {
+      active = false
+      clearTimeout(hydrationTimer)
+    }
+  }, [applyDraft])
 
   const calculation = useMemo(() => {
     const totalLoot = toNumber(totalValue)
@@ -133,21 +165,43 @@ export default function LootSplit() {
     setNotice(null)
   }
 
-  function saveDraft() {
+  function createDraftPayload(savedAt = new Date().toISOString()) {
+    return { eventName, totalValue, guildTaxPercent, playerNicks, regearList, savedAt }
+  }
+
+  async function saveDraft() {
+    const savedAt = new Date().toISOString()
+    const draft = createDraftPayload(savedAt)
     try {
-      const savedAt = new Date().toISOString()
-      const serializedDraft = JSON.stringify({ eventName, totalValue, guildTaxPercent, playerNicks, regearList, savedAt })
+      const serializedDraft = JSON.stringify(draft)
       localStorage.setItem(DRAFT_KEY, serializedDraft)
       if (localStorage.getItem(DRAFT_KEY) !== serializedDraft) throw new Error('Draft verification failed')
       setDraftSavedAt(savedAt)
-      setNotice({ type: 'success', text: 'Szkic rozliczenia zapisano na tym urządzeniu.' })
     } catch {
       setDraftSavedAt(null)
       setNotice({ type: 'error', text: 'Nie udało się zapisać szkicu. Sprawdź, czy przeglądarka pozwala tej stronie używać pamięci lokalnej.' })
+      return
+    }
+
+    try {
+      setSyncState('loading')
+      const response = await authenticatedFetch('/api/loot-split', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: draft }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Synchronizacja konta nie powiodła się.')
+      setDraftSavedAt(payload.savedAt || savedAt)
+      setSyncState('synced')
+      setNotice({ type: 'success', text: 'Szkic zapisano na koncie i w trybie offline.' })
+    } catch {
+      setSyncState('offline')
+      setNotice({ type: 'success', text: 'Szkic zapisano lokalnie. Synchronizacja konta zostanie ponowiona przy następnym zapisie.' })
     }
   }
 
-  function resetDraft() {
+  async function resetDraft() {
     setEventName('')
     setTotalValue('')
     setGuildTaxPercent('10')
@@ -159,7 +213,15 @@ export default function LootSplit() {
     setNotice(null)
     localStorage.removeItem(DRAFT_KEY)
     setResetDialogOpen(false)
-    setNotice({ type: 'success', text: 'Rozliczenie i zapisany szkic zostały wyczyszczone.' })
+    try {
+      const response = await authenticatedFetch('/api/loot-split', { method: 'DELETE' })
+      if (!response.ok) throw new Error()
+      setSyncState('synced')
+      setNotice({ type: 'success', text: 'Rozliczenie oraz szkic lokalny i zapis konta zostały wyczyszczone.' })
+    } catch {
+      setSyncState('offline')
+      setNotice({ type: 'success', text: 'Rozliczenie wyczyszczono lokalnie. Zapis konta jest chwilowo niedostępny.' })
+    }
   }
 
   function reportText() {
@@ -205,6 +267,37 @@ export default function LootSplit() {
     } catch {
       setNotice({ type: 'error', text: 'Przeglądarka nie pozwoliła skopiować raportu.' })
     }
+  }
+
+  async function saveReportVersion() {
+    if (!calculation.totalLoot || !calculation.players.length || calculation.deficit > 0 || calculation.unassignedRegears.length > 0) {
+      setNotice({ type: 'error', text: 'Uzupełnij poprawne rozliczenie przed zapisaniem wersji raportu.' })
+      return
+    }
+    try {
+      const response = await authenticatedFetch('/api/loot-split', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: createDraftPayload(), reportText: reportText() }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się zapisać raportu.')
+      const report = Array.isArray(payload.report) ? payload.report[0] : payload.report
+      if (report) setReportHistory((current) => [report, ...current].slice(0, 30))
+      setNotice({ type: 'success', text: `Zapisano wersję ${report?.version || ''} raportu w historii konta.` })
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    }
+  }
+
+  function downloadReport(text = reportText(), title = eventName || 'loot-split') {
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${title.replace(/[^a-z0-9-_]+/gi, '-').replace(/^-|-$/g, '') || 'loot-split'}.txt`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -295,10 +388,17 @@ export default function LootSplit() {
                 {calculation.roundingRemainder > 0 && <p className="flex items-start gap-2 text-[9px] leading-4 text-[var(--text-secondary)]"><Coins className="mt-0.5 h-3 w-3 shrink-0 text-[var(--amber)]" /> Pozostałość po zaokrągleniu: {silver(calculation.roundingRemainder)}. Zostaje w banku rozliczenia.</p>}
 
                 <button type="button" onClick={copyReport} disabled={!calculation.totalLoot || !calculation.players.length || calculation.deficit > 0 || calculation.unassignedRegears.length > 0} className="btn btn-primary flex w-full items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40"><ClipboardCopy className="h-4 w-4" /> Kopiuj raport</button>
-                <div className="grid gap-2 sm:grid-cols-2"><button type="button" onClick={saveDraft} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Save className="h-3.5 w-3.5" /> {draftSavedAt ? 'Zapisz ponownie' : 'Zapisz szkic'}</button><button type="button" onClick={() => setResetDialogOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-400/15 bg-rose-400/5 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-rose-300 hover:bg-rose-400/10"><RotateCcw className="h-3.5 w-3.5" /> Wyczyść</button></div>
+                <div className="grid gap-2 sm:grid-cols-2"><button type="button" onClick={saveDraft} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Save className="h-3.5 w-3.5" /> {draftSavedAt ? 'Zapisz ponownie' : 'Zapisz szkic'}</button><button type="button" onClick={saveReportVersion} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><History className="h-3.5 w-3.5" /> Zapisz wersję</button><button type="button" onClick={() => downloadReport()} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Download className="h-3.5 w-3.5" /> Eksport TXT</button><button type="button" onClick={() => setResetDialogOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-400/15 bg-rose-400/5 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-rose-300 hover:bg-rose-400/10"><RotateCcw className="h-3.5 w-3.5" /> Wyczyść</button></div>
                 <p className={`min-h-4 text-center text-[9px] ${draftSavedAt ? 'text-emerald-300' : 'text-[var(--text-secondary)]'}`} aria-live="polite">
-                  {draftSavedAt ? `Szkic zapisany lokalnie: ${new Date(draftSavedAt).toLocaleString('pl-PL')}` : 'Szkic zostanie zapisany tylko w tej przeglądarce.'}
+                  {syncState === 'loading' ? 'Synchronizacja konta…' : syncState === 'offline' ? 'Tryb offline — szkic pozostaje bezpieczny na tym urządzeniu.' : draftSavedAt ? `Szkic zsynchronizowany: ${new Date(draftSavedAt).toLocaleString('pl-PL')}` : 'Szkic zostanie zapisany na koncie i lokalnie.'}
                 </p>
+              </div>
+            </section>
+
+            <section className="panel overflow-hidden rounded-[28px]">
+              <div className="border-b border-white/8 p-5"><p className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[.18em] text-sky-300"><Cloud className="h-3.5 w-3.5" /> Historia konta</p><h2 className="font-display mt-1 text-xl font-black text-white">Wersje raportów</h2></div>
+              <div className="max-h-80 space-y-2 overflow-y-auto p-4">
+                {reportHistory.length === 0 ? <EmptyState icon={History} title="Brak zapisanych wersji" description="Gotowy raport możesz zachować w historii konta." compact /> : reportHistory.map((report) => <article key={report.id} className="rounded-xl border border-white/8 bg-black/15 p-3"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><strong className="block truncate text-xs text-white">{report.title}</strong><p className="mt-1 text-[9px] text-[var(--text-muted)]">Wersja {report.version} · {new Date(report.created_at).toLocaleString('pl-PL')}</p></div><button type="button" onClick={() => downloadReport(report.report_text, `${report.title}-v${report.version}`)} aria-label={`Pobierz ${report.title}, wersja ${report.version}`} className="rounded-lg border border-white/8 p-2 text-sky-300 hover:bg-sky-400/8"><Download className="h-3.5 w-3.5" /></button></div></article>)}
               </div>
             </section>
 
