@@ -7,6 +7,8 @@ import AppSidebar from './AppSidebar'
 import TopBar from './TopBar'
 import MobileBottomNav from './MobileBottomNav'
 
+const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc'])
+
 export default function AppShell({ children }) {
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -136,7 +138,8 @@ export default function AppShell({ children }) {
     }
   }, [user?.id])
 
-  const guestBlocked = authReady && !user && pathname !== '/'
+  const guestPublicPage = !user && GUEST_PUBLIC_PATHS.has(pathname)
+  const guestBlocked = authReady && !user && !guestPublicPage
 
   useEffect(() => {
     if (guestBlocked) router.replace('/')
@@ -151,13 +154,14 @@ export default function AppShell({ children }) {
     )
   }
 
-  const guestLanding = !user && pathname === '/'
+  const guestLanding = guestPublicPage && pathname === '/'
+  const guestLegalPage = guestPublicPage && pathname !== '/'
 
   return (
-    <div className={`app-shell ${guestLanding ? 'guest-landing' : ''} ${authReady ? 'auth-ready' : 'auth-pending'}`}>
+    <div className={`app-shell ${guestLanding ? 'guest-landing' : ''} ${guestLegalPage ? 'guest-public' : ''} ${authReady ? 'auth-ready' : 'auth-pending'}`}>
       <a href="#main-content" className="skip-link">Przejdź do treści</a>
       <div className="world-backdrop" aria-hidden="true" />
-      {!guestLanding && (
+      {user && (
         <AppSidebar
           isOpen={sidebarOpen}
           isAdmin={isAdmin}
@@ -182,7 +186,7 @@ export default function AppShell({ children }) {
         <main id="main-content" className="app-content">{children}</main>
       </div>
 
-      {!guestLanding && <MobileBottomNav />}
+      {user && <MobileBottomNav />}
     </div>
   )
 }
