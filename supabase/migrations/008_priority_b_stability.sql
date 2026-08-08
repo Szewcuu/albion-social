@@ -26,6 +26,7 @@ DROP POLICY IF EXISTS "Staff can read system events" ON public.system_events;
 CREATE POLICY "Staff can read system events" ON public.system_events FOR SELECT TO authenticated
 USING (public.is_portal_staff());
 GRANT SELECT ON public.system_events TO authenticated;
+GRANT INSERT ON public.system_events TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.integration_checks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -48,6 +49,7 @@ DROP POLICY IF EXISTS "Staff can read integration checks" ON public.integration_
 CREATE POLICY "Staff can read integration checks" ON public.integration_checks FOR SELECT TO authenticated
 USING (public.is_portal_staff());
 GRANT SELECT ON public.integration_checks TO authenticated;
+GRANT SELECT, INSERT ON public.integration_checks TO service_role;
 
 CREATE TABLE IF NOT EXISTS public.loot_split_drafts (
   user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -135,7 +137,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.save_loot_split_report(TEXT, JSONB, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.save_loot_split_report(TEXT, JSONB, TEXT) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.save_loot_split_report(TEXT, JSONB, TEXT) TO authenticated;
 
 COMMIT;

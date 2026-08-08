@@ -39,7 +39,7 @@ Gotowe i wdrożone:
 
 > **Priorytet B: stabilność kluczowych przepływów — implementacja gotowa do wdrożenia**
 
-P4.2 i Priorytet A są wdrożone. Gałąź Priorytetu B dodaje testy przeglądarkowe, monitoring błędów i zależności, status usług w panelu personelu oraz trwałe szkice i wersje raportów Loot Splitu. Przed wdrożeniem trzeba wykonać migrację `008_priority_b_stability.sql`, a pełne testy zalogowanego użytkownika wymagają osobnego konta E2E w sekretach GitHub.
+P4.2 i Priorytet A są wdrożone. Gałąź Priorytetu B dodaje testy przeglądarkowe, monitoring błędów i zależności, status usług w panelu personelu oraz trwałe szkice i wersje raportów Loot Splitu. Migracja `008_priority_b_stability.sql` została wdrożona i zweryfikowana na produkcyjnym projekcie Supabase. Do zamknięcia etapu pozostają konfiguracja `CRON_SECRET`, produkcyjny smoke test oraz pełne testy zalogowanego użytkownika z osobnym kontem E2E w sekretach GitHub.
 
 ### Zakończony Priorytet A
 
@@ -115,7 +115,8 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 - [x] przenieść szkice podziału łupów do kont użytkownika, pozostawiając `localStorage` jako tryb offline
 - [x] dodać wersjonowanie, historię konta oraz eksport TXT raportów podziału łupów
 - [x] dodać kontrolowane ponowienie publikacji wyprawy na Discordzie bez ponownego tworzenia ogłoszenia
-- [ ] wdrożyć migrację `supabase/migrations/008_priority_b_stability.sql`, ustawić `CRON_SECRET` i wykonać produkcyjny smoke test
+- [x] wdrożyć i zweryfikować migrację `supabase/migrations/008_priority_b_stability.sql` na produkcyjnym Supabase
+- [ ] ustawić `CRON_SECRET` i wykonać produkcyjny smoke test
 
 ### Priorytet C — funkcje społecznościowe
 
