@@ -29,7 +29,7 @@ export default function Rynek() {
     setLoading(true)
     const { data, error } = await supabase
       .from('market_items')
-      .select('*, profiles(username)')
+      .select('*, profiles!market_items_user_id_fkey(username)')
       .order('created_at', { ascending: false })
 
     if (!error && data) setOffers(data)

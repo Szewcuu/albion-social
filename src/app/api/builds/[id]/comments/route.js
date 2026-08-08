@@ -42,7 +42,7 @@ export async function GET(request, { params }) {
 
     const { data, error, count } = await supabase
       .from('build_comments')
-      .select('id, content, created_at, user_id, profiles(username)', { count: 'exact' })
+      .select('id, content, created_at, user_id, profiles!build_comments_user_id_fkey(username)', { count: 'exact' })
       .eq('build_id', buildId)
       .eq('status', 'visible')
       .order('created_at', { ascending: false })
@@ -68,7 +68,7 @@ export async function POST(request, { params }) {
     const buildId = await readBuildId(params)
     if (!buildId) return jsonError('Nieprawidłowy identyfikator buildu.', 400)
 
-    const rateLimit = checkRateLimit(`build-comment:${auth.user.id}`, {
+    const rateLimit = await checkRateLimit(`build-comment:${auth.user.id}`, {
       limit: 6,
       windowMs: 60 * 1000,
     })
@@ -88,7 +88,7 @@ export async function POST(request, { params }) {
     const { data, error } = await supabase
       .from('build_comments')
       .insert({ build_id: buildId, user_id: auth.user.id, content })
-      .select('id, content, created_at, user_id, profiles(username)')
+      .select('id, content, created_at, user_id, profiles!build_comments_user_id_fkey(username)')
       .single()
 
     if (error) throw new Error('Nie udało się zapisać komentarza.')

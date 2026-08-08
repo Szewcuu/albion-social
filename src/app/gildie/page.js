@@ -37,7 +37,7 @@ export default function Gildie() {
     setLoading(true)
     const { data, error } = await supabase
       .from('guilds')
-      .select('id, name, description, activity_type, main_city, server, discord_link, user_id, created_at, profiles(username)')
+      .select('id, name, description, activity_type, main_city, server, discord_link, user_id, created_at, profiles!guilds_user_id_fkey(username)')
       .order('created_at', { ascending: false })
 
     if (!error && data) setGuilds(data)

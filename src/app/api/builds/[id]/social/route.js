@@ -101,7 +101,7 @@ export async function PUT(request, { params }) {
     const buildId = await readBuildId(params)
     if (!buildId) return jsonError('Nieprawidłowy identyfikator buildu.', 400)
 
-    const rateLimit = checkRateLimit(`build-vote:${auth.user.id}`, {
+    const rateLimit = await checkRateLimit(`build-vote:${auth.user.id}`, {
       limit: 30,
       windowMs: 60 * 1000,
     })
@@ -159,7 +159,7 @@ export async function POST(request, { params }) {
     const buildId = await readBuildId(params)
     if (!buildId) return jsonError('Nieprawidłowy identyfikator buildu.', 400)
 
-    const rateLimit = checkRateLimit(`build-favorite:${auth.user.id}`, {
+    const rateLimit = await checkRateLimit(`build-favorite:${auth.user.id}`, {
       limit: 30,
       windowMs: 60 * 1000,
     })

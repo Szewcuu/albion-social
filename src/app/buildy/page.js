@@ -17,18 +17,23 @@ export default function BuildyPage() {
   const [user, setUser] = useState(null)
   const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
 
   const fetchBuilds = useCallback(async () => {
+    setLoadError('')
     try {
       const { data, error } = await supabase
         .from('builds')
-        .select('*, profiles(username, avatar_url), build_votes(id, vote_type)')
+        .select('*, profiles!builds_user_id_fkey(username, avatar_url), build_votes(id, vote_type)')
         .order('created_at', { ascending: false })
 
-      if (!error && data) setBuilds(data)
+      if (error) throw error
+      setBuilds(data || [])
     } catch (err) {
       console.error('Błąd pobierania buildów:', err)
+      setBuilds([])
+      setLoadError('Nie udało się wczytać Zbrojowni. Odśwież stronę lub spróbuj ponownie za chwilę.')
     } finally {
       setLoading(false)
     }
@@ -106,6 +111,15 @@ export default function BuildyPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           <p className="text-[var(--text-muted)] italic col-span-full text-center py-10">Pobieranie buildów...</p>
+        ) : loadError ? (
+          <div className="panel col-span-full text-center py-16" role="alert">
+            <div className="panel-body space-y-4">
+              <Anvil className="mx-auto h-9 w-9 text-rose-300" />
+              <p className="text-lg font-bold text-white">Zbrojownia jest chwilowo niedostępna.</p>
+              <p className="text-sm text-[var(--text-secondary)]">{loadError}</p>
+              <button type="button" onClick={fetchBuilds} className="btn btn-ghost btn-sm inline-flex">Spróbuj ponownie</button>
+            </div>
+          </div>
         ) : filteredBuilds.length === 0 ? (
           <div className="panel col-span-full text-center py-16">
             <div className="panel-body space-y-4">

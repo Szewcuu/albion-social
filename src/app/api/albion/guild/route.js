@@ -32,7 +32,7 @@ function apiError(message, { code, status = 500 } = {}) {
 
 export async function GET(request) {
   const clientKey = getClientKey(request)
-  const rateLimit = checkRateLimit(`albion-guild:${clientKey}`, { limit: 30, windowMs: 60_000 })
+  const rateLimit = await checkRateLimit(`albion-guild:${clientKey}`, { limit: 30, windowMs: 60_000 })
 
   if (!rateLimit.allowed) {
     return apiError('Zbyt wiele zapytań. Spróbuj ponownie za chwilę.', { code: 'RATE_LIMITED', status: 429 })

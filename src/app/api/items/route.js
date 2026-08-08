@@ -10,7 +10,7 @@ function getClientKey(request) {
 }
 
 export async function GET(request) {
-  const rateLimit = checkRateLimit(`albion-items:${getClientKey(request)}`, { limit: 40, windowMs: 60_000 })
+  const rateLimit = await checkRateLimit(`albion-items:${getClientKey(request)}`, { limit: 40, windowMs: 60_000 })
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { error: { message: 'Zbyt wiele zapytań do katalogu.', code: 'RATE_LIMITED' } },
