@@ -7,7 +7,6 @@ import {
   ArrowLeft, Save, Share2, Plus, Trash2, Check, AlertCircle,
   Swords, Video, Package, Zap, ThumbsUp, ThumbsDown,
 } from 'lucide-react'
-import PageBanner from '@/components/PageBanner'
 import EquipmentGrid from '@/components/builds/EquipmentGrid'
 import BuildStatsCalculator from '@/components/builds/BuildStatsCalculator'
 import TagSelector from '@/components/builds/TagSelector'
@@ -37,7 +36,7 @@ function DynamicList({ items, onChange, placeholder, max = 5 }) {
             value={item}
             onChange={(e) => update(idx, e.target.value)}
             placeholder={placeholder}
-            className="flex-1 bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+            className="flex-1 bg-[var(--bg-elevated)] border border-[#220e14] rounded-xl p-2.5 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
           />
           <button type="button" onClick={() => remove(idx)} aria-label={`Usuń pozycję ${idx + 1}`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
             <Trash2 className="w-3.5 h-3.5" />
@@ -45,7 +44,7 @@ function DynamicList({ items, onChange, placeholder, max = 5 }) {
         </div>
       ))}
       {items.length < max && (
-        <button type="button" onClick={add} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f] hover:text-[#fcd053]">
+        <button type="button" onClick={add} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[var(--amber)] hover:text-[#fcd053]">
           <Plus className="w-3.5 h-3.5" /> Dodaj
         </button>
       )}
@@ -178,14 +177,11 @@ export default function CreateBuildPage() {
   }
 
   return (
-    <main className="aopp-shell relative flex min-h-screen flex-col text-[#d5d0c6]">
-      <div className="aopp-world-bg" />
-      <div className="aopp-grain" />
-
-      <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col items-center space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="page-content">
+<div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-1 flex-col items-center space-y-6 p-4 sm:p-6 lg:p-8">
 
         <div className="w-full flex flex-wrap justify-between items-center gap-3">
-          <Link href="/buildy" className="group inline-flex min-h-11 items-center gap-2 rounded-lg pr-2 text-xs font-mono font-black uppercase tracking-widest text-[#f3ba2f] transition hover:text-[#fcd053]">
+          <Link href="/buildy" className="group inline-flex min-h-11 items-center gap-2 rounded-lg pr-2 text-xs font-mono font-black uppercase tracking-widest text-[var(--amber)] transition hover:text-[#fcd053]">
             <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
             Powrót do Zbrojowni
           </Link>
@@ -193,7 +189,7 @@ export default function CreateBuildPage() {
             <button
               type="button"
               onClick={handleShare}
-              className="aopp-ghost-button inline-flex min-h-11 items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-[.1em]"
+              className="btn btn-ghost inline-flex min-h-11 items-center gap-2 px-4 py-2.5 text-[10px] font-black uppercase tracking-[.1em]"
             >
               {shareCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
               {shareCopied ? 'Skopiowano!' : 'Udostępnij link'}
@@ -202,7 +198,7 @@ export default function CreateBuildPage() {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="aopp-primary-button inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[.1em] disabled:opacity-50"
+              className="btn btn-primary inline-flex min-h-11 items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[.1em] disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               {saving ? 'Zapisywanie...' : saved ? 'Opublikowano!' : 'Opublikuj build'}
@@ -210,13 +206,7 @@ export default function CreateBuildPage() {
           </div>
         </div>
 
-        <PageBanner
-          title="Kreator Buildów"
-          subtitle="Stwórz, dostosuj i udostępnij swój idealny zestaw bojowy"
-          icon={Swords}
-        />
-
-        {!user && (
+{!user && (
           <div className="w-full bg-amber-950/20 border border-amber-900/40 rounded-2xl p-4 flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
@@ -232,7 +222,7 @@ export default function CreateBuildPage() {
 
           <div className="space-y-6">
 
-            <section className="aopp-panel space-y-4 p-5 sm:p-6">
+            <section className="panel space-y-4 p-5 sm:p-6">
               <h2 className="font-display text-xl font-black text-[#fff8e8]">Informacje ogólne</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -240,11 +230,12 @@ export default function CreateBuildPage() {
                   <input
                     id="build-title"
                     type="text"
+                    autoComplete="off"
                     maxLength={100}
                     placeholder="np. Hellgate Healer T8"
                     value={build.title}
                     onChange={(e) => updateBuild({ title: e.target.value })}
-                    className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] p-3 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+                    className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[var(--bg-elevated)] p-3 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                   />
                   <span className="font-mono text-[9px] text-gray-400">{build.title.length}/100</span>
                 </div>
@@ -253,11 +244,12 @@ export default function CreateBuildPage() {
                   <input
                     id="build-author"
                     type="text"
+                    autoComplete="nickname"
                     maxLength={50}
                     placeholder="Twoja nazwa gracza"
                     value={build.authorName}
                     onChange={(e) => updateBuild({ authorName: e.target.value })}
-                    className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] p-3 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+                    className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[var(--bg-elevated)] p-3 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                   />
                 </div>
               </div>
@@ -269,12 +261,12 @@ export default function CreateBuildPage() {
                   placeholder="Opisz jak grać tym buildem, rotację skilli, wskazówki..."
                   value={build.description}
                   onChange={(e) => updateBuild({ description: e.target.value })}
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 text-xs focus:border-[#f3ba2f] outline-none resize-y"
+                  className="w-full bg-[var(--bg-elevated)] border border-[#220e14] rounded-xl p-3 text-gray-100 text-xs focus:border-[var(--amber)] outline-none resize-y"
                 />
               </div>
             </section>
 
-            <section className="aopp-panel p-5 sm:p-6">
+            <section className="panel p-5 sm:p-6">
               <h2 className="font-display mb-4 text-xl font-black text-[#fff8e8]">Doktryna i przeznaczenie</h2>
               <TagSelector
                 tags={build.tags}
@@ -285,7 +277,7 @@ export default function CreateBuildPage() {
             </section>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <section className="aopp-panel space-y-3 p-5">
+              <section className="panel space-y-3 p-5">
                 <h3 className="text-xs font-mono font-bold text-emerald-400 uppercase flex items-center gap-1.5">
                   <ThumbsUp className="w-3.5 h-3.5" /> Mocne strony
                 </h3>
@@ -296,7 +288,7 @@ export default function CreateBuildPage() {
                   max={5}
                 />
               </section>
-              <section className="aopp-panel space-y-3 p-5">
+              <section className="panel space-y-3 p-5">
                 <h3 className="text-xs font-mono font-bold text-rose-400 uppercase flex items-center gap-1.5">
                   <ThumbsDown className="w-3.5 h-3.5" /> Słabe strony
                 </h3>
@@ -309,12 +301,12 @@ export default function CreateBuildPage() {
               </section>
             </div>
 
-            <section className="aopp-panel space-y-4 p-5 sm:p-6">
+            <section className="panel space-y-4 p-5 sm:p-6">
               <h2 className="font-display text-xl font-black text-[#fff8e8]">Alternatywne przedmioty</h2>
               <p className="text-[10px] text-gray-500 font-mono">Dodaj do 2 alternatyw na slot (np. tańszy wariant)</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {EQUIPMENT_SLOTS.filter(s => !s.hasAmount).map((slot) => (
-                  <div key={slot.key} className="bg-[#050204] border border-[#200d13] rounded-xl p-3 space-y-2">
+                  <div key={slot.key} className="bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 space-y-2">
                     <span className="text-[10px] font-mono text-gray-400 uppercase">{slot.label}</span>
                     <div className="flex gap-2">
                       {[0, 1].map((altIdx) => (
@@ -338,12 +330,12 @@ export default function CreateBuildPage() {
               </div>
             </section>
 
-            <section className="aopp-panel space-y-3 p-5 sm:p-6">
-              <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
+            <section className="panel space-y-3 p-5 sm:p-6">
+              <h2 className="text-sm font-mono font-bold text-[var(--amber)] uppercase tracking-wider flex items-center gap-2">
                 <Zap className="w-4 h-4" /> Combo skilli ({build.skillCombos.length}/5)
               </h2>
               {build.skillCombos.map((combo, idx) => (
-                <div key={idx} className="bg-[#050204] border border-[#200d13] rounded-xl p-3 space-y-2">
+                <div key={idx} className="bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 space-y-2">
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -355,7 +347,7 @@ export default function CreateBuildPage() {
                         next[idx] = { ...combo, name: e.target.value }
                         updateBuild({ skillCombos: next })
                       }}
-                      className="flex-1 bg-[#0c0407] border border-[#220e14] rounded-lg p-2 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+                      className="flex-1 bg-[#0c0407] border border-[#220e14] rounded-lg p-2 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                     />
                     <button type="button" onClick={() => updateBuild({ skillCombos: build.skillCombos.filter((_, i) => i !== idx) })} aria-label={`Usuń combo ${idx + 1}`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
                       <Trash2 className="w-3.5 h-3.5" />
@@ -371,19 +363,19 @@ export default function CreateBuildPage() {
                       next[idx] = { ...combo, description: e.target.value }
                       updateBuild({ skillCombos: next })
                     }}
-                    className="w-full bg-[#0c0407] border border-[#220e14] rounded-lg p-2 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+                    className="w-full bg-[#0c0407] border border-[#220e14] rounded-lg p-2 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                   />
                 </div>
               ))}
               {build.skillCombos.length < 5 && (
-                <button type="button" onClick={addSkillCombo} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f]">
+                <button type="button" onClick={addSkillCombo} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[var(--amber)]">
                   <Plus className="w-3.5 h-3.5" /> Dodaj combo
                 </button>
               )}
             </section>
 
-            <section className="aopp-panel space-y-3 p-5 sm:p-6">
-              <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
+            <section className="panel space-y-3 p-5 sm:p-6">
+              <h2 className="text-sm font-mono font-bold text-[var(--amber)] uppercase tracking-wider flex items-center gap-2">
                 <Package className="w-4 h-4" /> Ekwipunek zapasowy ({build.inventory.length}/10)
               </h2>
               {build.inventory.map((item, idx) => (
@@ -411,7 +403,7 @@ export default function CreateBuildPage() {
                       next[idx] = { ...item, amount: parseInt(e.target.value) || 1 }
                       updateBuild({ inventory: next })
                     }}
-                    className="min-h-10 w-16 rounded-lg border border-[#220e14] bg-[#050204] py-2 text-center text-xs"
+                    className="min-h-10 w-16 rounded-lg border border-[#220e14] bg-[var(--bg-elevated)] py-2 text-center text-xs"
                   />
                   <button type="button" onClick={() => updateBuild({ inventory: build.inventory.filter((_, i) => i !== idx) })} aria-label={`Usuń przedmiot ${idx + 1} z ekwipunku`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
                     <Trash2 className="w-3.5 h-3.5" />
@@ -419,14 +411,14 @@ export default function CreateBuildPage() {
                 </div>
               ))}
               {build.inventory.length < 10 && (
-                <button type="button" onClick={addInventoryItem} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f]">
+                <button type="button" onClick={addInventoryItem} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[var(--amber)]">
                   <Plus className="w-3.5 h-3.5" /> Dodaj przedmiot
                 </button>
               )}
             </section>
 
-            <section className="aopp-panel space-y-3 p-5 sm:p-6">
-              <h2 className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
+            <section className="panel space-y-3 p-5 sm:p-6">
+              <h2 className="text-sm font-mono font-bold text-[var(--amber)] uppercase tracking-wider flex items-center gap-2">
                 <Video className="w-4 h-4" /> Filmy YouTube ({build.youtubeVideos.length}/3)
               </h2>
               <p className="text-[10px] text-gray-500 font-mono">youtube.com/watch, youtu.be, youtube.com/shorts</p>
@@ -442,7 +434,7 @@ export default function CreateBuildPage() {
                       next[idx] = e.target.value
                       updateBuild({ youtubeVideos: next })
                     }}
-                    className="flex-1 bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+                    className="flex-1 bg-[var(--bg-elevated)] border border-[#220e14] rounded-xl p-2.5 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                   />
                   <button type="button" onClick={() => updateBuild({ youtubeVideos: build.youtubeVideos.filter((_, i) => i !== idx) })} aria-label={`Usuń film ${idx + 1}`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
                     <Trash2 className="w-3.5 h-3.5" />
@@ -450,14 +442,14 @@ export default function CreateBuildPage() {
                 </div>
               ))}
               {build.youtubeVideos.length < 3 && (
-                <button type="button" onClick={addYoutube} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[#f3ba2f]">
+                <button type="button" onClick={addYoutube} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[var(--amber)]">
                   <Plus className="w-3.5 h-3.5" /> Dodaj film
                 </button>
               )}
             </section>
           </div>
 
-          <div className="xl:sticky xl:top-6 xl:self-start space-y-4">
+          <div className="self-start space-y-4">
             <EquipmentGrid slots={build.slots} onSlotChange={updateSlot} />
             <BuildStatsCalculator
               slots={build.slots}
@@ -467,7 +459,7 @@ export default function CreateBuildPage() {
               onSpecChange={(specBonus) => updateBuild({ specBonus })}
             />
 
-            <div className="aopp-panel space-y-2 p-4">
+            <div className="panel space-y-2 p-4">
               <h3 className="text-[10px] font-black uppercase tracking-[.18em] text-orange-200/70">Rytuał kucia</h3>
               <ol className="text-[10px] text-gray-500 font-mono space-y-1.5 list-decimal list-inside">
                 <li>Kliknij slot w siatce, aby wybrać przedmiot</li>
@@ -480,16 +472,6 @@ export default function CreateBuildPage() {
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">
-        <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
-          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
-          <div className="flex gap-4 text-xs font-mono text-gray-400">
-            <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
-            <span>•</span>
-            <Link href="/prywatnosc" className="hover:text-[#f3ba2f] transition">Polityka Prywatności</Link>
-          </div>
-        </div>
-      </footer>
-    </main>
+</div>
   )
 }

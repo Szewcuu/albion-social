@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Hammer, Sparkles, TrendingUp, TrendingDown, Coins, Percent, Zap, LoaderCircle, AlertCircle, RefreshCw } from 'lucide-react'
-import ModernHeader from '@/components/ModernHeader'
-import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 const RESOURCES = [
   { id: 'CLOTH', label: 'Tkanina (Cloth)', rawId: 'FIBER' },
@@ -114,29 +112,19 @@ export default function CraftingCalculatorPage() {
   const profitPerItem = quantity > 0 ? Math.round(netProfit / quantity) : 0
 
   return (
-    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
-      <ModernHeader />
+    <div className="page-content">
+      <div className="subpage-header">
+        <h1>Kalkulator Craftingu</h1>
+        <p>Oblicz zysk netto z craftingu uwzględniając Return Rate (RRR) oraz opłaty stanowisk.</p>
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-        <PortalSubpageHeader
-          eyebrow="Kalkulator Ekonomii • Albion Online Polska"
-          title={<>Kalkulator Zysku z Craftingu<br /><span className="text-[#e5bb55]">&amp; Przetwarzania Surowców</span></>}
-          description="Wyliczaj zysk netto w Srebrze na podstawie danych cenowych w czasie rzeczywistym z Albion Data Project API, uwzględniając Return Rate (RRR) oraz opłaty stanowisk."
-          icon={Hammer}
-          tone="gold"
-          stats={[
-            { label: 'Serwer', value: server },
-            { label: 'RRR', value: `${rrr}%` },
-            { label: 'Szacowany Zysk', value: `${profitPerItem.toLocaleString('pl-PL')} / szt` },
-          ]}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* USTAWIENIA CRAFTINGU */}
           <div className="lg:col-span-5 space-y-5">
-            <div className="aopp-panel rounded-3xl p-6 space-y-4">
+            <div className="panel rounded-3xl p-6 space-y-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <h3 className="font-display text-lg font-bold text-[#fff8e8] flex items-center gap-2">
+                <h3 className="font-display text-lg font-bold text-[#fff] flex items-center gap-2">
                   <Hammer className="w-5 h-5 text-amber-400" /> Parametry Rzemiosła
                 </h3>
                 <button
@@ -155,7 +143,7 @@ export default function CraftingCalculatorPage() {
                   <select
                     value={resourceType}
                     onChange={(e) => setResourceType(e.target.value)}
-                    className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
+                    className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
                   >
                     {RESOURCES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
                   </select>
@@ -167,7 +155,7 @@ export default function CraftingCalculatorPage() {
                     <select
                       value={tier}
                       onChange={(e) => setTier(e.target.value)}
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
                     >
                       {TIERS.map(t => <option key={t.level} value={t.level}>{t.label}</option>)}
                     </select>
@@ -178,7 +166,7 @@ export default function CraftingCalculatorPage() {
                     <select
                       value={enchant}
                       onChange={(e) => setEnchant(e.target.value)}
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
                     >
                       {ENCHANTS.map(e => <option key={e.level} value={e.level}>{e.label}</option>)}
                     </select>
@@ -191,7 +179,7 @@ export default function CraftingCalculatorPage() {
                     <select
                       value={server}
                       onChange={(e) => setServer(e.target.value)}
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
                     >
                       <option value="Europa">Europa (AMS)</option>
                       <option value="Ameryka">Ameryka (NWA)</option>
@@ -207,7 +195,7 @@ export default function CraftingCalculatorPage() {
                       max={10000}
                       value={quantity}
                       onChange={(e) => setQuantity(Number(e.target.value) || 1)}
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-3 text-gray-100 outline-none"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-gray-100 outline-none"
                     />
                   </div>
                 </div>
@@ -257,7 +245,7 @@ export default function CraftingCalculatorPage() {
 
           {/* PRAWA KOLUMNA: PODSUMOWANIE EKONOMICZNE */}
           <div className="lg:col-span-7 space-y-5">
-            <div className="aopp-panel rounded-3xl p-6 space-y-5">
+            <div className="panel rounded-3xl p-6 space-y-5">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
                   <div className="text-[10px] font-mono uppercase text-gray-400">Wybrany Przedmiot:</div>
@@ -313,17 +301,17 @@ export default function CraftingCalculatorPage() {
 
                   {/* STATYSTYKI SZCZEGÓŁOWE */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
-                    <div className="bg-[#050204] p-3.5 rounded-2xl border border-[#200d14]">
+                    <div className="bg-[var(--bg-elevated)] p-3.5 rounded-2xl border border-[#200d14]">
                       <div className="text-[9px] text-gray-400 uppercase">Przychód Ogólny</div>
                       <div className="text-sm font-bold text-amber-200 mt-0.5">{totalRevenue.toLocaleString('pl-PL')} Silver</div>
                     </div>
 
-                    <div className="bg-[#050204] p-3.5 rounded-2xl border border-[#200d14]">
+                    <div className="bg-[var(--bg-elevated)] p-3.5 rounded-2xl border border-[#200d14]">
                       <div className="text-[9px] text-gray-400 uppercase">Koszt po Zwrocie RRR</div>
                       <div className="text-sm font-bold text-rose-300 mt-0.5">{totalCost.toLocaleString('pl-PL')} Silver</div>
                     </div>
 
-                    <div className="bg-[#050204] p-3.5 rounded-2xl border border-[#200d14] col-span-2 sm:col-span-1">
+                    <div className="bg-[var(--bg-elevated)] p-3.5 rounded-2xl border border-[#200d14] col-span-2 sm:col-span-1">
                       <div className="text-[9px] text-gray-400 uppercase">Oszczędność z RRR</div>
                       <div className="text-sm font-bold text-emerald-400 mt-0.5">
                         +{Math.round(quantity * rawMaterialEstCost * (rrr / 100)).toLocaleString('pl-PL')} Silver
@@ -336,6 +324,6 @@ export default function CraftingCalculatorPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   )
 }

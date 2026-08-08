@@ -17,7 +17,6 @@ import {
   Trash2,
   Zap,
 } from 'lucide-react'
-import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
 
 const CUSTOM_TIMERS_KEY = 'aopp-custom-timers-v2'
@@ -167,36 +166,24 @@ export default function TimeryPage() {
   }
 
   return (
-    <main className="aopp-shell min-h-screen text-[#d5d0c6]">
-      <div className="aopp-world-bg" />
-      <div className="aopp-grain" />
+    <div className="page-content">
+      <div className="subpage-header">
+        <h1>Timery Świata</h1>
+        <p>Zegary UTC, okna terytoriów, zamków i ZvZ.</p>
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1380px] space-y-7 p-4 sm:p-6 lg:p-8">
-        <PortalSubpageHeader
-          eyebrow="Wieża zegarowa • Planer strategiczny"
-          title={<>Każda sekunda ma znaczenie,<br /><span className="text-violet-300">gdy armia czeka na rozkaz.</span></>}
-          description="Śledź cykle, orientacyjne okna strategiczne i własne wydarzenia w jednym centrum dowodzenia."
-          icon={CalendarClock}
-          tone="violet"
-          stats={[
-            { label: 'Serwer', value: `${selectedServer} ${server.code}` },
-            { label: 'Najbliższe okno', value: `${pad(nextWindow.hour)}:00 UTC` },
-            { label: 'Własne timery', value: activeCustomTimers.length },
-          ]}
-          imagePosition="72% center"
-        />
-
-        <section className="aopp-panel overflow-hidden rounded-[28px]">
+<div className="relative z-10 mx-auto w-full max-w-[1380px] space-y-7 p-4 sm:p-6 lg:p-8">
+<section className="panel overflow-hidden rounded-[28px]">
           <div className="grid lg:grid-cols-[1.15fr_.85fr]">
             <div className="border-b border-white/8 p-5 sm:p-7 lg:border-b-0 lg:border-r">
               <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[.22em] text-violet-300">Synchronizacja czasu</p>
-                  <h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Zegary dowódcy</h2>
-                  <p className="mt-2 text-xs text-[#8f8a81]">Czas aktualizowany co sekundę na podstawie zegara urządzenia.</p>
+                  <h2 className="font-display mt-1 text-2xl font-black text-[#fff]">Zegary dowódcy</h2>
+                  <p className="mt-2 text-xs text-[var(--text-secondary)]">Czas aktualizowany co sekundę na podstawie zegara urządzenia.</p>
                 </div>
-                <label className="relative min-w-44 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Region
-                  <select value={selectedServer} onChange={(event) => setSelectedServer(event.target.value)} className="mt-1.5 min-h-11 w-full appearance-none rounded-xl border px-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none">
+                <label className="relative min-w-44 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Region
+                  <select value={selectedServer} onChange={(event) => setSelectedServer(event.target.value)} className="mt-1.5 min-h-11 w-full appearance-none rounded-xl border px-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none">
                     {Object.keys(SERVER_CONFIG).map((name) => <option key={name}>{name}</option>)}
                   </select>
                   <ChevronDown className="pointer-events-none absolute bottom-3 right-3 h-3.5 w-3.5" />
@@ -213,11 +200,11 @@ export default function TimeryPage() {
             <div className="relative flex flex-col justify-center bg-[radial-gradient(circle_at_100%_0%,rgba(167,139,250,.12),transparent_60%)] p-6 sm:p-8">
               <p className="text-[9px] font-black uppercase tracking-[.22em] text-violet-300">Najbliższy punkt zbiórki</p>
               <div className="mt-3 flex items-end justify-between gap-4">
-                <div><p className="font-display text-xl font-black text-[#fff8e8]">{nextWindow.label}</p><p className="mt-1 text-xs text-[#8f8a81]">{pad(nextWindow.hour)}:00 UTC · {nextWindow.type}</p></div>
+                <div><p className="font-display text-xl font-black text-[#fff]">{nextWindow.label}</p><p className="mt-1 text-xs text-[var(--text-secondary)]">{pad(nextWindow.hour)}:00 UTC · {nextWindow.type}</p></div>
                 <BellRing className="h-6 w-6 shrink-0 text-violet-300" />
               </div>
-              <p className="mt-5 font-mono text-3xl font-black tracking-[.06em] text-[#e5bb55] sm:text-4xl" suppressHydrationWarning>{nextWindow.countdown.formatted}</p>
-              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-[#e5bb55]" style={{ width: `${Math.max(2, 100 - (nextWindow.countdown.totalSeconds / 86_400) * 100)}%` }} /></div>
+              <p className="mt-5 font-mono text-3xl font-black tracking-[.06em] text-[var(--amber)] sm:text-4xl" suppressHydrationWarning>{nextWindow.countdown.formatted}</p>
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-[var(--amber)]" style={{ width: `${Math.max(2, 100 - (nextWindow.countdown.totalSeconds / 86_400) * 100)}%` }} /></div>
             </div>
           </div>
         </section>
@@ -228,9 +215,9 @@ export default function TimeryPage() {
           <CycleCard icon={Shield} eyebrow={`Strategia ${server.code}`} title={nextWindow.type} target={nextWindow.target} countdown={nextWindow.countdown} tone="rose" description="Najbliższe orientacyjne okno strategiczne wybranego regionu." />
         </div>
 
-        <section className="aopp-panel rounded-[28px] p-5 sm:p-7">
+        <section className="panel rounded-[28px] p-5 sm:p-7">
           <div className="flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
-            <div><p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Mapa operacyjna</p><h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Okna strategiczne · {selectedServer}</h2><p className="mt-2 text-xs text-[#8f8a81]">Najbliższe wystąpienie każdego orientacyjnego bloku czasu.</p></div>
+            <div><p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Mapa operacyjna</p><h2 className="font-display mt-1 text-2xl font-black text-[#fff]">Okna strategiczne · {selectedServer}</h2><p className="mt-2 text-xs text-[var(--text-secondary)]">Najbliższe wystąpienie każdego orientacyjnego bloku czasu.</p></div>
             <span className="w-fit rounded-lg border border-sky-400/20 bg-sky-400/8 px-3 py-2 text-[9px] font-black uppercase tracking-[.14em] text-sky-300">Godziny UTC</span>
           </div>
 
@@ -238,11 +225,11 @@ export default function TimeryPage() {
             {strategicWindows.map((window, index) => {
               const urgent = window.countdown.totalSeconds <= 3_600
               return (
-                <article key={`${selectedServer}-${window.hour}`} className={`relative overflow-hidden rounded-2xl border p-4 ${urgent ? 'border-rose-400/30 bg-rose-400/8' : index === 0 ? 'border-[#e5bb55]/30 bg-[#e5bb55]/[.055]' : 'border-white/8 bg-black/15'}`}>
-                  <div className="flex items-start justify-between gap-3"><div><p className="font-display text-2xl font-black text-[#fff8e8]">{pad(window.hour)}:00</p><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">UTC</p></div>{urgent ? <span className="rounded-md border border-rose-400/25 bg-rose-400/10 px-2 py-1 text-[8px] font-black uppercase text-rose-300">Blisko</span> : index === 0 ? <Sparkles className="h-4 w-4 text-[#e5bb55]" /> : null}</div>
-                  <h3 className="mt-5 text-xs font-bold text-[#d8d2c8]">{window.label}</h3>
-                  <p className="mt-1 text-[9px] text-[#918b82]">{window.type}</p>
-                  <div className="mt-4 border-t border-white/8 pt-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">Do rozpoczęcia</p><p className={`mt-1 font-mono text-sm font-bold ${urgent ? 'text-rose-300' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{window.countdown.formatted}</p></div>
+                <article key={`${selectedServer}-${window.hour}`} className={`relative overflow-hidden rounded-2xl border p-4 ${urgent ? 'border-rose-400/30 bg-rose-400/8' : index === 0 ? 'border-[var(--amber)]/30 bg-[var(--amber)]/[.055]' : 'border-white/8 bg-black/15'}`}>
+                  <div className="flex items-start justify-between gap-3"><div><p className="font-display text-2xl font-black text-[#fff]">{pad(window.hour)}:00</p><p className="text-[8px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">UTC</p></div>{urgent ? <span className="rounded-md border border-rose-400/25 bg-rose-400/10 px-2 py-1 text-[8px] font-black uppercase text-rose-300">Blisko</span> : index === 0 ? <Sparkles className="h-4 w-4 text-[var(--amber)]" /> : null}</div>
+                  <h3 className="mt-5 text-xs font-bold text-[var(--text-primary)]">{window.label}</h3>
+                  <p className="mt-1 text-[9px] text-[var(--text-secondary)]">{window.type}</p>
+                  <div className="mt-4 border-t border-white/8 pt-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Do rozpoczęcia</p><p className={`mt-1 font-mono text-sm font-bold ${urgent ? 'text-rose-300' : 'text-[var(--amber)]'}`} suppressHydrationWarning>{window.countdown.formatted}</p></div>
                 </article>
               )
             })}
@@ -250,18 +237,18 @@ export default function TimeryPage() {
         </section>
 
         <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
-          <section className="aopp-panel rounded-[28px] p-5 sm:p-6">
-            <div className="border-b border-white/8 pb-4"><p className="text-[9px] font-black uppercase tracking-[.2em] text-[#e5bb55]">Własny alarm</p><h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Dodaj wydarzenie</h2><p className="mt-2 text-xs leading-5 text-[#8f8a81]">Timer zapisze się lokalnie na tym urządzeniu.</p></div>
+          <section className="panel rounded-[28px] p-5 sm:p-6">
+            <div className="border-b border-white/8 pb-4"><p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Własny alarm</p><h2 className="font-display mt-1 text-xl font-black text-[#fff]">Dodaj wydarzenie</h2><p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Timer zapisze się lokalnie na tym urządzeniu.</p></div>
             <form onSubmit={addTimer} className="mt-5 space-y-4">
-              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Nazwa wydarzenia<input type="text" maxLength={80} value={timerName} onChange={(event) => setTimerName(event.target.value)} placeholder="np. Zbiórka pod hideoutem" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
-              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Data i godzina<input type="datetime-local" value={timerDate} onChange={(event) => setTimerDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[#eee7d9] outline-none" /></label>
-              <button type="submit" className="aopp-primary-button flex w-full items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em]"><Plus className="h-4 w-4" /> Dodaj timer</button>
+              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Nazwa wydarzenia<input type="text" maxLength={80} value={timerName} onChange={(event) => setTimerName(event.target.value)} placeholder="np. Zbiórka pod hideoutem" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" /></label>
+              <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Data i godzina<input type="datetime-local" value={timerDate} onChange={(event) => setTimerDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" /></label>
+              <button type="submit" className="btn btn-primary flex w-full items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em]"><Plus className="h-4 w-4" /> Dodaj timer</button>
             </form>
             {notice && <StatusNotice type="success" className="mt-3">{notice}</StatusNotice>}
           </section>
 
-          <section className="aopp-panel rounded-[28px] p-5 sm:p-6">
-            <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Osobisty harmonogram</p><h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Twoje wydarzenia</h2></div><span className="rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-[9px] font-bold text-[#8f8a81]">{activeCustomTimers.length}/20</span></div>
+          <section className="panel rounded-[28px] p-5 sm:p-6">
+            <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Osobisty harmonogram</p><h2 className="font-display mt-1 text-xl font-black text-[#fff]">Twoje wydarzenia</h2></div><span className="rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-[9px] font-bold text-[var(--text-secondary)]">{activeCustomTimers.length}/20</span></div>
             <div className="mt-4 space-y-2">
               {activeCustomTimers.length === 0 ? (
                 <EmptyState icon={TimerReset} title="Brak własnych timerów" description="Dodaj datę zbiórki, CTA lub transportu." />
@@ -269,8 +256,8 @@ export default function TimeryPage() {
                 const expired = timer.target <= now
                 return (
                   <article key={timer.id} className={`flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between ${expired ? 'border-white/6 bg-black/10 opacity-55' : 'border-white/8 bg-black/20'}`}>
-                    <div className="min-w-0"><p className="truncate text-xs font-bold text-[#eee7d9]">{timer.name}</p><p className="mt-1 text-[9px] text-[#918b82]">{formatTimerDate(timer.date)}</p></div>
-                    <div className="flex items-center justify-between gap-3 sm:justify-end"><span className={`font-mono text-xs font-bold ${expired ? 'text-[#918b82]' : 'text-[#e5bb55]'}`} suppressHydrationWarning>{expired ? 'Zakończony' : timer.countdown.formatted}</span><button type="button" onClick={() => removeTimer(timer.id)} aria-label={`Usuń timer ${timer.name}`} className="rounded-lg border border-rose-400/15 bg-rose-400/5 p-2 text-rose-300 hover:bg-rose-400/10"><Trash2 className="h-3.5 w-3.5" /></button></div>
+                    <div className="min-w-0"><p className="truncate text-xs font-bold text-[var(--text-primary)]">{timer.name}</p><p className="mt-1 text-[9px] text-[var(--text-secondary)]">{formatTimerDate(timer.date)}</p></div>
+                    <div className="flex items-center justify-between gap-3 sm:justify-end"><span className={`font-mono text-xs font-bold ${expired ? 'text-[var(--text-secondary)]' : 'text-[var(--amber)]'}`} suppressHydrationWarning>{expired ? 'Zakończony' : timer.countdown.formatted}</span><button type="button" onClick={() => removeTimer(timer.id)} aria-label={`Usuń timer ${timer.name}`} className="rounded-lg border border-rose-400/15 bg-rose-400/5 p-2 text-rose-300 hover:bg-rose-400/10"><Trash2 className="h-3.5 w-3.5" /></button></div>
                   </article>
                 )
               })}
@@ -280,22 +267,22 @@ export default function TimeryPage() {
 
         <div className="flex items-start gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/7 p-4 text-[10px] leading-5 text-amber-100/75"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" /><p>Okna strategiczne są planerem orientacyjnym, nie oficjalnym harmonogramem gry. Rzeczywiste godziny zależą od regionu, strefy, sezonu i aktualnych zasad Albion Online — przed CTA potwierdź je na mapie oraz w interfejsie gry.</p></div>
       </div>
-    </main>
+    </div>
   )
 }
 
 function ClockMetric({ label, value, icon: Icon, tone = 'gold' }) {
-  const color = tone === 'sky' ? 'text-sky-300' : tone === 'violet' ? 'text-violet-300' : 'text-[#e5bb55]'
-  return <div className="rounded-2xl border border-white/8 bg-black/20 p-4"><div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[.16em] text-[#918b82]"><Icon className={`h-3.5 w-3.5 ${color}`} />{label}</div><p className={`mt-2 font-mono text-lg font-black ${color}`} suppressHydrationWarning>{value}</p></div>
+  const color = tone === 'sky' ? 'text-sky-300' : tone === 'violet' ? 'text-violet-300' : 'text-[var(--amber)]'
+  return <div className="rounded-2xl border border-white/8 bg-black/20 p-4"><div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-[.16em] text-[var(--text-secondary)]"><Icon className={`h-3.5 w-3.5 ${color}`} />{label}</div><p className={`mt-2 font-mono text-lg font-black ${color}`} suppressHydrationWarning>{value}</p></div>
 }
 
 function CycleCard({ icon: Icon, eyebrow, title, target, countdown, tone, description }) {
   const toneClasses = tone === 'violet' ? 'text-violet-300 border-violet-400/20 bg-violet-400/7' : tone === 'rose' ? 'text-rose-300 border-rose-400/20 bg-rose-400/7' : 'text-amber-300 border-amber-400/20 bg-amber-400/7'
   return (
-    <article className="aopp-panel rounded-[24px] p-5">
-      <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.18em] text-[#918b82]">{eyebrow}</p><h2 className="font-display mt-1 text-lg font-black text-[#fff8e8]">{title}</h2></div><span className={`rounded-xl border p-2 ${toneClasses}`}><Icon className="h-4 w-4" /></span></div>
-      <p className="mt-3 text-[10px] leading-5 text-[#8f8a81]">{description}</p>
-      <div className="mt-4 rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">{target.toLocaleString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC</p><p className="mt-1 font-mono text-xl font-black text-[#e5bb55]" suppressHydrationWarning>{countdown.formatted}</p></div>
+    <article className="panel rounded-[24px] p-5">
+      <div className="flex items-start justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.18em] text-[var(--text-secondary)]">{eyebrow}</p><h2 className="font-display mt-1 text-lg font-black text-[#fff]">{title}</h2></div><span className={`rounded-xl border p-2 ${toneClasses}`}><Icon className="h-4 w-4" /></span></div>
+      <p className="mt-3 text-[10px] leading-5 text-[var(--text-secondary)]">{description}</p>
+      <div className="mt-4 rounded-xl border border-white/8 bg-black/20 p-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">{target.toLocaleString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} UTC</p><p className="mt-1 font-mono text-xl font-black text-[var(--amber)]" suppressHydrationWarning>{countdown.formatted}</p></div>
     </article>
   )
 }

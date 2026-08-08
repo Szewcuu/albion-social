@@ -5,8 +5,6 @@ import Link from 'next/link'
 import { Swords, Shield, Globe, MapPin, Search, ExternalLink, HelpCircle } from 'lucide-react'
 import GuildApplyModal from '@/components/GuildApplyModal'
 import GuildZvZInspectorModal from '@/components/guilds/GuildZvZInspectorModal'
-import ModernHeader from '@/components/ModernHeader'
-import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 
 export default function Gildie() {
   const [guilds, setGuilds] = useState([])
@@ -124,50 +122,40 @@ export default function Gildie() {
   })
 
   return (
-    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
-      <ModernHeader user={user} />
+    <div className="page-content">
+      <div className="subpage-header">
+        <h1>Rejestr Gildii</h1>
+        <p>Poznaj aktywne polskie formacje, porównaj doktryny i miasta bazowe albo opublikuj manifest własnej gildii.</p>
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
         
-        <PortalSubpageHeader
-          eyebrow="Sala chorągwi • Rejestr sojuszy"
-          title={<>Znajdź sztandar,<br /><span className="text-[#e4b94f]">pod którym ruszysz do walki.</span></>}
-          description="Poznaj aktywne polskie formacje, porównaj doktryny i miasta bazowe albo opublikuj manifest własnej gildii."
-          icon={Swords}
-          stats={[
-            { label: 'Zarejestrowane gildie', value: guilds.length },
-            { label: 'Pasujące wyniki', value: filteredGuilds.length },
-            { label: 'Główny serwer', value: filterServer === 'ALL' ? 'Wszystkie' : filterServer },
-          ]}
-          imagePosition="76% center"
-        />
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+<div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
           {/* LEWA STRONA: FORMULARZ */}
           <div className="lg:col-span-4">
-            <div className="aopp-panel sticky top-6 space-y-5 rounded-3xl p-6">
+            <div className="panel sticky top-6 space-y-5 rounded-3xl p-6">
               <div className="border-b border-white/[.07] pb-4">
-                <p className="text-[9px] font-black uppercase tracking-[.2em] text-[#9e998f]">Dla liderów</p>
-                <h2 className="font-display mt-1 flex items-center gap-2 text-xl font-black text-[#f0c75e]"><Shield className="h-5 w-5" /> Opublikuj manifest</h2>
-                <p className="mt-2 text-xs leading-5 text-[#8f8b83]">Pokaż graczom profil formacji i otwórz rekrutację.</p>
+                <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--text-secondary)]">Dla liderów</p>
+                <h2 className="font-display mt-1 flex items-center gap-2 text-xl font-black text-[var(--amber)]"><Shield className="h-5 w-5" /> Opublikuj manifest</h2>
+                <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Pokaż graczom profil formacji i otwórz rekrutację.</p>
               </div>
               
               {!user ? (
-                <p className="text-xs text-gray-400 italic bg-[#050204] p-4 rounded-2xl border border-[#200d13]">
+                <p className="text-xs text-gray-400 italic bg-[var(--bg-elevated)] p-4 rounded-2xl border border-[var(--border-hover)]">
                   Zaloguj się na stronie głównej, aby opublikować manifest swojej gildii.
                 </p>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-3 text-xs">
                   <div>
                     <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Nazwa Gildii *</label>
-                    <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" placeholder="np. Husaria Polska" />
+                    <input type="text" name="name" required value={formData.name} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs" placeholder="np. Husaria Polska" />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Serwer *</label>
-                      <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
+                      <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
                         <option value="Europa">Europa</option>
                         <option value="Ameryka">Ameryka</option>
                         <option value="Azja">Azja</option>
@@ -176,7 +164,7 @@ export default function Gildie() {
 
                     <div>
                       <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Główne Miasto *</label>
-                      <select name="main_city" value={formData.main_city} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
+                      <select name="main_city" value={formData.main_city} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
                         <option value="Martlock">Martlock</option>
                         <option value="Lymhurst">Lymhurst</option>
                         <option value="Bridgewatch">Bridgewatch</option>
@@ -190,7 +178,7 @@ export default function Gildie() {
 
                   <div>
                     <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Profil / Doktryna *</label>
-                    <select name="activity_type" value={formData.activity_type} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
+                    <select name="activity_type" value={formData.activity_type} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
                       <option value="PvP">PvP / Ganking</option>
                       <option value="PvE / HCE">PvE / HCE</option>
                       <option value="ZvZ / Wojny">ZvZ / Wojny Terytorialne</option>
@@ -200,7 +188,7 @@ export default function Gildie() {
 
                   <div>
                     <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Zaproszenie Discord *</label>
-                    <input type="url" name="discord_link" required value={formData.discord_link} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" placeholder="https://discord.gg/..." />
+                    <input type="url" name="discord_link" required value={formData.discord_link} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs" placeholder="https://discord.gg/..." />
                   </div>
 
                   <div>
@@ -210,12 +198,12 @@ export default function Gildie() {
                       name="webhook_url"
                       value={formData.webhook_url}
                       onChange={handleInputChange}
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
                       placeholder="https://discord.com/api/webhooks/..."
                     />
                     
-                    <details className="mt-2 text-[10px] text-gray-400 bg-[#050204] border border-[#220e14] p-2.5 rounded-xl">
-                      <summary className="cursor-pointer text-[#f3ba2f] font-bold hover:underline select-none flex items-center gap-1 font-mono">
+                    <details className="mt-2 text-[10px] text-gray-400 bg-[var(--bg-elevated)] border border-[var(--border-hover)] p-2.5 rounded-xl">
+                      <summary className="cursor-pointer text-[var(--amber)] font-bold hover:underline select-none flex items-center gap-1 font-mono">
                         <HelpCircle className="w-3.5 h-3.5" />
                         <span>Jak pobrać Webhook z Discorda?</span>
                       </summary>
@@ -232,10 +220,10 @@ export default function Gildie() {
                       <label className="block text-gray-400 font-bold uppercase font-mono text-[10px]">Opis / Wymagania *</label>
                       <span className="text-gray-500 font-mono text-[10px]">{formData.description.length}/600</span>
                     </div>
-                    <textarea name="description" rows="4" maxLength="600" value={formData.description} onChange={handleInputChange} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none resize-none text-xs" placeholder="Opisz godziny aktywności, wymagany Fame..." />
+                    <textarea name="description" rows="4" maxLength="600" value={formData.description} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none resize-none text-xs" placeholder="Opisz godziny aktywności, wymagany Fame..." />
                   </div>
 
-                  <button type="submit" className="aopp-primary-button w-full py-3.5 text-xs font-extrabold uppercase tracking-wider">
+                  <button type="submit" className="btn btn-primary w-full py-3.5 text-xs font-extrabold uppercase tracking-wider">
                     Opublikuj Manifest
                   </button>
                   {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs font-mono">{formMessage}</p>}
@@ -248,10 +236,10 @@ export default function Gildie() {
           <div className="lg:col-span-8 space-y-4">
             
             {/* FILTRY */}
-            <div className="aopp-panel space-y-3 rounded-3xl p-4 font-mono text-xs">
+            <div className="panel space-y-3 rounded-3xl p-4 font-mono text-xs">
               <div className="flex items-center justify-between gap-3 px-1">
-                <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#8f8b83]">Archiwum chorągwi</p><h2 className="font-display text-lg font-bold text-white">Przeglądaj formacje</h2></div>
-                <span className="rounded-lg border border-[#d8ad4a]/20 bg-[#d8ad4a]/10 px-3 py-1 text-[10px] font-black text-[#e4b94f]">{filteredGuilds.length} {filteredGuilds.length === 1 ? 'wynik' : 'wyników'}</span>
+                <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[var(--text-secondary)]">Archiwum chorągwi</p><h2 className="font-display text-lg font-bold text-white">Przeglądaj formacje</h2></div>
+                <span className="rounded-lg border border-[var(--amber)]/20 bg-[var(--amber)]/10 px-3 py-1 text-[10px] font-black text-[var(--amber)]">{filteredGuilds.length} {filteredGuilds.length === 1 ? 'wynik' : 'wyników'}</span>
               </div>
               <div className="relative">
                 <label htmlFor="guild-search" className="sr-only">Szukaj gildii po nazwie lub opisie</label>
@@ -262,14 +250,14 @@ export default function Gildie() {
                   placeholder="Szukaj gildii po nazwie lub opisie..." 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+                  className="input-with-icon min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                 />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div>
                   <label htmlFor="guild-server-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Serwer</label>
-                  <select id="guild-server-filter" value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 font-bold text-[#f3ba2f] outline-none">
+                  <select id="guild-server-filter" value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 font-bold text-[var(--amber)] outline-none">
                     <option value="ALL">Wszystkie Serwery</option>
                     <option value="Europa">Europa</option>
                     <option value="Ameryka">Ameryka</option>
@@ -278,7 +266,7 @@ export default function Gildie() {
                 </div>
                 <div>
                   <label htmlFor="guild-city-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Miasto</label>
-                  <select id="guild-city-filter" value={filterCity} onChange={(e) => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
+                  <select id="guild-city-filter" value={filterCity} onChange={(e) => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Miasta</option>
                     <option value="Martlock">Martlock</option>
                     <option value="Lymhurst">Lymhurst</option>
@@ -291,7 +279,7 @@ export default function Gildie() {
                 </div>
                 <div>
                   <label htmlFor="guild-activity-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Doktryna</label>
-                  <select id="guild-activity-filter" value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
+                  <select id="guild-activity-filter" value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Doktryny</option>
                     <option value="PvP">PvP / Ganking</option>
                     <option value="PvE / HCE">PvE / HCE</option>
@@ -309,7 +297,7 @@ export default function Gildie() {
                   Otwieranie archiwów gildyjnych...
                 </div>
               ) : filteredGuilds.length === 0 ? (
-                <div className="aopp-panel rounded-3xl p-12 text-center">
+                <div className="panel rounded-3xl p-12 text-center">
                   <Swords className="mx-auto h-8 w-8 text-[#7e6932]" />
                   <p className="font-display mt-4 text-lg font-bold text-[#c7c1b7]">Żadna chorągiew nie odpowiada filtrom</p>
                   <p className="mt-1 text-xs text-[#817d75]">Zmień serwer, miasto lub doktrynę i spróbuj ponownie.</p>
@@ -318,12 +306,12 @@ export default function Gildie() {
                 filteredGuilds.map((guild) => (
                   <div 
                     key={guild.id} 
-                    className="aopp-list-card group relative space-y-5 overflow-hidden rounded-3xl p-6"
+                    className="panel panel-interactive group relative space-y-5 overflow-hidden rounded-3xl p-6"
                   >
-                    <div className="pointer-events-none absolute -right-2 -top-8 font-display text-[9rem] font-black leading-none text-[#d8ad4a]/[.035]">{guild.name.charAt(0)}</div>
+                    <div className="pointer-events-none absolute -right-2 -top-8 text-[9rem] font-black leading-none text-[var(--amber)]/[.035]">{guild.name.charAt(0)}</div>
                     <div className="relative flex flex-wrap items-start justify-between gap-4 border-b border-white/[.07] pb-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#d8ad4a]/25 bg-[#d8ad4a]/10 font-display text-xl font-black text-[#e4b94f]">{guild.name.charAt(0)}</div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--amber)]/25 bg-[var(--amber)]/10 text-xl font-black text-[var(--amber)]">{guild.name.charAt(0)}</div>
                         <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#817d75]">Chorągiew gildyjna</p><h3 className="font-display mt-0.5 text-2xl font-black tracking-wide text-white">{guild.name}</h3></div>
                       </div>
 
@@ -364,7 +352,7 @@ export default function Gildie() {
 
                         <button
                           onClick={() => setSelectedGuildForApply(guild)}
-                          className="aopp-primary-button flex min-h-11 items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider"
+                          className="btn btn-primary flex min-h-11 items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider"
                         >
                           <Swords className="w-3.5 h-3.5" />
                           <span>Aplikuj</span>
@@ -389,14 +377,7 @@ export default function Gildie() {
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-400">
-        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
-          <p className="font-mono text-[10px] text-gray-400">Rejestr Gildii &amp; Rekrutacja</p>
-        </div>
-      </footer>
-
-      <GuildApplyModal
+<GuildApplyModal
         isOpen={!!selectedGuildForApply}
         onClose={() => setSelectedGuildForApply(null)}
         guild={selectedGuildForApply}
@@ -410,6 +391,6 @@ export default function Gildie() {
         guildName={inspectedGuild?.name || ''}
         server={inspectedGuild?.server || 'Europa'}
       />
-    </main>
+    </div>
   )
 }

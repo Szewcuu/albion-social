@@ -1,191 +1,286 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
+import {
+  CornerUpLeft,
+  MessageSquareReply,
+  RefreshCw,
+  Send,
+  Sparkles,
+  Trash2,
+  Users,
+  X,
+} from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { Radio, Send, Trash2 } from 'lucide-react'
+
+const BASE_FIELDS = 'id, user_id, channel, username, text, created_at'
+const REPLY_FIELDS = `${BASE_FIELDS}, reply_to`
+
+function normalizeMessage(message) {
+  return { ...message, username: message.username || 'Gracz', reply_to: message.reply_to || null }
+}
+
+function MessageText({ text }) {
+  const parts = text.split(/(@[\p{L}\p{N}_.-]+)/gu)
+  return parts.map((part, index) => part.startsWith('@')
+    ? <mark className="chat-mention" key={`${part}-${index}`}>{part}</mark>
+    : part)
+}
 
 export default function ChatBox({ user, isAdmin }) {
   const [chatMessages, setChatMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
-  const [activeChannel, setActiveChannel] = useState('GLOBALNY')
-  const chatLoading = chatMessages.length === 0
-  const chatContainerRef = useRef(null)
+  const [replyingTo, setReplyingTo] = useState(null)
+  const [highlightedId, setHighlightedId] = useState(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [sendError, setSendError] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState('CONNECTING')
+  const [supportsReplies, setSupportsReplies] = useState(true)
+  const composerRef = useRef(null)
 
-  useEffect(() => {
-    let isMounted = true
+  const addOrReplaceMessage = useCallback((incoming) => {
+    const normalized = normalizeMessage(incoming)
+    setChatMessages((current) => {
+      const exists = current.some((message) => message.id === normalized.id)
+      return exists
+        ? current.map((message) => message.id === normalized.id ? normalized : message)
+        : [...current, normalized]
+    })
+  }, [])
 
-    const fetchInitialChat = async () => {
-      const { data } = await supabase
+  const fetchMessages = useCallback(async () => {
+    setLoading(true)
+    setLoadError('')
+
+    let result = await supabase
+      .from('chat_messages')
+      .select(REPLY_FIELDS)
+      .eq('channel', 'GLOBALNY')
+      .order('created_at', { ascending: false })
+      .limit(100)
+
+    if (result.error) {
+      const fallback = await supabase
         .from('chat_messages')
-        .select('*, profiles(username, avatar_url)')
-        .order('created_at', { ascending: true })
-        .limit(50)
-        
-      if (!isMounted) return
-      if (data && data.length > 0) {
-        const mapped = data.map(msg => ({
-          ...msg,
-          username: msg.username || msg.profiles?.username || 'Gracz',
-          avatar_url: msg.avatar_url || msg.profiles?.avatar_url || null
-        }))
-        setChatMessages(mapped)
-      } else {
-        setChatMessages([{ id: 'init', channel: 'SYSTEM', username: 'System', text: 'Połączono z węzłem miejskim AOPP. Czat aktywny.' }])
+        .select(BASE_FIELDS)
+        .eq('channel', 'GLOBALNY')
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (!fallback.error) {
+        result = fallback
+        setSupportsReplies(false)
       }
     }
 
-    fetchInitialChat()
-
-    const chatChannel = supabase
-      .channel('schema-db-chat-component')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'chat_messages' },
-        (payload) => {
-          if (!isMounted) return
-          if (payload.eventType === 'INSERT') {
-            setChatMessages((prev) => [...prev, payload.new])
-          } else if (payload.eventType === 'DELETE') {
-            setChatMessages((prev) => prev.filter((msg) => msg.id !== payload.old.id))
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      isMounted = false
-      supabase.removeChannel(chatChannel)
+    if (result.error) {
+      setLoadError('Nie udało się otworzyć kroniki rozmów. Odśwież widok lub spróbuj ponownie później.')
+    } else {
+      setChatMessages((result.data || []).reverse().map(normalizeMessage))
     }
+    setLoading(false)
   }, [])
 
   useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    const loadTimer = window.setTimeout(fetchMessages, 0)
+    const chatChannel = supabase
+      .channel('community-tavern')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
+        if ((payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') && payload.new.channel === 'GLOBALNY') {
+          addOrReplaceMessage(payload.new)
+        }
+        if (payload.eventType === 'DELETE') {
+          setChatMessages((current) => current.filter((message) => message.id !== payload.old.id))
+        }
+      })
+      .subscribe((status) => {
+        setConnectionStatus(status === 'SUBSCRIBED' ? 'LIVE' : status === 'CHANNEL_ERROR' ? 'ERROR' : 'CONNECTING')
+      })
+
+    return () => {
+      window.clearTimeout(loadTimer)
+      supabase.removeChannel(chatChannel)
     }
-  }, [chatMessages, activeChannel])
+  }, [addOrReplaceMessage, fetchMessages])
 
-  const handleSendChatMessage = async (e) => {
-    e.preventDefault()
-    if (!newMessage.trim() || !user) return
+  const messagesById = useMemo(
+    () => new Map(chatMessages.map((message) => [message.id, message])),
+    [chatMessages],
+  )
 
-    const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
-    const cleanUsername = rawName.replace(/#0$/, '')
-
-    const { error } = await supabase.from('chat_messages').insert([
-      {
-        user_id: user.id,
-        channel: activeChannel,
-        username: cleanUsername,
-        text: newMessage.trim()
-      }
-    ])
-
-    if (!error) setNewMessage('')
+  const startReply = (message) => {
+    setReplyingTo(message)
+    const mention = `@${message.username.replace(/\s+/g, '')}`
+    setNewMessage((current) => current.startsWith(mention) ? current : `${mention} ${current}`)
+    composerRef.current?.focus()
   }
 
-  const deleteChatMessage = async (msgId) => {
-    if (!isAdmin) return
-    if (confirm('Czy na pewno chcesz usunąć tę wiadomość z czatu?')) {
-      const { error } = await supabase.from('chat_messages').delete().eq('id', msgId)
-      if (!error) {
-        setChatMessages((prev) => prev.filter((msg) => msg.id !== msgId))
-      }
+  const jumpToMessage = (messageId) => {
+    const element = document.getElementById(`chat-message-${messageId}`)
+    if (!element) return
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setHighlightedId(messageId)
+    window.setTimeout(() => setHighlightedId(null), 1800)
+  }
+
+  const handleSendChatMessage = async (event) => {
+    event.preventDefault()
+    const text = newMessage.trim()
+    if (!text || !user || isSending) return
+
+    setIsSending(true)
+    setSendError('')
+    const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
+    const payload = {
+      user_id: user.id,
+      channel: 'GLOBALNY',
+      username: rawName.replace(/#0$/, ''),
+      text,
+      ...(supportsReplies && replyingTo ? { reply_to: replyingTo.id } : {}),
     }
+
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert(payload)
+      .select(supportsReplies ? REPLY_FIELDS : BASE_FIELDS)
+      .single()
+
+    if (error) {
+      setSendError('Wiadomość nie została zapisana. Sprawdź sesję i spróbuj ponownie.')
+    } else {
+      addOrReplaceMessage(data)
+      setNewMessage('')
+      setReplyingTo(null)
+    }
+    setIsSending(false)
+  }
+
+  const handleComposerKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey || event.nativeEvent.isComposing) return
+    event.preventDefault()
+    event.currentTarget.form?.requestSubmit()
+  }
+
+  const deleteChatMessage = async (message) => {
+    if (!(isAdmin || message.user_id === user?.id)) return
+    if (pendingDeleteId !== message.id) {
+      setPendingDeleteId(message.id)
+      return
+    }
+
+    const { error } = await supabase.from('chat_messages').delete().eq('id', message.id)
+    if (error) {
+      setSendError('Nie udało się usunąć wiadomości.')
+      return
+    }
+    setChatMessages((current) => current.filter((item) => item.id !== message.id))
+    setPendingDeleteId(null)
   }
 
   return (
-    <div className="aopp-panel flex h-[600px] flex-col justify-between rounded-3xl p-6 sm:p-8">
-      <div className="flex items-center justify-between border-b border-[#200d13] pb-4 mb-3 flex-wrap gap-2">
-        <div className="flex items-center gap-2 font-mono text-xs font-bold text-[#f3ba2f]">
-          <Radio className="w-4 h-4 text-emerald-400 animate-pulse" />
-          <span>STRUMIEŃ KOMUNIKACJI</span>
+    <section className="community-forum" aria-labelledby="community-title">
+      <header className="community-forum-header">
+        <div>
+          <span className="community-overline"><Users aria-hidden="true" /> Forum kompanii</span>
+          <h2 id="community-title">Tawerna społeczności</h2>
+          <p>Jedna wspólna rozmowa graczy. Handel, rekrutacja i organizacja wypraw pozostają w wyspecjalizowanych modułach.</p>
         </div>
-        
-        <div className="flex gap-1.5 flex-wrap">
-          {['GLOBALNY', 'HANDEL', 'REKRUTACJA', 'SYSTEM'].map((ch) => (
-            <button 
-              key={ch} 
-              onClick={() => setActiveChannel(ch)} 
-              className={`px-3 py-1.5 rounded-xl transition-all text-[11px] font-mono cursor-pointer ${
-                activeChannel === ch 
-                  ? 'bg-[#f3ba2f] text-black font-extrabold shadow-[0_0_10px_rgba(243,186,47,0.3)]' 
-                  : 'text-gray-400 bg-[#050204] hover:text-gray-200 border border-[#200d13]'
-              }`}
-            >
-              {ch}
-            </button>
-          ))}
+        <div className={`community-connection ${connectionStatus.toLowerCase()}`}>
+          <span className="status-dot" />
+          {connectionStatus === 'LIVE' ? 'Rozmowa na żywo' : connectionStatus === 'ERROR' ? 'Tryb odświeżania' : 'Łączenie'}
         </div>
-      </div>
+      </header>
 
-      <div 
-        ref={chatContainerRef}
-        className="space-y-3 overflow-y-auto flex-1 w-full pr-2 text-sm select-text flex flex-col my-2"
-      >
-        {chatLoading ? (
-          <p className="text-gray-500 italic text-center py-10">Ładowanie bufora wiadomości...</p>
-        ) : (
-          chatMessages
-            .filter(msg => activeChannel === 'GLOBALNY' || msg.channel === activeChannel || msg.channel === 'SYSTEM')
-            .map((msg) => {
-              const messageTime = msg.created_at ? new Date(msg.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' }) : '';
-              const userAvatar = msg.avatar_url || (msg.user_id === user?.id ? user?.user_metadata?.avatar_url : null);
-              const cleanDisplayName = (msg.username || 'System').replace(/#0$/, '');
+      <div className="community-layout community-single">
+        <div className="community-thread">
+          <div className="community-thread-heading">
+            <div><Sparkles aria-hidden="true" /><span><strong>Główna sala tawerny</strong><small>{chatMessages.length} ostatnich wiadomości</small></span></div>
+            <button type="button" onClick={fetchMessages} aria-label="Odśwież rozmowę" disabled={loading}>
+              <RefreshCw aria-hidden="true" className={loading ? 'spin' : ''} />
+            </button>
+          </div>
+
+          <div className="community-posts" aria-live="polite">
+            {loading ? (
+              <div className="community-empty"><RefreshCw className="spin" aria-hidden="true" /><strong>Otwieramy kronikę rozmów…</strong></div>
+            ) : loadError ? (
+              <div className="community-empty error"><strong>Brama komunikacyjna nie odpowiada</strong><p>{loadError}</p><button type="button" className="btn btn-ghost btn-sm" onClick={fetchMessages}>Spróbuj ponownie</button></div>
+            ) : chatMessages.length === 0 ? (
+              <div className="community-empty"><MessageSquareReply aria-hidden="true" /><strong>Rozpal pierwszą rozmowę</strong><p>Tawerna jest jeszcze pusta. Napisz pierwszą wiadomość do kompanii.</p></div>
+            ) : chatMessages.map((message) => {
+              const ownMessage = message.user_id === user?.id
+              const displayName = (message.username || 'System').replace(/#0$/, '')
+              const avatarUrl = ownMessage ? user?.user_metadata?.avatar_url : null
+              const parentMessage = message.reply_to ? messagesById.get(message.reply_to) : null
+              const time = message.created_at
+                ? new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(message.created_at))
+                : ''
 
               return (
-                <div key={msg.id} className="flex items-start gap-3 rounded-2xl border border-white/[.06] bg-black/25 p-3.5 transition-colors hover:border-[#cba84e]/20 hover:bg-black/35">
-                  {userAvatar && msg.channel !== 'SYSTEM' ? (
-                    <Image src={userAvatar} alt={`Avatar użytkownika ${cleanDisplayName}`} width={36} height={36} className="w-9 h-9 rounded-xl object-cover border border-[#3d1823] shrink-0 shadow" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 bg-[#12070a] border border-[#3d1823] text-[#f3ba2f]">
-                      {cleanDisplayName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`font-bold text-xs ${msg.role === 'ADMIN' ? 'text-[#f3ba2f] font-serif' : 'text-sky-400'}`}>
-                        {cleanDisplayName}
-                      </span>
-                      <span className="text-[10px] text-gray-500 font-mono">{messageTime}</span>
-
-                      {isAdmin && msg.channel !== 'SYSTEM' && (
-                        <button onClick={() => deleteChatMessage(msg.id)} aria-label="Usuń wiadomość" title="Usuń wiadomość" className="text-rose-400 hover:text-rose-300 text-xs ml-auto cursor-pointer">
-                          <Trash2 className="w-3.5 h-3.5 inline" />
-                        </button>
-                      )}
-                    </div>
-
-                    <p className="text-gray-200 mt-1 text-xs sm:text-sm whitespace-pre-wrap leading-relaxed">
-                      {msg.text}
-                    </p>
+                <article
+                  id={`chat-message-${message.id}`}
+                  key={message.id}
+                  className={`community-post ${ownMessage ? 'own' : ''} ${highlightedId === message.id ? 'highlighted' : ''}`}
+                >
+                  <div className="community-avatar">{avatarUrl ? <Image src={avatarUrl} alt="" width={42} height={42} /> : displayName.charAt(0).toUpperCase()}</div>
+                  <div className="community-post-content">
+                    <header><strong>{displayName}</strong>{ownMessage && <span>Ty</span>}<time>{time}</time></header>
+                    {message.reply_to && (
+                      <button type="button" className="reply-quote" onClick={() => jumpToMessage(message.reply_to)}>
+                        <CornerUpLeft aria-hidden="true" />
+                        <span><strong>{parentMessage?.username || 'Usunięta wiadomość'}</strong><small>{parentMessage?.text || 'Oryginalna wiadomość nie jest już dostępna.'}</small></span>
+                      </button>
+                    )}
+                    <p><MessageText text={message.text} /></p>
+                    {message.channel !== 'SYSTEM' && (
+                      <div className="community-post-actions">
+                        <button type="button" onClick={() => startReply(message)}><MessageSquareReply aria-hidden="true" /> Odpowiedz</button>
+                        {(isAdmin || ownMessage) && (
+                          <button type="button" className={pendingDeleteId === message.id ? 'confirm-delete' : ''} onClick={() => deleteChatMessage(message)}>
+                            <Trash2 aria-hidden="true" /> {pendingDeleteId === message.id ? 'Potwierdź usunięcie' : 'Usuń'}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })
-        )}
+                </article>
+              )
+            })}
+          </div>
+
+          <form className="community-composer" onSubmit={handleSendChatMessage}>
+            {replyingTo && (
+              <div className="composer-reply-preview">
+                <CornerUpLeft aria-hidden="true" />
+                <span><small>Odpowiadasz użytkownikowi</small><strong>{replyingTo.username}</strong><em>{replyingTo.text}</em></span>
+                <button type="button" onClick={() => setReplyingTo(null)} aria-label="Anuluj odpowiedź"><X aria-hidden="true" /></button>
+              </div>
+            )}
+            <label htmlFor="community-message">Napisz wiadomość w tawernie</label>
+            <div>
+              <textarea
+                ref={composerRef}
+                id="community-message"
+                maxLength={500}
+                value={newMessage}
+                onChange={(event) => setNewMessage(event.target.value)}
+                onKeyDown={handleComposerKeyDown}
+                placeholder="Podziel się informacją, zadaj pytanie albo zbierz drużynę…"
+              />
+              <button type="submit" className="btn btn-primary" disabled={!newMessage.trim() || isSending}>
+                <Send aria-hidden="true" /> {isSending ? 'Wysyłanie…' : 'Opublikuj'}
+              </button>
+            </div>
+            <footer><span>{newMessage.length}/500</span><span><kbd>Enter</kbd> wyślij · <kbd>Shift</kbd> + <kbd>Enter</kbd> nowa linia</span></footer>
+            {!supportsReplies && replyingTo && <p className="community-form-note">Wzmianka zostanie wysłana, a podgląd cytatu pojawi się po wdrożeniu najnowszej migracji bazy.</p>}
+            {sendError && <p className="community-form-error" role="alert">{sendError}</p>}
+          </form>
+        </div>
       </div>
-
-      <form onSubmit={handleSendChatMessage} className="mt-2 flex items-center gap-2 rounded-2xl border border-[#cba84e]/15 bg-black/35 p-2.5 pl-4 transition-colors focus-within:border-[#cba84e]/50">
-        <input
-          type="text"
-          maxLength="120"
-          disabled={activeChannel === 'SYSTEM'}
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder={activeChannel === 'SYSTEM' ? 'Kanał systemowy zablokowany...' : `Napisz wiadomość na kanale ${activeChannel.toLowerCase()}...`}
-          className="flex-1 bg-transparent text-xs sm:text-sm text-gray-100 focus:outline-none placeholder-gray-500"
-        />
-
-        <button 
-          type="submit" 
-          disabled={activeChannel === 'SYSTEM'} 
-          className="bg-gradient-to-r from-[#f3ba2f] to-[#d9981e] hover:from-[#fcd053] text-black px-5 py-2.5 rounded-xl text-xs font-black uppercase transition disabled:hidden flex items-center gap-1.5 shadow cursor-pointer"
-        >
-          <Send className="w-3.5 h-3.5" />
-          <span>Wyślij</span>
-        </button>
-      </form>
-    </div>
+    </section>
   )
 }

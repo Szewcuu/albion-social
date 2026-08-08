@@ -1,6 +1,6 @@
 import Image from 'next/image'
 
-import { EQUIPMENT_SLOTS, itemImageUrl } from '@/lib/buildSlots'
+import { EQUIPMENT_LAYOUT, EQUIPMENT_SLOTS, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
 
 function ItemTile({ itemId, label, amount, muted = false }) {
   return (
@@ -22,6 +22,9 @@ function ItemTile({ itemId, label, amount, muted = false }) {
           {amount > 1 && (
             <span className="absolute bottom-2 right-2 rounded-md border border-white/10 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-orange-100">×{amount}</span>
           )}
+          {getItemTierLabel(itemId) && (
+            <span className="absolute bottom-2 left-2 rounded-md border border-amber-300/20 bg-black/75 px-1.5 py-0.5 font-mono text-[8px] font-black text-amber-100">{getItemTierLabel(itemId)}</span>
+          )}
         </>
       ) : (
         <span className="mt-4 font-mono text-[10px] text-[#6f6a63]">Pusty slot</span>
@@ -41,15 +44,19 @@ export default function BuildDetailEquipment({ slots }) {
         <span className="hidden font-mono text-[9px] uppercase text-[#918b82] sm:block">10 slotów doktryny</span>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {EQUIPMENT_SLOTS.map((slot) => (
-          <ItemTile
-            key={slot.key}
-            itemId={slots[slot.key]?.main}
-            label={slot.label}
-            amount={slots[slot.key]?.amount}
-          />
-        ))}
+      <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2 sm:gap-3">
+        {EQUIPMENT_LAYOUT.flatMap((row, rowIndex) => row.map((key, columnIndex) => {
+          if (!key) return <div key={`empty-${rowIndex}-${columnIndex}`} aria-hidden="true" />
+          const slot = EQUIPMENT_SLOTS.find((item) => item.key === key)
+          return (
+            <ItemTile
+              key={key}
+              itemId={slots[key]?.main}
+              label={slot.label}
+              amount={slots[key]?.amount}
+            />
+          )
+        }))}
       </div>
 
       {EQUIPMENT_SLOTS.some((slot) => slots[slot.key]?.alternatives?.some(Boolean)) && (

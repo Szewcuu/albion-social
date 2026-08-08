@@ -3,10 +3,15 @@ import { NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import {
   createSupabaseAdminClient,
+  createSupabaseRequestClient,
   isPortalAdmin,
   requireApiUser,
 } from '@/lib/server/supabaseAdmin'
 import { cleanText, isSafeDiscordWebhook } from '@/lib/server/validation'
+import {
+  deleteExpeditionDiscordMessages,
+  deleteExpeditionRecords,
+} from '@/lib/server/expeditionCleanup'
 
 const jsonError = (message, status, headers) => (
   NextResponse.json({ error: message }, { status, headers })
@@ -108,7 +113,15 @@ export async function POST(request) {
 
     if (!expeditionId) return jsonError('Nieprawidłowy identyfikator wyprawy.', 400)
 
-    const supabase = createSupabaseAdminClient()
+    let supabase
+    try {
+      supabase = createSupabaseAdminClient()
+    } catch {
+      // Local development and owner-triggered webhook actions can safely use
+      // the authenticated request client when the optional service key is absent.
+      supabase = createSupabaseRequestClient(request)
+    }
+    const warnings = []
     const expedition = await loadExpedition(supabase, expeditionId)
     if (!expedition) return jsonError('Nie znaleziono wyprawy.', 404)
 
@@ -167,13 +180,17 @@ export async function POST(request) {
           .update({ full_party_message_id: discordData.id })
           .eq('id', expedition.id)
 
-        if (error) throw new Error('Nie udało się zapisać identyfikatora wiadomości Discord.')
+        if (error) {
+          console.warn('Nie udało się zapisać identyfikatora pełnego składu:', error.message)
+          warnings.push('Wiadomość wysłano, ale nie zapisano jej identyfikatora w bazie.')
+        }
       }
 
       return NextResponse.json({
         success: true,
         messageId: discordData?.id || null,
         skipped: !discordData,
+        warnings,
       })
     }
 
@@ -233,13 +250,17 @@ export async function POST(request) {
         .update({ discord_message_id: discordData.id })
         .eq('id', expedition.id)
 
-      if (error) throw new Error('Nie udało się zapisać identyfikatora wiadomości Discord.')
+      if (error) {
+        console.warn('Nie udało się zapisać identyfikatora ogłoszenia Discord:', error.message)
+        warnings.push('Wiadomość wysłano, ale nie zapisano jej identyfikatora w bazie.')
+      }
     }
 
     return NextResponse.json({
       success: true,
       messageId: discordData?.id || null,
       skipped: !discordData,
+      warnings,
     })
   } catch (error) {
     console.error('Błąd wywoływania webhooka wypraw:', error)
@@ -256,7 +277,14 @@ export async function DELETE(request) {
     const expeditionId = cleanText(body.expeditionId, { min: 1, max: 100 })
     if (!expeditionId) return jsonError('Nieprawidłowy identyfikator wyprawy.', 400)
 
-    const supabase = createSupabaseAdminClient()
+    let supabase
+    try {
+      supabase = createSupabaseAdminClient()
+    } catch {
+      // Manual deletion must still work for the owner when the optional server
+      // admin key is not configured. Supabase RLS remains the authorization layer.
+      supabase = createSupabaseRequestClient(request)
+    }
     const expedition = await loadExpedition(supabase, expeditionId)
     if (!expedition) return jsonError('Nie znaleziono wyprawy.', 404)
 
@@ -264,32 +292,16 @@ export async function DELETE(request) {
       return jsonError('Brak uprawnień.', 403)
     }
 
-    const webhookUrl = getWebhookUrl()
-    if (webhookUrl) {
-      webhookUrl.search = ''
-      const messageIds = [
-        expedition.discord_message_id,
-        expedition.full_party_message_id,
-      ].filter((id) => /^\d{15,25}$/.test(String(id || '')))
+    const discord = await deleteExpeditionDiscordMessages(expedition)
+    await deleteExpeditionRecords(supabase, expedition.id)
 
-      await Promise.allSettled(messageIds.map((messageId) => {
-        const deleteUrl = new URL(`${webhookUrl.toString().replace(/\/$/, '')}/messages/${messageId}`)
-        return fetch(deleteUrl, {
-          method: 'DELETE',
-          redirect: 'error',
-          signal: AbortSignal.timeout(8_000),
-        })
-      }))
-    }
-
-    const { error } = await supabase
-      .from('expeditions')
-      .delete()
-      .eq('id', expedition.id)
-
-    if (error) throw new Error('Nie udało się usunąć wyprawy.')
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      warning: discord.failed > 0
+        ? 'Wyprawa została usunięta, ale nie udało się usunąć wszystkich wiadomości z Discorda.'
+        : null,
+      discord,
+    })
   } catch (error) {
     console.error('Błąd usuwania wyprawy:', error)
     return jsonError('Wystąpił błąd podczas usuwania wyprawy.', 500)

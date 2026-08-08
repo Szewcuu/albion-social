@@ -70,7 +70,7 @@ export default function BuildSocialActions({ buildId, initialVotes = 0 }) {
       }))
       setVotes(payload.votes)
       setUserVote(payload.userVote)
-      setMessage(payload.userVote ? 'Głos zapisany.' : 'Głos wycofany.')
+      setMessage(payload.userVote ? 'Build polubiony.' : 'Polubienie usunięte.')
     } catch (error) {
       setMessage(error.message)
     } finally {
@@ -124,7 +124,7 @@ export default function BuildSocialActions({ buildId, initialVotes = 0 }) {
           }`}
         >
           <ThumbsUp className="h-4 w-4" aria-hidden="true" />
-          {userVote ? 'Poparłeś' : 'Popieram'}
+          {userVote ? 'Lubisz' : 'Polub'}
           <span className="rounded-md bg-black/20 px-1.5 py-0.5 font-mono text-[10px]">{votes}</span>
         </button>
 

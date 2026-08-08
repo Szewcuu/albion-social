@@ -11,6 +11,13 @@ export const EQUIPMENT_SLOTS = [
   { key: 'food', label: 'Jedzenie', category: 'foods', gridArea: 'food', hasAmount: true },
 ]
 
+export const EQUIPMENT_LAYOUT = [
+  ['bag', 'head', 'cape'],
+  ['main_hand', 'armor', 'off_hand'],
+  ['potion', 'shoes', 'food'],
+  [null, 'mount', null],
+]
+
 export const EMPTY_SLOT = { main: '', alternatives: [], amount: 1 }
 
 export function createEmptyBuild() {
@@ -36,6 +43,24 @@ export function createEmptyBuild() {
 export function isTwoHandedWeapon(itemId) {
   if (!itemId) return false
   return itemId.includes('2H_') || itemId.includes('_2H_')
+}
+
+export function getItemEnchant(itemId) {
+  const match = String(itemId || '').match(/@([1-4])$/)
+  return match ? Number(match[1]) : 0
+}
+
+export function setItemEnchant(itemId, enchant = 0) {
+  const baseId = String(itemId || '').replace(/@[1-4]$/, '')
+  const safeEnchant = Math.max(0, Math.min(4, Number(enchant) || 0))
+  return baseId && safeEnchant > 0 ? `${baseId}@${safeEnchant}` : baseId
+}
+
+export function getItemTierLabel(itemId) {
+  const match = String(itemId || '').match(/^T([1-8])_/i)
+  if (!match) return ''
+  const enchant = getItemEnchant(itemId)
+  return `T${match[1]}.${enchant}`
 }
 
 export function itemImageUrl(itemId, quality = 1) {

@@ -8,6 +8,17 @@ Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 
 ## Stan projektu
 
+### Rebuild UI/UX — Albion War Table (sierpień 2026)
+
+- [x] przeanalizować zmiany Antigravity i zachować wszystkie działające moduły
+- [x] odbudować ekran powitalny z mocnym motywem Albion Online i logowaniem Discord
+- [x] wprowadzić wspólną nawigację, typografię, kolory oraz komponenty inspirowane stołem wojennym gildii
+- [x] przebudować stronę główną bez usuwania danych Supabase, czatu i kalkulatora marży
+- [x] objąć nowym systemem wizualnym istniejące podstrony i widoki mobilne
+- [x] poprawić etykiety formularzy, kontrast oraz politykę Content Security Policy wskazane przez Lighthouse
+- [x] wykonać lint, produkcyjny build oraz testy desktop/mobile najważniejszych tras
+- [ ] opublikować gałąź, sprawdzić preview Vercel i wykonać końcowy smoke test produkcji
+
 Gotowe i wdrożone:
 
 - [x] audyt pierwszej wersji projektu i podstawowe utwardzenie backendu
@@ -24,20 +35,22 @@ Gotowe i wdrożone:
 - [x] Market Intelligence z pełnym katalogiem, porównaniem miast, trendami i kalkulatorami
 - [x] nowe ekrany Profilu, Timerów, Loot Splitu, Regulaminu i Prywatności
 
-## Najbliższy krok
+## Najbliższy etap
 
-> **P4.2: komentarze i zgłaszanie nadużyć pod buildami**
+> **Priorytet A: bezpieczeństwo i moderacja całego portalu**
 
-P4.1 jest wdrożone: publikacja prowadzi do publicznego URL-a buildu, głosowanie jest ograniczone do jednego rekordu użytkownika, a ulubione są prywatne i chronione przez RLS. P4.2 jest w trakcie wdrożenia i rozbudowuje stronę buildu o moderowalne komentarze oraz prywatne zgłoszenia nadużyć.
+P4.2 jest zakończone implementacyjnie: strona buildu obsługuje moderowalne komentarze i prywatne zgłoszenia nadużyć, a administrator otrzymał chronioną kolejkę moderacji. Następny etap rozszerzy te zabezpieczenia na czat, buildy, rynek, gildie i wyprawy oraz wprowadzi osobną rolę moderatora, dziennik działań i pełny audyt RLS.
 
-### Aktywny sprint P4.2
+### Zakończony sprint P4.2
 
 - [x] dodać wersjonowaną migrację `build_comments` i `build_reports`
 - [x] ograniczyć odczyt komentarzy do treści widocznych i zgłoszeń do właściciela lub moderatora przez RLS
 - [x] dodać walidowane i limitowane API publikacji oraz usuwania własnych komentarzy
 - [x] dodać prywatne zgłoszenia buildu lub konkretnego komentarza z deduplikacją
 - [x] przygotować responsywny UI komentarzy, pustych stanów, potwierdzeń i dostępnego dialogu zgłoszenia
-- [ ] przetestować pełny przepływ na preview, wdrożyć PR i wykonać smoke test produkcji
+- [x] dodać chroniony panel administratora z kolejką zgłoszeń i akcjami moderacji komentarzy
+- [x] wykonać lint i pełny build produkcyjny wszystkich tras
+- [ ] scalić PR, sprawdzić preview Vercel i wykonać końcowy smoke test produkcji
 
 ### Zakończony sprint P4.1
 
@@ -65,6 +78,54 @@ P4.1 jest wdrożone: publikacja prowadzi do publicznego URL-a buildu, głosowani
 - [x] usunąć pozostałe ostrzeżenia `no-img-element` bez pogorszenia wydajności
 - [x] wykonać lint, build i lokalny test wszystkich publicznych tras
 - [x] wdrożyć sprint przez GitHub/Vercel i wykonać końcowy test produkcji
+
+## Audyt rozwoju — rekomendowane następne prace
+
+Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, naprawie lokalnego szkicu podziału łupów i korekcie wyszukiwarki Killboardu. Kolejność uwzględnia wpływ na bezpieczeństwo, stabilność i wygodę użytkowników.
+
+### Priorytet A — bezpieczeństwo i moderacja
+
+- [ ] rozszerzyć panel administratora o moderację czatu, buildów, ofert rynku, gildii i wypraw
+- [ ] dodać osobną rolę moderatora z mniejszym zakresem uprawnień niż administrator
+- [ ] zapisywać dziennik akcji administracyjnych: kto, co i kiedy ukrył, usunął lub przywrócił
+- [ ] dodać możliwość przywrócenia ukrytego komentarza oraz zbiorcze akcje na zgłoszeniach
+- [ ] przeprowadzić pełny audyt RLS i uprawnień `GRANT` dla każdej tabeli Supabase
+- [ ] dodać ochronę antyspamową opartą o trwały magazyn zamiast pamięci pojedynczej instancji Vercel
+
+### Priorytet B — stabilność kluczowych przepływów
+
+- [ ] dodać testy end-to-end: logowanie, czat, publikacja buildu, komentarz, wyprawa, rynek i podział łupów
+- [ ] dodać monitoring błędów frontend/backend oraz alerty dla awarii Supabase, Discorda i API Albionu
+- [ ] uruchomić cykliczne testy webhooka Discord i czytelny status integracji w panelu administratora
+- [ ] przenieść szkice podziału łupów do kont użytkownika, pozostawiając `localStorage` jako tryb offline
+- [ ] dodać wersjonowanie i eksport raportów podziału łupów do historii grupy lub gildii
+- [ ] dodać kontrolowane ponowienie publikacji wyprawy na Discordzie bez ponownego tworzenia ogłoszenia
+
+### Priorytet C — funkcje społecznościowe
+
+- [ ] dodać publiczne profile graczy z przypiętą postacią Albionu, ulubionymi buildami i aktywnością
+- [ ] rozbudować strony gildii o role, rekrutację, wydarzenia, skład i historię aktywności
+- [ ] dodać kalendarz wydarzeń oraz zapisy z przypomnieniami w centrum powiadomień
+- [ ] dodać obserwowanie buildów, gildii, ofert i graczy oraz powiadomienia o zmianach
+- [ ] rozbudować komentarze o odpowiedzi, edycję własnej treści i sortowanie
+- [ ] dodać bezpieczny przepływ kontaktu kupujący–sprzedający bez publikowania danych prywatnych
+
+### Priorytet D — dane Albionu i narzędzia
+
+- [ ] wyceniać utracony ekwipunek w Killboardzie na podstawie wybranego regionu i aktualności ceny
+- [ ] dodać porównanie buildów, umiejętności przedmiotów oraz koszt zestawu w wybranych miastach
+- [ ] umożliwić zapis obserwowanych postaci i automatyczne podsumowania ich nowych walk
+- [ ] aktualizować katalog przedmiotów automatycznie z wersjonowanym fallbackiem lokalnym
+- [ ] dodać historię zmian cen i alerty cenowe przechowywane po stronie serwera
+
+### Priorytet E — wydajność, SEO i jakość UI
+
+- [ ] podzielić najcięższe komponenty klienckie i ograniczyć liczbę równoległych zapytań po wejściu na stronę
+- [ ] dodać paginację lub wirtualizację długich list: czat, buildy, rynek, komentarze i zgłoszenia
+- [ ] przygotować unikalne metadata, Open Graph, sitemapę i canonical URL dla publicznych treści
+- [ ] mierzyć Core Web Vitals oraz budżet rozmiaru JavaScript w CI
+- [ ] przeprowadzić ponowny Lighthouse dla mobile i desktop po wdrożeniu obecnej gałęzi
+- [ ] uzupełnić testy wizualne dla 360, 390, 430, 768, 1280 i 1920 px
 
 ## Roadmapa / TODO
 
@@ -123,12 +184,13 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] dodać osobną stronę szczegółów buildu z linkiem publicznym
 - [x] zabezpieczyć głosowanie na build: jeden głos użytkownika na build
 - [x] dodać zapisywanie buildów do ulubionych
-- [ ] dodać komentarze i zgłaszanie nadużyć pod buildami
+- [x] dodać komentarze i zgłaszanie nadużyć pod buildami
 - [ ] dodać wygasanie, odnawianie i archiwizację ofert rynkowych
 - [ ] dodać szczegóły oferty i bezpieczny przepływ kontaktu ze sprzedawcą
 - [ ] dodać publiczne strony gildii i kalendarz wydarzeń
 - [ ] dodać centrum powiadomień w portalu
-- [ ] dodać role moderatora i panel moderacji treści
+- [x] dodać podstawowy panel administratora i moderację zgłoszonych komentarzy
+- [ ] rozszerzyć panel o role moderatora i pozostałe typy treści
 
 ### P5 — Supabase i bezpieczeństwo danych
 

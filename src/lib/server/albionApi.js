@@ -124,10 +124,12 @@ function normalizeCombatant(combatant) {
 }
 
 function normalizeEvent(event, perspective) {
+  const reportedFame = Number(event.TotalVictimKillFame || event.Victim?.DeathFame || 0)
+
   return {
     id: String(event.EventId),
     timestamp: event.TimeStamp,
-    fame: event.TotalVictimKillFame || event.Victim?.DeathFame || 0,
+    fame: reportedFame > 0 ? reportedFame : null,
     location: event.Location || '',
     killArea: event.KillArea || '',
     participantCount: event.numberOfParticipants || event.Participants?.length || 1,
