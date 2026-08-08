@@ -46,7 +46,7 @@ export default function Wyprawy() {
     setLoading(true)
     const { data } = await supabase
       .from('expeditions')
-      .select('*, profiles(username), expedition_signups(*)')
+      .select('*, profiles!expeditions_user_id_fkey(username), expedition_signups(*)')
       .gte('created_at', new Date(Date.now() - EXPEDITION_TTL_MS).toISOString())
       .order('created_at', { ascending: false })
 

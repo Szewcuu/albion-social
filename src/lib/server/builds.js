@@ -15,13 +15,13 @@ export const getPublicBuild = cache(async (id) => {
   const supabase = createSupabasePublicServerClient()
   const { data, error } = await supabase
     .from('builds')
-    .select('*, profiles(username, avatar_url), build_votes(id, vote_type)')
+    .select('*, profiles!builds_user_id_fkey(username, avatar_url), build_votes(id, vote_type)')
     .eq('id', id)
     .maybeSingle()
 
   if (error) {
     console.error('Nie udało się pobrać publicznego buildu:', error.message)
-    return null
+    throw new Error('Nie udało się pobrać publicznego buildu.')
   }
 
   return data
