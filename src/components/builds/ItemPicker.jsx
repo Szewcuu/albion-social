@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Search, X, Plus } from 'lucide-react'
-import { itemImageUrl } from '@/lib/buildSlots'
+import { getItemEnchant, getItemTierLabel, itemImageUrl, setItemEnchant } from '@/lib/buildSlots'
 
 export default function ItemPicker({ label, category, value, onChange, disabled = false, compact = false }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,9 +10,11 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [customId, setCustomId] = useState(value || '')
+  const [selectedEnchant, setSelectedEnchant] = useState(() => getItemEnchant(value))
   const dialogTitleId = useId()
   const dialogRef = useRef(null)
   const triggerRef = useRef(null)
+  const requestIdRef = useRef(0)
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -46,14 +48,16 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
     }
   }, [isOpen])
 
-  const fetchItems = useCallback(async (query = '') => {
+  const fetchItems = useCallback(async (query = '', signal) => {
+    const requestId = ++requestIdRef.current
     setLoading(true)
     try {
       const params = new URLSearchParams()
       if (category) params.set('category', category)
       if (query) params.set('search', query)
-      const res = await fetch(`/api/items?${params}`)
+      const res = await fetch(`/api/items?${params}`, { signal })
       const data = await res.json()
+      if (requestId !== requestIdRef.current) return
       if (Array.isArray(data.items)) {
         setItems(data.items)
       } else if (category && data[category]) {
@@ -64,29 +68,54 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
       } else {
         setItems([])
       }
-    } catch {
-      setItems([])
+    } catch (error) {
+      if (error?.name !== 'AbortError' && requestId === requestIdRef.current) setItems([])
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) setLoading(false)
     }
   }, [category])
 
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => {
+      fetchItems(search.trim(), controller.signal)
+    }, search.trim() ? 250 : 0)
+
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
+  }, [fetchItems, isOpen, search])
+
   const openPicker = () => {
     setIsOpen(true)
+    setSearch('')
     setCustomId(value || '')
-    fetchItems('')
+    setSelectedEnchant(getItemEnchant(value))
   }
 
   const handleSearchChange = (event) => {
     const query = event.target.value
     setSearch(query)
-    fetchItems(query)
   }
 
-  const handleSelect = (itemId) => {
-    onChange(itemId)
+  const handleSelect = (itemId, preserveExplicitEnchant = false) => {
+    onChange(preserveExplicitEnchant && getItemEnchant(itemId) > 0
+      ? itemId
+      : setItemEnchant(itemId, selectedEnchant))
     setIsOpen(false)
     setSearch('')
+  }
+
+  const handleEnchantChange = (enchant) => {
+    setSelectedEnchant(enchant)
+    if (value) {
+      const enchantedId = setItemEnchant(value, enchant)
+      onChange(enchantedId)
+      setCustomId(enchantedId)
+    }
   }
 
   if (disabled) {
@@ -118,15 +147,18 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
         )}
         <div className="flex items-center justify-center">
           {value ? (
-            <Image
-              src={itemImageUrl(value)}
-              alt={`Wybrany przedmiot: ${value}`}
-              width={compact ? 40 : 48}
-              height={compact ? 40 : 48}
-              unoptimized
-              className={`object-contain drop-shadow-lg group-hover:scale-110 transition-transform ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}
-              onError={(e) => { e.target.style.display = 'none' }}
-            />
+            <div className="relative">
+              <Image
+                src={itemImageUrl(value)}
+                alt={`Wybrany przedmiot: ${value}`}
+                width={compact ? 40 : 48}
+                height={compact ? 40 : 48}
+                unoptimized
+                className={`object-contain drop-shadow-lg group-hover:scale-110 transition-transform ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}
+                onError={(e) => { e.target.style.display = 'none' }}
+              />
+              {getItemTierLabel(value) && <span className="absolute -bottom-1 -right-2 rounded border border-amber-300/25 bg-black/85 px-1 py-0.5 font-mono text-[7px] font-black text-amber-100">{getItemTierLabel(value)}</span>}
+            </div>
           ) : (
             <div className={`rounded-lg bg-[#15060b] border border-dashed border-[#3b131f] flex items-center justify-center text-gray-600 ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
               <Plus className="w-4 h-4" />
@@ -159,9 +191,31 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
                   placeholder="Szukaj przedmiotu..."
                   value={search}
                   onChange={handleSearchChange}
-                  className="w-full bg-[#0c0407] border border-[#2b0e16] rounded-xl pl-10 pr-4 py-2.5 text-xs font-mono text-gray-100 outline-none focus:border-[#f3ba2f]"
+                  className="input-with-icon w-full bg-[#0c0407] border border-[#2b0e16] rounded-xl pr-4 py-2.5 text-xs font-mono text-gray-100 outline-none focus:border-[#f3ba2f]"
                   autoFocus
                 />
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300/10 bg-amber-300/[.035] p-2.5">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[.14em] text-amber-100">Enchant przedmiotu</p>
+                  <p className="mt-0.5 text-[9px] text-gray-500">Wybierz .0–.4 przed wskazaniem przedmiotu.</p>
+                </div>
+                <div className="flex gap-1" role="group" aria-label="Poziom enchantu przedmiotu">
+                  {[0, 1, 2, 3, 4].map((enchant) => (
+                    <button
+                      key={enchant}
+                      type="button"
+                      aria-pressed={selectedEnchant === enchant}
+                      onClick={() => handleEnchantChange(enchant)}
+                      className={`min-h-9 min-w-9 rounded-lg border px-2 font-mono text-[10px] font-black transition ${selectedEnchant === enchant
+                        ? 'border-amber-300/60 bg-amber-300 text-[#180d05]'
+                        : 'border-white/10 bg-black/25 text-gray-400 hover:border-amber-300/30 hover:text-amber-100'
+                      }`}
+                    >
+                      .{enchant}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex gap-2">
                 <input
@@ -172,20 +226,22 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
                   onChange={(e) => setCustomId(e.target.value.toUpperCase())}
                   className="flex-1 bg-[#0c0407] border border-[#2b0e16] rounded-xl p-2.5 text-xs font-mono text-gray-100 outline-none focus:border-[#f3ba2f]"
                 />
-                <button type="button" onClick={() => handleSelect(customId)} className="min-h-11 shrink-0 rounded-xl bg-[#f3ba2f] px-4 text-xs font-extrabold uppercase text-black">
+                <button type="button" onClick={() => handleSelect(customId, true)} className="min-h-11 shrink-0 rounded-xl bg-[#f3ba2f] px-4 text-xs font-extrabold uppercase text-black">
                   Użyj
                 </button>
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              {loading ? (
+              {loading && items.length === 0 ? (
                 <p className="text-center text-gray-500 text-xs py-8">Ładowanie przedmiotów...</p>
               ) : items.length === 0 ? (
                 <p className="text-center text-gray-500 text-xs py-8">Brak wyników. Wpisz ID ręcznie powyżej.</p>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {items.filter(i => i.id !== undefined).map((item) => (
+                <div className="relative">
+                  {loading && <span className="absolute right-1 top-0 z-10 rounded-md bg-black/70 px-2 py-1 text-[9px] text-amber-200">Aktualizuję wyniki…</span>}
+                  <div className={`grid grid-cols-2 gap-2 transition-opacity sm:grid-cols-3 ${loading ? 'opacity-55' : 'opacity-100'}`}>
+                    {items.filter(i => i.id !== undefined).map((item) => (
                     <button
                       key={item.id || 'empty'}
                       type="button"
@@ -203,7 +259,8 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
                       )}
                       <span className="font-mono text-[10px] text-gray-200 truncate">{item.name}</span>
                     </button>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

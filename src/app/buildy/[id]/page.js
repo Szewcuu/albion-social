@@ -45,7 +45,7 @@ function safeYoutubeUrl(value) {
 function DetailList({ title, icon: Icon, items, tone }) {
   if (!items?.filter(Boolean).length) return null
   return (
-    <section className="aopp-panel p-5 sm:p-6">
+    <section className="panel p-5 sm:p-6">
       <h2 className={`flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] ${tone}`}>
         <Icon className="h-4 w-4" aria-hidden="true" /> {title}
       </h2>
@@ -105,12 +105,9 @@ export default async function BuildDetailPage({ params }) {
   const publishedAt = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'long' }).format(new Date(row.created_at))
 
   return (
-    <main className="aopp-shell flex min-h-screen flex-col text-[#d5d0c6]">
-      <div className="aopp-world-bg" />
-      <div className="aopp-grain" />
-
-      <div className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-5 p-4 sm:p-6 lg:p-8">
-        <Link href="/buildy" className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-lg pr-2 text-[10px] font-black uppercase tracking-[.2em] text-[#d9b45a] transition hover:text-[#f0cf77]">
+    <div className="page-content">
+<div className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-5 p-4 sm:p-6 lg:p-8">
+        <Link href="/buildy" className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-lg pr-2 text-[10px] font-black uppercase tracking-[.2em] text-[var(--amber)] transition hover:text-[#f0cf77]">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
           Powrót do zbrojowni
         </Link>
@@ -160,8 +157,8 @@ export default async function BuildDetailPage({ params }) {
             )}
 
             {build.skillCombos?.length > 0 && (
-              <section className="aopp-panel p-5 sm:p-6" aria-labelledby="combos-title">
-                <h2 id="combos-title" className="flex items-center gap-2 font-display text-2xl font-black text-[#fff8e8]"><Zap className="h-5 w-5 text-amber-300" aria-hidden="true" /> Sekwencje umiejętności</h2>
+              <section className="panel p-5 sm:p-6" aria-labelledby="combos-title">
+                <h2 id="combos-title" className="flex items-center gap-2 text-2xl font-black text-[#fff8e8]"><Zap className="h-5 w-5 text-amber-300" aria-hidden="true" /> Sekwencje umiejętności</h2>
                 <div className="mt-5 space-y-3">
                   {build.skillCombos.map((combo, index) => (
                     <div key={`${combo.name}-${index}`} className="rounded-2xl border border-white/8 bg-black/20 p-4">
@@ -174,8 +171,8 @@ export default async function BuildDetailPage({ params }) {
             )}
 
             {build.inventory?.length > 0 && (
-              <section className="aopp-panel p-5 sm:p-6" aria-labelledby="inventory-title">
-                <h2 id="inventory-title" className="flex items-center gap-2 font-display text-2xl font-black text-[#fff8e8]"><Package className="h-5 w-5 text-orange-200" aria-hidden="true" /> Ekwipunek zapasowy</h2>
+              <section className="panel p-5 sm:p-6" aria-labelledby="inventory-title">
+                <h2 id="inventory-title" className="flex items-center gap-2 text-2xl font-black text-[#fff8e8]"><Package className="h-5 w-5 text-orange-200" aria-hidden="true" /> Ekwipunek zapasowy</h2>
                 <ul className="mt-5 grid gap-2 sm:grid-cols-2">
                   {build.inventory.filter((item) => item.id).map((item, index) => (
                     <li key={`${item.id}-${index}`} className="flex items-center justify-between gap-4 rounded-xl border border-white/8 bg-black/20 px-4 py-3 font-mono text-[10px] text-[#c5bfb5]">
@@ -185,15 +182,17 @@ export default async function BuildDetailPage({ params }) {
                 </ul>
               </section>
             )}
+
+            <BuildComments buildId={row.id} />
           </div>
 
           <aside className="space-y-5">
-            <section className="aopp-panel p-5" aria-labelledby="doctrine-title">
+            <section className="panel p-5" aria-labelledby="doctrine-title">
               <h2 id="doctrine-title" className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-orange-100"><BookOpen className="h-4 w-4" aria-hidden="true" /> Sygnatura doktryny</h2>
               <div className="mt-4 space-y-4">
                 {TAG_GROUPS.map(([key, label]) => build.tags?.[key]?.length > 0 && (
                   <div key={key}>
-                    <p className="mb-2 text-[9px] font-black uppercase tracking-[.15em] text-[#918b82]">{label}</p>
+                    <p className="mb-2 text-[9px] font-black uppercase tracking-[.15em] text-[var(--text-secondary)]">{label}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {build.tags[key].map((tag) => (
                         <span key={tag} className="rounded-lg border border-orange-200/12 bg-orange-200/[.055] px-2.5 py-1 text-[10px] text-[#c9c3b8]">{tag}</span>
@@ -204,7 +203,7 @@ export default async function BuildDetailPage({ params }) {
               </div>
             </section>
 
-            <section className="aopp-panel p-5" aria-labelledby="videos-title">
+            <section className="panel p-5" aria-labelledby="videos-title">
               <h2 id="videos-title" className="flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-orange-100"><Play className="h-4 w-4" aria-hidden="true" /> Materiały bojowe</h2>
               {videos.length > 0 ? (
                 <div className="mt-4 space-y-2">
@@ -219,18 +218,14 @@ export default async function BuildDetailPage({ params }) {
               )}
             </section>
 
-            <Link href="/buildy/create" className="aopp-primary-button flex min-h-12 items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.12em]">
+            <Link href="/buildy/create" className="btn btn-primary flex min-h-12 items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.12em]">
               <Sparkles className="h-4 w-4" aria-hidden="true" /> Wykuj własny build
             </Link>
           </aside>
         </div>
 
-        <BuildComments buildId={row.id} />
       </div>
 
-      <footer className="relative z-10 mt-12 border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">
-        <p>© {new Date().getFullYear()} <span className="font-bold text-[#f3ba2f]">Albion Online Polska Portal</span>.</p>
-      </footer>
-    </main>
+</div>
   )
 }

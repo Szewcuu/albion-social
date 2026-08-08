@@ -2,12 +2,9 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, ArrowUpRight } from 'lucide-react'
-import ModernHeader from '@/components/ModernHeader'
-import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame } from 'lucide-react'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
-import { buildFromDbRow, itemImageUrl } from '@/lib/buildSlots'
+import { buildFromDbRow } from '@/lib/buildSlots'
 
 const ALBION_CATEGORIES = [
   { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
@@ -54,190 +51,142 @@ export default function BuildyPage() {
     ? builds
     : builds.filter(b => b.activity_type?.toLowerCase().includes(activeCategory))
 
-  const renderItemSlot = (itemName, label) => (
-    <div className="flex flex-col items-center bg-[#050204] border border-[#260f16] rounded-2xl p-2 text-center relative group shadow-inner">
-      <span className="text-[9px] text-gray-500 font-mono uppercase mb-1">{label}</span>
-      {itemName ? (
-        <Image
-          src={itemImageUrl(itemName)}
-          alt={itemName}
-          width={48}
-          height={48}
-          unoptimized
-          className="w-12 h-12 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-transform group-hover:scale-110"
-          title={itemName}
-          onError={(e) => { e.target.style.display = 'none' }}
-        />
-      ) : (
-        <div className="w-12 h-12 flex items-center justify-center text-[10px] text-gray-700 font-mono">-</div>
-      )}
-    </div>
-  )
+  const totalVotes = builds.reduce((sum, build) => sum + (build.build_votes || []).filter((vote) => vote.vote_type === 'up').length, 0)
 
   return (
-    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
-      <ModernHeader user={user} />
+    <div className="page-content">
+      {/* Header */}
+      <div className="subpage-header">
+        <h1><Anvil className="w-5 h-5 text-[var(--amber)]" /> Kuźnia Buildów</h1>
+        <p>Przeglądaj sprawdzone kompozycje graczy, odkrywaj synergie ekwipunku i publikuj własne doktryny.</p>
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-        <PortalSubpageHeader
-          eyebrow="Kuźnia doktryn • Buildy społeczności"
-          title={<>Wykuj zestaw,<br /><span className="text-orange-200">który przetrwa bitwę.</span></>}
-          description="Przeglądaj sprawdzone kompozycje graczy, odkrywaj synergie ekwipunku i publikuj własne doktryny dla PvP, PvE oraz polowań."
-          icon={Anvil}
-          tone="ember"
-          stats={[
-            { label: 'Zapisane buildy', value: builds.length },
-            { label: 'Widoczne zestawy', value: filteredBuilds.length },
-            { label: 'Głosy społeczności', value: builds.reduce((sum, build) => sum + (build.build_votes || []).filter((vote) => vote.vote_type === 'up').length, 0) },
-          ]}
-          imagePosition="68% center"
-        />
-
-        <section className="aopp-panel flex w-full flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-          <div className="flex flex-wrap gap-2">
-            {ALBION_CATEGORIES.map((cat) => {
-            const IconComponent = cat.icon
-            const isActive = activeCategory === cat.id
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`flex min-h-11 items-center gap-2 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-[.12em] transition-all ${
-                  isActive
-                    ? 'border border-orange-300/40 bg-orange-300 text-[#160b05] shadow-[0_0_20px_rgba(251,146,60,.16)]'
-                    : 'border border-white/8 bg-black/20 text-[#9d978d] hover:border-orange-300/25 hover:text-orange-100'
-                }`}
-              >
-                <IconComponent className="w-4 h-4" />
-                <span>{cat.name}</span>
-              </button>
-            )
-            })}
-          </div>
-          <Link href="/buildy/create" className="aopp-primary-button inline-flex shrink-0 items-center justify-center gap-2 px-5 py-3 text-[10px] font-black uppercase tracking-[.12em]">
-            <Flame className="h-4 w-4" /> Rozpal kuźnię
-          </Link>
-        </section>
-
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
-            <p className="text-gray-500 italic col-span-full text-center py-10">Pobieranie rejestru zbrojowni...</p>
-          ) : filteredBuilds.length === 0 ? (
-            <div className="aopp-panel col-span-full space-y-4 py-16 text-center">
-              <Anvil className="mx-auto h-9 w-9 text-orange-200/70" />
-              <p className="font-display text-lg font-bold text-[#d8d2c8]">W tej części zbrojowni jest jeszcze pusto.</p>
-              <Link
-                href="/buildy/create"
-                className="aopp-ghost-button inline-flex items-center gap-2 px-5 py-3 text-[10px] font-black uppercase tracking-[.12em]"
-              >
-                <Plus className="w-4 h-4" /> Stwórz pierwszy build
-              </Link>
-            </div>
-          ) : (
-            filteredBuilds.map((b) => {
-              const parsed = buildFromDbRow(b)
-              const hasExtended = b.build_data && Object.keys(b.build_data).length > 0
-              const voteCount = Math.max(
-                (b.build_votes || []).filter((vote) => vote.vote_type === 'up').length,
-                b.votes_count || 0,
-              )
-
-              return (
-                <article key={b.id} className="aopp-list-card group flex flex-col justify-between space-y-5 overflow-hidden p-5 sm:p-6">
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#f3ba2f]/10 text-[#f3ba2f] border border-[#f3ba2f]/30 text-[10px] font-mono font-bold uppercase">
-                        {b.activity_type}
-                      </span>
-                      <span className="text-xs text-gray-500 font-mono">
-                        {new Date(b.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <h3 className="font-display mt-3 text-xl font-black leading-tight text-[#fff8e8] transition group-hover:text-orange-100">
-                      <Link href={`/buildy/${b.id}`} className="rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-300">{b.title}</Link>
-                    </h3>
-                    <p className="mt-2 line-clamp-2 text-xs leading-5 text-[#99938a]">{b.description || 'Brak opisu taktycznego.'}</p>
-
-                    {hasExtended && parsed.tags?.activities?.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {parsed.tags.activities.slice(0, 3).map(tag => (
-                          <span key={tag} className="px-1.5 py-0.5 bg-[#050204] border border-[#200d13] rounded text-[9px] font-mono text-gray-500">{tag}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="rounded-2xl border border-orange-200/10 bg-[radial-gradient(circle_at_50%_35%,rgba(193,91,36,.12),rgba(0,0,0,.25)_70%)] p-3 shadow-inner">
-                    <div className="mb-3 text-center text-[9px] font-black uppercase tracking-[.2em] text-orange-200/60">Ekwipunek zestawu</div>
-
-                    {hasExtended ? (
-                      <EquipmentPreview slots={parsed.slots} size="sm" />
-                    ) : (
-                      <>
-                        <div className="grid grid-cols-3 gap-2">
-                          {renderItemSlot(b.weapon, 'Broń')}
-                          {renderItemSlot(b.armor, 'Zbroja')}
-                          {renderItemSlot(b.head || b.helmet, 'Hełm')}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 w-2/3 mx-auto">
-                          {renderItemSlot(b.shoes, 'Buty')}
-                          {renderItemSlot(b.cape, 'Peleryna')}
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-[#200d13]">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-[#1c080e] border border-[#3b131f] flex items-center justify-center text-[#f3ba2f] text-xs font-bold">
-                        {(b.profiles?.username || parsed.authorName || 'G').charAt(0).toUpperCase()}
-                      </div>
-                      <span className="text-xs text-gray-400 font-mono">{b.profiles?.username || parsed.authorName || 'Gracz'}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="flex min-h-10 items-center gap-1 rounded-xl border border-[#3b131f] bg-[#1a070d] px-3 py-1.5 text-xs font-bold text-amber-300" title="Głosy społeczności">
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                        <span>{voteCount}</span>
-                      </span>
-
-                      <Link
-                        href={`/buildy/${b.id}`}
-                        aria-label={`Otwórz build: ${b.title}`}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl border border-orange-300/20 bg-orange-300/8 text-orange-100 transition hover:border-orange-300/40 hover:bg-orange-300/12"
-                      >
-                        <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-                      </Link>
-
-                      {user && user.id === b.user_id && (
-                        <button
-                          onClick={() => handleDeleteBuild(b.id)}
-                          aria-label={`Usuń build: ${b.title}`}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-950/60 text-rose-300 transition hover:bg-rose-900"
-                          title="Usuń build"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              )
-            })
-          )}
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="stat-card">
+          <span className="stat-card-label">Zapisane buildy</span>
+          <span className="stat-card-value amber">{builds.length}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-card-label">Widoczne</span>
+          <span className="stat-card-value">{filteredBuilds.length}</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-card-label">Polubienia</span>
+          <span className="stat-card-value emerald">{totalVotes}</span>
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">
-        <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
-          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska - Portal</span>.</p>
-          <div className="flex gap-4 text-xs font-mono text-gray-400">
-            <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
-            <span>•</span>
-            <Link href="/prywatnosc" className="hover:text-[#f3ba2f] transition">Polityka Prywatności</Link>
+      {/* Filters + Create */}
+      <div className="panel mb-6">
+        <div className="panel-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-2">
+            {ALBION_CATEGORIES.map((cat) => {
+              const IconComponent = cat.icon
+              const isActive = activeCategory === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`chip ${isActive ? 'active' : ''}`}
+                >
+                  <IconComponent className="w-3.5 h-3.5" />
+                  <span>{cat.name}</span>
+                </button>
+              )
+            })}
           </div>
+          <Link href="/buildy/create" className="btn btn-primary btn-sm">
+            <Flame className="h-4 w-4" /> Stwórz Build
+          </Link>
         </div>
-      </footer>
-    </main>
+      </div>
+
+      {/* Builds Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {loading ? (
+          <p className="text-[var(--text-muted)] italic col-span-full text-center py-10">Pobieranie buildów...</p>
+        ) : filteredBuilds.length === 0 ? (
+          <div className="panel col-span-full text-center py-16">
+            <div className="panel-body space-y-4">
+              <Anvil className="mx-auto h-9 w-9 text-[var(--amber)]" />
+              <p className="text-lg font-bold text-white">Zbrojownia jest pusta.</p>
+              <Link href="/buildy/create" className="btn btn-ghost btn-sm inline-flex">
+                <Plus className="w-4 h-4" /> Stwórz pierwszy build
+              </Link>
+            </div>
+          </div>
+        ) : (
+          filteredBuilds.map((b) => {
+            const parsed = buildFromDbRow(b)
+            const hasExtended = b.build_data && Object.keys(b.build_data).length > 0
+            const voteCount = Math.max(
+              (b.build_votes || []).filter((vote) => vote.vote_type === 'up').length,
+              b.votes_count || 0,
+            )
+
+            return (
+              <article key={b.id} className="panel panel-interactive group relative flex flex-col justify-between overflow-hidden">
+                <Link
+                  href={`/buildy/${b.id}`}
+                  aria-label={`Otwórz build: ${b.title}`}
+                  className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--amber)]"
+                />
+                <div className="pointer-events-none relative z-0 p-5">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="badge badge-amber">{b.activity_type}</span>
+                    <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                      {new Date(b.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white leading-tight group-hover:text-[var(--amber)] transition">{b.title}</h3>
+                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--text-secondary)]">{b.description || 'Brak opisu taktycznego.'}</p>
+
+                  {hasExtended && parsed.tags?.activities?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {parsed.tags.activities.slice(0, 3).map(tag => (
+                        <span key={tag} className="px-1.5 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border)] rounded text-[9px] font-mono text-[var(--text-muted)]">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pointer-events-none relative z-0 mx-5 mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
+                  <div className="mb-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Ekwipunek</div>
+                  <EquipmentPreview slots={parsed.slots} size="card" />
+                </div>
+
+                <div className="relative z-20 flex items-center justify-between px-5 pb-4 pt-3 border-t border-[var(--border)]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-[var(--bg-hover)] flex items-center justify-center text-[var(--amber)] text-[10px] font-bold">
+                      {(b.profiles?.username || parsed.authorName || 'G').charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-[11px] text-[var(--text-secondary)] font-mono">{b.profiles?.username || parsed.authorName || 'Gracz'}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--bg-elevated)] border border-[var(--border)] text-xs font-bold text-[var(--amber)]" title="Polubienia">
+                      <ThumbsUp className="w-3 h-3" />
+                      {voteCount}
+                    </span>
+
+                    {user && user.id === b.user_id && (
+                      <button
+                        onClick={() => handleDeleteBuild(b.id)}
+                        aria-label={`Usuń build: ${b.title}`}
+                        className="btn-icon text-[var(--rose)]"
+                        title="Usuń build"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </article>
+            )
+          })
+        )}
+      </div>
+    </div>
   )
 }

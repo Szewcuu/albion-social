@@ -1,7 +1,7 @@
 'use client'
 import ItemPicker from './ItemPicker'
 import Image from 'next/image'
-import { EQUIPMENT_SLOTS, isTwoHandedWeapon, itemImageUrl } from '@/lib/buildSlots'
+import { EQUIPMENT_LAYOUT, EQUIPMENT_SLOTS, getItemTierLabel, isTwoHandedWeapon, itemImageUrl } from '@/lib/buildSlots'
 import { Lock } from 'lucide-react'
 
 function SlotCell({ slot, slotData, onChange, offHandBlocked }) {
@@ -46,27 +46,18 @@ export default function EquipmentGrid({ slots, onSlotChange }) {
         Ekwipunek — kliknij slot aby wybrać przedmiot
       </div>
 
-      {/* Layout inspirowany albiononlinebuilds.com */}
-      <div className="grid grid-cols-[1fr_auto_1fr] gap-3 max-w-sm mx-auto items-center">
-        {/* Row 1: Bag | Head | Cape */}
-        <SlotCell slot={getSlot('bag')} slotData={slots.bag} onChange={(d) => onSlotChange('bag', d)} offHandBlocked={offHandBlocked} />
-        <SlotCell slot={getSlot('head')} slotData={slots.head} onChange={(d) => onSlotChange('head', d)} offHandBlocked={offHandBlocked} />
-        <SlotCell slot={getSlot('cape')} slotData={slots.cape} onChange={(d) => onSlotChange('cape', d)} offHandBlocked={offHandBlocked} />
-
-        {/* Row 2: Main | Armor | Off */}
-        <SlotCell slot={getSlot('main_hand')} slotData={slots.main_hand} onChange={(d) => onSlotChange('main_hand', d)} offHandBlocked={offHandBlocked} />
-        <SlotCell slot={getSlot('armor')} slotData={slots.armor} onChange={(d) => onSlotChange('armor', d)} offHandBlocked={offHandBlocked} />
-        <SlotCell slot={getSlot('off_hand')} slotData={slots.off_hand} onChange={(d) => onSlotChange('off_hand', d)} offHandBlocked={offHandBlocked} />
-
-        {/* Row 3: Potion | Shoes | Food */}
-        <SlotCell slot={getSlot('potion')} slotData={slots.potion} onChange={(d) => onSlotChange('potion', d)} offHandBlocked={offHandBlocked} />
-        <SlotCell slot={getSlot('shoes')} slotData={slots.shoes} onChange={(d) => onSlotChange('shoes', d)} offHandBlocked={offHandBlocked} />
-        <SlotCell slot={getSlot('food')} slotData={slots.food} onChange={(d) => onSlotChange('food', d)} offHandBlocked={offHandBlocked} />
-
-        {/* Row 4: Mount centered */}
-        <div />
-        <SlotCell slot={getSlot('mount')} slotData={slots.mount} onChange={(d) => onSlotChange('mount', d)} offHandBlocked={offHandBlocked} />
-        <div />
+      <div className="mx-auto grid max-w-sm grid-cols-3 items-center gap-3">
+        {EQUIPMENT_LAYOUT.flatMap((row, rowIndex) => row.map((key, columnIndex) => (
+          key ? (
+            <SlotCell
+              key={key}
+              slot={getSlot(key)}
+              slotData={slots[key]}
+              onChange={(data) => onSlotChange(key, data)}
+              offHandBlocked={offHandBlocked}
+            />
+          ) : <div key={`empty-${rowIndex}-${columnIndex}`} aria-hidden="true" />
+        )))}
       </div>
 
       {offHandBlocked && (
@@ -79,28 +70,35 @@ export default function EquipmentGrid({ slots, onSlotChange }) {
 }
 
 export function EquipmentPreview({ slots, size = 'md' }) {
-  const iconSize = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10'
-  const previewSlots = ['main_hand', 'head', 'armor', 'shoes', 'cape', 'off_hand', 'bag', 'mount', 'potion', 'food']
+  const isCard = size === 'card'
+  const iconSize = size === 'sm' ? 'h-8 w-8' : isCard ? 'h-14 w-14' : 'h-11 w-11'
+  const cellSize = size === 'sm' ? 'min-h-10' : isCard ? 'min-h-16' : 'min-h-14'
+  const layoutWidth = size === 'sm' ? 'max-w-40' : isCard ? 'max-w-64' : 'max-w-56'
+  const imagePixels = size === 'sm' ? 32 : isCard ? 56 : 44
 
   return (
-    <div className="flex flex-wrap gap-1.5 justify-center">
-      {previewSlots.map((key) => {
+    <div className={`mx-auto grid w-full grid-cols-3 gap-2 ${layoutWidth}`}>
+      {EQUIPMENT_LAYOUT.flatMap((row, rowIndex) => row.map((key, columnIndex) => {
+        if (!key) return <div key={`empty-${rowIndex}-${columnIndex}`} aria-hidden="true" />
         const itemId = slots[key]?.main
-        if (!itemId) return null
         return (
-          <Image
-            key={key}
-            src={itemImageUrl(itemId)}
-            alt={`Przedmiot w slocie ${key}`}
-            title={key}
-            width={size === 'sm' ? 32 : 40}
-            height={size === 'sm' ? 32 : 40}
-            unoptimized
-            className={`${iconSize} object-contain drop-shadow-md`}
-            onError={(e) => { e.target.style.display = 'none' }}
-          />
+          <div key={key} className={`relative grid ${cellSize} place-items-center rounded-md border border-white/8 bg-black/20`}>
+            {itemId ? (
+              <Image
+                src={itemImageUrl(itemId)}
+                alt={`Przedmiot w slocie ${key}`}
+                title={itemId}
+                width={imagePixels}
+                height={imagePixels}
+                unoptimized
+                className={`${iconSize} object-contain drop-shadow-md`}
+                onError={(e) => { e.target.style.display = 'none' }}
+              />
+            ) : <span className="h-1 w-1 rotate-45 bg-white/10" />}
+            {itemId && getItemTierLabel(itemId) && <span className={`absolute bottom-0.5 right-0.5 rounded bg-black/80 px-1 font-mono font-black text-amber-100 ${isCard ? 'text-[8px]' : 'text-[6px]'}`}>{getItemTierLabel(itemId)}</span>}
+          </div>
         )
-      })}
+      }))}
     </div>
   )
 }

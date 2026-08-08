@@ -220,11 +220,13 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
                           <span className="font-bold text-rose-400">{b.victim?.name}</span>
                         </div>
                         <div className="text-[10px] text-gray-400">
-                          {b.victim?.guildName ? `Gildia ofiary: ${b.victim.guildName}` : 'Brak gildii'} • IP Ofiary: {b.victim?.equipment?.averageItemPower || 'B/D'}
+                          {b.victim?.guildName ? `Gildia ofiary: ${b.victim.guildName}` : 'Brak gildii'} • IP Ofiary: {b.victim?.averageItemPower || 'B/D'}
                         </div>
                       </div>
-                      <div className="text-right font-mono text-[10px] text-amber-300 font-bold">
-                        +{Number(b.fame ?? b.totalFame ?? 0).toLocaleString('pl-PL')} Fame
+                      <div className="max-w-24 text-right font-mono text-[10px] text-amber-300 font-bold">
+                        {b.fame
+                          ? `+${Number(b.fame).toLocaleString('pl-PL')} Fame`
+                          : <span className="text-gray-500" title="Albion Gameinfo API zwróciło 0 dla tego zdarzenia">Brak danych Fame</span>}
                       </div>
                     </div>
                   ))}

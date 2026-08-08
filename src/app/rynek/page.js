@@ -2,8 +2,6 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } from 'lucide-react'
-import ModernHeader from '@/components/ModernHeader'
-import PortalSubpageHeader from '@/components/PortalSubpageHeader'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 
@@ -100,31 +98,20 @@ export default function Rynek() {
   })
 
   return (
-    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
-      <ModernHeader user={user} />
+    <div className="page-content">
+      <div className="subpage-header">
+        <h1>Rynek P2P</h1>
+        <p>Przeglądaj i publikuj ogłoszenia handlowe w wybranym mieście Albionu.</p>
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-        <PortalSubpageHeader
-          eyebrow="Plac targowy • Handel P2P"
-          title={<>Dobry interes zaczyna się<br /><span className="text-sky-300">od właściwej oferty.</span></>}
-          description="Przeglądaj ogłoszenia poszukiwaczy przygód, porównuj ceny i umawiaj bezpieczne transakcje w wybranym mieście Albionu."
-          icon={Store}
-          tone="sky"
-          stats={[
-            { label: 'Aktywne oferty', value: offers.length },
-            { label: 'Pasujące wyniki', value: filteredOffers.length },
-            { label: 'Region', value: filterCity === 'ALL' ? 'Cały Albion' : filterCity },
-          ]}
-          imagePosition="76% center"
-        />
-
-        <MarketIntelligence />
+<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+<MarketIntelligence />
 
         <div className="mt-4 flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
           <div>
             <p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Ogłoszenia społeczności</p>
-            <h2 className="font-display mt-1 text-2xl font-black text-[#fff8e8]">Rynek ofert P2P</h2>
-            <p className="mt-2 max-w-2xl text-xs leading-5 text-[#8f8a81]">Oferty wystawiają gracze portalu. Nie są automatycznie powiązane z cenami skanowanymi przez Albion Online Data Project.</p>
+            <h2 className="font-display mt-1 text-2xl font-black text-[#fff]">Rynek ofert P2P</h2>
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-[var(--text-secondary)]">Oferty wystawiają gracze portalu. Nie są automatycznie powiązane z cenami skanowanymi przez Albion Online Data Project.</p>
           </div>
           <span className="w-fit rounded-lg border border-sky-400/20 bg-sky-400/8 px-3 py-2 text-[9px] font-black uppercase tracking-[.14em] text-sky-300">Kontakt i odbiór w grze</span>
         </div>
@@ -133,18 +120,18 @@ export default function Rynek() {
           
           {/* LEWA KOLUMNA: FORMULARZ OFERTY */}
           <div className="lg:col-span-4">
-            <div className="aopp-panel sticky top-6 space-y-5 p-5 sm:p-6">
+            <div className="panel sticky top-6 space-y-5 p-5 sm:p-6">
               <div className="border-b border-white/8 pb-4">
                 <p className="mb-2 text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Twoje stoisko</p>
-                <h2 className="font-display flex items-center gap-2 text-xl font-black text-[#fff8e8]">
+                <h2 className="font-display flex items-center gap-2 text-xl font-black text-[#fff]">
                   <Plus className="h-4 w-4" />
                   <span>Wystaw ofertę</span>
                 </h2>
-                <p className="mt-2 text-xs leading-5 text-[#8f8a81]">Dodaj cenę, miejsce odbioru i sposób kontaktu. Ogłoszenie od razu trafi na tablicę.</p>
+                <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Dodaj cenę, miejsce odbioru i sposób kontaktu. Ogłoszenie od razu trafi na tablicę.</p>
               </div>
 
               {!user ? (
-                <p className="text-xs text-gray-400 italic bg-[#050204] p-4 rounded-2xl border border-[#200d13]">
+                <p className="text-xs text-gray-400 italic bg-[var(--bg-elevated)] p-4 rounded-2xl border border-[var(--border-hover)]">
                   Zaloguj się na stronie głównej, aby dodawać własne oferty na rynku.
                 </p>
               ) : (
@@ -156,7 +143,7 @@ export default function Rynek() {
                       required 
                       value={formData.title} 
                       onChange={e => setFormData({ ...formData, title: e.target.value })} 
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" 
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
                       placeholder="np. Sprzedam Mamuta Transportowego T8" 
                     />
                   </div>
@@ -167,7 +154,7 @@ export default function Rynek() {
                       type="text" 
                       value={formData.item_name} 
                       onChange={e => setFormData({ ...formData, item_name: e.target.value })} 
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-amber-200 focus:border-[#f3ba2f] outline-none text-xs font-mono" 
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-amber-200 focus:border-[var(--amber)] outline-none text-xs font-mono"
                       placeholder="np. T8_BAG, T4_BAG, T8_MAIN_SWORD" 
                     />
                   </div>
@@ -186,7 +173,7 @@ export default function Rynek() {
                         required 
                         value={formData.price} 
                         onChange={e => setFormData({ ...formData, price: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs font-mono" 
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
                         placeholder="150000000" 
                       />
                     </div>
@@ -196,7 +183,7 @@ export default function Rynek() {
                       <select 
                         value={formData.category} 
                         onChange={e => setFormData({ ...formData, category: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
                       >
                         <option value="Ekwipunek">Ekwipunek / Bronie</option>
                         <option value="Wierzchowce">Wierzchowce</option>
@@ -213,7 +200,7 @@ export default function Rynek() {
                       <select 
                         value={formData.city} 
                         onChange={e => setFormData({ ...formData, city: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
                       >
                         <option value="Caerleon">Caerleon</option>
                         <option value="Martlock">Martlock</option>
@@ -230,7 +217,7 @@ export default function Rynek() {
                       <select 
                         value={formData.server} 
                         onChange={e => setFormData({ ...formData, server: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
                       >
                         <option value="Europa">Europa</option>
                         <option value="Ameryka">Ameryka</option>
@@ -245,12 +232,12 @@ export default function Rynek() {
                       type="text" 
                       value={formData.contact_info} 
                       onChange={e => setFormData({ ...formData, contact_info: e.target.value })} 
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" 
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
                       placeholder="np. Pisz na priv w grze lub Discord: Szewczykos" 
                     />
                   </div>
 
-                  <button type="submit" className="aopp-primary-button w-full justify-center py-3.5">
+                  <button type="submit" className="btn btn-primary w-full justify-center py-3.5">
                     Wystaw Ofertę
                   </button>
                   {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs font-mono">{formMessage}</p>}
@@ -263,13 +250,13 @@ export default function Rynek() {
           <div className="lg:col-span-8 space-y-4">
             
             {/* PASEK WYSZUKIWANIA */}
-            <div className="aopp-panel space-y-4 p-4 text-xs sm:p-5">
+            <div className="panel space-y-4 p-4 text-xs sm:p-5">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Tablica ogłoszeń</p>
-                  <h2 className="font-display mt-1 text-xl font-black text-[#fff8e8]">Znajdź właściwy towar</h2>
+                  <h2 className="font-display mt-1 text-xl font-black text-[#fff]">Znajdź właściwy towar</h2>
                 </div>
-                <span className="rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.14em] text-[#a9a49b]">{filteredOffers.length} ofert</span>
+                <span className="rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">{filteredOffers.length} ofert</span>
               </div>
               <div className="relative">
                 <label htmlFor="market-offer-search" className="sr-only">Szukaj przedmiotów na rynku</label>
@@ -280,14 +267,14 @@ export default function Rynek() {
                   placeholder="Szukaj przedmiotów na rynku..." 
                   value={searchTerm} 
                   onChange={e => setSearchTerm(e.target.value)} 
-                  className="min-h-11 w-full rounded-xl border border-[#220e14] bg-[#050204] pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-[#f3ba2f]"
+                  className="min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <label htmlFor="market-city-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Miasto</label>
-                  <select id="market-city-filter" value={filterCity} onChange={e => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
+                  <select id="market-city-filter" value={filterCity} onChange={e => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Miasta</option>
                     <option value="Caerleon">Caerleon</option>
                     <option value="Martlock">Martlock</option>
@@ -301,7 +288,7 @@ export default function Rynek() {
 
                 <div>
                   <label htmlFor="market-category-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Kategoria</label>
-                  <select id="market-category-filter" value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[#220e14] bg-[#050204] p-2 text-gray-200 outline-none">
+                  <select id="market-category-filter" value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
                     <option value="ALL">Wszystkie Kategorie</option>
                     <option value="Ekwipunek">Ekwipunek</option>
                     <option value="Wierzchowce">Wierzchowce</option>
@@ -318,17 +305,17 @@ export default function Rynek() {
               {loading ? (
                 <p className="text-center py-12 text-gray-500 font-mono animate-pulse">Pobieranie ofert z rynku...</p>
               ) : filteredOffers.length === 0 ? (
-                <div className="aopp-panel py-14 text-center">
+                <div className="panel py-14 text-center">
                   <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-sky-300/70" />
-                  <p className="font-display text-lg font-bold text-[#d8d2c8]">Stragany czekają na pierwszą ofertę.</p>
-                  <p className="mt-1 text-xs text-[#918b82]">Zmień filtry albo wystaw własne ogłoszenie.</p>
+                  <p className="font-display text-lg font-bold text-[var(--text-primary)]">Stragany czekają na pierwszą ofertę.</p>
+                  <p className="mt-1 text-xs text-[var(--text-secondary)]">Zmień filtry albo wystaw własne ogłoszenie.</p>
                 </div>
               ) : (
                 filteredOffers.map(offer => {
                   const isOwner = user?.id === offer.user_id
 
                   return (
-                    <article key={offer.id} className="aopp-list-card flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                    <article key={offer.id} className="panel panel-interactive flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                       
                       <div className="flex min-w-0 gap-4">
                         <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/8 text-sky-300 sm:flex">
@@ -341,8 +328,8 @@ export default function Rynek() {
                           <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> {offer.server || 'Europa'}</span>
                         </div>
 
-                        <h3 className="font-display text-xl font-black leading-tight text-[#fff8e8]">{offer.title}</h3>
-                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[#918b82]">Sprzedawca: <span className="text-[#b8b1a7]">{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span></p>
+                        <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
+                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)]">Sprzedawca: <span className="text-[#b8b1a7]">{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span></p>
                         
                         {offer.contact_info && (
                           <p className="text-xs text-gray-400 font-mono">
@@ -355,7 +342,7 @@ export default function Rynek() {
                       <div className="flex w-full items-end justify-between gap-3 border-t border-white/8 pt-4 sm:w-auto sm:min-w-[190px] sm:flex-col sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
                         <div className="text-right font-mono">
                           <span className="text-[10px] text-gray-500 block uppercase">Cena</span>
-                          <span className="font-display text-2xl font-black text-[#e5bb55]">
+                          <span className="font-display text-2xl font-black text-[var(--amber)]">
                             {parseInt(offer.price).toLocaleString('pl-PL')} <span className="text-xs font-normal text-gray-400">Silver</span>
                           </span>
                         </div>
@@ -381,12 +368,6 @@ export default function Rynek() {
         </div>
       </div>
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/10 bg-black/20 py-6 text-center text-xs text-[#918b82]">
-        <div className="mx-auto flex max-w-[1480px] flex-col items-center justify-between gap-3 px-6 sm:flex-row">
-          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
-          <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.16em] text-[#918b82]"><HandCoins className="h-3.5 w-3.5" /> Giełda Handlowa &amp; Czarny Rynek</p>
-        </div>
-      </footer>
-    </main>
+</div>
   )
 }

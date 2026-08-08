@@ -7,8 +7,8 @@ import {
   Swords, Shield, Heart, UserCheck, Plus,
   Clock, Users, Trash2, AlertTriangle 
 } from 'lucide-react'
-import ModernHeader from '@/components/ModernHeader'
-import PortalSubpageHeader from '@/components/PortalSubpageHeader'
+
+const EXPEDITION_TTL_MS = 72 * 60 * 60 * 1000
 
 export default function Wyprawy() {
   const [user, setUser] = useState(null)
@@ -30,6 +30,9 @@ export default function Wyprawy() {
     max_supports: 1
   })
   const [formMessage, setFormMessage] = useState('')
+  const [deleteMessage, setDeleteMessage] = useState('')
+  const [deletingExpeditionId, setDeletingExpeditionId] = useState(null)
+  const [publishingExpeditionId, setPublishingExpeditionId] = useState(null)
 
   const [signupData, setFormSignupData] = useState({
     ingame_nick: '',
@@ -44,6 +47,7 @@ export default function Wyprawy() {
     const { data } = await supabase
       .from('expeditions')
       .select('*, profiles(username), expedition_signups(*)')
+      .gte('created_at', new Date(Date.now() - EXPEDITION_TTL_MS).toISOString())
       .order('created_at', { ascending: false })
 
     if (data) {
@@ -139,7 +143,8 @@ export default function Wyprawy() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ expeditionId: createdExpedition.id }),
         })
-        discordPublished = response.ok
+        const discordResult = await response.json().catch(() => ({}))
+        discordPublished = response.ok && !discordResult.skipped
       } catch (err) {
         console.error('Błąd Webhooka:', err)
       }
@@ -236,7 +241,12 @@ export default function Wyprawy() {
             })
           })
 
-          if (!res.ok) console.error('Discord odrzucił powiadomienie o pełnym składzie.')
+          const discordResult = await res.json().catch(() => ({}))
+          if (!res.ok) {
+            console.warn('Nie udało się wysłać powiadomienia o pełnym składzie:', discordResult.error || res.status)
+          } else if (discordResult.skipped) {
+            console.warn('Powiadomienie o pełnym składzie pominięto, ponieważ webhook Discord nie jest skonfigurowany.')
+          }
         } catch (err) {
           console.error('Błąd powiadomienia o pełnym składzie:', err)
         }
@@ -256,6 +266,8 @@ export default function Wyprawy() {
 
   const handleDeleteExpedition = async (expeditionId) => {
     if (confirm('Czy na pewno chcesz odwołać tę wyprawę? Wiadomości z Discorda zostaną również usunięte.')) {
+      setDeleteMessage('')
+      setDeletingExpeditionId(expeditionId)
       try {
         const response = await authenticatedFetch('/api/webhooks/expedition', {
           method: 'DELETE',
@@ -263,47 +275,68 @@ export default function Wyprawy() {
           body: JSON.stringify({ expeditionId }),
         })
 
-        if (response.ok) fetchExpeditions()
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          throw new Error(result.error || 'Nie udało się odwołać wyprawy.')
+        }
+
+        setExpeditions((current) => current.filter((expedition) => expedition.id !== expeditionId))
+        setDeleteMessage(result.warning || 'Wyprawa została odwołana i usunięta z tablicy.')
       } catch (err) {
         console.error('Błąd kasowania wyprawy:', err)
+        setDeleteMessage(err.message || 'Nie udało się odwołać wyprawy. Spróbuj ponownie.')
+      } finally {
+        setDeletingExpeditionId(null)
       }
+    }
+  }
+
+  const retryDiscordPublication = async (expeditionId) => {
+    setDeleteMessage('')
+    setPublishingExpeditionId(expeditionId)
+    try {
+      const response = await authenticatedFetch('/api/webhooks/expedition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expeditionId }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok || result.skipped) {
+        throw new Error(result.error || 'Webhook Discord nie jest skonfigurowany.')
+      }
+
+      setDeleteMessage('Ogłoszenie wyprawy zostało opublikowane na Discordzie.')
+      await fetchExpeditions()
+    } catch (error) {
+      setDeleteMessage(error.message || 'Nie udało się opublikować wyprawy na Discordzie.')
+    } finally {
+      setPublishingExpeditionId(null)
     }
   }
 
   const totalSignups = expeditions.reduce((sum, expedition) => sum + (expedition.expedition_signups?.length || 0), 0)
 
   return (
-    <main className="modern-shell min-h-screen text-[#f3f4f6] pb-12">
-      <ModernHeader user={user} />
+    <div className="page-content">
+      <div className="subpage-header">
+        <h1>Wyprawy & Party</h1>
+        <p>Organizuj zbiórki grupowe z weryfikacją IP.</p>
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-        <PortalSubpageHeader
-          eyebrow="Tablica mobilizacji • Party finder"
-          title={<>Każda wyprawa zaczyna się<br /><span className="text-violet-300">od właściwej drużyny.</span></>}
-          description="Zwołaj ekipę, określ wymagane role i przygotuj zbiórkę zsynchronizowaną z Discordem — od statyka po ZvZ i karawanę."
-          icon={Users}
-          tone="violet"
-          stats={[
-            { label: 'Aktywne wyprawy', value: expeditions.length },
-            { label: 'Zapisani gracze', value: totalSignups },
-            { label: 'Synchronizacja', value: 'Discord' },
-          ]}
-          imagePosition="82% center"
-        />
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+<div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
           {/* FORMULARZ WYPRAWY */}
           <div className="lg:col-span-4">
-            <div className="aopp-panel sticky top-6 space-y-5 rounded-3xl p-6">
+            <div className="panel sticky top-6 space-y-5 rounded-3xl p-6">
               <div className="border-b border-white/[.07] pb-4">
-                <p className="text-[9px] font-black uppercase tracking-[.2em] text-[#9e998f]">Dla organizatorów</p>
+                <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--text-secondary)]">Dla organizatorów</p>
                 <h2 className="font-display mt-1 flex items-center gap-2 text-xl font-black text-violet-200"><Plus className="h-5 w-5" /> Zwołaj wyprawę</h2>
-                <p className="mt-2 text-xs leading-5 text-[#8f8b83]">Ustal cel, wymagania i skład. Resztę ogłosimy drużynie.</p>
+                <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Ustal cel, wymagania i skład. Resztę ogłosimy drużynie.</p>
               </div>
 
               {!user ? (
-                <p className="text-xs text-gray-400 italic bg-[#050204] p-4 rounded-2xl border border-[#200d13]">
+                <p className="text-xs text-gray-400 italic bg-[var(--bg-elevated)] p-4 rounded-2xl border border-[var(--border-hover)]">
                   Zaloguj się na stronie głównej, aby tworzyć nowe ogłoszenia.
                 </p>
               ) : (
@@ -315,7 +348,7 @@ export default function Wyprawy() {
                       required 
                       value={formData.title} 
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })} 
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" 
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
                       placeholder="np. Statyk T8.2 Martlock + Chest" 
                     />
                   </div>
@@ -326,7 +359,7 @@ export default function Wyprawy() {
                       <select 
                         value={formData.activity_type} 
                         onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer focus:border-[#f3ba2f]"
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer focus:border-[var(--amber)]"
                       >
                         <optgroup label="PvE &amp; Lochy">
                           <option value="Statyk T8">Statyk / Group Dungeon</option>
@@ -362,7 +395,7 @@ export default function Wyprawy() {
                           placeholder="Wpisz własną nazwę aktywności..."
                           value={formData.custom_activity}
                           onChange={(e) => setFormData({ ...formData, custom_activity: e.target.value })}
-                          className="w-full mt-2 bg-[#050204] border border-[#f3ba2f]/50 rounded-xl p-2.5 text-gray-100 outline-none text-xs"
+                          className="w-full mt-2 bg-[var(--bg-elevated)] border border-[var(--amber)]/50 rounded-xl p-2.5 text-gray-100 outline-none text-xs"
                         />
                       )}
                     </div>
@@ -374,7 +407,7 @@ export default function Wyprawy() {
                         required 
                         value={formData.min_ip} 
                         onChange={(e) => setFormData({ ...formData, min_ip: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs font-mono" 
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
                       />
                     </div>
                   </div>
@@ -387,7 +420,7 @@ export default function Wyprawy() {
                         required 
                         value={formData.start_time} 
                         onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs font-mono" 
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
                         placeholder="np. 19:30 UTC" 
                       />
                     </div>
@@ -397,7 +430,7 @@ export default function Wyprawy() {
                       <select 
                         value={formData.server} 
                         onChange={(e) => setFormData({ ...formData, server: e.target.value })} 
-                        className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
+                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
                       >
                         <option value="Europa">Europa</option>
                         <option value="Ameryka">Ameryka</option>
@@ -406,24 +439,24 @@ export default function Wyprawy() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[#200d13] pt-3">
-                    <label className="block text-[#f3ba2f] mb-2 font-bold uppercase tracking-wider text-[10px] font-mono">Poszukiwane Role</label>
+                  <div className="border-t border-[var(--border-hover)] pt-3">
+                    <label className="block text-[var(--amber)] mb-2 font-bold uppercase tracking-wider text-[10px] font-mono">Poszukiwane Role</label>
                     <div className="grid grid-cols-4 gap-2 text-center">
                       <div>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">Tank</span>
-                        <input type="number" min="0" max="5" value={formData.max_tanks} onChange={(e) => setFormData({ ...formData, max_tanks: e.target.value })} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
+                        <input type="number" min="0" max="5" value={formData.max_tanks} onChange={(e) => setFormData({ ...formData, max_tanks: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
                       </div>
                       <div>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">Heal</span>
-                        <input type="number" min="0" max="5" value={formData.max_healers} onChange={(e) => setFormData({ ...formData, max_healers: e.target.value })} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
+                        <input type="number" min="0" max="5" value={formData.max_healers} onChange={(e) => setFormData({ ...formData, max_healers: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
                       </div>
                       <div>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">DPS</span>
-                        <input type="number" min="0" max="20" value={formData.max_dps} onChange={(e) => setFormData({ ...formData, max_dps: e.target.value })} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
+                        <input type="number" min="0" max="20" value={formData.max_dps} onChange={(e) => setFormData({ ...formData, max_dps: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
                       </div>
                       <div>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">Supp</span>
-                        <input type="number" min="0" max="5" value={formData.max_supports} onChange={(e) => setFormData({ ...formData, max_supports: e.target.value })} className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
+                        <input type="number" min="0" max="5" value={formData.max_supports} onChange={(e) => setFormData({ ...formData, max_supports: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
                       </div>
                     </div>
                   </div>
@@ -434,12 +467,12 @@ export default function Wyprawy() {
                       rows="3" 
                       value={formData.description} 
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
-                      className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none resize-none text-xs" 
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none resize-none text-xs"
                       placeholder="np. Zbiórka w banku Martlock, komunikacja na Discordzie..." 
                     />
                   </div>
 
-                  <button type="submit" className="aopp-primary-button w-full py-3.5 text-xs font-extrabold uppercase tracking-wider">
+                  <button type="submit" className="btn btn-primary w-full py-3.5 text-xs font-extrabold uppercase tracking-wider">
                     Ogłoś Wyprawę
                   </button>
                   {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs">{formMessage}</p>}
@@ -450,14 +483,17 @@ export default function Wyprawy() {
 
           {/* LISTA WYPRAW */}
           <div className="lg:col-span-8 space-y-4">
-            <div className="aopp-panel flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4">
-              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[#8f8b83]">Aktualna mobilizacja</p><h2 className="font-display text-xl font-bold text-white">Otwarte drużyny</h2></div>
+            <div className="panel flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4">
+              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[var(--text-secondary)]">Aktualna mobilizacja · ogłoszenia wygasają po 72h</p><h2 className="font-display text-xl font-bold text-white">Otwarte drużyny</h2></div>
               <div className="flex items-center gap-2 text-xs"><span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" /></span><span className="font-bold text-[#bcb6ab]">{expeditions.length} aktywnych ogłoszeń</span></div>
             </div>
+            {deleteMessage && (
+              <p role="status" className="rounded-xl border border-amber-400/20 bg-amber-400/8 px-4 py-3 text-xs text-amber-100/80">{deleteMessage}</p>
+            )}
             {loading ? (
               <p className="text-center py-12 text-gray-500 font-mono animate-pulse">Ładowanie aktywnych wypraw...</p>
             ) : expeditions.length === 0 ? (
-              <div className="aopp-panel rounded-3xl py-14 text-center"><Users className="mx-auto h-9 w-9 text-violet-300/35" /><p className="font-display mt-4 text-lg font-bold text-[#c7c1b7]">Tablica jest teraz pusta</p><p className="mt-1 text-xs text-[#817d75]">Zwołaj pierwszą wyprawę i rozpocznij mobilizację.</p></div>
+              <div className="panel rounded-3xl py-14 text-center"><Users className="mx-auto h-9 w-9 text-violet-300/35" /><p className="font-display mt-4 text-lg font-bold text-[#c7c1b7]">Tablica jest teraz pusta</p><p className="mt-1 text-xs text-[#817d75]">Zwołaj pierwszą wyprawę i rozpocznij mobilizację.</p></div>
             ) : (
               expeditions.map((exp) => {
                 const signups = exp.expedition_signups || []
@@ -472,7 +508,7 @@ export default function Wyprawy() {
                 const fillPercent = totalSlots > 0 ? Math.min(100, Math.round((signups.length / totalSlots) * 100)) : 0
 
                 return (
-                  <div key={exp.id} className="aopp-list-card group relative space-y-5 overflow-hidden rounded-3xl p-6">
+                  <div key={exp.id} className="panel panel-interactive group relative space-y-5 overflow-hidden rounded-3xl p-6">
                     
                     <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[.07] pb-4">
                       <div className="space-y-1">
@@ -484,18 +520,18 @@ export default function Wyprawy() {
                       </div>
 
                       <div className="flex items-center gap-3 text-xs font-mono">
-                        <span className="flex items-center gap-1.5 text-amber-400 font-bold bg-[#050204] px-3 py-1.5 rounded-xl border border-[#220e14]">
+                        <span className="flex items-center gap-1.5 text-amber-400 font-bold bg-[var(--bg-elevated)] px-3 py-1.5 rounded-xl border border-[var(--border-hover)]">
                           <Clock className="w-3 h-3" /> {exp.start_time}
                         </span>
-                        <span className="bg-[#050204] px-3 py-1.5 rounded-xl border border-[#220e14] text-gray-300 font-bold">
+                        <span className="bg-[var(--bg-elevated)] px-3 py-1.5 rounded-xl border border-[var(--border-hover)] text-gray-300 font-bold">
                           IP: <b className="text-emerald-400">{exp.min_ip}+</b>
                         </span>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[.14em]"><span className="text-[#8f8b83]">Gotowość drużyny</span><span className="text-violet-200">{signups.length}/{totalSlots} graczy</span></div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-black/45"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-[#e4b94f] transition-all" style={{ width: `${fillPercent}%` }} /></div>
+                      <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-[.14em]"><span className="text-[var(--text-secondary)]">Gotowość drużyny</span><span className="text-violet-200">{signups.length}/{totalSlots} graczy</span></div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-black/45"><div className="h-full rounded-full bg-gradient-to-r from-violet-500 to-[var(--amber)] transition-all" style={{ width: `${fillPercent}%` }} /></div>
                     </div>
 
                     {exp.description && (
@@ -564,9 +600,14 @@ export default function Wyprawy() {
                       </span>
 
                       <div className="flex items-center gap-2">
+                        {isOwner && !exp.discord_message_id && (
+                          <button disabled={publishingExpeditionId === exp.id} onClick={() => retryDiscordPublication(exp.id)} className="border border-sky-400/30 bg-sky-400/8 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-sky-200 transition hover:bg-sky-400/12 disabled:cursor-wait disabled:opacity-60">
+                            {publishingExpeditionId === exp.id ? 'Publikowanie…' : 'Opublikuj na Discordzie'}
+                          </button>
+                        )}
                         {isOwner && (
-                          <button onClick={() => handleDeleteExpedition(exp.id)} className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 font-bold px-3 py-1.5 rounded-xl uppercase text-[10px] tracking-wider transition cursor-pointer">
-                            Odwołaj Wyprawę
+                          <button disabled={deletingExpeditionId === exp.id} onClick={() => handleDeleteExpedition(exp.id)} className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 font-bold px-3 py-1.5 rounded-xl uppercase text-[10px] tracking-wider transition cursor-pointer disabled:cursor-wait disabled:opacity-60">
+                            {deletingExpeditionId === exp.id ? 'Odwoływanie…' : 'Odwołaj Wyprawę'}
                           </button>
                         )}
 
@@ -575,7 +616,7 @@ export default function Wyprawy() {
                             <Trash2 className="w-3 h-3" /> Opuść Drużynę
                           </button>
                         ) : user ? (
-                          <button onClick={() => openSignupModal(exp)} className="aopp-primary-button px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider">
+                          <button onClick={() => openSignupModal(exp)} className="btn btn-primary px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider">
                             Dołącz do Ekipy
                           </button>
                         ) : (
@@ -596,8 +637,8 @@ export default function Wyprawy() {
       {/* MODAL ZAPISU DO DRUŻYNY */}
       {activeExpeditionForSignup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="aopp-panel relative w-full max-w-md space-y-4 rounded-3xl p-6 text-gray-200 sm:p-8">
-            <h3 className="font-display border-b border-white/[.07] pb-3 text-xl font-black text-[#f0c75e]">
+          <div className="panel relative w-full max-w-md space-y-4 rounded-3xl p-6 text-gray-200 sm:p-8">
+            <h3 className="font-display border-b border-white/[.07] pb-3 text-xl font-black text-[var(--amber)]">
               Dołącz do Wyprawy: {activeExpeditionForSignup.title}
             </h3>
 
@@ -609,7 +650,7 @@ export default function Wyprawy() {
                   required 
                   value={signupData.ingame_nick} 
                   onChange={(e) => setFormSignupData({ ...signupData, ingame_nick: e.target.value })} 
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs" 
+                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
                   placeholder="np. Szewczykos" 
                 />
               </div>
@@ -619,7 +660,7 @@ export default function Wyprawy() {
                 <select 
                   value={signupData.role_type} 
                   onChange={(e) => setFormSignupData({ ...signupData, role_type: e.target.value })} 
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
+                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
                 >
                   {activeExpeditionForSignup.max_tanks > 0 && (
                     <option 
@@ -666,7 +707,7 @@ export default function Wyprawy() {
                   required 
                   value={signupData.player_ip} 
                   onChange={(e) => setFormSignupData({ ...signupData, player_ip: e.target.value })} 
-                  className="w-full bg-[#050204] border border-[#220e14] rounded-xl p-2.5 text-gray-100 focus:border-[#f3ba2f] outline-none text-xs font-mono" 
+                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
                 />
               </div>
 
@@ -678,7 +719,7 @@ export default function Wyprawy() {
               )}
 
               <div className="flex gap-2 pt-2">
-                <button type="submit" className="aopp-primary-button flex-1 py-3 text-xs font-extrabold uppercase tracking-wider">
+                <button type="submit" className="btn btn-primary flex-1 py-3 text-xs font-extrabold uppercase tracking-wider">
                   Potwierdź Zgłoszenie
                 </button>
                 <button type="button" onClick={() => setActiveExpeditionForSignup(null)} className="bg-[#1a080d] text-rose-300 hover:bg-rose-950/80 border border-rose-900/40 font-bold px-4 py-3 rounded-xl uppercase text-xs cursor-pointer">
@@ -690,16 +731,6 @@ export default function Wyprawy() {
         </div>
       )}
 
-      <footer className="relative z-10 mt-12 w-full border-t border-[#d8ad4a]/15 bg-[#070807]/85 py-6 text-center text-xs text-gray-400">
-        <div className="max-w-[1600px] mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p>© {new Date().getFullYear()} <span className="text-[#f3ba2f] font-bold">Albion Online Polska Portal</span>.</p>
-          <div className="flex gap-4 text-xs font-mono text-gray-400">
-            <Link href="/regulamin" className="hover:text-[#f3ba2f] transition">Regulamin</Link>
-            <span>•</span>
-            <Link href="/prywatnosc" className="hover:text-[#f3ba2f] transition">Polityka Prywatności</Link>
-          </div>
-        </div>
-      </footer>
-    </main>
+</div>
   )
 }
