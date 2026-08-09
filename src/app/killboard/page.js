@@ -1,8 +1,8 @@
 'use client'
 
 import CustomSelect from '@/components/ui/CustomSelect'
-
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   AlertTriangle,
   ChevronRight,
@@ -45,9 +45,13 @@ function getErrorMessage(payload, fallback) {
   return payload?.error?.message || payload?.error || fallback
 }
 
-export default function KillboardPage() {
-  const [searchNick, setSearchNick] = useState('')
-  const [region, setRegion] = useState('europe')
+function KillboardContent() {
+  const searchParams = useSearchParams()
+  const initialNick = searchParams?.get('nick')
+  const initialRegion = searchParams?.get('region')
+
+  const [searchNick, setSearchNick] = useState(initialNick || '')
+  const [region, setRegion] = useState(initialRegion || 'europe')
   const [searching, setSearching] = useState(false)
   const [loadingPlayer, setLoadingPlayer] = useState(false)
   const [searchResults, setSearchResults] = useState([])
@@ -55,6 +59,23 @@ export default function KillboardPage() {
   const [meta, setMeta] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
   const [activeHistory, setActiveHistory] = useState('kills')
+
+  useEffect(() => {
+    if (initialNick) {
+      const targetRegion = initialRegion || region
+      setSearchNick(initialNick)
+      setSearching(true)
+      fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(initialNick)}&region=${targetRegion}`)
+        .then((res) => res.json())
+        .then((payload) => {
+          const players = payload.data?.players || []
+          setSearchResults(players)
+          setMeta(payload.meta)
+        })
+        .catch((err) => setErrorMsg(err.message || 'Nie udało się pobrać danych.'))
+        .finally(() => setSearching(false))
+    }
+  }, [initialNick, initialRegion])
 
   const resetResults = () => {
     setSearchResults([])
@@ -323,5 +344,13 @@ export default function KillboardPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function KillboardPage() {
+  return (
+    <Suspense fallback={<div className="page-content py-12 text-center text-xs font-mono text-gray-400">Ładowanie Kronik Walk...</div>}>
+      <KillboardContent />
+    </Suspense>
   )
 }

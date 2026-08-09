@@ -191,6 +191,15 @@ export default function PublicProfilePage() {
                 <span className="flex items-center gap-1 text-[var(--text-muted)]">
                   <Calendar className="w-3.5 h-3.5" /> Dołączył: {formatDate(profile.created_at)}
                 </span>
+                {(profile.ingame_nick || profile.username) && (
+                  <Link
+                    href={`/killboard?nick=${encodeURIComponent(profile.ingame_nick || profile.username)}`}
+                    className="btn btn-ghost btn-xs inline-flex items-center gap-1 text-[10px] text-rose-300 hover:text-rose-200 ml-auto md:ml-0"
+                  >
+                    <Swords className="w-3 h-3 text-rose-400" />
+                    <span>Statystyki Killboard</span>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
