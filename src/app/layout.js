@@ -36,6 +36,9 @@ export default function RootLayout({ children }) {
       lang="pl"
       className={`${cinzel.variable} ${lora.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preload" href="/albion-bg.jpg" as="image" fetchpriority="high" />
+      </head>
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
         <PwaRegister />
