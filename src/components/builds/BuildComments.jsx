@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import {
   Flag,
@@ -106,11 +108,16 @@ function ReportDialog({ open, target, busy, onClose, onSubmit }) {
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           <div>
-            <label htmlFor={`${titleId}-reason`} className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Powód zgłoszenia</label>
-            <select ref={selectRef} id={`${titleId}-reason`} required value={reason} onChange={(event) => setReason(event.target.value)} className="mt-2 min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-stone)] px-3 text-sm text-[var(--text-primary)] outline-none transition focus:border-[var(--gold-dim)]">
-              <option value="">Wybierz powód</option>
-              {REPORT_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
+            <CustomSelect
+              label="Powód zgłoszenia"
+              value={reason}
+              onChange={(val) => setReason(val)}
+              placeholder="Wybierz powód"
+              options={[
+                { value: '', label: 'Wybierz powód' },
+                ...REPORT_OPTIONS.map(([value, label]) => ({ value, label }))
+              ]}
+            />
           </div>
           <div>
             <div className="flex items-center justify-between gap-3">

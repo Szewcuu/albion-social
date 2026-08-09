@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useState } from 'react'
 import { calculateBuildStats, QUALITY_OPTIONS } from '@/lib/statCalculator'
 import { Shield, Heart, Zap, Swords, Award, Sliders } from 'lucide-react'
@@ -49,20 +51,15 @@ export default function BuildStatsCalculator({ slots, quality = 1, specBonus = 0
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#0a0508] p-3.5 rounded-xl border border-[#200d14]">
           {/* JAKOŚĆ PRZEDMIOTU */}
           <div>
-            <label className="block text-[10px] font-mono text-gray-400 uppercase mb-1.5">
-              Jakość Ekwipunku:
-            </label>
-            <select
+            <CustomSelect
+              label="Jakość Ekwipunku:"
               value={activeQuality}
-              onChange={(e) => handleQualitySelect(Number(e.target.value))}
-              className="w-full bg-[#050204] border border-[#331520] text-amber-200 text-xs rounded-lg p-2 font-mono focus:border-amber-500 outline-none"
-            >
-              {QUALITY_OPTIONS.map((q) => (
-                <option key={q.value} value={q.value}>
-                  {q.label} (+{q.bonusIp} IP)
-                </option>
-              ))}
-            </select>
+              onChange={(val) => handleQualitySelect(Number(val))}
+              options={QUALITY_OPTIONS.map((q) => ({
+                value: q.value,
+                label: `${q.label} (+${q.bonusIp} IP)`,
+              }))}
+            />
           </div>
 
           {/* SPECJALIZACJA (MASTERY BONUS) */}

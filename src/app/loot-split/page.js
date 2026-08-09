@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
@@ -336,16 +338,27 @@ export default function LootSplit() {
               )}
             </section>
 
-            <section className="panel rounded-[28px] p-5 sm:p-7">
+            <section className="panel rounded-[28px] p-5 sm:p-7 relative z-30 !overflow-visible">
               <SectionTitle icon={ShieldAlert} eyebrow="Krok 3" title="Zwroty za sprzęt" description="Regear jest wypłacany wskazanemu graczowi ponad jego równy udział, ale finansowany z całej puli." badge={`${regearList.length} pozycji`} tone="rose" />
               <form onSubmit={handleAddRegear} className="mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-                <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Gracz
+                <div>
                   {calculation.players.length ? (
-                    <select value={regearNick} onChange={(event) => setRegearNick(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none"><option value="">Wybierz uczestnika</option>{calculation.players.map((nick) => <option key={nick} value={nick}>{nick}</option>)}</select>
+                    <CustomSelect
+                      label="Gracz"
+                      value={regearNick}
+                      onChange={(val) => setRegearNick(val)}
+                      placeholder="Wybierz uczestnika"
+                      options={[
+                        { value: '', label: 'Wybierz uczestnika' },
+                        ...calculation.players.map((nick) => ({ value: nick, label: nick }))
+                      ]}
+                    />
                   ) : (
-                    <input type="text" maxLength={80} value={regearNick} onChange={(event) => setRegearNick(event.target.value)} placeholder="Nick gracza" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
+                    <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Gracz
+                      <input type="text" maxLength={80} value={regearNick} onChange={(event) => setRegearNick(event.target.value)} placeholder="Nick gracza" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none font-mono" />
+                    </label>
                   )}
-                </label>
+                </div>
                 <Field label="Kwota zwrotu" value={regearAmount} onChange={setRegearAmount} placeholder="250000" type="number" min="0" />
                 <button type="submit" className="mt-auto flex h-[43px] items-center justify-center gap-2 rounded-xl border border-rose-400/25 bg-rose-400/8 px-4 text-[10px] font-black uppercase tracking-[.12em] text-rose-200 transition hover:bg-rose-400/12"><Plus className="h-4 w-4" /> Dodaj</button>
               </form>

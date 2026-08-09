@@ -519,7 +519,8 @@ a { color: inherit; text-decoration: none; }
   background: linear-gradient(145deg, rgba(45,33,23,.94), rgba(27,19,14,.96));
   box-shadow: 0 15px 38px rgba(0,0,0,.17), inset 0 1px rgba(255,255,255,.025);
 }
-.panel, .widget { overflow: hidden; }
+.panel, .widget { overflow: visible; }
+.panel-clip { overflow: hidden; }
 .panel-interactive { transition: .22s ease; }
 .panel-interactive:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: 0 20px 44px rgba(0,0,0,.25); }
 .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 54px; padding: 14px 18px; border-bottom: 1px solid var(--border); color: var(--text-bright); font: 650 12px/1.3 var(--font-heading); }

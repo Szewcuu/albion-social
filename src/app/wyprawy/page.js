@@ -4,6 +4,10 @@ import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
+import { 
+  Swords, Shield, Heart, UserCheck, Plus, Search,
+  Clock, Users, Trash2, AlertTriangle, MapPin, Compass, Sparkles, Calendar 
+} from 'lucide-react'
 
 const EXPEDITION_TTL_MS = 72 * 60 * 60 * 1000
 

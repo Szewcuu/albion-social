@@ -130,7 +130,7 @@ export default function Rynek() {
           
           {/* LEWA KOLUMNA: FORMULARZ OFERTY */}
           <div className="lg:col-span-4">
-            <div className="panel sticky top-6 space-y-5 p-5 sm:p-6">
+            <div className="panel sticky top-6 space-y-5 p-5 sm:p-6 relative z-30 !overflow-visible">
               <div className="border-b border-white/8 pb-4">
                 <p className="mb-2 text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Twoje stoisko</p>
                 <h2 className="font-display flex items-center gap-2 text-xl font-black text-[#fff]">
@@ -242,7 +242,7 @@ export default function Rynek() {
           <div className="lg:col-span-8 space-y-4">
             
             {/* PASEK WYSZUKIWANIA */}
-            <div className="panel space-y-4 p-4 text-xs sm:p-5">
+            <div className="panel space-y-4 p-4 text-xs sm:p-5 relative z-30 !overflow-visible">
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Tablica ogłoszeń</p>
@@ -259,7 +259,7 @@ export default function Rynek() {
                   placeholder="Szukaj przedmiotów na rynku..." 
                   value={searchTerm} 
                   onChange={e => setSearchTerm(e.target.value)} 
-                  className="min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pl-11 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)] font-mono"
+                  className="input-with-icon min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] !pl-12 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)] font-mono"
                 />
               </div>
 

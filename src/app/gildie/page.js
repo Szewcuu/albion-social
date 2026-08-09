@@ -135,7 +135,7 @@ export default function Gildie() {
           
           {/* LEWA STRONA: FORMULARZ */}
           <div className="lg:col-span-4">
-            <div className="panel sticky top-6 space-y-5 rounded-3xl p-6">
+            <div className="panel sticky top-6 space-y-5 rounded-3xl p-6 relative z-30 !overflow-visible">
               <div className="border-b border-white/[.07] pb-4">
                 <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--text-secondary)]">Dla liderów</p>
                 <h2 className="font-display mt-1 flex items-center gap-2 text-xl font-black text-[var(--amber)]"><Shield className="h-5 w-5" /> Opublikuj manifest</h2>
@@ -237,7 +237,7 @@ export default function Gildie() {
           <div className="lg:col-span-8 space-y-4">
             
             {/* FILTRY */}
-            <div className="panel space-y-3 rounded-3xl p-4 font-mono text-xs">
+            <div className="panel space-y-3 rounded-3xl p-4 font-mono text-xs relative z-30 !overflow-visible">
               <div className="flex items-center justify-between gap-3 px-1">
                 <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[var(--text-secondary)]">Archiwum chorągwi</p><h2 className="font-display text-lg font-bold text-white">Przeglądaj formacje</h2></div>
                 <span className="rounded-lg border border-[var(--amber)]/20 bg-[var(--amber)]/10 px-3 py-1 text-[10px] font-black text-[var(--amber)]">{filteredGuilds.length} {filteredGuilds.length === 1 ? 'wynik' : 'wyników'}</span>
@@ -251,7 +251,7 @@ export default function Gildie() {
                   placeholder="Szukaj gildii po nazwie lub opisie..." 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pl-11 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
+                  className="input-with-icon !pl-12 min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                 />
               </div>
               

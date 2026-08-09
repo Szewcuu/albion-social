@@ -65,7 +65,7 @@ export default function CustomSelect({
   }
 
   return (
-    <div className={`relative w-full ${className}`} ref={containerRef}>
+    <div className={`relative w-full ${isOpen ? 'z-[100]' : 'z-10'} ${className}`} ref={containerRef}>
       {label && (
         <label className="block text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1 font-mono">
           {label}
@@ -84,7 +84,7 @@ export default function CustomSelect({
           disabled
             ? 'opacity-50 cursor-not-allowed border-[var(--border)] bg-[var(--bg-panel)] text-[var(--text-faded)]'
             : isOpen
-            ? 'border-[var(--gold)] bg-[var(--bg-stone)] text-[var(--gold-bright)] shadow-[0_0_12px_rgba(200,168,78,0.15)]'
+            ? 'border-[var(--gold)] bg-[var(--bg-stone)] text-[var(--gold-bright)] shadow-[0_0_12px_rgba(200,168,78,0.15)] ring-1 ring-[var(--gold)]/30'
             : 'border-[var(--border-warm)] bg-[var(--bg-stone)] text-[var(--text-bright)] hover:border-[var(--gold-dim)] hover:bg-[var(--bg-hover)]'
         }`}
       >
@@ -100,8 +100,8 @@ export default function CustomSelect({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 max-h-60 overflow-y-auto rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] p-1.5 shadow-2xl shadow-black/80 animate-fade-in font-mono text-xs"
-          style={{ background: 'var(--bg-stone)' }}
+          className="absolute left-0 right-0 top-[calc(100%+6px)] z-[9999] max-h-60 overflow-y-auto rounded-xl border border-[var(--border-warm)] bg-[#120d0a] p-1.5 shadow-2xl shadow-black/95 animate-fade-in font-mono text-xs"
+          style={{ background: '#120d0a' }}
         >
           {normalizedOptions.length === 0 ? (
             <div className="px-3 py-2 text-[var(--text-muted)] italic text-center">Brak opcji</div>

@@ -134,7 +134,7 @@ export default function KillboardPage() {
       </div>
 
 <div className="relative z-10 mx-auto flex w-full max-w-[1480px] flex-col gap-7 p-4 sm:p-6 lg:p-8">
-<section className="panel p-4 sm:p-5">
+<section className="panel p-4 sm:p-5 relative z-30 !overflow-visible">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-[9px] font-black uppercase tracking-[.22em] text-rose-300">Archiwum wojowników</p>
@@ -167,7 +167,7 @@ export default function KillboardPage() {
                 placeholder="Wpisz nick gracza..."
                 value={searchNick}
                 onChange={event => setSearchNick(event.target.value)}
-                className="input-with-icon w-full rounded-xl border border-white/10 bg-black/35 py-3 pr-4 text-xs text-[#f2ede3] outline-none placeholder:text-[#5f5a53] focus:border-rose-300/45"
+                className="input-with-icon !pl-12 w-full rounded-xl border border-white/10 bg-black/35 py-3 pr-4 text-xs text-[#f2ede3] outline-none placeholder:text-[#5f5a53] focus:border-rose-300/45"
               />
             </label>
 

@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import {
@@ -392,14 +394,14 @@ export default function MarketIntelligence() {
           <div className="space-y-2">
             <label htmlFor="market-item-search" className="text-[9px] font-black uppercase tracking-[.18em] text-[#8f8a81]">Przedmiot</label>
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#918b82]" />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#918b82] pointer-events-none" />
               <input
                 id="market-item-search"
                 value={query}
                 onChange={(event) => { setQuery(event.target.value); setSearchOpen(true) }}
                 onFocus={() => setSearchOpen(true)}
                 placeholder="Nazwa lub ID, np. T4_BAG"
-                className="w-full rounded-xl border border-white/10 bg-black/25 py-3 pl-11 pr-10 text-xs text-[#fff8e8] outline-none transition focus:border-[#e5bb55]/60"
+                className="input-with-icon w-full rounded-xl border border-white/10 bg-black/25 py-3 !pl-12 pr-10 text-xs text-[#fff8e8] outline-none transition focus:border-[#e5bb55]/60"
                 autoComplete="off"
               />
               {query && <button type="button" aria-label="Wyczyść wyszukiwanie" onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#918b82] hover:text-white"><X className="h-4 w-4" /></button>}
@@ -453,11 +455,17 @@ export default function MarketIntelligence() {
               <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.16em] text-[#8f8a81]"><BellRing className="h-3.5 w-3.5 text-[#e5bb55]" /> Obserwowana cena</p>
               {activeWatch && <span className="text-[8px] font-bold uppercase text-emerald-300">Zapisana</span>}
             </div>
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[100px_1fr_auto]">
-              <label><span className="sr-only">Warunek obserwowanej ceny</span><select value={watchDirection} onChange={(event) => setWatchDirection(event.target.value)} className="min-h-11 w-full rounded-lg border border-white/10 bg-[#080605] px-2 text-[9px] text-[#b8b1a7] outline-none">
-                <option value="below">Sprzedaż ≤</option>
-                <option value="above">Kupno ≥</option>
-              </select></label>
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[130px_1fr_auto] items-center">
+              <div>
+                <CustomSelect
+                  value={watchDirection}
+                  onChange={(val) => setWatchDirection(val)}
+                  options={[
+                    { value: 'below', label: 'Sprzedaż ≤' },
+                    { value: 'above', label: 'Kupno ≥' },
+                  ]}
+                />
+              </div>
               <label><span className="sr-only">Próg ceny w silver</span><input type="number" min="0" value={watchTarget} onChange={(event) => setWatchTarget(event.target.value)} placeholder="Cena" className="min-h-11 w-full min-w-0 rounded-lg border border-white/10 bg-[#080605] px-2 py-2 font-mono text-[10px] text-[#eee7d9] outline-none focus:border-[#e5bb55]/40" /></label>
               <button type="button" onClick={savePriceWatch} className="min-h-11 rounded-lg border border-[#e5bb55]/20 bg-[#e5bb55]/8 px-3 text-[9px] font-black uppercase text-[#e5bb55] hover:bg-[#e5bb55]/12">Zapisz</button>
             </div>
@@ -465,24 +473,22 @@ export default function MarketIntelligence() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="space-y-1.5 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">
-              Region
-              <span className="relative block">
-                <select value={region} onChange={(event) => setRegion(event.target.value)} className="min-h-11 w-full appearance-none rounded-xl border border-white/10 bg-[#080605] px-3 text-xs font-semibold normal-case tracking-normal text-[#d8d2c8] outline-none focus:border-[#e5bb55]/50">
-                  {REGION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-              </span>
-            </label>
-            <label className="space-y-1.5 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">
-              Jakość
-              <span className="relative block">
-                <select value={quality} onChange={(event) => setQuality(Number(event.target.value))} className="min-h-11 w-full appearance-none rounded-xl border border-white/10 bg-[#080605] px-3 text-xs font-semibold normal-case tracking-normal text-[#d8d2c8] outline-none focus:border-[#e5bb55]/50">
-                  {QUALITY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2" />
-              </span>
-            </label>
+            <div>
+              <CustomSelect
+                label="Region"
+                value={region}
+                onChange={(val) => setRegion(val)}
+                options={REGION_OPTIONS}
+              />
+            </div>
+            <div>
+              <CustomSelect
+                label="Jakość"
+                value={quality}
+                onChange={(val) => setQuality(Number(val))}
+                options={QUALITY_OPTIONS}
+              />
+            </div>
           </div>
 
           <div>
@@ -503,16 +509,18 @@ export default function MarketIntelligence() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
-            <label className="relative">
-              <span className="sr-only">Zakres historii</span>
-              <select value={range} onChange={(event) => setRange(event.target.value)} className="h-full w-full appearance-none rounded-xl border border-white/10 bg-[#080605] px-3 py-3 text-xs text-[#d8d2c8] outline-none">
-                <option value="24h">Historia: 24 godziny</option>
-                <option value="7d">Historia: 7 dni</option>
-                <option value="30d">Historia: 30 dni</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#918b82]" />
-            </label>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto] items-end">
+            <div>
+              <CustomSelect
+                value={range}
+                onChange={(val) => setRange(val)}
+                options={[
+                  { value: '24h', label: 'Historia: 24 godziny' },
+                  { value: '7d', label: 'Historia: 7 dni' },
+                  { value: '30d', label: 'Historia: 30 dni' },
+                ]}
+              />
+            </div>
             <button type="button" onClick={analyzeMarket} disabled={loading} className="aopp-primary-button min-h-11 w-full justify-center disabled:cursor-wait disabled:opacity-60 sm:min-w-32">
               {loading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
               {loading ? 'Analizuję' : 'Analizuj'}
@@ -594,9 +602,13 @@ export default function MarketIntelligence() {
                       <p className="text-[9px] font-black uppercase tracking-[.18em] text-[#e5bb55]">Średnia cena transakcji</p>
                       <h3 className="font-display mt-1 text-lg font-black text-[#fff8e8]">Historia przedmiotu</h3>
                     </div>
-                    <select value={historyCity} onChange={(event) => setHistoryCity(event.target.value)} className="max-w-36 rounded-lg border border-white/10 bg-[#080605] px-2 py-1.5 text-[10px] text-[#b8b1a7] outline-none">
-                      {CITIES.map((city) => <option key={city}>{city}</option>)}
-                    </select>
+                    <div className="min-w-36">
+                      <CustomSelect
+                        value={historyCity}
+                        onChange={(val) => setHistoryCity(val)}
+                        options={CITIES.map((city) => ({ value: city, label: city }))}
+                      />
+                    </div>
                   </div>
                   <LineChart points={historyPoints} emptyText="Brak wystarczających transakcji w wybranym okresie." />
                 </div>

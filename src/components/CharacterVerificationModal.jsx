@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useState, useEffect } from 'react'
 import { Search, ShieldCheck, CheckCircle2, AlertCircle, LoaderCircle, X, Trophy, Swords, UserCheck, Globe2, Clock } from 'lucide-react'
 
@@ -156,18 +158,16 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
             </div>
 
             <div>
-              <label className="block text-[9px] font-mono text-gray-400 uppercase mb-1">
-                Region / Serwer:
-              </label>
-              <select
+              <CustomSelect
+                label="Region / Serwer:"
                 value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                className="w-full bg-[#050204] border border-[#331520] text-amber-200 text-xs rounded-xl p-3 outline-none focus:border-[#f3ba2f] font-mono cursor-pointer"
-              >
-                <option value="europe">Europa (AMS)</option>
-                <option value="america">Ameryka (NWA)</option>
-                <option value="asia">Azja (SGP)</option>
-              </select>
+                onChange={(val) => setRegion(val)}
+                options={[
+                  { value: 'europe', label: 'Europa (AMS)' },
+                  { value: 'america', label: 'Ameryka (NWA)' },
+                  { value: 'asia', label: 'Azja (SGP)' },
+                ]}
+              />
             </div>
           </div>
 
