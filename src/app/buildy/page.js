@@ -171,12 +171,12 @@ export default function BuildyPage() {
                 </div>
 
                 <div className="relative z-20 flex items-center justify-between px-5 pb-4 pt-3 border-t border-[var(--border)]">
-                  <div className="flex items-center gap-2">
+                  <Link href={`/profil/${b.user_id || b.profiles?.username}`} className="flex items-center gap-2 hover:opacity-80 transition" title="Zobacz publiczny profil gracza">
                     <div className="w-6 h-6 rounded-md bg-[var(--bg-hover)] flex items-center justify-center text-[var(--amber)] text-[10px] font-bold">
                       {(b.profiles?.username || parsed.authorName || 'G').charAt(0).toUpperCase()}
                     </div>
                     <span className="text-[11px] text-[var(--text-secondary)] font-mono">{b.profiles?.username || parsed.authorName || 'Gracz'}</span>
-                  </div>
+                  </Link>
 
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[var(--bg-elevated)] border border-[var(--border)] text-xs font-bold text-[var(--amber)]" title="Polubienia">

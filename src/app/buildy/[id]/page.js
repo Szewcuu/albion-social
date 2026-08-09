@@ -129,7 +129,12 @@ export default async function BuildDetailPage({ params }) {
             <p className="mt-5 max-w-3xl text-sm leading-7 text-[#c9c3b8] sm:text-base">{row.description || 'Autor nie dodał jeszcze opisu taktycznego dla tego zestawu.'}</p>
 
             <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/8 pt-5 text-[10px] uppercase tracking-[.1em] text-[#aaa49a]">
-              <span className="inline-flex items-center gap-2"><UserRound className="h-4 w-4 text-orange-200" aria-hidden="true" /> {author}</span>
+              <span className="inline-flex items-center gap-2">
+                <UserRound className="h-4 w-4 text-orange-200" aria-hidden="true" />
+                <Link href={`/profil/${row.user_id || row.profiles?.username}`} className="hover:text-[var(--gold)] transition underline underline-offset-2">
+                  {author}
+                </Link>
+              </span>
               <span className="inline-flex items-center gap-2"><CalendarDays className="h-4 w-4 text-orange-200" aria-hidden="true" /> {publishedAt}</span>
             </div>
 
