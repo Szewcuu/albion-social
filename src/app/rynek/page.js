@@ -1,14 +1,17 @@
 'use client'
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } from 'lucide-react'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
+import ContactSellerModal from '@/components/market/ContactSellerModal'
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [selectedOfferForContact, setSelectedOfferForContact] = useState(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCity, setFilterCity] = useState('ALL')
@@ -329,7 +332,12 @@ export default function Rynek() {
                         </div>
 
                         <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
-                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)]">Sprzedawca: <span className="text-[#b8b1a7]">{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span></p>
+                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)]">
+                          Sprzedawca: {' '}
+                          <Link href={`/profil/${offer.user_id}`} className="text-[#b8b1a7] hover:text-[var(--gold)] hover:underline font-bold transition">
+                            {(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}
+                          </Link>
+                        </p>
                         
                         {offer.contact_info && (
                           <p className="text-xs text-gray-400 font-mono">
@@ -347,12 +355,19 @@ export default function Rynek() {
                           </span>
                         </div>
 
-                        {isOwner && (
+                        {isOwner ? (
                           <button 
                             onClick={() => handleDeleteOffer(offer.id)} 
                             className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 p-2 rounded-xl transition cursor-pointer flex items-center gap-1 text-[10px] font-mono font-bold"
                           >
                             <Trash2 className="w-3.5 h-3.5" /> Usuń
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setSelectedOfferForContact(offer)}
+                            className="btn btn-secondary btn-sm flex items-center gap-1.5"
+                          >
+                            <HandCoins className="w-3.5 h-3.5 text-[var(--gold)]" /> Kup / Kontakt
                           </button>
                         )}
                       </div>
@@ -368,6 +383,12 @@ export default function Rynek() {
         </div>
       </div>
 
-</div>
+      <ContactSellerModal
+        isOpen={Boolean(selectedOfferForContact)}
+        onClose={() => setSelectedOfferForContact(null)}
+        offer={selectedOfferForContact}
+        currentUser={user}
+      />
+    </div>
   )
 }
