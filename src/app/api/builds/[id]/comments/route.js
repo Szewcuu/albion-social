@@ -14,6 +14,7 @@ import {
   requireApiUser,
 } from '@/lib/server/supabaseAdmin'
 import { cleanText } from '@/lib/server/validation'
+import { createNotification } from '@/lib/server/notifications'
 
 const jsonError = (message, status, headers) => NextResponse.json({ error: message }, { status, headers })
 
@@ -90,8 +91,26 @@ export async function POST(request, { params }) {
       .insert({ build_id: buildId, user_id: auth.user.id, content })
       .select('id, content, created_at, user_id, profiles!build_comments_user_id_fkey(username)')
       .single()
-
     if (error) throw new Error('Nie udało się zapisać komentarza.')
+
+    // Notification to build author
+    const { data: buildData } = await supabase
+      .from('builds')
+      .select('user_id, title')
+      .eq('id', buildId)
+      .maybeSingle()
+
+    if (buildData && buildData.user_id && buildData.user_id !== auth.user.id) {
+      const commenterName = data.profiles?.username || 'Gracz'
+      await createNotification({
+        userId: buildData.user_id,
+        title: 'Nowy komentarz pod Twoim buildem',
+        message: `${commenterName} skomentował Twój zestaw "${buildData.title}".`,
+        link: `/buildy/${buildId}`,
+        type: 'build_comment',
+      })
+    }
+
     return NextResponse.json({ comment: toCommentDto(data, auth.user.id) }, { status: 201 })
   } catch (error) {
     console.error('Błąd dodawania komentarza buildu:', error)
