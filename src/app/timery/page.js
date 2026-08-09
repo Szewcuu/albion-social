@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
@@ -182,12 +184,14 @@ export default function TimeryPage() {
                   <h2 className="font-display mt-1 text-2xl font-black text-[#fff]">Zegary dowódcy</h2>
                   <p className="mt-2 text-xs text-[var(--text-secondary)]">Czas aktualizowany co sekundę na podstawie zegara urządzenia.</p>
                 </div>
-                <label className="relative min-w-44 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Region
-                  <select value={selectedServer} onChange={(event) => setSelectedServer(event.target.value)} className="mt-1.5 min-h-11 w-full appearance-none rounded-xl border px-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none">
-                    {Object.keys(SERVER_CONFIG).map((name) => <option key={name}>{name}</option>)}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute bottom-3 right-3 h-3.5 w-3.5" />
-                </label>
+                <div className="min-w-44">
+                  <CustomSelect
+                    label="Region"
+                    value={selectedServer}
+                    onChange={(val) => setSelectedServer(val)}
+                    options={Object.keys(SERVER_CONFIG)}
+                  />
+                </div>
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">

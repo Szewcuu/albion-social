@@ -399,7 +399,7 @@ export default function MarketIntelligence() {
                 onChange={(event) => { setQuery(event.target.value); setSearchOpen(true) }}
                 onFocus={() => setSearchOpen(true)}
                 placeholder="Nazwa lub ID, np. T4_BAG"
-                className="w-full rounded-xl border border-white/10 bg-black/25 py-3 pl-10 pr-10 text-xs text-[#fff8e8] outline-none transition focus:border-[#e5bb55]/60"
+                className="w-full rounded-xl border border-white/10 bg-black/25 py-3 pl-11 pr-10 text-xs text-[#fff8e8] outline-none transition focus:border-[#e5bb55]/60"
                 autoComplete="off"
               />
               {query && <button type="button" aria-label="Wyczyść wyszukiwanie" onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#918b82] hover:text-white"><X className="h-4 w-4" /></button>}

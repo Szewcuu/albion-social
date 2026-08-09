@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useState } from 'react'
 import {
   AlertTriangle,
@@ -141,20 +143,21 @@ export default function KillboardPage() {
             <p className="text-[10px] text-[var(--text-secondary)]">Wybierz region, w którym znajduje się postać.</p>
           </div>
 
-          <form onSubmit={handleSearch} className="grid gap-3 sm:grid-cols-[210px_1fr_auto]">
-            <label className="sr-only" htmlFor="killboard-region">Region Albionu</label>
-            <select
-              id="killboard-region"
-              value={region}
-              onChange={event => handleRegionChange(event.target.value)}
-              className="rounded-xl border border-white/10 bg-black/35 px-4 py-3 text-xs font-bold text-[#e2c36f] outline-none focus:border-[var(--amber)]/60"
-            >
-              {REGIONS.map(item => <option key={item.id} value={item.id}>{item.label} ({item.short})</option>)}
-            </select>
+          <form onSubmit={handleSearch} className="grid gap-3 sm:grid-cols-[220px_1fr_auto] items-center">
+            <div>
+              <CustomSelect
+                value={region}
+                onChange={(val) => handleRegionChange(val)}
+                options={REGIONS.map((item) => ({
+                  value: item.id,
+                  label: `${item.label} (${item.short})`,
+                }))}
+              />
+            </div>
 
             <label className="relative" htmlFor="killboard-player">
               <span className="sr-only">Nick gracza</span>
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666159]" />
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#666159] pointer-events-none" />
               <input
                 id="killboard-player"
                 type="search"

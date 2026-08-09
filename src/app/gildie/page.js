@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Swords, Shield, Globe, MapPin, Search, ExternalLink, HelpCircle } from 'lucide-react'
 import GuildApplyModal from '@/components/GuildApplyModal'
 import GuildZvZInspectorModal from '@/components/guilds/GuildZvZInspectorModal'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 export default function Gildie() {
   const [guilds, setGuilds] = useState([])
@@ -154,36 +155,36 @@ export default function Gildie() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Serwer *</label>
-                      <select name="server" value={formData.server} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
-                        <option value="Europa">Europa</option>
-                        <option value="Ameryka">Ameryka</option>
-                        <option value="Azja">Azja</option>
-                      </select>
+                      <CustomSelect
+                        label="Serwer *"
+                        value={formData.server}
+                        onChange={(val) => setFormData((prev) => ({ ...prev, server: val }))}
+                        options={['Europa', 'Ameryka', 'Azja']}
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Główne Miasto *</label>
-                      <select name="main_city" value={formData.main_city} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
-                        <option value="Martlock">Martlock</option>
-                        <option value="Lymhurst">Lymhurst</option>
-                        <option value="Bridgewatch">Bridgewatch</option>
-                        <option value="Fort Sterling">Fort Sterling</option>
-                        <option value="Thetford">Thetford</option>
-                        <option value="Caerleon">Caerleon</option>
-                        <option value="Brecilien">Brecilien</option>
-                      </select>
+                      <CustomSelect
+                        label="Główne Miasto *"
+                        value={formData.main_city}
+                        onChange={(val) => setFormData((prev) => ({ ...prev, main_city: val }))}
+                        options={['Martlock', 'Lymhurst', 'Bridgewatch', 'Fort Sterling', 'Thetford', 'Caerleon', 'Brecilien']}
+                      />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Profil / Doktryna *</label>
-                    <select name="activity_type" value={formData.activity_type} onChange={handleInputChange} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer">
-                      <option value="PvP">PvP / Ganking</option>
-                      <option value="PvE / HCE">PvE / HCE</option>
-                      <option value="ZvZ / Wojny">ZvZ / Wojny Terytorialne</option>
-                      <option value="Casual / Wszystko">Casual / Mieszana</option>
-                    </select>
+                    <CustomSelect
+                      label="Profil / Doktryna *"
+                      value={formData.activity_type}
+                      onChange={(val) => setFormData((prev) => ({ ...prev, activity_type: val }))}
+                      options={[
+                        { value: 'PvP', label: 'PvP / Ganking' },
+                        { value: 'PvE / HCE', label: 'PvE / HCE' },
+                        { value: 'ZvZ / Wojny', label: 'ZvZ / Wojny Terytorialne' },
+                        { value: 'Casual / Wszystko', label: 'Casual / Mieszana' },
+                      ]}
+                    />
                   </div>
 
                   <div>
@@ -243,49 +244,61 @@ export default function Gildie() {
               </div>
               <div className="relative">
                 <label htmlFor="guild-search" className="sr-only">Szukaj gildii po nazwie lub opisie</label>
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input 
                   id="guild-search"
                   type="text" 
                   placeholder="Szukaj gildii po nazwie lub opisie..." 
                   value={searchTerm} 
                   onChange={(e) => setSearchTerm(e.target.value)} 
-                  className="input-with-icon min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
+                  className="min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pl-11 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
                 />
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div>
-                  <label htmlFor="guild-server-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Serwer</label>
-                  <select id="guild-server-filter" value={filterServer} onChange={(e) => setFilterServer(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 font-bold text-[var(--amber)] outline-none">
-                    <option value="ALL">Wszystkie Serwery</option>
-                    <option value="Europa">Europa</option>
-                    <option value="Ameryka">Ameryka</option>
-                    <option value="Azja">Azja</option>
-                  </select>
+                  <CustomSelect
+                    label="Serwer"
+                    value={filterServer}
+                    onChange={(val) => setFilterServer(val)}
+                    options={[
+                      { value: 'ALL', label: 'Wszystkie Serwery' },
+                      'Europa',
+                      'Ameryka',
+                      'Azja',
+                    ]}
+                  />
                 </div>
                 <div>
-                  <label htmlFor="guild-city-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Miasto</label>
-                  <select id="guild-city-filter" value={filterCity} onChange={(e) => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
-                    <option value="ALL">Wszystkie Miasta</option>
-                    <option value="Martlock">Martlock</option>
-                    <option value="Lymhurst">Lymhurst</option>
-                    <option value="Bridgewatch">Bridgewatch</option>
-                    <option value="Fort Sterling">Fort Sterling</option>
-                    <option value="Thetford">Thetford</option>
-                    <option value="Caerleon">Caerleon</option>
-                    <option value="Brecilien">Brecilien</option>
-                  </select>
+                  <CustomSelect
+                    label="Miasto"
+                    value={filterCity}
+                    onChange={(val) => setFilterCity(val)}
+                    options={[
+                      { value: 'ALL', label: 'Wszystkie Miasta' },
+                      'Martlock',
+                      'Lymhurst',
+                      'Bridgewatch',
+                      'Fort Sterling',
+                      'Thetford',
+                      'Caerleon',
+                      'Brecilien',
+                    ]}
+                  />
                 </div>
                 <div>
-                  <label htmlFor="guild-activity-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Doktryna</label>
-                  <select id="guild-activity-filter" value={filterActivity} onChange={(e) => setFilterActivity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
-                    <option value="ALL">Wszystkie Doktryny</option>
-                    <option value="PvP">PvP / Ganking</option>
-                    <option value="PvE / HCE">PvE / HCE</option>
-                    <option value="ZvZ / Wojny">ZvZ / Wojny</option>
-                    <option value="Casual / Wszystko">Mieszana (Casual)</option>
-                  </select>
+                  <CustomSelect
+                    label="Doktryna"
+                    value={filterActivity}
+                    onChange={(val) => setFilterActivity(val)}
+                    options={[
+                      { value: 'ALL', label: 'Wszystkie Doktryny' },
+                      { value: 'PvP', label: 'PvP / Ganking' },
+                      { value: 'PvE / HCE', label: 'PvE / HCE' },
+                      { value: 'ZvZ / Wojny', label: 'ZvZ / Wojny' },
+                      { value: 'Casual / Wszystko', label: 'Mieszana (Casual)' },
+                    ]}
+                  />
                 </div>
               </div>
             </div>

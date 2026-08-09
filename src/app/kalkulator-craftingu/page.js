@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import { useState, useEffect, useCallback } from 'react'
 import { Hammer, Sparkles, TrendingUp, TrendingDown, Coins, Percent, Zap, LoaderCircle, AlertCircle, RefreshCw } from 'lucide-react'
 
@@ -139,52 +141,46 @@ export default function CraftingCalculatorPage() {
 
               <div className="space-y-3 text-xs font-mono">
                 <div>
-                  <label className="block text-gray-400 mb-1 font-bold uppercase text-[10px]">Typ Surowca / Przedmiotu</label>
-                  <select
+                  <CustomSelect
+                    label="Typ Surowca / Przedmiotu"
                     value={resourceType}
-                    onChange={(e) => setResourceType(e.target.value)}
-                    className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
-                  >
-                    {RESOURCES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
-                  </select>
+                    onChange={(val) => setResourceType(val)}
+                    options={RESOURCES.map((r) => ({ value: r.id, label: r.label }))}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase text-[10px]">Tier Surowca</label>
-                    <select
+                    <CustomSelect
+                      label="Tier Surowca"
                       value={tier}
-                      onChange={(e) => setTier(e.target.value)}
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
-                    >
-                      {TIERS.map(t => <option key={t.level} value={t.level}>{t.label}</option>)}
-                    </select>
+                      onChange={(val) => setTier(val)}
+                      options={TIERS.map((t) => ({ value: t.level, label: t.label }))}
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase text-[10px]">Zaklęcie (@Enchant)</label>
-                    <select
+                    <CustomSelect
+                      label="Zaklęcie (@Enchant)"
                       value={enchant}
-                      onChange={(e) => setEnchant(e.target.value)}
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
-                    >
-                      {ENCHANTS.map(e => <option key={e.level} value={e.level}>{e.label}</option>)}
-                    </select>
+                      onChange={(val) => setEnchant(val)}
+                      options={ENCHANTS.map((e) => ({ value: e.level, label: e.label }))}
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase text-[10px]">Serwer Gry</label>
-                    <select
+                    <CustomSelect
+                      label="Serwer Gry"
                       value={server}
-                      onChange={(e) => setServer(e.target.value)}
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-amber-200 outline-none cursor-pointer"
-                    >
-                      <option value="Europa">Europa (AMS)</option>
-                      <option value="Ameryka">Ameryka (NWA)</option>
-                      <option value="Azja">Azja (SGP)</option>
-                    </select>
+                      onChange={(val) => setServer(val)}
+                      options={[
+                        { value: 'Europa', label: 'Europa (AMS)' },
+                        { value: 'Ameryka', label: 'Ameryka (NWA)' },
+                        { value: 'Azja', label: 'Azja (SGP)' },
+                      ]}
+                    />
                   </div>
 
                   <div>

@@ -3,10 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { 
-  Swords, Shield, Heart, UserCheck, Plus,
-  Clock, Users, Trash2, AlertTriangle 
-} from 'lucide-react'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 const EXPEDITION_TTL_MS = 72 * 60 * 60 * 1000
 
@@ -355,38 +352,26 @@ export default function Wyprawy() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Typ Aktywności</label>
-                      <select 
-                        value={formData.activity_type} 
-                        onChange={(e) => setFormData({ ...formData, activity_type: e.target.value })} 
-                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer focus:border-[var(--amber)]"
-                      >
-                        <optgroup label="PvE &amp; Lochy">
-                          <option value="Statyk T8">Statyk / Group Dungeon</option>
-                          <option value="Ava Dungeon">Avalonian Dungeon</option>
-                          <option value="Tropienie (Tracking)">Tropienie w Grupie (Tracking)</option>
-                          <option value="Lochy Spaczenia (Corrupted)">Corrupted Dungeons</option>
-                        </optgroup>
-
-                        <optgroup label="PvP &amp; Wojny">
-                          <option value="ZvZ / Zamki / Terytoria">ZvZ / Zamki / Terki</option>
-                          <option value="Wojny Frakcyjne (Faction)">Wojny Frakcyjne (Faction)</option>
-                          <option value="Roaming / Ganking">Ganking / Small Scale</option>
-                          <option value="Hellgate 2v2 / 5v5 / 10v10">Hellgate (2v2 / 5v5 / 10v10)</option>
-                          <option value="Kryształowa Arena / League">Kryształowa Arena / Crystal League</option>
-                        </optgroup>
-
-                        <optgroup label="Ekonomia &amp; Zbiory">
-                          <option value="Ochrona Karawany">Karawana do Caerleon / Transport</option>
-                          <option value="Power Core / Vortex">Esporta Core / Vortex (Outlands)</option>
-                          <option value="Zbieractwo w Grupie / Aspekty">Zbieractwo w Grupie / Aspekty</option>
-                        </optgroup>
-
-                        <optgroup label="Inne">
-                          <option value="Inna / Własna aktywność">✍️ Inna / Własna aktywność...</option>
-                        </optgroup>
-                      </select>
-
+                      <CustomSelect
+                        label="Typ Aktywności *"
+                        value={formData.activity_type}
+                        onChange={(val) => setFormData((prev) => ({ ...prev, activity_type: val }))}
+                        options={[
+                          { value: 'Statyk T8', label: 'Statyk / Group Dungeon' },
+                          { value: 'Ava Dungeon', label: 'Avalonian Dungeon' },
+                          { value: 'Tropienie (Tracking)', label: 'Tropienie w Grupie' },
+                          { value: 'Lochy Spaczenia (Corrupted)', label: 'Corrupted Dungeons' },
+                          { value: 'ZvZ / Zamki / Terytoria', label: 'ZvZ / Zamki / Terki' },
+                          { value: 'Wojny Frakcyjne (Faction)', label: 'Wojny Frakcyjne (Faction)' },
+                          { value: 'Roaming / Ganking', label: 'Ganking / Small Scale' },
+                          { value: 'Hellgate 2v2 / 5v5 / 10v10', label: 'Hellgate (2v2 / 5v5 / 10v10)' },
+                          { value: 'Kryształowa Arena / League', label: 'Kryształowa Arena' },
+                          { value: 'Ochrona Karawany', label: 'Karawana do Caerleon / Transport' },
+                          { value: 'Power Core / Vortex', label: 'Esporta Core / Vortex' },
+                          { value: 'Zbieractwo w Grupie / Aspekty', label: 'Zbieractwo w Grupie / Aspekty' },
+                          { value: 'Inna / Własna aktywność', label: '✍️ Inna / Własna aktywność...' },
+                        ]}
+                      />
                       {/* Pole na własną nazwę aktywności, widoczne tylko po wybraniu "Inna" */}
                       {formData.activity_type === 'Inna / Własna aktywność' && (
                         <input 
@@ -426,16 +411,12 @@ export default function Wyprawy() {
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Serwer</label>
-                      <select 
-                        value={formData.server} 
-                        onChange={(e) => setFormData({ ...formData, server: e.target.value })} 
-                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
-                      >
-                        <option value="Europa">Europa</option>
-                        <option value="Ameryka">Ameryka</option>
-                        <option value="Azja">Azja</option>
-                      </select>
+                      <CustomSelect
+                        label="Serwer"
+                        value={formData.server}
+                        onChange={(val) => setFormData((prev) => ({ ...prev, server: val }))}
+                        options={['Europa', 'Ameryka', 'Azja']}
+                      />
                     </div>
                   </div>
 
@@ -656,48 +637,29 @@ export default function Wyprawy() {
               </div>
 
               <div>
-                <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Wybierz Rolę *</label>
-                <select 
-                  value={signupData.role_type} 
-                  onChange={(e) => setFormSignupData({ ...signupData, role_type: e.target.value })} 
-                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
-                >
-                  {activeExpeditionForSignup.max_tanks > 0 && (
-                    <option 
-                      value="Tank" 
-                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length || 0) >= activeExpeditionForSignup.max_tanks}
-                    >
-                      Tank ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length || 0}/{activeExpeditionForSignup.max_tanks})
-                    </option>
-                  )}
-
-                  {activeExpeditionForSignup.max_healers > 0 && (
-                    <option 
-                      value="Healer" 
-                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length || 0) >= activeExpeditionForSignup.max_healers}
-                    >
-                      Healer ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length || 0}/{activeExpeditionForSignup.max_healers})
-                    </option>
-                  )}
-
-                  {activeExpeditionForSignup.max_dps > 0 && (
-                    <option 
-                      value="DPS" 
-                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length || 0) >= activeExpeditionForSignup.max_dps}
-                    >
-                      DPS ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length || 0}/{activeExpeditionForSignup.max_dps})
-                    </option>
-                  )}
-
-                  {activeExpeditionForSignup.max_supports > 0 && (
-                    <option 
-                      value="Support" 
-                      disabled={(activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length || 0) >= activeExpeditionForSignup.max_supports}
-                    >
-                      Support ({activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length || 0}/{activeExpeditionForSignup.max_supports})
-                    </option>
-                  )}
-                </select>
+                <CustomSelect
+                  label="Wybierz Rolę *"
+                  value={signupData.role_type}
+                  onChange={(val) => setFormSignupData((prev) => ({ ...prev, role_type: val }))}
+                  options={[
+                    activeExpeditionForSignup.max_tanks > 0 && {
+                      value: 'Tank',
+                      label: `Tank (${activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Tank').length || 0}/${activeExpeditionForSignup.max_tanks})`
+                    },
+                    activeExpeditionForSignup.max_healers > 0 && {
+                      value: 'Healer',
+                      label: `Healer (${activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Healer').length || 0}/${activeExpeditionForSignup.max_healers})`
+                    },
+                    activeExpeditionForSignup.max_dps > 0 && {
+                      value: 'DPS',
+                      label: `DPS (${activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'DPS').length || 0}/${activeExpeditionForSignup.max_dps})`
+                    },
+                    activeExpeditionForSignup.max_supports > 0 && {
+                      value: 'Support',
+                      label: `Support (${activeExpeditionForSignup.expedition_signups?.filter(s => s.role_type === 'Support').length || 0}/${activeExpeditionForSignup.max_supports})`
+                    },
+                  ].filter(Boolean)}
+                />
               </div>
 
               <div>

@@ -1,5 +1,7 @@
 'use client'
 
+import CustomSelect from '@/components/ui/CustomSelect'
+
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -382,19 +384,30 @@ export default function ProfilePage() {
                       }`}
                     />
                   </label>
-                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Serwer główny
-                    <select value={formData.main_server} onChange={(event) => setFormData({ ...formData, main_server: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none">
-                      <option value="Europa">Europa</option><option value="Ameryka">Ameryka</option><option value="Azja">Azja</option>
-                    </select>
-                  </label>
+                  <div>
+                    <CustomSelect
+                      label="Serwer główny"
+                      value={formData.main_server}
+                      onChange={(val) => setFormData({ ...formData, main_server: val })}
+                      options={['Europa', 'Ameryka', 'Azja']}
+                    />
+                  </div>
                   <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Nazwa gildii
-                    <input type="text" maxLength={100} value={formData.guild_name} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
+                    <input type="text" maxLength={100} value={formData.guild_name} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none font-mono" />
                   </label>
-                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Główna rola
-                    <select value={formData.main_role} onChange={(event) => setFormData({ ...formData, main_role: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none">
-                      <option value="Tank">Tank</option><option value="Healer">Healer</option><option value="DPS">DPS</option><option value="Support">Support / Utility</option>
-                    </select>
-                  </label>
+                  <div>
+                    <CustomSelect
+                      label="Główna rola"
+                      value={formData.main_role}
+                      onChange={(val) => setFormData({ ...formData, main_role: val })}
+                      options={[
+                        'Tank',
+                        'Healer',
+                        'DPS',
+                        { value: 'Support', label: 'Support / Utility' },
+                      ]}
+                    />
+                  </div>
                   <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Średnie Item Power
                     <input type="number" min="0" max="3000" value={formData.avg_ip} onChange={(event) => setFormData({ ...formData, avg_ip: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
                   </label>

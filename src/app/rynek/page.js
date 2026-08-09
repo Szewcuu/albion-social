@@ -6,6 +6,7 @@ import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } fr
 import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 import ContactSellerModal from '@/components/market/ContactSellerModal'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
@@ -60,13 +61,15 @@ export default function Rynek() {
       return
     }
 
+    const contactVal = formData.contact_info?.trim() || 'W grze'
     const insertPayload = {
       title: formData.title.trim(),
       item_name: formData.item_name ? formData.item_name.trim() : formData.title.trim(),
       price: parseInt(formData.price),
       city: formData.city,
       category: formData.category,
-      contact_info: formData.contact_info ? formData.contact_info.trim() : '',
+      contact: contactVal,
+      contact_info: contactVal,
       user_id: user.id,
     }
 
@@ -186,50 +189,32 @@ export default function Rynek() {
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Kategoria</label>
-                      <select 
-                        value={formData.category} 
-                        onChange={e => setFormData({ ...formData, category: e.target.value })} 
-                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
-                      >
-                        <option value="Ekwipunek">Ekwipunek / Bronie</option>
-                        <option value="Wierzchowce">Wierzchowce</option>
-                        <option value="Surowce">Surowce / Materialy</option>
-                        <option value="Jedzenie &amp; Potiony">Jedzenie &amp; Mikstury</option>
-                        <option value="Inne">Inne</option>
-                      </select>
+                      <CustomSelect
+                        label="Kategoria"
+                        value={formData.category}
+                        onChange={(val) => setFormData({ ...formData, category: val })}
+                        options={['Ekwipunek', 'Wierzchowce', 'Surowce', 'Jedzenie & Potiony', 'Inne']}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Lokalizacja / Miasto</label>
-                      <select 
-                        value={formData.city} 
-                        onChange={e => setFormData({ ...formData, city: e.target.value })} 
-                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
-                      >
-                        <option value="Caerleon">Caerleon</option>
-                        <option value="Martlock">Martlock</option>
-                        <option value="Lymhurst">Lymhurst</option>
-                        <option value="Bridgewatch">Bridgewatch</option>
-                        <option value="Fort Sterling">Fort Sterling</option>
-                        <option value="Thetford">Thetford</option>
-                        <option value="Brecilien">Brecilien</option>
-                      </select>
+                      <CustomSelect
+                        label="Lokalizacja / Miasto"
+                        value={formData.city}
+                        onChange={(val) => setFormData({ ...formData, city: val })}
+                        options={['Caerleon', 'Martlock', 'Lymhurst', 'Bridgewatch', 'Fort Sterling', 'Thetford', 'Brecilien']}
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Serwer</label>
-                      <select 
-                        value={formData.server} 
-                        onChange={e => setFormData({ ...formData, server: e.target.value })} 
-                        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-200 outline-none text-xs cursor-pointer"
-                      >
-                        <option value="Europa">Europa</option>
-                        <option value="Ameryka">Ameryka</option>
-                        <option value="Azja">Azja</option>
-                      </select>
+                      <CustomSelect
+                        label="Serwer"
+                        value={formData.server}
+                        onChange={(val) => setFormData({ ...formData, server: val })}
+                        options={['Europa', 'Ameryka', 'Azja']}
+                      />
                     </div>
                   </div>
 
@@ -239,7 +224,7 @@ export default function Rynek() {
                       type="text" 
                       value={formData.contact_info} 
                       onChange={e => setFormData({ ...formData, contact_info: e.target.value })} 
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
                       placeholder="np. Pisz na priv w grze lub Discord: Szewczykos" 
                     />
                   </div>
@@ -267,42 +252,50 @@ export default function Rynek() {
               </div>
               <div className="relative">
                 <label htmlFor="market-offer-search" className="sr-only">Szukaj przedmiotów na rynku</label>
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input 
                   id="market-offer-search"
                   type="text" 
                   placeholder="Szukaj przedmiotów na rynku..." 
                   value={searchTerm} 
                   onChange={e => setSearchTerm(e.target.value)} 
-                  className="min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pl-9 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
+                  className="min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] pl-11 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)] font-mono"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
-                  <label htmlFor="market-city-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Miasto</label>
-                  <select id="market-city-filter" value={filterCity} onChange={e => setFilterCity(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
-                    <option value="ALL">Wszystkie Miasta</option>
-                    <option value="Caerleon">Caerleon</option>
-                    <option value="Martlock">Martlock</option>
-                    <option value="Lymhurst">Lymhurst</option>
-                    <option value="Bridgewatch">Bridgewatch</option>
-                    <option value="Fort Sterling">Fort Sterling</option>
-                    <option value="Thetford">Thetford</option>
-                    <option value="Brecilien">Brecilien</option>
-                  </select>
+                  <CustomSelect
+                    label="Miasto"
+                    value={filterCity}
+                    onChange={(val) => setFilterCity(val)}
+                    options={[
+                      { value: 'ALL', label: 'Wszystkie Miasta' },
+                      'Caerleon',
+                      'Martlock',
+                      'Lymhurst',
+                      'Bridgewatch',
+                      'Fort Sterling',
+                      'Thetford',
+                      'Brecilien',
+                    ]}
+                  />
                 </div>
 
                 <div>
-                  <label htmlFor="market-category-filter" className="mb-1 block text-[10px] font-bold uppercase text-gray-300">Kategoria</label>
-                  <select id="market-category-filter" value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="min-h-11 w-full cursor-pointer rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] p-2 text-gray-200 outline-none">
-                    <option value="ALL">Wszystkie Kategorie</option>
-                    <option value="Ekwipunek">Ekwipunek</option>
-                    <option value="Wierzchowce">Wierzchowce</option>
-                    <option value="Surowce">Surowce</option>
-                    <option value="Jedzenie &amp; Potiony">Jedzenie &amp; Potiony</option>
-                    <option value="Inne">Inne</option>
-                  </select>
+                  <CustomSelect
+                    label="Kategoria"
+                    value={filterCategory}
+                    onChange={(val) => setFilterCategory(val)}
+                    options={[
+                      { value: 'ALL', label: 'Wszystkie Kategorie' },
+                      'Ekwipunek',
+                      'Wierzchowce',
+                      'Surowce',
+                      'Jedzenie & Potiony',
+                      'Inne',
+                    ]}
+                  />
                 </div>
               </div>
             </div>
