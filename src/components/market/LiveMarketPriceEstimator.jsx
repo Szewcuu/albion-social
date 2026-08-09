@@ -26,10 +26,16 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
       try {
         const formattedId = itemId.trim().toUpperCase().replace(/\s+/g, '_')
         const res = await fetch(`/api/prices?mode=prices&items=${encodeURIComponent(formattedId)}&region=${region}`)
-        const data = await res.json()
+        const text = await res.text()
+        let data = {}
+        try {
+          data = text ? JSON.parse(text) : {}
+        } catch {
+          data = {}
+        }
 
         if (!res.ok || data.error) {
-          throw new Error(data.error?.message || 'Brak danych rynkowych dla tego przedmiotu.')
+          throw new Error(typeof data.error === 'string' ? data.error : data.error?.message || 'Brak danych rynkowych dla tego przedmiotu.')
         }
 
         const prices = data.data || []

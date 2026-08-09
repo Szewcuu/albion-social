@@ -60,13 +60,17 @@ export default function Rynek() {
       return
     }
 
-    const { error } = await supabase.from('market_items').insert([
-      {
-        ...formData,
-        price: parseInt(formData.price),
-        user_id: user.id
-      }
-    ])
+    const insertPayload = {
+      title: formData.title.trim(),
+      item_name: formData.item_name ? formData.item_name.trim() : formData.title.trim(),
+      price: parseInt(formData.price),
+      city: formData.city,
+      category: formData.category,
+      contact_info: formData.contact_info ? formData.contact_info.trim() : '',
+      user_id: user.id,
+    }
+
+    const { error } = await supabase.from('market_items').insert([insertPayload])
 
     if (error) {
       setFormMessage(`Błąd: ${error.message}`)
