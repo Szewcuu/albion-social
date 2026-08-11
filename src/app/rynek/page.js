@@ -146,7 +146,6 @@ export default function Rynek() {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-        <MarketIntelligence />
 
         <div className="mt-4 flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
           <div>
@@ -279,13 +278,10 @@ export default function Rynek() {
                 </form>
               )}
             </div>
-            <GoldExchangeWidget />
           </div>
 
           {/* PRAWA KOLUMNA: TABLICA OGŁOSZEŃ */}
           <div className="lg:col-span-8 space-y-4">
-            <TradeArbitrageCalculator />
-            
             {/* WYSZUKIWARKA I FILTRY */}
             <div className="panel space-y-4 p-5 relative z-30 !overflow-visible">
               <div className="flex items-center justify-between">
@@ -482,6 +478,10 @@ export default function Rynek() {
           </div>
 
         </div>
+
+        {/* KURS ZŁOTA + INTEL RYNKOWY — POD OFERTAMI */}
+        <GoldExchangeWidget />
+        <MarketIntelligence />
       </div>
 
       <ContactSellerModal

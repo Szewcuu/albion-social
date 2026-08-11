@@ -228,6 +228,39 @@ export default function PublicProfilePage() {
         </div>
       </div>
 
+      {/* Trophies & Achievements */}
+      {(() => {
+        const badges = []
+        if (isVerified) badges.push({ emoji: '🛡️', label: 'Zweryfikowany', desc: 'Potwierdzona postać w Albion Online', color: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300' })
+        if (builds.length >= 1) badges.push({ emoji: '⚔️', label: 'Rzemieślnik Buildów', desc: 'Opublikował co najmniej 1 build', color: 'border-amber-400/30 bg-amber-500/10 text-amber-300' })
+        if (builds.length >= 5) badges.push({ emoji: '🏹', label: 'Mistrz Kuźni', desc: '5+ buildów w Zbrojowni', color: 'border-amber-400/30 bg-amber-500/10 text-amber-300' })
+        if (offers.length >= 1) badges.push({ emoji: '🏪', label: 'Kupiec', desc: 'Wystawił co najmniej 1 ofertę na Rynku', color: 'border-sky-400/30 bg-sky-500/10 text-sky-300' })
+        if (offers.length >= 5) badges.push({ emoji: '💰', label: 'Baron Handlowy', desc: '5+ ofert na Rynku P2P', color: 'border-sky-400/30 bg-sky-500/10 text-sky-300' })
+        if (expeditions.length >= 1) badges.push({ emoji: '🧭', label: 'Poszukiwacz Przygód', desc: 'Uczestnik co najmniej 1 wyprawy', color: 'border-violet-400/30 bg-violet-500/10 text-violet-300' })
+        if (profile.guild_name) badges.push({ emoji: '⚜️', label: 'Gildyjny', desc: `Członek gildii: ${profile.guild_name}`, color: 'border-rose-400/30 bg-rose-500/10 text-rose-300' })
+        const joinDays = profile.created_at ? Math.floor((new Date() - new Date(profile.created_at)) / (1000 * 60 * 60 * 24)) : 0
+        if (joinDays >= 30) badges.push({ emoji: '🏆', label: 'Weteran Portalu', desc: '30+ dni aktywności na portalu', color: 'border-yellow-400/30 bg-yellow-500/10 text-yellow-300' })
+
+        if (badges.length === 0) return null
+        return (
+          <div className="panel mb-6 p-5">
+            <p className="text-[9px] font-black uppercase tracking-[.2em] text-amber-400 mb-3">Trofea i Osiągnięcia</p>
+            <div className="flex flex-wrap gap-2">
+              {badges.map((badge, i) => (
+                <div
+                  key={i}
+                  title={badge.desc}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold font-mono ${badge.color}`}
+                >
+                  <span>{badge.emoji}</span>
+                  <span>{badge.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Tabs Navigation */}
       <div className="flex gap-2 mb-6 border-b border-[var(--border)] pb-3">
         <button

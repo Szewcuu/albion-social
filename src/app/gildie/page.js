@@ -130,6 +130,15 @@ export default function Gildie() {
       </div>
 
 <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+
+      {/* INFORMACJA O ŹRÓDLE DANYCH */}
+      <div className="flex items-center gap-3 p-3.5 rounded-2xl border border-sky-400/20 bg-sky-500/5 text-[10px] font-mono text-sky-300">
+        <HelpCircle className="w-4 h-4 shrink-0 text-sky-400" />
+        <p>
+          <strong>Uwaga:</strong> Dane profilów gildii z Albion Online (statystyki PvP, KD, sława) są pobierane z zewnętrznego <strong>Gameinfo API</strong> i mogą mieć opóźnienie.
+          Obecność w rejestrze portalu zarządzają Liderzy Gildii samodzielnie.
+        </p>
+      </div>
         
 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           

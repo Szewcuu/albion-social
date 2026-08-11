@@ -5,6 +5,7 @@ import CustomSelect from '@/components/ui/CustomSelect'
 import { useState, useEffect, useCallback } from 'react'
 import { Hammer, Sparkles, TrendingUp, TrendingDown, Coins, Percent, Zap, LoaderCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import GoldExchangeWidget from '@/components/economy/GoldExchangeWidget'
+import TradeArbitrageCalculator from '@/components/market/TradeArbitrageCalculator'
 
 const RESOURCES = [
   { id: 'CLOTH', label: 'Tkanina (Cloth)', rawId: 'FIBER' },
@@ -159,6 +160,7 @@ export default function CraftingCalculatorPage() {
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
         <GoldExchangeWidget />
+        <TradeArbitrageCalculator />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* USTAWIENIA CRAFTINGU */}
           <div className="lg:col-span-5 space-y-5">

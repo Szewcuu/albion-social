@@ -7,6 +7,7 @@ import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { buildFromDbRow } from '@/lib/buildSlots'
 import BuildComparator from '@/components/builds/BuildComparator'
 import FavoriteButton from '@/components/ui/FavoriteButton'
+import SquadCompBuilder from '@/components/builds/SquadCompBuilder'
 
 const ALBION_CATEGORIES = [
   { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
@@ -108,6 +109,8 @@ export default function BuildyPage() {
           </Link>
         </div>
       </div>
+
+      <SquadCompBuilder />
 
       <BuildComparator builds={builds} />
 
