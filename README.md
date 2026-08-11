@@ -258,6 +258,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Przycisk "Obserwuj" dla graczy, gildii i buildów zapisuący subskrypcje powiadomień w profilu użytkownika.
 - [x] Komponent Centrum Powiadomień (`NotificationCenterModal.jsx`) z powiadomieniami o nowych wyprawach, ofertach rynkowych i aktualizacjach obserwowanych gildii.
 
+### Etap P12 — PWA Offline Service Worker, Manifest & Wydajność Web Vitals
+
+- [x] Rejestracja Service Workera dla aplikacji PWA umożliwiająca zapisywanie w pamięci podręcznej i działanie w trybie offline.
+- [x] Konfiguracja powiadomień diagnostycznych wydajności (Speed Insights / Core Web Vitals) dla ulepszenia czasy ładowania na urządzeniach mobilnych.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
