@@ -144,12 +144,12 @@ export default function Home() {
   const displayName = (user.user_metadata?.full_name || user.user_metadata?.name || 'Wojowniku').replace(/#0$/, '')
 
   return (
-    <div className="member-home">
+    <div className="member-home space-y-6">
       <section className="member-intro" aria-labelledby="member-title">
         <div>
           <span className="welcome-kicker"><Activity aria-hidden="true" /> Kompania online</span>
           <h1 id="member-title">Witaj w tawernie, <em>{displayName}</em></h1>
-          <p>Rozmawiaj ze społecznością, a gdy będziesz gotowy — wybierz narzędzie z arsenału poniżej.</p>
+          <p>Wybierz moduł z arsenału poniżej lub dołącz do dyskusji na żywo w czacie społeczności.</p>
         </div>
         <dl className="member-stats">
           <div><dt>Gildie</dt><dd>{globalStats.guildsCount}</dd></div>
@@ -158,14 +158,11 @@ export default function Home() {
         </dl>
       </section>
 
-      <ChatBox user={user} isAdmin={isAdmin} />
-
-      <PortalAnalyticsWidget />
-
+      {/* 1. ARSENAŁ MODUŁÓW NA SAMEJ GÓRZE */}
       <section className="realm-section member-arsenal" aria-labelledby="arsenal-title">
         <div className="section-heading">
-          <div><span className="section-index">I</span><p>Arsenał społeczności</p><h2 id="arsenal-title">Wybierz swój szlak</h2></div>
-          <p className="section-intro">To jedyny katalog modułów na stronie głównej. Stała nawigacja po lewej służy do szybkiego przemieszczania się podczas pracy.</p>
+          <div><span className="section-index">I</span><p>Arsenał społeczności</p><h2 id="arsenal-title">Główne Moduły Portalu</h2></div>
+          <p className="section-intro">Szybki dostęp do wszystkich narzędzi i baz wiedzy Albion Polska.</p>
         </div>
         <div className="module-grid">
           {MODULES.map((module) => {
@@ -183,6 +180,16 @@ export default function Home() {
           })}
         </div>
       </section>
+
+      {/* 2. DWA KOLUMNY: CZAT I STATYSTYKI OBOJĘTNIE OBOK SIEBIE */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="lg:col-span-7">
+          <ChatBox user={user} isAdmin={isAdmin} />
+        </div>
+        <div className="lg:col-span-5">
+          <PortalAnalyticsWidget />
+        </div>
+      </div>
     </div>
   )
 }
