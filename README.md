@@ -278,6 +278,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Utworzenie zestawu testów integracyjnych `e2e/portal.spec.js` weryfikującego główne podstrony (Tawerna, Zbrojownia Buildów, Rynek P2P, Kalkulator Craftingu, Loot Split).
 - [x] Dodanie skryptu testowania `npm run test:e2e` dla ciągłej weryfikacji przepływów przed wdrożeniem na produkcję.
 
+### Etap P16 — Wygasanie, Odnawianie & Archiwizacja Ofert Rynkowych
+
+- [x] Automatyczne obliczanie czasu ważności ogłoszeń rynkowych P2P (standardowo 7 dni aktywności).
+- [x] Wskaźniki stanu oferty ("Aktywna", "Wymaga odnowienia", "Wygasła / Zarchiwizowana") z opcją 1-klikowego odnowienia oferty przez sprzedawcę.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.

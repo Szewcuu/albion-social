@@ -3,7 +3,7 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User, ExternalLink } from 'lucide-react'
+import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User, ExternalLink, RefreshCw, Clock } from 'lucide-react'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 import ContactSellerModal from '@/components/market/ContactSellerModal'
@@ -41,6 +41,17 @@ export default function Rynek() {
     if (!error && data) setOffers(data)
     setLoading(false)
   }, [])
+
+  const handleRenewOffer = async (offerId) => {
+    const { error } = await supabase
+      .from('market_items')
+      .update({ created_at: new Date().toISOString() })
+      .eq('id', offerId)
+
+    if (!error) {
+      fetchOffers()
+    }
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -353,18 +364,24 @@ export default function Rynek() {
                 </div>
               ) : (
                 filteredOffers.map(offer => {
-                  const isOwner = user?.id === offer.user_id
-                  const cleanItemName = offer.item_name ? offer.item_name.trim().toUpperCase() : ''
+                  const isOwner = user && user.id === offer.user_id
+                  const cleanItemName = (offer.item_name || '').trim().toUpperCase()
+                  const createdDate = offer.created_at ? new Date(offer.created_at) : new Date()
+                  const ageInDays = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24))
+                  const daysRemaining = Math.max(0, 7 - ageInDays)
+                  const isExpired = daysRemaining === 0
 
                   return (
-                    <article key={offer.id} className="panel panel-interactive flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-                      
-                      <div className="flex min-w-0 gap-4 items-center">
-                        <div className="h-14 w-14 shrink-0 flex items-center justify-center rounded-xl border border-amber-400/30 bg-[#090507] p-1 shadow-md overflow-hidden relative">
+                    <article
+                      key={offer.id}
+                      className={`panel p-5 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isExpired ? 'opacity-70 border-rose-500/20' : 'hover:border-[var(--amber-muted)]'}`}
+                    >
+                      <div className="flex items-start gap-4 min-w-0 flex-1">
+                        <div className="h-16 w-16 rounded-2xl bg-black/40 border border-white/10 p-2 flex items-center justify-center shrink-0 relative overflow-hidden">
                           {cleanItemName.length >= 3 ? (
-                            // eslint-disable-next-line @next/next/no-img-element
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
-                              src={`https://render.albiononline.com/v1/item/${encodeURIComponent(cleanItemName)}.png?quality=1&size=64`}
+                              src={`https://render.albiononline.com/v1/item/${encodeURIComponent(cleanItemName)}.png?count=1&quality=1`}
                               alt={offer.title}
                               className="h-12 w-12 object-contain"
                               onError={(e) => {
@@ -381,10 +398,15 @@ export default function Rynek() {
                         </div>
 
                         <div className="min-w-0 space-y-1.5">
-                          <div className="flex items-center gap-2 font-mono text-[10px]">
+                          <div className="flex items-center gap-2 font-mono text-[10px] flex-wrap">
                             <span className="bg-sky-500/10 text-sky-400 border border-sky-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase">{offer.category || 'Przedmiot'}</span>
                             <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> {offer.city}</span>
                             <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> {offer.server || 'Europa'}</span>
+                            {isExpired ? (
+                              <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Clock className="w-3 h-3 text-rose-400" /> Wygasła</span>
+                            ) : (
+                              <span className="bg-amber-400/10 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400" /> Ważna: {daysRemaining}d</span>
+                            )}
                           </div>
 
                           <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
@@ -419,12 +441,21 @@ export default function Rynek() {
                         </div>
 
                         {isOwner ? (
-                          <button 
-                            onClick={() => handleDeleteOffer(offer.id)} 
-                            className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 p-2 rounded-xl transition cursor-pointer flex items-center gap-1 text-[10px] font-mono font-bold"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Usuń
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button 
+                              onClick={() => handleRenewOffer(offer.id)} 
+                              className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30 text-amber-300 p-2 rounded-xl transition cursor-pointer flex items-center gap-1 text-[10px] font-mono font-bold"
+                              title="Odśwież ważność oferty na kolejne 7 dni"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5 text-amber-400" /> Odnów (7d)
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteOffer(offer.id)} 
+                              className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 p-2 rounded-xl transition cursor-pointer flex items-center gap-1 text-[10px] font-mono font-bold"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Usuń
+                            </button>
+                          </div>
                         ) : (
                           <button
                             onClick={() => setSelectedOfferForContact(offer)}
