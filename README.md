@@ -273,6 +273,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Utworzenie przepływu pracy GitHub Actions (`.github/workflows/ci.yml`) weryfikującego poprawność budowania aplikacji (`npm run build`) przy każdym commit/push oraz Pull Requescie.
 - [x] Automatyczna kontrola błędów statycznych, Next.js Turbopack builda oraz TypeScript typecheck przed wdrożeniem.
 
+### Etap P15 — Zestaw Testów End-to-End (E2E Integration Test Suite)
+
+- [x] Utworzenie zestawu testów integracyjnych `e2e/portal.spec.js` weryfikującego główne podstrony (Tawerna, Zbrojownia Buildów, Rynek P2P, Kalkulator Craftingu, Loot Split).
+- [x] Dodanie skryptu testowania `npm run test:e2e` dla ciągłej weryfikacji przepływów przed wdrożeniem na produkcję.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
