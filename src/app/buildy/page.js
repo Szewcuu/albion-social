@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame } from 'lucide-react'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { buildFromDbRow } from '@/lib/buildSlots'
+import BuildComparator from '@/components/builds/BuildComparator'
 
 const ALBION_CATEGORIES = [
   { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
@@ -106,6 +107,8 @@ export default function BuildyPage() {
           </Link>
         </div>
       </div>
+
+      <BuildComparator builds={builds} />
 
       {/* Builds Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

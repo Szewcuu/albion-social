@@ -237,6 +237,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Wyświetlanie sumarycznej wartości zniszczonego sprzętu (z podziałem na zwycięzcę i pokonanego) w monetach Silver (~1.5M Silver).
 - [x] Kalendarz nadchodzących wydarzeń gildyjnych i wypraw z opcją zapisów i powiadomień.
 
+### Etap P8 — Porównywarka Buildów & Kalkulator Kosztów Zestawów
+
+- [x] Narzędzie do porównywania 2 zestawów bojowych side-by-side (ekwipunek, spelle, szacowane IP i koszty).
+- [x] Kalkulator łącznego kosztu zakupu całego buildu w miastach królewskich na podstawie danych cenowych z API.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
