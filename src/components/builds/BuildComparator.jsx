@@ -92,7 +92,7 @@ export default function BuildComparator({ builds = [] }) {
   const cheaperBuild = costA < costB ? 'A' : costA > costB ? 'B' : 'equal'
 
   return (
-    <div className="panel p-5 sm:p-7 space-y-6">
+    <div className="panel p-5 sm:p-7 space-y-6 mb-6 sm:mb-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/8 pb-5">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-400/30 text-amber-300">

@@ -29,14 +29,50 @@ const ENCHANTS = [
   { level: '4', label: '@4 (Pristine)' },
 ]
 
+const CITY_BONUSES = {
+  'Lymhurst': { bonusResource: 'PLANKS', baseRrr: 28.5, focusRrr: 47.9, label: 'Lymhurst (Bonus: Drewno / Planks)' },
+  'Martlock': { bonusResource: 'LEATHER', baseRrr: 28.5, focusRrr: 47.9, label: 'Martlock (Bonus: Skóra / Leather)' },
+  'Thetford': { bonusResource: 'METALBAR', baseRrr: 28.5, focusRrr: 47.9, label: 'Thetford (Bonus: Metal / Ore)' },
+  'Fort Sterling': { bonusResource: 'CLOTH', baseRrr: 28.5, focusRrr: 47.9, label: 'Fort Sterling (Bonus: Tkanina / Cloth)' },
+  'Bridgewatch': { bonusResource: 'STONEBLOCK', baseRrr: 28.5, focusRrr: 47.9, label: 'Bridgewatch (Bonus: Kamień / Stone)' },
+  'Caerleon': { bonusResource: 'ALL', baseRrr: 15.2, focusRrr: 43.5, label: 'Caerleon (Czerwona Strefa)' },
+  'Brecilien': { bonusResource: 'ALL', baseRrr: 20.0, focusRrr: 45.0, label: 'Brecilien (Mgły)' },
+}
+
 export default function CraftingCalculatorPage() {
   const [resourceType, setResourceType] = useState('PLANKS')
   const [tier, setTier] = useState('T5')
   const [enchant, setEnchant] = useState('0')
   const [server, setServer] = useState('Europa')
-  const [rrr, setRrr] = useState(36.7) // RRR %
+  const [selectedCity, setSelectedCity] = useState('Lymhurst')
+  const [useFocus, setUseFocus] = useState(true)
+  const [rrr, setRrr] = useState(47.9) // RRR %
   const [stationTax, setStationTax] = useState(500) // Tax per 100 nutrition
   const [quantity, setQuantity] = useState(100)
+
+  const applyCityRrr = useCallback((city, focus, resType) => {
+    const cityConfig = CITY_BONUSES[city] || CITY_BONUSES['Lymhurst']
+    const hasBonus = cityConfig.bonusResource === 'ALL' || cityConfig.bonusResource === resType
+    const baseRrr = hasBonus ? cityConfig.baseRrr : 15.2
+    const finalRrr = focus ? (hasBonus ? cityConfig.focusRrr : 43.5) : baseRrr
+    setRrr(finalRrr)
+  }, [])
+
+  const handleCityChange = (newCity) => {
+    setSelectedCity(newCity)
+    applyCityRrr(newCity, useFocus, resourceType)
+  }
+
+  const handleFocusToggle = () => {
+    const newFocus = !useFocus
+    setUseFocus(newFocus)
+    applyCityRrr(selectedCity, newFocus, resourceType)
+  }
+
+  const handleResourceChange = (newRes) => {
+    setResourceType(newRes)
+    applyCityRrr(selectedCity, useFocus, newRes)
+  }
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -144,9 +180,35 @@ export default function CraftingCalculatorPage() {
                   <CustomSelect
                     label="Typ Surowca / Przedmiotu"
                     value={resourceType}
-                    onChange={(val) => setResourceType(val)}
+                    onChange={(val) => handleResourceChange(val)}
                     options={RESOURCES.map((r) => ({ value: r.id, label: r.label }))}
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <CustomSelect
+                      label="Miasto Rzemiosła (Bonus RRR)"
+                      value={selectedCity}
+                      onChange={(val) => handleCityChange(val)}
+                      options={Object.keys(CITY_BONUSES).map(city => ({ value: city, label: CITY_BONUSES[city].label }))}
+                    />
+                  </div>
+
+                  <div className="flex flex-col justify-end">
+                    <button
+                      type="button"
+                      onClick={handleFocusToggle}
+                      className={`w-full py-3 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                        useFocus
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
+                          : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                      }`}
+                    >
+                      <Zap className={`w-3.5 h-3.5 ${useFocus ? 'text-amber-400' : 'text-gray-500'}`} />
+                      <span>{useFocus ? 'Skupienie (Focus) ON' : 'Skupienie (Focus) OFF'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

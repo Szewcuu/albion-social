@@ -242,6 +242,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Narzędzie do porównywania 2 zestawów bojowych side-by-side (ekwipunek, spelle, szacowane IP i koszty).
 - [x] Kalkulator łącznego kosztu zakupu całego buildu w miastach królewskich na podstawie danych cenowych z API.
 
+### Etap P9 — Kalkulator Bonusu Miast & Podatku Stoiska Rzemieślniczego
+
+- [x] Automatyczne dobieranie wskaźnika zwrotu surowców (RRR %) dla każdego miasta (Martlock, Lymhurst, Fort Sterling, Bridgewatch, Thetford, Caerleon, Brecilien).
+- [x] Uwzględnianie opłaty odżywczej stoiska gracza (Nutrition Tax Fee / 100 Nutrition) w wyliczeniu czystego zysku rzemieślniczego.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
