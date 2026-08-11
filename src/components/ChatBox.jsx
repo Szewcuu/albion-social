@@ -203,7 +203,7 @@ export default function ChatBox({ user, isAdmin }) {
             </button>
           </div>
 
-          <div className="community-posts" aria-live="polite">
+          <div className="community-posts !max-h-[220px] overflow-y-auto" aria-live="polite">
             {loading ? (
               <div className="community-empty"><RefreshCw className="spin" aria-hidden="true" /><strong>Otwieramy kronikę rozmów…</strong></div>
             ) : loadError ? (
@@ -251,7 +251,7 @@ export default function ChatBox({ user, isAdmin }) {
             })}
           </div>
 
-          <form className="community-composer" onSubmit={handleSendChatMessage}>
+          <form className="community-composer !p-3" onSubmit={handleSendChatMessage}>
             {replyingTo && (
               <div className="composer-reply-preview">
                 <CornerUpLeft aria-hidden="true" />
@@ -259,19 +259,21 @@ export default function ChatBox({ user, isAdmin }) {
                 <button type="button" onClick={() => setReplyingTo(null)} aria-label="Anuluj odpowiedź"><X aria-hidden="true" /></button>
               </div>
             )}
-            <label htmlFor="community-message">Napisz wiadomość w tawernie</label>
+            <label htmlFor="community-message" className="sr-only">Napisz wiadomość w tawernie</label>
             <div>
               <textarea
                 ref={composerRef}
                 id="community-message"
                 maxLength={500}
+                rows={1}
                 value={newMessage}
                 onChange={(event) => setNewMessage(event.target.value)}
                 onKeyDown={handleComposerKeyDown}
-                placeholder="Podziel się informacją, zadaj pytanie albo zbierz drużynę…"
+                placeholder="Napisz wiadomość w tawernie (Enter wyślij)…"
+                className="!min-h-[42px] !h-10 !py-2.5"
               />
               <button type="submit" className="btn btn-primary" disabled={!newMessage.trim() || isSending}>
-                <Send aria-hidden="true" /> {isSending ? 'Wysyłanie…' : 'Opublikuj'}
+                <Send aria-hidden="true" /> {isSending ? '...' : 'Wyślij'}
               </button>
             </div>
             <footer><span>{newMessage.length}/500</span><span><kbd>Enter</kbd> wyślij · <kbd>Shift</kbd> + <kbd>Enter</kbd> nowa linia</span></footer>
