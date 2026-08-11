@@ -144,16 +144,15 @@ export default function Home() {
   const displayName = (user.user_metadata?.full_name || user.user_metadata?.name || 'Wojowniku').replace(/#0$/, '')
 
   return (
-    <div className="member-home space-y-6 animate-fade-in">
+    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 space-y-4 animate-fade-in">
       {/* NAGŁÓWEK POWITALNY TAWERNY */}
-      <section className="member-intro p-5 sm:p-6" aria-labelledby="member-title">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <section className="member-intro !p-3.5 sm:!p-4 !m-0" aria-labelledby="member-title">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <span className="welcome-kicker"><Activity aria-hidden="true" /> Główny Punkt Wypadowy</span>
-            <h1 id="member-title" className="text-2xl font-black">Witaj w tawernie, <em>{displayName}</em></h1>
-            <p className="text-xs text-gray-400 mt-1">Dyskutuj na żywo ze społecznością graczy Albion Online.</p>
+            <span className="welcome-kicker !mb-0.5"><Activity aria-hidden="true" /> Główny Punkt Wypadowy</span>
+            <h1 id="member-title" className="text-xl font-black">Witaj w tawernie, <em>{displayName}</em></h1>
           </div>
-          <dl className="member-stats flex items-center gap-4">
+          <dl className="member-stats flex items-center gap-4 text-xs">
             <div><dt>Gildie</dt><dd>{globalStats.guildsCount}</dd></div>
             <div><dt>Oferty rynku</dt><dd>{globalStats.marketOffersCount}</dd></div>
             <div><dt>Serwery</dt><dd><span className="status-dot online" /> Wszystkie</dd></div>
@@ -162,34 +161,30 @@ export default function Home() {
       </section>
 
       {/* DWA KOLUMNY: CZAT I STATYSTYKI */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         <div className="lg:col-span-7">
           <ChatBox user={user} isAdmin={isAdmin} />
         </div>
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4">
           <PortalAnalyticsWidget />
 
           {/* SZYBKIE AKCJE SPOŁECZNOŚCI */}
-          <div className="panel p-5 space-y-3">
-            <h3 className="font-display text-sm font-bold text-white flex items-center gap-2 border-b border-white/8 pb-3">
-              <Flame className="w-4 h-4 text-amber-400" /> Szybkie Akcje Gracza
+          <div className="panel p-4 space-y-2.5">
+            <h3 className="font-display text-xs font-bold text-white flex items-center gap-2 border-b border-white/8 pb-2">
+              <Flame className="w-3.5 h-3.5 text-amber-400" /> Szybkie Akcje Gracza
             </h3>
-            <div className="grid grid-cols-1 gap-2 font-mono text-xs">
-              <Link href="/buildy/create" className="p-3 rounded-xl bg-white/5 hover:bg-amber-500/10 border border-white/8 hover:border-amber-400/40 text-gray-200 hover:text-amber-300 transition flex items-center justify-between">
-                <span className="flex items-center gap-2"><Swords className="w-4 h-4 text-amber-400" /> Stwórz Nowy Build</span>
-                <ChevronRight className="w-4 h-4 text-gray-500" />
+            <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+              <Link href="/buildy/create" className="p-2.5 rounded-xl bg-white/5 hover:bg-amber-500/10 border border-white/8 hover:border-amber-400/40 text-gray-200 hover:text-amber-300 transition flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px]"><Swords className="w-3.5 h-3.5 text-amber-400" /> Stwórz Build</span>
               </Link>
-              <Link href="/rynek" className="p-3 rounded-xl bg-white/5 hover:bg-sky-500/10 border border-white/8 hover:border-sky-400/40 text-gray-200 hover:text-sky-300 transition flex items-center justify-between">
-                <span className="flex items-center gap-2"><ShoppingBag className="w-4 h-4 text-sky-400" /> Wystaw Ofertę na Rynku</span>
-                <ChevronRight className="w-4 h-4 text-gray-500" />
+              <Link href="/rynek" className="p-2.5 rounded-xl bg-white/5 hover:bg-sky-500/10 border border-white/8 hover:border-sky-400/40 text-gray-200 hover:text-sky-300 transition flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px]"><ShoppingBag className="w-3.5 h-3.5 text-sky-400" /> Wystaw Ofertę</span>
               </Link>
-              <Link href="/wyprawy" className="p-3 rounded-xl bg-white/5 hover:bg-purple-500/10 border border-white/8 hover:border-purple-400/40 text-gray-200 hover:text-purple-300 transition flex items-center justify-between">
-                <span className="flex items-center gap-2"><Users className="w-4 h-4 text-purple-400" /> Zorganizuj Wyprawę</span>
-                <ChevronRight className="w-4 h-4 text-gray-500" />
+              <Link href="/wyprawy" className="p-2.5 rounded-xl bg-white/5 hover:bg-purple-500/10 border border-white/8 hover:border-purple-400/40 text-gray-200 hover:text-purple-300 transition flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px]"><Users className="w-3.5 h-3.5 text-purple-400" /> Wyprawa</span>
               </Link>
-              <Link href="/loot-split" className="p-3 rounded-xl bg-white/5 hover:bg-emerald-500/10 border border-white/8 hover:border-emerald-400/40 text-gray-200 hover:text-emerald-300 transition flex items-center justify-between">
-                <span className="flex items-center gap-2"><Coins className="w-4 h-4 text-emerald-400" /> Policzenie Podziału Łupów</span>
-                <ChevronRight className="w-4 h-4 text-gray-500" />
+              <Link href="/loot-split" className="p-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/10 border border-white/8 hover:border-emerald-400/40 text-gray-200 hover:text-emerald-300 transition flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px]"><Coins className="w-3.5 h-3.5 text-emerald-400" /> Loot Split</span>
               </Link>
             </div>
           </div>

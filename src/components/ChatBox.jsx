@@ -182,23 +182,22 @@ export default function ChatBox({ user, isAdmin }) {
   }
 
   return (
-    <section className="community-forum" aria-labelledby="community-title">
-      <header className="community-forum-header">
-        <div>
-          <span className="community-overline"><Users aria-hidden="true" /> Forum kompanii</span>
-          <h2 id="community-title">Tawerna społeczności</h2>
-          <p>Jedna wspólna rozmowa graczy. Handel, rekrutacja i organizacja wypraw pozostają w wyspecjalizowanych modułach.</p>
+    <section className="community-forum !m-0 !w-full rounded-2xl border border-[var(--border)] overflow-hidden" aria-labelledby="community-title">
+      <header className="community-forum-header !py-3 !px-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-amber-400" />
+          <h2 id="community-title" className="text-base font-bold text-white !m-0">Tawerna społeczności</h2>
         </div>
-        <div className={`community-connection ${connectionStatus.toLowerCase()}`}>
+        <div className={`community-connection ${connectionStatus.toLowerCase()} text-xs`}>
           <span className="status-dot" />
-          {connectionStatus === 'LIVE' ? 'Rozmowa na żywo' : connectionStatus === 'ERROR' ? 'Tryb odświeżania' : 'Łączenie'}
+          {connectionStatus === 'LIVE' ? 'Na żywo' : 'Łączenie'}
         </div>
       </header>
 
       <div className="community-layout community-single">
         <div className="community-thread">
-          <div className="community-thread-heading">
-            <div><Sparkles aria-hidden="true" /><span><strong>Główna sala tawerny</strong><small>{chatMessages.length} ostatnich wiadomości</small></span></div>
+          <div className="community-thread-heading !py-2 !px-4 text-xs">
+            <div><Sparkles aria-hidden="true" /><span className="text-xs"><strong>Główna sala tawerny</strong> <small className="text-[10px]">({chatMessages.length} wiadomości)</small></span></div>
             <button type="button" onClick={fetchMessages} aria-label="Odśwież rozmowę" disabled={loading}>
               <RefreshCw aria-hidden="true" className={loading ? 'spin' : ''} />
             </button>
