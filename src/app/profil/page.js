@@ -5,6 +5,7 @@ import CustomSelect from '@/components/ui/CustomSelect'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import AccountDeletionModal from '@/components/profile/AccountDeletionModal'
 import {
   Activity,
   Award,
@@ -24,6 +25,8 @@ import {
   Swords,
   Trophy,
   UserRoundCheck,
+  Zap,
+  Trash2,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import CharacterVerificationModal from '@/components/CharacterVerificationModal'
@@ -80,6 +83,7 @@ export default function ProfilePage() {
   const [myOffers, setMyOffers] = useState([])
   const [notice, setNotice] = useState(null)
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [verifiedState, setVerifiedState] = useState(null)
 
   const fetchProfileData = useCallback(async (userId) => {
@@ -316,7 +320,7 @@ export default function ProfilePage() {
               </div>
             </section>
 
-            <nav className="panel rounded-[24px] p-3" aria-label="Skróty profilu">
+            <nav className="panel rounded-[24px] p-3 space-y-1" aria-label="Skróty profilu">
               {[
                 ['/killboard', Swords, 'Otwórz Killboard', 'Historia walk i statystyki'],
                 ['/wyprawy', Shield, 'Zarządzaj wyprawami', `${myExpeditions.length} utworzonych`],
@@ -328,6 +332,16 @@ export default function ProfilePage() {
                   <ChevronRight className="h-4 w-4 text-[#5f5b55] transition group-hover:translate-x-0.5 group-hover:text-[var(--amber)]" />
                 </Link>
               ))}
+
+              <div className="pt-2 border-t border-white/8">
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="w-full py-2.5 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-mono font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Usuń Konto & Dane RODO
+                </button>
+              </div>
             </nav>
           </aside>
 
@@ -461,6 +475,12 @@ export default function ProfilePage() {
         defaultNick={formData.ingame_nick}
         defaultServer={formData.main_server}
         onVerifySuccess={handleVerifySuccess}
+      />
+
+      <AccountDeletionModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        userId={user?.id}
       />
     </div>
   )

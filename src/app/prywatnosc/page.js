@@ -50,9 +50,9 @@ export default function PrivacyPage() {
     },
     {
       id: 'retention',
-      title: 'Okres przechowywania',
+      title: 'Okres przechowywania & Procedura Usunięcia Konta (RODO)',
       icon: Clock3,
-      content: <><p>Dane konta są przechowywane przez czas korzystania z profilu i okres niezbędny do obsługi usunięcia konta lub roszczeń. Treści publiczne pozostają do ich usunięcia przez autora, moderatora albo do zakończenia celu, dla którego je opublikowano.</p><p>Logi techniczne są przechowywane zgodnie z konfiguracją i okresami retencji dostawców infrastruktury. Dane w pamięci lokalnej pozostają do czasu ich wyczyszczenia przez użytkownika.</p></>,
+      content: <><p>Dane konta są przechowywane przez czas korzystania z profilu. Użytkownik posiada prawo do natychmiastowego i trwałego usunięcia swojego profilu oraz wszystkich powiązanych danych w dowolnym momencie.</p><p><strong className="text-[#eee7d9]">Procedura usunięcia konta:</strong> W zakładce Ustawień Profilu (<a href="/profil" className="font-bold text-amber-300 hover:text-amber-200">/profil</a>) znajduje się dedykowany przycisk <strong className="text-rose-300 font-mono">"Usuń Konto & Dane RODO"</strong>. Po potwierdzeniu frazą "USUŃ KONTO" profil użytkownika, wpisy na forum, oferty rynkowe P2P oraz powiązane dane osobowe są trwale kasowane z bazy Supabase.</p></>,
     },
     {
       id: 'rights',

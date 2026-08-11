@@ -283,6 +283,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Automatyczne obliczanie czasu ważności ogłoszeń rynkowych P2P (standardowo 7 dni aktywności).
 - [x] Wskaźniki stanu oferty ("Aktywna", "Wymaga odnowienia", "Wygasła / Zarchiwizowana") z opcją 1-klikowego odnowienia oferty przez sprzedawcę.
 
+### Etap P17 — Procedura Usunięcia Konta & Retencja Danych RODO
+
+- [x] Przycisk i modal trwałego usunięcia konta użytkownika z bazy Supabase w zakładce Ustawień Profilu (`/profil`).
+- [x] Zapisanie zasad retencji danych osobowych i procedur anonimizacji w Polityce Prywatności (`/prywatnosc`).
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
