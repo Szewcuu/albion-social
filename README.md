@@ -203,33 +203,33 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] zabezpieczyć głosowanie na build: jeden głos użytkownika na build
 - [x] dodać zapisywanie buildów do ulubionych
 - [x] dodać komentarze i zgłaszanie nadużyć pod buildami
-- [ ] dodać wygasanie, odnawianie i archiwizację ofert rynkowych
-- [ ] dodać szczegóły oferty i bezpieczny przepływ kontaktu ze sprzedawcą
-- [ ] dodać publiczne strony gildii i kalendarz wydarzeń
-- [ ] dodać centrum powiadomień w portalu
+- [x] dodać wygasanie, odnawianie i archiwizację ofert rynkowych
+- [x] dodać szczegóły oferty i bezpieczny przepływ kontaktu ze sprzedawcą
+- [x] dodać publiczne strony gildii i kalendarz wydarzeń
+- [x] dodać centrum powiadomień w portalu
 - [x] dodać podstawowy panel administratora i moderację zgłoszonych komentarzy
 - [x] rozszerzyć panel o role moderatora i pozostałe typy treści
 
 ### P5 — Supabase i bezpieczeństwo danych
 
-- [ ] zapisać schemat bazy jako wersjonowane migracje w repozytorium
+- [x] zapisać schemat bazy jako wersjonowane migracje w repozytorium
 - [x] przeprowadzić audyt RLS wszystkich tabel i polityk dostępu
-- [ ] dodać indeksy dla najczęstszych filtrów, sortowania i relacji
+- [x] dodać indeksy dla najczęstszych filtrów, sortowania i relacji
 - [x] wymusić reguły własności rekordów po stronie bazy, nie tylko interfejsu
-- [ ] dodać tabele głosów, ulubionych, zgłoszeń i powiadomień
-- [ ] określić retencję danych i procedurę usunięcia konta
-- [ ] sprawdzić logi pod kątem wycieku danych użytkownika lub sekretów
+- [x] dodać tabele głosów, ulubionych, zgłoszeń i powiadomień
+- [x] określić retencję danych i procedurę usunięcia konta
+- [x] sprawdzić logi pod kątem wycieku danych użytkownika lub sekretów
 
 ### P6 — jakość, SEO i wydajność
 
-- [ ] dodać testy end-to-end kluczowych przepływów
-- [ ] dodać automatyczny lint i build w GitHub Actions
+- [x] dodać testy end-to-end kluczowych przepływów
+- [x] dodać automatyczny lint i build w GitHub Actions
 - [x] usunąć ostrzeżenia `no-img-element` tam, gdzie optymalizacja Next Image jest bezpieczna
-- [ ] dodać unikalne metadata, Open Graph i canonical URL dla podstron
-- [ ] przygotować sitemapę i robots.txt
-- [ ] dodać PWA: manifest, ikony i podstawowy tryb offline
-- [ ] dodać pomiar błędów frontendowych i Core Web Vitals
-- [ ] wykonać ponowny audyt Lighthouse po zakończeniu głównych ekranów
+- [x] dodać unikalne metadata, Open Graph i canonical URL dla podstron
+- [x] przygotować sitemapę i robots.txt
+- [x] dodać PWA: manifest, ikony i podstawowy tryb offline
+- [x] dodać pomiar błędów frontendowych i Core Web Vitals
+- [x] wykonać ponowny audyt Lighthouse po zakończeniu głównych ekranów
 
 ### Etap P7 — Wycena Ekwipunku Killboarda & Kalendarz Wydarzeń
 
