@@ -330,7 +330,7 @@ export default function LootSplit() {
             <section className="panel rounded-[28px] p-5 sm:p-7">
               <SectionTitle icon={Users} eyebrow="Krok 2" title="Lista uczestników" description="Wklej nicki rozdzielone przecinkiem, średnikiem lub nową linią. Duplikaty zostaną usunięte." badge={`${calculation.players.length} graczy`} />
               <label className="mt-6 block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Nicki graczy
-                <textarea rows={6} value={playerNicks} onChange={(event) => setPlayerNicks(event.target.value)} placeholder={'Szewczykos\nHealerOne\nTankMain'} className="mt-1.5 w-full resize-y rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
+                <textarea rows={6} value={playerNicks} onChange={(event) => setPlayerNicks(event.target.value)} placeholder={'PlayerOne\nHealerOne\nTankMain'} className="mt-1.5 w-full resize-y rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
               </label>
               {calculation.players.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-1.5">{calculation.players.map((nick) => <span key={nick.toLocaleLowerCase('pl')} className="rounded-lg border border-sky-400/15 bg-sky-400/6 px-2.5 py-1.5 text-[9px] font-bold text-sky-200">{nick}</span>)}</div>

@@ -1,8 +1,9 @@
 'use client'
+
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins } from 'lucide-react'
+import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User } from 'lucide-react'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 import ContactSellerModal from '@/components/market/ContactSellerModal'
@@ -245,7 +246,7 @@ export default function Rynek() {
                       value={formData.contact_info} 
                       onChange={e => setFormData({ ...formData, contact_info: e.target.value })} 
                       className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
-                      placeholder="np. Pisz na priv w grze lub Discord: Szewczykos" 
+                      placeholder="np. Pisz na priv w grze lub Discord: SirLancelot#1234" 
                     />
                   </div>
 
@@ -361,6 +362,7 @@ export default function Rynek() {
                       <div className="flex min-w-0 gap-4 items-center">
                         <div className="h-14 w-14 shrink-0 flex items-center justify-center rounded-xl border border-amber-400/30 bg-[#090507] p-1 shadow-md overflow-hidden relative">
                           {cleanItemName.length >= 3 ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={`https://render.albiononline.com/v1/item/${encodeURIComponent(cleanItemName)}.png?quality=1&size=64`}
                               alt={offer.title}
@@ -386,12 +388,17 @@ export default function Rynek() {
                           </div>
 
                           <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
-                          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)]">
-                            Sprzedawca: {' '}
-                            <Link href={`/profil/${offer.user_id}`} className="text-[#b8b1a7] hover:text-[var(--gold)] hover:underline font-bold transition">
-                              {(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}
+                          
+                          <div className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)] flex items-center gap-1.5 flex-wrap">
+                            <span>Sprzedawca:</span>
+                            <Link
+                              href={`/profil/${offer.user_id}`}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-300 hover:bg-amber-400/20 hover:border-amber-400 hover:text-amber-200 transition font-bold text-xs normal-case shadow-sm cursor-pointer"
+                            >
+                              <User className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                              <span>{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span>
                             </Link>
-                          </p>
+                          </div>
                           
                           {offer.contact_info && (
                             <p className="text-xs text-gray-400 font-mono">

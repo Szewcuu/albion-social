@@ -375,7 +375,7 @@ export default function ProfilePage() {
                       readOnly={Boolean(verifiedState?.is_verified)}
                       disabled={Boolean(verifiedState?.is_verified)}
                       onChange={(event) => setFormData({ ...formData, ingame_nick: event.target.value })}
-                      placeholder="np. Szewczykos"
+                      placeholder="np. SirLancelot"
                       title={verifiedState?.is_verified ? "Nick został Oficjalnie Zweryfikowany z API. Użyj przycisku 'Zaktualizuj Weryfikację', aby zmienić postać." : "Nick w grze"}
                       className={`mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal outline-none ${
                         verifiedState?.is_verified

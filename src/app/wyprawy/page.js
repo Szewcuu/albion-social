@@ -636,7 +636,7 @@ export default function Wyprawy() {
                   value={signupData.ingame_nick} 
                   onChange={(e) => setFormSignupData({ ...signupData, ingame_nick: e.target.value })} 
                   className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
-                  placeholder="np. Szewczykos" 
+                  placeholder="np. SirLancelot" 
                 />
               </div>
 
