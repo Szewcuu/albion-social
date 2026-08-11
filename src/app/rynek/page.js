@@ -17,6 +17,7 @@ export default function Rynek() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCity, setFilterCity] = useState('ALL')
   const [filterCategory, setFilterCategory] = useState('ALL')
+  const [sortBy, setSortBy] = useState('newest')
 
   const [formData, setFormData] = useState({
     title: '',
@@ -64,7 +65,7 @@ export default function Rynek() {
     const contactVal = formData.contact_info?.trim() || 'W grze'
     const insertPayload = {
       title: formData.title.trim(),
-      item_name: formData.item_name ? formData.item_name.trim() : formData.title.trim(),
+      item_name: formData.item_name ? formData.item_name.trim().toUpperCase() : '',
       price: parseInt(formData.price),
       city: formData.city,
       category: formData.category,
@@ -99,13 +100,28 @@ export default function Rynek() {
     }
   }
 
-  const filteredOffers = offers.filter(o => {
-    const matchesSearch = (o.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (o.item_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCity = filterCity === 'ALL' || o.city === filterCity
-    const matchesCategory = filterCategory === 'ALL' || o.category === filterCategory
-    return matchesSearch && matchesCity && matchesCategory
-  })
+  const filteredOffers = offers
+    .filter(o => {
+      const matchesSearch = (o.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (o.item_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesCity = filterCity === 'ALL' || o.city === filterCity
+      const matchesCategory = filterCategory === 'ALL' || o.category === filterCategory
+      return matchesSearch && matchesCity && matchesCategory
+    })
+    .sort((a, b) => {
+      if (sortBy === 'price_asc') return Number(a.price) - Number(b.price)
+      if (sortBy === 'price_desc') return Number(b.price) - Number(a.price)
+      return new Date(b.created_at) - new Date(a.created_at)
+    })
+
+  const numericPrice = Number(formData.price) || 0
+  const formattedPricePreview = numericPrice > 0
+    ? numericPrice >= 1_000_000
+      ? `${numericPrice.toLocaleString('pl-PL')} Silver (~${(numericPrice / 1_000_000).toFixed(1)}M)`
+      : numericPrice >= 1_000
+      ? `${numericPrice.toLocaleString('pl-PL')} Silver (~${(numericPrice / 1_000).toFixed(0)}k)`
+      : `${numericPrice.toLocaleString('pl-PL')} Silver`
+    : ''
 
   return (
     <div className="page-content">
@@ -114,8 +130,8 @@ export default function Rynek() {
         <p>Przeglądaj i publikuj ogłoszenia handlowe w wybranym mieście Albionu.</p>
       </div>
 
-<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-<MarketIntelligence />
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+        <MarketIntelligence />
 
         <div className="mt-4 flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
           <div>
@@ -164,7 +180,7 @@ export default function Rynek() {
                       type="text" 
                       value={formData.item_name} 
                       onChange={e => setFormData({ ...formData, item_name: e.target.value })} 
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-amber-200 focus:border-[var(--amber)] outline-none text-xs font-mono"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-amber-200 focus:border-[var(--amber)] outline-none text-xs font-mono uppercase"
                       placeholder="np. T8_BAG, T4_BAG, T8_MAIN_SWORD" 
                     />
                   </div>
@@ -173,6 +189,7 @@ export default function Rynek() {
                     itemId={formData.item_name}
                     userPrice={formData.price}
                     server={formData.server}
+                    onSelectPrice={(val) => setFormData(prev => ({ ...prev, price: String(val) }))}
                   />
 
                   <div className="grid grid-cols-2 gap-3">
@@ -186,6 +203,9 @@ export default function Rynek() {
                         className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
                         placeholder="150000000" 
                       />
+                      {formattedPricePreview && (
+                        <p className="mt-1 text-[10px] text-amber-300 font-mono">{formattedPricePreview}</p>
+                      )}
                     </div>
 
                     <div>
@@ -204,7 +224,7 @@ export default function Rynek() {
                         label="Lokalizacja / Miasto"
                         value={formData.city}
                         onChange={(val) => setFormData({ ...formData, city: val })}
-                        options={['Caerleon', 'Martlock', 'Lymhurst', 'Bridgewatch', 'Fort Sterling', 'Thetford', 'Brecilien']}
+                        options={['Caerleon', 'Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford', 'Brecilien']}
                       />
                     </div>
 
@@ -219,51 +239,58 @@ export default function Rynek() {
                   </div>
 
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Kontakt / Nick w grze</label>
+                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Kontakt w grze / Discord</label>
                     <input 
                       type="text" 
                       value={formData.contact_info} 
                       onChange={e => setFormData({ ...formData, contact_info: e.target.value })} 
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
+                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
                       placeholder="np. Pisz na priv w grze lub Discord: Szewczykos" 
                     />
                   </div>
 
-                  <button type="submit" className="btn btn-primary w-full justify-center py-3.5">
-                    Wystaw Ofertę
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary w-full py-3 text-xs font-bold uppercase tracking-wider mt-2 flex items-center justify-center gap-2"
+                  >
+                    <Store className="w-4 h-4" /> Wystaw ofertę
                   </button>
-                  {formMessage && <p className="text-center font-bold text-amber-400 mt-2 text-xs font-mono">{formMessage}</p>}
+
+                  {formMessage && (
+                    <p className={`mt-2 text-center text-xs font-bold font-mono ${formMessage.includes('Błąd') ? 'text-rose-400' : 'text-amber-400'}`}>
+                      {formMessage}
+                    </p>
+                  )}
                 </form>
               )}
             </div>
           </div>
 
-          {/* PRAWA KOLUMNA: LISTA OFERT */}
+          {/* PRAWA KOLUMNA: TABLICA OGŁOSZEŃ */}
           <div className="lg:col-span-8 space-y-4">
             
-            {/* PASEK WYSZUKIWANIA */}
-            <div className="panel space-y-4 p-4 text-xs sm:p-5 relative z-30 !overflow-visible">
-              <div className="flex items-end justify-between gap-4">
+            {/* WYSZUKIWARKA I FILTRY */}
+            <div className="panel space-y-4 p-5 relative z-30 !overflow-visible">
+              <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Tablica ogłoszeń</p>
-                  <h2 className="font-display mt-1 text-xl font-black text-[#fff]">Znajdź właściwy towar</h2>
+                  <h2 className="font-display text-lg font-black text-[#fff]">Znajdź właściwy towar</h2>
                 </div>
-                <span className="rounded-lg border border-white/10 bg-black/25 px-3 py-1.5 text-[10px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">{filteredOffers.length} ofert</span>
+                <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">{filteredOffers.length} Ofert</span>
               </div>
+
               <div className="relative">
-                <label htmlFor="market-offer-search" className="sr-only">Szukaj przedmiotów na rynku</label>
-                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none" />
                 <input 
-                  id="market-offer-search"
                   type="text" 
-                  placeholder="Szukaj przedmiotów na rynku..." 
                   value={searchTerm} 
                   onChange={e => setSearchTerm(e.target.value)} 
-                  className="input-with-icon min-h-11 w-full rounded-xl border border-[var(--border-hover)] bg-[var(--bg-elevated)] !pl-12 pr-4 text-xs text-gray-100 outline-none focus:border-[var(--amber)] font-mono"
+                  placeholder="Szukaj przedmiotów na rynku..." 
+                  className="input-with-icon !pl-12 w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl py-2.5 pr-4 text-xs text-gray-100 focus:border-[var(--amber)] outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <CustomSelect
                     label="Miasto"
@@ -272,10 +299,10 @@ export default function Rynek() {
                     options={[
                       { value: 'ALL', label: 'Wszystkie Miasta' },
                       'Caerleon',
-                      'Martlock',
-                      'Lymhurst',
                       'Bridgewatch',
                       'Fort Sterling',
+                      'Lymhurst',
+                      'Martlock',
                       'Thetford',
                       'Brecilien',
                     ]}
@@ -297,6 +324,19 @@ export default function Rynek() {
                     ]}
                   />
                 </div>
+
+                <div>
+                  <CustomSelect
+                    label="Sortowanie"
+                    value={sortBy}
+                    onChange={(val) => setSortBy(val)}
+                    options={[
+                      { value: 'newest', label: 'Najnowsze' },
+                      { value: 'price_asc', label: 'Cena: Najniższa' },
+                      { value: 'price_desc', label: 'Cena: Najwyższa' },
+                    ]}
+                  />
+                </div>
               </div>
             </div>
 
@@ -313,34 +353,51 @@ export default function Rynek() {
               ) : (
                 filteredOffers.map(offer => {
                   const isOwner = user?.id === offer.user_id
+                  const cleanItemName = offer.item_name ? offer.item_name.trim().toUpperCase() : ''
 
                   return (
                     <article key={offer.id} className="panel panel-interactive flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                       
-                      <div className="flex min-w-0 gap-4">
-                        <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-sky-400/20 bg-sky-400/8 text-sky-300 sm:flex">
-                          <ShoppingBag className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 space-y-2">
-                        <div className="flex items-center gap-2 font-mono text-[10px]">
-                          <span className="bg-sky-500/10 text-sky-400 border border-sky-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase">{offer.category || 'Przedmiot'}</span>
-                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> {offer.city}</span>
-                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> {offer.server || 'Europa'}</span>
+                      <div className="flex min-w-0 gap-4 items-center">
+                        <div className="h-14 w-14 shrink-0 flex items-center justify-center rounded-xl border border-amber-400/30 bg-[#090507] p-1 shadow-md overflow-hidden relative">
+                          {cleanItemName.length >= 3 ? (
+                            <img
+                              src={`https://render.albiononline.com/v1/item/${encodeURIComponent(cleanItemName)}.png?quality=1&size=64`}
+                              alt={offer.title}
+                              className="h-12 w-12 object-contain"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none'
+                                if (e.currentTarget.nextElementSibling) {
+                                  e.currentTarget.nextElementSibling.style.display = 'flex'
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div className="h-full w-full flex items-center justify-center text-amber-400" style={{ display: cleanItemName.length >= 3 ? 'none' : 'flex' }}>
+                            <ShoppingBag className="h-6 w-6" />
+                          </div>
                         </div>
 
-                        <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
-                        <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)]">
-                          Sprzedawca: {' '}
-                          <Link href={`/profil/${offer.user_id}`} className="text-[#b8b1a7] hover:text-[var(--gold)] hover:underline font-bold transition">
-                            {(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}
-                          </Link>
-                        </p>
-                        
-                        {offer.contact_info && (
-                          <p className="text-xs text-gray-400 font-mono">
-                            Kontakt: <span className="text-gray-200">{offer.contact_info}</span>
+                        <div className="min-w-0 space-y-1.5">
+                          <div className="flex items-center gap-2 font-mono text-[10px]">
+                            <span className="bg-sky-500/10 text-sky-400 border border-sky-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase">{offer.category || 'Przedmiot'}</span>
+                            <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> {offer.city}</span>
+                            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> {offer.server || 'Europa'}</span>
+                          </div>
+
+                          <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
+                          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)]">
+                            Sprzedawca: {' '}
+                            <Link href={`/profil/${offer.user_id}`} className="text-[#b8b1a7] hover:text-[var(--gold)] hover:underline font-bold transition">
+                              {(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}
+                            </Link>
                           </p>
-                        )}
+                          
+                          {offer.contact_info && (
+                            <p className="text-xs text-gray-400 font-mono">
+                              Kontakt: <span className="text-gray-200">{offer.contact_info}</span>
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -374,14 +431,13 @@ export default function Rynek() {
                 })
               )}
             </div>
-
           </div>
 
         </div>
       </div>
 
       <ContactSellerModal
-        isOpen={Boolean(selectedOfferForContact)}
+        isOpen={!!selectedOfferForContact}
         onClose={() => setSelectedOfferForContact(null)}
         offer={selectedOfferForContact}
         currentUser={user}

@@ -1,19 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingDown, TrendingUp, Sparkles, LoaderCircle, AlertCircle, Coins, CheckCircle2 } from 'lucide-react'
+import Image from 'next/image'
+import { TrendingDown, TrendingUp, LoaderCircle, AlertCircle, Coins, CheckCircle2, Zap } from 'lucide-react'
 
-export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, server = 'Europa' }) {
+export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, server = 'Europa', onSelectPrice }) {
   const [loading, setLoading] = useState(false)
   const [marketData, setMarketData] = useState(null)
   const [error, setError] = useState(null)
 
   const region = server.toLowerCase().includes('ameryka') ? 'america' : server.toLowerCase().includes('azja') ? 'asia' : 'europe'
+  const formattedId = itemId ? itemId.trim().toUpperCase().replace(/\s+/g, '_') : ''
 
   useEffect(() => {
     let isMounted = true
 
-    if (!itemId || itemId.length < 3) {
+    if (!formattedId || formattedId.length < 3) {
       return () => {
         isMounted = false
       }
@@ -24,7 +26,6 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
       setError(null)
 
       try {
-        const formattedId = itemId.trim().toUpperCase().replace(/\s+/g, '_')
         const allCities = 'Caerleon,Bridgewatch,Fort Sterling,Lymhurst,Martlock,Thetford,Brecilien'
         const res = await fetch(`/api/prices?mode=prices&items=${encodeURIComponent(formattedId)}&cities=${encodeURIComponent(allCities)}&region=${region}`)
         const text = await res.text()
@@ -71,9 +72,9 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
       isMounted = false
       clearTimeout(timer)
     }
-  }, [itemId, region])
+  }, [formattedId, region])
 
-  if (!itemId || itemId.length < 3) return null
+  if (!formattedId || formattedId.length < 3) return null
 
   const parsedUserPrice = Number(userPrice) || 0
   const priceDiffPct = marketData?.minPrice && parsedUserPrice > 0
@@ -84,8 +85,19 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
     <div className="bg-[#090407] border border-[#d8ad4a]/25 p-4 rounded-2xl space-y-3 font-mono text-xs text-gray-200">
       <div className="flex items-center justify-between border-b border-[#220e14] pb-2">
         <div className="flex items-center gap-2 text-amber-400 font-bold uppercase text-[11px]">
-          <Coins className="w-4 h-4 text-amber-400" />
-          Live Wycena Rynkowa (Albion Data API)
+          <div className="w-7 h-7 rounded-lg bg-black/60 border border-amber-400/30 flex items-center justify-center shrink-0 overflow-hidden">
+            <Image
+              src={`https://render.albiononline.com/v1/item/${encodeURIComponent(formattedId)}.png?quality=1&size=40`}
+              alt={formattedId}
+              width={28}
+              height={28}
+              unoptimized
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+              className="object-contain"
+            />
+            <Coins className="w-4 h-4 text-amber-400 absolute" style={{ display: 'none' }} />
+          </div>
+          <span>Live Wycena Rynkowa</span>
         </div>
         <span className="text-[9px] text-gray-400 uppercase">Serwer: {region.toUpperCase()}</span>
       </div>
@@ -107,10 +119,21 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
       {marketData && !loading && (
         <div className="space-y-2">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[10px]">
-            <div className="bg-[#050204] p-2 rounded-xl border border-[#200d14]">
-              <div className="text-gray-400">Najtaniej rynkowo:</div>
-              <div className="font-bold text-emerald-300 text-xs">{marketData.minPrice.toLocaleString('pl-PL')} Silver</div>
-              <div className="text-gray-400 text-[9px]">{marketData.cheapestCity}</div>
+            <div className="bg-[#050204] p-2 rounded-xl border border-[#200d14] flex flex-col justify-between">
+              <div>
+                <div className="text-gray-400">Najtaniej rynkowo:</div>
+                <div className="font-bold text-emerald-300 text-xs">{marketData.minPrice.toLocaleString('pl-PL')} Silver</div>
+                <div className="text-gray-400 text-[9px]">{marketData.cheapestCity}</div>
+              </div>
+              {onSelectPrice && (
+                <button
+                  type="button"
+                  onClick={() => onSelectPrice(marketData.minPrice)}
+                  className="mt-1.5 flex items-center justify-center gap-1 rounded bg-emerald-400/15 border border-emerald-400/30 px-1.5 py-1 text-[9px] font-bold text-emerald-300 hover:bg-emerald-400/30 transition cursor-pointer"
+                >
+                  <Zap className="w-2.5 h-2.5" /> Użyj tej ceny
+                </button>
+              )}
             </div>
 
             <div className="bg-[#050204] p-2 rounded-xl border border-[#200d14]">
