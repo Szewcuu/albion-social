@@ -288,6 +288,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Przycisk i modal trwałego usunięcia konta użytkownika z bazy Supabase w zakładce Ustawień Profilu (`/profil`).
 - [x] Zapisanie zasad retencji danych osobowych i procedur anonimizacji w Polityce Prywatności (`/prywatnosc`).
 
+### Etap P18 — Wersjonowane Migracje Supabase & Indeksy Wydajnościowe
+
+- [x] Stworzenie reprezentacji schematu bazy jako wersjonowanej migracji SQL (`supabase/migrations/20260811000000_schema_and_indexes.sql`).
+- [x] Utworzenie indeksów wydajnościowych B-Tree dla najczęstszych sortowań, relacji kluczy obcych i filtrów rynkowych.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
