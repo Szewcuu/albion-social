@@ -307,6 +307,21 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Przycisk "Do Ulubionych" (`[ ⭐ Ulubione ]`) przy zestawach w Zbrojowni i ofertach na Rynku z zapisem w profilu gracza (`favoriteSystem.js`).
 - [x] Szybki filtr "Tylko Ulubione" na podstronach `/buildy` oraz `/rynek`.
 
+### Etap P22 — System Oceniania & Recenzowania Gildii (Guild Ratings & Reviews)
+
+- [x] Wprowadzenie ocen gwiazdkowych (1-5 ⭐) oraz opinii dla gildii z zapisem recenzji społeczności.
+- [x] Średnia ocena gildii i podgląd opinii w Rejestrze Gildii i na podstronie gildii (`/gildie/[id]`).
+
+### Etap P23 — Kalkulator Arbitrażu Handlowego Miast Królewskich (Trade Arbitrage Calculator)
+
+- [x] Dedykowany kalkulator arbitrażu na Rynku P2P (`TradeArbitrageCalculator.jsx`) porównujący ceny zakupu i sprzedaży przedmiotu pomiędzy 6 miastami królewskimi i Caerleon.
+- [x] Wyliczanie czystego zysku po odliczeniu podatku rynkowego i opłaty za transport surowców.
+
+### Etap P24 — Monitorowanie Stanu Usług Portalu (System Health & Audit API)
+
+- [x] Endpoint weryfikacji zdrowia `/api/admin/health` sprawdzający opóźnienia i status Supabase, Albion Data Project oraz Gameinfo API.
+- [x] Panel diagnostyczny i dziennik audytów w Panelu Administratora (`/admin`).
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.

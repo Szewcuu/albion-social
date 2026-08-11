@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User, ExternalLink, RefreshCw, Clock } from 'lucide-react'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
+import TradeArbitrageCalculator from '@/components/market/TradeArbitrageCalculator'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 import ContactSellerModal from '@/components/market/ContactSellerModal'
 import CustomSelect from '@/components/ui/CustomSelect'
@@ -281,6 +282,7 @@ export default function Rynek() {
 
           {/* PRAWA KOLUMNA: TABLICA OGŁOSZEŃ */}
           <div className="lg:col-span-8 space-y-4">
+            <TradeArbitrageCalculator />
             
             {/* WYSZUKIWARKA I FILTRY */}
             <div className="panel space-y-4 p-5 relative z-30 !overflow-visible">

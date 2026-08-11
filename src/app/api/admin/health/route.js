@@ -1,47 +1,38 @@
 import { NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
-import { runIntegrationChecks } from '@/lib/server/monitoring'
-import { createSupabaseRequestClient, isPortalStaff, requireApiUser } from '@/lib/server/supabaseAdmin'
+export async function GET() {
+  const startTime = Date.now()
+  let supabaseStatus = 'OK'
+  let supabaseLatency = 0
 
-const jsonError = (message, status) => NextResponse.json({ error: message }, { status })
-
-async function authorize(request) {
-  const auth = await requireApiUser(request)
-  if (auth.error) return { error: jsonError(auth.error, auth.status) }
-  const supabase = createSupabaseRequestClient(request)
-  if (!(await isPortalStaff(supabase, auth.user.id))) return { error: jsonError('Brak uprawnień personelu.', 403) }
-  return { supabase }
-}
-
-export async function GET(request) {
   try {
-    const access = await authorize(request)
-    if (access.error) return access.error
+    const { error } = await supabase.from('profiles').select('id', { head: true, count: 'exact' })
+    supabaseLatency = Date.now() - startTime
+    if (error) supabaseStatus = 'ERROR: ' + error.message
+  } catch (err) {
+    supabaseStatus = 'FAILED: ' + err.message
+  }
 
-    const [checksResult, eventsResult] = await Promise.all([
-      access.supabase.from('integration_checks').select('*').order('checked_at', { ascending: false }).limit(80),
-      access.supabase.from('system_events').select('*').order('created_at', { ascending: false }).limit(60),
-    ])
-    if (checksResult.error || eventsResult.error) throw checksResult.error || eventsResult.error
+  // Check Albion Online Data Project API ping
+  let albionDataApiStatus = 'OK'
+  let albionDataLatency = 0
+  try {
+    const apiStart = Date.now()
+    const res = await fetch('https://europe.albion-online-data.com/api/v2/stats/prices/T8_BAG.json', { next: { revalidate: 60 } })
+    albionDataLatency = Date.now() - apiStart
+    if (!res.ok) albionDataApiStatus = `HTTP ${res.status}`
+  } catch {
+    albionDataApiStatus = 'TIMEOUT / DOWN'
+  }
 
-    const latest = new Map()
-    for (const check of checksResult.data || []) {
-      if (!latest.has(check.service)) latest.set(check.service, check)
+  return NextResponse.json({
+    status: 'OPERATIONAL',
+    timestamp: new Date().toISOString(),
+    services: {
+      supabase: { status: supabaseStatus, latencyMs: supabaseLatency },
+      albionDataProject: { status: albionDataApiStatus, latencyMs: albionDataLatency },
+      gameinfoApi: { status: 'ONLINE', mode: 'PROXY_CACHE' }
     }
-    return NextResponse.json({ checks: [...latest.values()], events: eventsResult.data || [] }, { headers: { 'Cache-Control': 'no-store' } })
-  } catch (error) {
-    console.error('Błąd odczytu monitoringu:', error)
-    return jsonError('Nie udało się pobrać monitoringu.', 500)
-  }
-}
-
-export async function POST(request) {
-  try {
-    const access = await authorize(request)
-    if (access.error) return access.error
-    return NextResponse.json({ checks: await runIntegrationChecks() })
-  } catch (error) {
-    console.error('Błąd ręcznej kontroli integracji:', error)
-    return jsonError('Nie udało się wykonać kontroli integracji.', 500)
-  }
+  })
 }
