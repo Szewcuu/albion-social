@@ -322,6 +322,20 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Endpoint weryfikacji zdrowia `/api/admin/health` sprawdzający opóźnienia i status Supabase, Albion Data Project oraz Gameinfo API.
 - [x] Panel diagnostyczny i dziennik audytów w Panelu Administratora (`/admin`).
 
+### Etap P25 — Kalkulator Zysku z Uszlachetniania Surowców (Refining Profit Calculator)
+
+- [x] Narzędzie kalkulacji zysku z przeliczania surowców surowych na przetworzone (Ore -> Ingot, Hide -> Leather, Wood -> Planks, Fiber -> Cloth, Stone -> Block) dla tierów T4-T8.
+- [x] Uwzględnianie wskaźnika zwrotu surowców miasta (RRR %), opłat przetwórczych oraz bonusa Skupienia (Focus).
+
+### Etap P26 — Przelicznik Kursu Złota i Srebra (Gold to Silver Live Exchange & Converter)
+
+- [x] Pobieranie aktualnego kursu wymiany Gold / Silver z API Albion Data Project (`/api/v2/stats/gold.json`).
+- [x] Przelicznik walut na żywo i wskaźnik trendów 24h (`GoldExchangeWidget.jsx`) zintegrowany z Rynkiem P2P i Kalkulatorem.
+
+### Etap P27 — Generator Raportów Wypraw i Podziału Łupów (Loot Split PDF/Text Export)
+
+- [x] Eksport raportu rozliczenia srebra i przedmiotów z wyprawy drużynowej do pliku tekstowego oraz gotowego do wydruku podsumowania dla skarbnika gildii.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
