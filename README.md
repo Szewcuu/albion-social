@@ -268,6 +268,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Dodanie indywidualnych wywołań `export const metadata` dla podstron: `/buildy`, `/gildie`, `/rynek`, `/killboard`, `/kalkulator-craftingu`, `/timery`, `/wyprawy`, `/loot-split`.
 - [x] Precyzyjne tytuły, opisy i słowa kluczowe SEO dla kart podglądu społecznościowego na Discordzie i w wyszukiwarkach.
 
+### Etap P14 — Automatyzacja CI/CD GitHub Actions Workflow
+
+- [x] Utworzenie przepływu pracy GitHub Actions (`.github/workflows/ci.yml`) weryfikującego poprawność budowania aplikacji (`npm run build`) przy każdym commit/push oraz Pull Requescie.
+- [x] Automatyczna kontrola błędów statycznych, Next.js Turbopack builda oraz TypeScript typecheck przed wdrożeniem.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
