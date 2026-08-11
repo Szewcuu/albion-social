@@ -146,10 +146,10 @@ export default function Home() {
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 space-y-4 animate-fade-in">
       {/* NAGŁÓWEK POWITALNY TAWERNY */}
-      <section className="member-intro !p-3.5 sm:!p-4 !m-0" aria-labelledby="member-title">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <section className="member-intro p-4 sm:p-5 rounded-2xl border border-white/10 mb-5" aria-labelledby="member-title">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="welcome-kicker !mb-0.5"><Activity aria-hidden="true" /> Główny Punkt Wypadowy</span>
+            <span className="welcome-kicker mb-1"><Activity aria-hidden="true" /> Główny Punkt Wypadowy</span>
             <h1 id="member-title" className="text-xl font-black">Witaj w tawernie, <em>{displayName}</em></h1>
           </div>
           <dl className="member-stats flex items-center gap-4 text-xs">

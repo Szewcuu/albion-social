@@ -4,6 +4,7 @@ import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
+import UpcomingExpeditionsWidget from '@/components/expeditions/UpcomingExpeditionsWidget'
 import { 
   Swords, Shield, Heart, UserCheck, Plus, Search,
   Clock, Users, Trash2, AlertTriangle, MapPin, Compass, Sparkles, Calendar 
@@ -324,6 +325,7 @@ export default function Wyprawy() {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+        <UpcomingExpeditionsWidget expeditions={expeditions} />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
           {/* FORMULARZ WYPRAWY */}
