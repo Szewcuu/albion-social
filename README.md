@@ -336,6 +336,19 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 - [x] Eksport raportu rozliczenia srebra i przedmiotów z wyprawy drużynowej do pliku tekstowego oraz gotowego do wydruku podsumowania dla skarbnika gildii.
 
+### Etap P28 — System Zgłaszania Nadłużyć & Kolejka Moderacyjna (Report & Moderation Queue)
+
+- [x] Przycisk zgłaszania treści (`[ 🚩 Zgłoś nadużycie ]`) pod buildami, ofertami rynkowymi i wiadomościami z zapisem w Supabase `reports`.
+- [x] Dedykowany moduł moderacyjny w Panelu Administratora (`/admin`) z opcją zatwierdzania i ukrywania treści.
+
+### Etap P29 — Integracja Przelicznika Złota na Rynku P2P (Live Gold Rates on Market)
+
+- [x] Integracja widżetu kursu złota `GoldExchangeWidget` na podstronie Rynku P2P (`/rynek`) ułatwiająca wycenę przedmiotów wartościowych.
+
+### Etap P30 — Końcowy Audyt Gotowości Wdrożeniowej (Production Build & CI Verification)
+
+- [x] Pełny audyt statyczny, 100% sukcesu kompilacji Next.js Turbopack, spójność wszystkich 38 tras, Service Workera PWA oraz GitHub Actions CI/CD.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.

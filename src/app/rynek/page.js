@@ -10,6 +10,7 @@ import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimat
 import ContactSellerModal from '@/components/market/ContactSellerModal'
 import CustomSelect from '@/components/ui/CustomSelect'
 import FavoriteButton from '@/components/ui/FavoriteButton'
+import GoldExchangeWidget from '@/components/economy/GoldExchangeWidget'
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
@@ -278,6 +279,7 @@ export default function Rynek() {
                 </form>
               )}
             </div>
+            <GoldExchangeWidget />
           </div>
 
           {/* PRAWA KOLUMNA: TABLICA OGŁOSZEŃ */}
