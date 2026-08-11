@@ -25,7 +25,8 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
 
       try {
         const formattedId = itemId.trim().toUpperCase().replace(/\s+/g, '_')
-        const res = await fetch(`/api/prices?mode=prices&items=${encodeURIComponent(formattedId)}&region=${region}`)
+        const allCities = 'Caerleon,Bridgewatch,Fort Sterling,Lymhurst,Martlock,Thetford,Brecilien'
+        const res = await fetch(`/api/prices?mode=prices&items=${encodeURIComponent(formattedId)}&cities=${encodeURIComponent(allCities)}&region=${region}`)
         const text = await res.text()
         let data = {}
         try {

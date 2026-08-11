@@ -88,7 +88,8 @@ export async function GET(request) {
       max: 10,
       transform: (entry) => entry.toUpperCase(),
     })
-    const cities = uniqueList(searchParams.get('cities') || searchParams.get('city') || 'Caerleon', { max: MARKET_CITIES.length })
+    const defaultCities = MARKET_CITIES.join(',')
+    const cities = uniqueList(searchParams.get('cities') || searchParams.get('city') || defaultCities, { max: MARKET_CITIES.length })
     const qualities = uniqueList(searchParams.get('qualities') || searchParams.get('quality') || '1', {
       max: 5,
       transform: Number,
