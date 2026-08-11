@@ -231,6 +231,12 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [ ] dodać pomiar błędów frontendowych i Core Web Vitals
 - [ ] wykonać ponowny audyt Lighthouse po zakończeniu głównych ekranów
 
+### Etap P7 — Wycena Ekwipunku Killboarda & Kalendarz Wydarzeń
+
+- [x] Automatyczne przeliczanie wartości utraconego ekwipunku graczy w walkach na Killboardzie na podstawie cen z rynków królewskich.
+- [x] Wyświetlanie sumarycznej wartości zniszczonego sprzętu (z podziałem na zwycięzcę i pokonanego) w monetach Silver (~1.5M Silver).
+- [ ] Kalendarz nadchodzących wydarzeń gildyjnych i wypraw z opcją zapisów i powiadomień.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.

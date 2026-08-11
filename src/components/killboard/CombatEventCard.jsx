@@ -1,13 +1,49 @@
 'use client'
 
 import Image from 'next/image'
-import { Skull, Swords, Users } from 'lucide-react'
+import { Skull, Swords, Users, Coins } from 'lucide-react'
 
 const EQUIPMENT_ORDER = ['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes', 'Cape', 'Potion', 'Food']
 
 function itemImageUrl(item) {
   if (!item?.type) return null
   return `https://render.albiononline.com/v1/item/${encodeURIComponent(item.type)}.png?quality=${item.quality || 1}&size=80`
+}
+
+function estimateEquipmentSilverValue(equipment) {
+  if (!equipment) return 0
+  let total = 0
+  for (const key of EQUIPMENT_ORDER) {
+    const item = equipment[key]
+    if (!item?.type) continue
+    const typeStr = item.type.toUpperCase()
+    const count = item.count || 1
+    
+    const tierMatch = typeStr.match(/^T(\d)/)
+    const tier = tierMatch ? parseInt(tierMatch[1]) : 4
+    
+    const enchantMatch = typeStr.match(/@(\d)$/)
+    const enchant = enchantMatch ? parseInt(enchantMatch[1]) : 0
+
+    let basePrice = 12000
+    if (tier === 5) basePrice = 35000
+    else if (tier === 6) basePrice = 95000
+    else if (tier === 7) basePrice = 280000
+    else if (tier === 8) basePrice = 850000
+
+    const enchantMultiplier = 1 + (enchant * 1.2)
+    const qualityMultiplier = 1 + ((item.quality || 1) - 1) * 0.15
+
+    total += Math.round(basePrice * enchantMultiplier * qualityMultiplier * count)
+  }
+  return total
+}
+
+function formatSilverValue(amount) {
+  if (!amount || amount <= 0) return '— Silver'
+  if (amount >= 1_000_000) return `~${(amount / 1_000_000).toFixed(1)}M Silver`
+  if (amount >= 1_000) return `~${(amount / 1_000).toFixed(0)}k Silver`
+  return `${amount.toLocaleString('pl-PL')} Silver`
 }
 
 function EquipmentStrip({ equipment }) {
@@ -43,6 +79,9 @@ export default function CombatEventCard({ event }) {
   const opponent = isKill ? event.victim : event.killer
   const ownSide = isKill ? event.killer : event.victim
 
+  const ownValue = estimateEquipmentSilverValue(ownSide?.equipment)
+  const opponentValue = estimateEquipmentSilverValue(opponent?.equipment)
+
   return (
     <article className="aopp-list-card space-y-4 p-4 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -72,12 +111,24 @@ export default function CombatEventCard({ event }) {
         <div>
           <p className="mb-2 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Zestaw {ownSide?.name}</p>
           <EquipmentStrip equipment={ownSide?.equipment} />
-          <p className="mt-2 text-[9px] text-[#625f59]">Średnie IP: <span className="text-[#aaa39a]">{ownSide?.averageItemPower || '—'}</span></p>
+          <div className="mt-2.5 flex items-center justify-between text-[9px]">
+            <span className="text-[#625f59]">Średnie IP: <span className="text-[#aaa39a] font-bold">{ownSide?.averageItemPower || '—'}</span></span>
+            <span className="text-amber-300 font-mono font-bold flex items-center gap-1 bg-amber-400/10 border border-amber-400/25 px-2 py-0.5 rounded-md" title="Szacowana łączna wartość sprzętu w Silverach">
+              <Coins className="w-3 h-3 text-amber-400" />
+              {formatSilverValue(ownValue)}
+            </span>
+          </div>
         </div>
         <div>
           <p className="mb-2 text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Zestaw {opponent?.name}</p>
           <EquipmentStrip equipment={opponent?.equipment} />
-          <p className="mt-2 text-[9px] text-[#625f59]">Średnie IP: <span className="text-[#aaa39a]">{opponent?.averageItemPower || '—'}</span></p>
+          <div className="mt-2.5 flex items-center justify-between text-[9px]">
+            <span className="text-[#625f59]">Średnie IP: <span className="text-[#aaa39a] font-bold">{opponent?.averageItemPower || '—'}</span></span>
+            <span className="text-amber-300 font-mono font-bold flex items-center gap-1 bg-amber-400/10 border border-amber-400/25 px-2 py-0.5 rounded-md" title="Szacowana łączna wartość sprzętu w Silverach">
+              <Coins className="w-3 h-3 text-amber-400" />
+              {formatSilverValue(opponentValue)}
+            </span>
+          </div>
         </div>
       </div>
     </article>

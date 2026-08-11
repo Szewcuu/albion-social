@@ -3,7 +3,7 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User } from 'lucide-react'
+import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User, ExternalLink } from 'lucide-react'
 import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 import ContactSellerModal from '@/components/market/ContactSellerModal'
@@ -393,10 +393,12 @@ export default function Rynek() {
                             <span>Sprzedawca:</span>
                             <Link
                               href={`/profil/${offer.user_id}`}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-400/10 border border-amber-400/30 text-amber-300 hover:bg-amber-400/20 hover:border-amber-400 hover:text-amber-200 transition font-bold text-xs normal-case shadow-sm cursor-pointer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-400/50 text-amber-300 hover:text-white hover:bg-amber-500/35 hover:border-amber-400 hover:scale-[1.03] transition cursor-pointer font-bold text-xs normal-case shadow-[0_0_15px_rgba(245,158,11,0.15)] group"
+                              title="Kliknij, aby otworzyć publiczny profil i karty przygód gracza"
                             >
-                              <User className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                              <span>{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span>
+                              <User className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:text-amber-200 transition" />
+                              <span className="underline underline-offset-2 decoration-amber-400/40 group-hover:decoration-amber-300">{(offer.profiles?.username || 'Gracz').replace(/#0$/, '')}</span>
+                              <ExternalLink className="w-3 h-3 text-amber-400/80 group-hover:text-amber-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0" />
                             </Link>
                           </div>
                           
