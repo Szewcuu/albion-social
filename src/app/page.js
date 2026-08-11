@@ -146,19 +146,22 @@ export default function Home() {
   return (
     <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 space-y-4 animate-fade-in">
       {/* NAGŁÓWEK POWITALNY TAWERNY */}
-      <section className="member-intro p-4 sm:p-5 rounded-2xl border border-white/10 mb-5" aria-labelledby="member-title">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <span className="welcome-kicker mb-1"><Activity aria-hidden="true" /> Główny Punkt Wypadowy</span>
-            <h1 id="member-title" className="text-xl font-black">Witaj w tawernie, <em>{displayName}</em></h1>
+      <div className="panel p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-amber-400/20">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <Activity className="w-4 h-4" />
           </div>
-          <dl className="member-stats flex items-center gap-4 text-xs">
-            <div><dt>Gildie</dt><dd>{globalStats.guildsCount}</dd></div>
-            <div><dt>Oferty rynku</dt><dd>{globalStats.marketOffersCount}</dd></div>
-            <div><dt>Serwery</dt><dd><span className="status-dot online" /> Wszystkie</dd></div>
-          </dl>
+          <div>
+            <h1 className="text-base font-black text-white">Witaj w tawernie, <span className="text-amber-400">{displayName}</span></h1>
+            <p className="text-[11px] text-gray-400">Główny punkt wypadowy polskiej społeczności Albion Online.</p>
+          </div>
         </div>
-      </section>
+        <div className="flex items-center gap-3 text-xs font-mono">
+          <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8"><span className="text-gray-400">Gildie:</span> <strong className="text-amber-300">{globalStats.guildsCount}</strong></div>
+          <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8"><span className="text-gray-400">Oferty:</span> <strong className="text-emerald-300">{globalStats.marketOffersCount}</strong></div>
+          <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8 flex items-center gap-1.5"><span className="status-dot online" /><span className="text-gray-300">Wszystkie Serwery</span></div>
+        </div>
+      </div>
 
       {/* DWA KOLUMNY: CZAT I STATYSTYKI */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
