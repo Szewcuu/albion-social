@@ -1,6 +1,7 @@
 'use client'
 
 import CustomSelect from '@/components/ui/CustomSelect'
+import EventCalendarWidget from '@/components/events/EventCalendarWidget'
 
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -233,12 +234,13 @@ export default function TimeryPage() {
                   <div className="flex items-start justify-between gap-3"><div><p className="font-display text-2xl font-black text-[#fff]">{pad(window.hour)}:00</p><p className="text-[8px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">UTC</p></div>{urgent ? <span className="rounded-md border border-rose-400/25 bg-rose-400/10 px-2 py-1 text-[8px] font-black uppercase text-rose-300">Blisko</span> : index === 0 ? <Sparkles className="h-4 w-4 text-[var(--amber)]" /> : null}</div>
                   <h3 className="mt-5 text-xs font-bold text-[var(--text-primary)]">{window.label}</h3>
                   <p className="mt-1 text-[9px] text-[var(--text-secondary)]">{window.type}</p>
-                  <div className="mt-4 border-t border-white/8 pt-3"><p className="text-[8px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Do rozpoczęcia</p><p className={`mt-1 font-mono text-sm font-bold ${urgent ? 'text-rose-300' : 'text-[var(--amber)]'}`} suppressHydrationWarning>{window.countdown.formatted}</p></div>
                 </article>
               )
             })}
           </div>
         </section>
+
+        <EventCalendarWidget />
 
         <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
           <section className="panel rounded-[28px] p-5 sm:p-6">

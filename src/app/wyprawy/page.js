@@ -4,6 +4,7 @@ import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
+import EventCalendarWidget from '@/components/events/EventCalendarWidget'
 import { 
   Swords, Shield, Heart, UserCheck, Plus, Search,
   Clock, Users, Trash2, AlertTriangle, MapPin, Compass, Sparkles, Calendar 
@@ -307,7 +308,6 @@ export default function Wyprawy() {
       }
 
       setDeleteMessage('Ogłoszenie wyprawy zostało opublikowane na Discordzie.')
-      await fetchExpeditions()
     } catch (error) {
       setDeleteMessage(error.message || 'Nie udało się opublikować wyprawy na Discordzie.')
     } finally {
@@ -321,11 +321,12 @@ export default function Wyprawy() {
     <div className="page-content">
       <div className="subpage-header">
         <h1>Wyprawy & Party</h1>
-        <p>Organizuj zbiórki grupowe z weryfikacją IP.</p>
+        <p>Organizuj zbiórki grupowe, harmonogram wydarzeń i ZvZ z weryfikacją IP.</p>
       </div>
 
-<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-<div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
+        <EventCalendarWidget expeditions={expeditions} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
           {/* FORMULARZ WYPRAWY */}
           <div className="lg:col-span-4">
