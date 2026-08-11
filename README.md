@@ -247,6 +247,12 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Automatyczne dobieranie wskaźnika zwrotu surowców (RRR %) dla każdego miasta (Martlock, Lymhurst, Fort Sterling, Bridgewatch, Thetford, Caerleon, Brecilien).
 - [x] Uwzględnianie opłaty odżywczej stoiska gracza (Nutrition Tax Fee / 100 Nutrition) w wyliczeniu czystego zysku rzemieślniczego.
 
+### Etap P10 — Dynamiczna Mapa Witryny (Sitemap.xml), Robots.txt & Metadata Open Graph
+
+- [x] Utworzenie dynamicznego generowania mapy witryny (`src/app/sitemap.js`) rejestrującego podstrony i trasy dynamiczne.
+- [x] Utworzenie pliku `src/app/robots.js` z regułami indeksowania wyszukiwarek.
+- [x] Dodanie unikalnych metadanych SEO, tytułów, opisów oraz kart Open Graph (og:image, og:title, og:description) dla podstron i kart w mediach społecznościowych.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.
