@@ -8,6 +8,7 @@ import MarketIntelligence from '@/components/market/MarketIntelligence'
 import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
 import ContactSellerModal from '@/components/market/ContactSellerModal'
 import CustomSelect from '@/components/ui/CustomSelect'
+import FavoriteButton from '@/components/ui/FavoriteButton'
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
@@ -409,7 +410,10 @@ export default function Rynek() {
                             )}
                           </div>
 
-                          <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
+                          <div className="flex items-center justify-between gap-3">
+                            <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
+                            <FavoriteButton id={offer.id} title={offer.title} type="market" />
+                          </div>
                           
                           <div className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)] flex items-center gap-1.5 flex-wrap">
                             <span>Sprzedawca:</span>

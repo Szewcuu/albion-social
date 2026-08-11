@@ -293,6 +293,20 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Stworzenie reprezentacji schematu bazy jako wersjonowanej migracji SQL (`supabase/migrations/20260811000000_schema_and_indexes.sql`).
 - [x] Utworzenie indeksów wydajnościowych B-Tree dla najczęstszych sortowań, relacji kluczy obcych i filtrów rynkowych.
 
+### Etap P19 — Statystyki Portalu & Analityka Aktywności Graczy
+
+- [x] Widżet analityki żywej aktywności na stronie głównej Tawerny (`/`): liczba zweryfikowanych graczy, łączny rozegrany PvP/PvE Fame, aktywne oferty P2P oraz zbiórki na wyprawy.
+
+### Etap P20 — Eksport & Import Buildów (Kody Udostępniania & Kopiowanie Zestawów)
+
+- [x] Funkcja eksportu buildu do zwięzłego kodu udostępniania (Share Code / JSON) oraz przycisk 1-klikowego kopiowania linku w Kreatorze i podglądzie zestawu.
+- [x] Funkcja importu buildu z podanego kodu udostępniania w Kreatorze Buildów (`/buildy/create`).
+
+### Etap P21 — System Ulubionych / Zakładek dla Buildów & Ofert Rynkowych
+
+- [x] Przycisk "Do Ulubionych" (`[ ⭐ Ulubione ]`) przy zestawach w Zbrojowni i ofertach na Rynku z zapisem w profilu gracza (`favoriteSystem.js`).
+- [x] Szybki filtr "Tylko Ulubione" na podstronach `/buildy` oraz `/rynek`.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.

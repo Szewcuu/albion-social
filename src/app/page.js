@@ -19,6 +19,7 @@ import {
   Users,
 } from 'lucide-react'
 import ChatBox from '@/components/ChatBox'
+import PortalAnalyticsWidget from '@/components/stats/PortalAnalyticsWidget'
 import { supabase } from '@/lib/supabase'
 
 const MODULES = [
@@ -158,6 +159,8 @@ export default function Home() {
       </section>
 
       <ChatBox user={user} isAdmin={isAdmin} />
+
+      <PortalAnalyticsWidget />
 
       <section className="realm-section member-arsenal" aria-labelledby="arsenal-title">
         <div className="section-heading">

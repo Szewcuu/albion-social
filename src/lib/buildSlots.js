@@ -81,6 +81,23 @@ export function decodeBuildFromUrl(encoded) {
   }
 }
 
+export function exportBuildToShareCode(build) {
+  try {
+    return `BUILD-${btoa(unescape(encodeURIComponent(JSON.stringify(build))))}`
+  } catch {
+    return ''
+  }
+}
+
+export function importBuildFromShareCode(code) {
+  try {
+    const raw = code.replace(/^BUILD-/, '').trim()
+    return JSON.parse(decodeURIComponent(escape(atob(raw))))
+  } catch {
+    return null
+  }
+}
+
 export function buildToDbPayload(build, userId) {
   const s = build.slots
   const primaryActivity = build.tags.activities[0] || 'PvP'

@@ -2,10 +2,11 @@
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame } from 'lucide-react'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, Star } from 'lucide-react'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { buildFromDbRow } from '@/lib/buildSlots'
 import BuildComparator from '@/components/builds/BuildComparator'
+import FavoriteButton from '@/components/ui/FavoriteButton'
 
 const ALBION_CATEGORIES = [
   { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
@@ -152,9 +153,12 @@ export default function BuildyPage() {
                 <div className="pointer-events-none relative z-0 p-5">
                   <div className="flex justify-between items-start mb-3">
                     <span className="badge badge-amber">{b.activity_type}</span>
-                    <span className="text-[11px] text-[var(--text-muted)] font-mono">
-                      {new Date(b.created_at).toLocaleDateString()}
-                    </span>
+                    <div className="flex items-center gap-2 pointer-events-auto">
+                      <FavoriteButton id={b.id} title={b.title} type="build" />
+                      <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                        {new Date(b.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
                   <h3 className="text-base font-bold text-white leading-tight group-hover:text-[var(--amber)] transition">{b.title}</h3>
                   <p className="mt-2 line-clamp-2 text-xs leading-5 text-[var(--text-secondary)]">{b.description || 'Brak opisu taktycznego.'}</p>
