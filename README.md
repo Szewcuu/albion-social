@@ -253,6 +253,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Utworzenie pliku `src/app/robots.js` z regułami indeksowania wyszukiwarek.
 - [x] Dodanie unikalnych metadanych SEO, tytułów, opisów oraz kart Open Graph (og:image, og:title, og:description) dla podstron i kart w mediach społecznościowych.
 
+### Etap P11 — System Obserwowania & Centrum Powiadomień Portalu
+
+- [x] Przycisk "Obserwuj" dla graczy, gildii i buildów zapisuący subskrypcje powiadomień w profilu użytkownika.
+- [x] Komponent Centrum Powiadomień (`NotificationCenterModal.jsx`) z powiadomieniami o nowych wyprawach, ofertach rynkowych i aktualizacjach obserwowanych gildii.
+
 ## Audyt dostępnych API Albion Online
 
 Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone bezpośrednimi zapytaniami dla serwera europejskiego.

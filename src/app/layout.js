@@ -36,14 +36,14 @@ export const metadata = {
     locale: 'pl_PL',
     url: 'https://albion-social.vercel.app',
     title: 'Albion Online Polska Portal',
-    description: 'Ogólnopolski portal graczy Albion Online — gildie, zbrojownia buildów, rynek P2P i wyceny rynkowe.',
+    description: 'Ogólnopolski portal graczy Albion Online — zbrojownia buildów, rynek P2P, kalkulatory craftingu, killboard i gildie.',
     siteName: 'Albion Social',
     images: [
       {
-        url: '/logo-256.webp',
-        width: 256,
-        height: 256,
-        alt: 'Albion Online Polska Portal',
+        url: '/og-banner.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Albion Online Polska Portal Banner',
       },
     ],
   },
@@ -51,7 +51,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Albion Online Polska Portal',
     description: 'Baza wiedzy, zbrojownia buildów, rynek P2P i społeczność polskich gildii w Albion Online.',
-    images: ['/logo-256.webp'],
+    images: ['/og-banner.jpg'],
   },
   robots: {
     index: true,
