@@ -144,44 +144,46 @@ export default function Home() {
   const displayName = (user.user_metadata?.full_name || user.user_metadata?.name || 'Wojowniku').replace(/#0$/, '')
 
   return (
-    <div className="member-home space-y-6">
-      <section className="member-intro" aria-labelledby="member-title">
-        <div>
-          <span className="welcome-kicker"><Activity aria-hidden="true" /> Kompania online</span>
-          <h1 id="member-title">Witaj w tawernie, <em>{displayName}</em></h1>
-          <p>Wybierz moduł z arsenału poniżej lub dołącz do dyskusji na żywo w czacie społeczności.</p>
+    <div className="member-home space-y-5 animate-fade-in">
+      {/* 1. KANAPA / WELCOME BANNER */}
+      <section className="member-intro p-5 sm:p-6" aria-labelledby="member-title">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span className="welcome-kicker"><Activity aria-hidden="true" /> Kompania Online</span>
+            <h1 id="member-title" className="text-2xl font-black">Witaj w tawernie, <em>{displayName}</em></h1>
+            <p className="text-xs text-gray-400 mt-1">Główny punkt wypadowy polskiej społeczności Albion Online.</p>
+          </div>
+          <dl className="member-stats flex items-center gap-4">
+            <div><dt>Gildie</dt><dd>{globalStats.guildsCount}</dd></div>
+            <div><dt>Oferty rynku</dt><dd>{globalStats.marketOffersCount}</dd></div>
+            <div><dt>Serwery</dt><dd><span className="status-dot online" /> Wszystkie</dd></div>
+          </dl>
         </div>
-        <dl className="member-stats">
-          <div><dt>Gildie</dt><dd>{globalStats.guildsCount}</dd></div>
-          <div><dt>Oferty rynku</dt><dd>{globalStats.marketOffersCount}</dd></div>
-          <div><dt>Serwery Albionu</dt><dd><span className="status-dot online" /> Wszystkie</dd></div>
-        </dl>
       </section>
 
-      {/* 1. ARSENAŁ MODUŁÓW NA SAMEJ GÓRZE */}
-      <section className="realm-section member-arsenal" aria-labelledby="arsenal-title">
-        <div className="section-heading">
-          <div><span className="section-index">I</span><p>Arsenał społeczności</p><h2 id="arsenal-title">Główne Moduły Portalu</h2></div>
-          <p className="section-intro">Szybki dostęp do wszystkich narzędzi i baz wiedzy Albion Polska.</p>
-        </div>
-        <div className="module-grid">
-          {MODULES.map((module) => {
-            const Icon = module.icon
+      {/* 2. ZWIĘZŁY PASEK SZYBKIEGO DOSTĘPU (QUICK NAV DOCK) */}
+      <div className="panel p-3.5 flex items-center gap-2 overflow-x-auto scrollbar-none border-amber-400/20">
+        <span className="text-[10px] font-mono font-bold uppercase text-amber-400 shrink-0 px-2 flex items-center gap-1">
+          <Compass className="w-3.5 h-3.5" /> Szybki Dostęp:
+        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {MODULES.map((m) => {
+            const Icon = m.icon
             return (
-              <Link key={module.href} href={module.href} className="module-card" data-tone={module.tone}>
-                <span className="module-marker">{module.marker}</span>
-                <span className="module-icon"><Icon aria-hidden="true" /></span>
-                <span className="module-eyebrow">{module.eyebrow}</span>
-                <h3>{module.label}</h3>
-                <p>{module.desc}</p>
-                <span className="module-cta">Otwórz księgę <ChevronRight aria-hidden="true" /></span>
+              <Link
+                key={m.href}
+                href={m.href}
+                className="chip flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-amber-500/20 border border-white/10 hover:border-amber-400/50 text-xs text-gray-200 hover:text-amber-300 font-bold transition whitespace-nowrap"
+              >
+                <Icon className="w-3.5 h-3.5 text-amber-400" />
+                <span>{m.label}</span>
               </Link>
             )
           })}
         </div>
-      </section>
+      </div>
 
-      {/* 2. DWA KOLUMNY: CZAT I STATYSTYKI OBOJĘTNIE OBOK SIEBIE */}
+      {/* 3. DWUKOLUMNOWY CZAT I ANALITYKA PORTALU */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <div className="lg:col-span-7">
           <ChatBox user={user} isAdmin={isAdmin} />
