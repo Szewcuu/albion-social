@@ -203,7 +203,7 @@ export default function ChatBox({ user, isAdmin }) {
             </button>
           </div>
 
-          <div className="community-posts !max-h-[160px] overflow-y-auto" aria-live="polite">
+          <div className="community-posts !max-h-[260px] overflow-y-auto" aria-live="polite">
             {loading ? (
               <div className="community-empty"><RefreshCw className="spin" aria-hidden="true" /><strong>Otwieramy kronikę rozmów…</strong></div>
             ) : loadError ? (

@@ -144,7 +144,7 @@ export default function Home() {
   const displayName = (user.user_metadata?.full_name || user.user_metadata?.name || 'Wojowniku').replace(/#0$/, '')
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 space-y-4 animate-fade-in">
+    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 pt-6 space-y-6 animate-fade-in">
       {/* NAGŁÓWEK POWITALNY TAWERNY */}
       <div className="panel p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-amber-400/20">
         <div className="flex items-center gap-3">

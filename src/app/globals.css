@@ -639,7 +639,7 @@ input:autofill, textarea:autofill, select:autofill { background: #171009; color:
 .community-connection.connecting .status-dot { background: var(--gold); animation: pulse 1.2s ease-in-out infinite; }
 .community-layout { display: grid; min-height: 610px; grid-template-columns: 270px minmax(0,1fr); }
 .community-layout.community-single { display: block; min-height: 0; }
-.community-single .community-thread { min-height: 650px; }
+.community-single .community-thread { min-height: auto; }
 .community-channels { padding: 20px 14px; border-right: 1px solid var(--border); background: rgba(10,7,5,.27); }
 .community-channels > p { margin: 0 10px 11px; color: var(--text-faded); font: 850 8px/1 var(--font-ui); letter-spacing: .15em; text-transform: uppercase; }
 .community-channels > button { display: grid; width: 100%; grid-template-columns: 25px minmax(0,1fr) auto; align-items: center; gap: 8px; padding: 12px 10px; border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text-muted); text-align: left; cursor: pointer; transition: .18s; }
