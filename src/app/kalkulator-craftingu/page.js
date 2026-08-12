@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Hammer, Sparkles, TrendingUp, TrendingDown, Coins, Percent, Zap, LoaderCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import GoldExchangeWidget from '@/components/economy/GoldExchangeWidget'
 import TradeArbitrageCalculator from '@/components/market/TradeArbitrageCalculator'
+import ItemPriceHistoryChart from '@/components/market/ItemPriceHistoryChart'
 
 const RESOURCES = [
   { id: 'CLOTH', label: 'Tkanina (Cloth)', rawId: 'FIBER' },
@@ -103,7 +104,6 @@ export default function CraftingCalculatorPage() {
         rawPrices = []
       }
 
-      // Fallback pobierający dane bezpośrednio w przeglądarce jeśli serwer pośredniczący zasygnalizuje błąd
       if (!rawPrices || rawPrices.length === 0) {
         const host = regionKey === 'america' ? 'west' : regionKey === 'asia' ? 'east' : 'europe'
         const directRes = await fetch(`https://${host}.albion-online-data.com/api/v2/stats/prices/${encodeURIComponent(itemId)}.json?locations=Caerleon,Martlock,Lymhurst,Bridgewatch,FortSterling,Thetford,Brecilien`)
@@ -114,7 +114,7 @@ export default function CraftingCalculatorPage() {
 
       const validPrices = (rawPrices || []).filter(p => p.sell_price_min > 0)
       if (validPrices.length === 0) {
-        setError(`Brak aktywnych danych cenowych dla przedmiotu ${itemId} na serwerze ${server}. (Cena nie została jeszcze zeskanowana przez graczy)`)
+        setError(`Brak aktywnych danych cenowych dla przedmiotu ${itemId} na serwerze ${server}.`)
         setPriceData(null)
       } else {
         validPrices.sort((a, b) => a.sell_price_min - b.sell_price_min)
@@ -128,7 +128,7 @@ export default function CraftingCalculatorPage() {
         })
       }
     } catch (err) {
-      setError(err.message || 'Błąd pobierania cen.')
+      setError(err.message || 'Nie udało się pobrać cen z API.')
       setPriceData(null)
     } finally {
       setLoading(false)
@@ -142,14 +142,14 @@ export default function CraftingCalculatorPage() {
     return () => clearTimeout(timer)
   }, [fetchPrices])
 
-  // Przeliczenia zysku z uwzględnieniem RRR
   const unitPrice = priceData?.minPrice || 0
-  const rawMaterialEstCost = Math.round(unitPrice * 0.7) // szacowany koszt surowca
+  const rawMaterialEstCost = Math.round(unitPrice * 0.7)
   const returnRateMultiplier = 1 - rrr / 100
   const totalCost = Math.round(quantity * rawMaterialEstCost * returnRateMultiplier + (quantity * (stationTax / 10)))
   const totalRevenue = Math.round(quantity * unitPrice)
   const netProfit = totalRevenue - totalCost
   const profitPerItem = quantity > 0 ? Math.round(netProfit / quantity) : 0
+  const returnedItems = Math.round(quantity * (rrr / 100))
 
   return (
     <div className="page-content">
@@ -262,7 +262,6 @@ export default function CraftingCalculatorPage() {
                   </div>
                 </div>
 
-                {/* SUWAKI RRR I PODATKU */}
                 <div className="space-y-3 pt-2 border-t border-white/10">
                   <div>
                     <div className="flex justify-between text-[11px] font-bold text-emerald-400 mb-1">
@@ -278,11 +277,6 @@ export default function CraftingCalculatorPage() {
                       onChange={(e) => setRrr(Number(e.target.value))}
                       className="w-full accent-emerald-500 cursor-pointer"
                     />
-                    <div className="flex justify-between text-[9px] text-gray-400 mt-0.5">
-                      <span>15.2% (Standard)</span>
-                      <span>36.7% (Miasto + Skupienie)</span>
-                      <span>53.9% (Max Bonus)</span>
-                    </div>
                   </div>
 
                   <div>
@@ -338,7 +332,6 @@ export default function CraftingCalculatorPage() {
 
               {priceData && !loading && (
                 <div className="space-y-5">
-                  {/* GLÓWNY WYNIK ZYSKU */}
                   <div className={`p-5 rounded-3xl border ${
                     netProfit > 0
                       ? 'bg-gradient-to-r from-emerald-950/60 to-emerald-900/40 border-emerald-500/40'
@@ -361,28 +354,28 @@ export default function CraftingCalculatorPage() {
                     </div>
                   </div>
 
-                  {/* STATYSTYKI SZCZEGÓŁOWE */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
-                    <div className="bg-[var(--bg-elevated)] p-3.5 rounded-2xl border border-[#200d14]">
-                      <div className="text-[9px] text-gray-400 uppercase">Przychód Ogólny</div>
-                      <div className="text-sm font-bold text-amber-200 mt-0.5">{totalRevenue.toLocaleString('pl-PL')} Silver</div>
+                    <div className="bg-[#050204] p-3 rounded-2xl border border-[#200d14]">
+                      <div className="text-gray-400 text-[10px]">Łączny Koszt Wytworzenia:</div>
+                      <div className="font-bold text-gray-200 mt-0.5">{totalCost.toLocaleString('pl-PL')} Silver</div>
                     </div>
 
-                    <div className="bg-[var(--bg-elevated)] p-3.5 rounded-2xl border border-[#200d14]">
-                      <div className="text-[9px] text-gray-400 uppercase">Koszt po Zwrocie RRR</div>
-                      <div className="text-sm font-bold text-rose-300 mt-0.5">{totalCost.toLocaleString('pl-PL')} Silver</div>
+                    <div className="bg-[#050204] p-3 rounded-2xl border border-[#200d14]">
+                      <div className="text-gray-400 text-[10px]">Zwrócone Surowce (RRR):</div>
+                      <div className="font-bold text-amber-300 mt-0.5">{returnedItems} szt. ({rrr}%)</div>
                     </div>
 
-                    <div className="bg-[var(--bg-elevated)] p-3.5 rounded-2xl border border-[#200d14] col-span-2 sm:col-span-1">
-                      <div className="text-[9px] text-gray-400 uppercase">Oszczędność z RRR</div>
-                      <div className="text-sm font-bold text-emerald-400 mt-0.5">
-                        +{Math.round(quantity * rawMaterialEstCost * (rrr / 100)).toLocaleString('pl-PL')} Silver
-                      </div>
+                    <div className="bg-[#050204] p-3 rounded-2xl border border-[#200d14] col-span-2 sm:col-span-1">
+                      <div className="text-gray-400 text-[10px]">Przychód ze Sprzedaży:</div>
+                      <div className="font-bold text-emerald-300 mt-0.5">{totalRevenue.toLocaleString('pl-PL')} Silver</div>
                     </div>
                   </div>
                 </div>
               )}
             </div>
+
+            {/* WYKRES HISTORII CEN SUROWCA */}
+            <ItemPriceHistoryChart itemId={getItemId()} defaultCity={selectedCity} />
           </div>
         </div>
       </div>

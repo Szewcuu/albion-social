@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { TrendingDown, TrendingUp, LoaderCircle, AlertCircle, Coins, CheckCircle2, Zap } from 'lucide-react'
+import ItemPriceHistoryChart from './ItemPriceHistoryChart'
 
 export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, server = 'Europa', onSelectPrice }) {
   const [loading, setLoading] = useState(false)
@@ -177,6 +178,9 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
               </div>
             </div>
           )}
+
+          {/* HISTORIA CEN - CHART */}
+          <ItemPriceHistoryChart itemId={formattedId} defaultCity={marketData.cheapestCity || 'Caerleon'} compact />
         </div>
       )}
     </div>

@@ -17,7 +17,9 @@ Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 - [x] objąć nowym systemem wizualnym istniejące podstrony i widoki mobilne
 - [x] poprawić etykiety formularzy, kontrast oraz politykę Content Security Policy wskazane przez Lighthouse
 - [x] wykonać lint, produkcyjny build oraz testy desktop/mobile najważniejszych tras
-- [ ] opublikować gałąź, sprawdzić preview Vercel i wykonać końcowy smoke test produkcji
+### Faza II — Nowe Moduły i Funkcje
+
+- [x] **P31: 📈 Wykresy Historii Cen (Albion Data History API)** — interaktywny wykres cen z ostatnich 24h, 7d i 30d z trendami w kalkulatorze craftingu i na rynku.
 
 Gotowe i wdrożone:
 
