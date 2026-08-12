@@ -8,6 +8,7 @@ import { buildFromDbRow } from '@/lib/buildSlots'
 import BuildComparator from '@/components/builds/BuildComparator'
 import FavoriteButton from '@/components/ui/FavoriteButton'
 import SquadCompBuilder from '@/components/builds/SquadCompBuilder'
+import Meta1v1Tierlist from '@/components/builds/Meta1v1Tierlist'
 
 const ALBION_CATEGORIES = [
   { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
@@ -61,12 +62,14 @@ export default function BuildyPage() {
 
   const totalVotes = builds.reduce((sum, build) => sum + (build.build_votes || []).filter((vote) => vote.vote_type === 'up').length, 0)
 
+  const [mainTab, setMainTab] = useState('catalog') // 'catalog' | 'meta' | 'squad'
+
   return (
     <div className="page-content">
       {/* Header */}
       <div className="subpage-header">
         <h1><Anvil className="w-5 h-5 text-[var(--amber)]" /> Kuźnia Buildów</h1>
-        <p>Przeglądaj sprawdzone kompozycje graczy, odkrywaj synergie ekwipunku i publikuj własne doktryny.</p>
+        <p>Przeglądaj sprawdzone kompozycje graczy, odkrywaj synergie ekwipunku, analizuj Meta 1v1 i buduj skład zespołowy.</p>
       </div>
 
       {/* Stats */}
@@ -85,36 +88,79 @@ export default function BuildyPage() {
         </div>
       </div>
 
-      {/* Filters + Create */}
-      <div className="panel mb-6">
-        <div className="panel-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap gap-2">
-            {ALBION_CATEGORIES.map((cat) => {
-              const IconComponent = cat.icon
-              const isActive = activeCategory === cat.id
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`chip ${isActive ? 'active' : ''}`}
-                >
-                  <IconComponent className="w-3.5 h-3.5" />
-                  <span>{cat.name}</span>
-                </button>
-              )
-            })}
-          </div>
-          <Link href="/buildy/create" className="btn btn-primary btn-sm">
-            <Flame className="h-4 w-4" /> Stwórz Build
-          </Link>
-        </div>
+      {/* MAIN TAB SWITCHER */}
+      <div className="panel mb-6 p-2 flex flex-wrap gap-2 font-mono text-xs">
+        <button
+          onClick={() => setMainTab('catalog')}
+          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+            mainTab === 'catalog'
+              ? 'bg-amber-500/20 border border-amber-400/50 text-amber-300 shadow-md'
+              : 'bg-black/30 border border-white/5 text-gray-400 hover:text-white'
+          }`}
+        >
+          <Swords className="w-4 h-4 text-amber-400" />
+          <span>Zbrojownia Buildów</span>
+        </button>
+
+        <button
+          onClick={() => setMainTab('meta')}
+          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+            mainTab === 'meta'
+              ? 'bg-amber-500/20 border border-amber-400/50 text-amber-300 shadow-md'
+              : 'bg-black/30 border border-white/5 text-gray-400 hover:text-white'
+          }`}
+        >
+          <Flame className="w-4 h-4 text-amber-400" />
+          <span>Meta 1v1 & Tierlisty</span>
+        </button>
+
+        <button
+          onClick={() => setMainTab('squad')}
+          className={`flex-1 min-w-[140px] py-2.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition cursor-pointer ${
+            mainTab === 'squad'
+              ? 'bg-amber-500/20 border border-amber-400/50 text-amber-300 shadow-md'
+              : 'bg-black/30 border border-white/5 text-gray-400 hover:text-white'
+          }`}
+        >
+          <Shield className="w-4 h-4 text-sky-400" />
+          <span>Planer Składu (5v5)</span>
+        </button>
       </div>
 
-      <SquadCompBuilder />
+      {mainTab === 'meta' && <Meta1v1Tierlist />}
 
-      <BuildComparator builds={builds} />
+      {mainTab === 'squad' && <SquadCompBuilder />}
 
-      {/* Builds Grid */}
+      {mainTab === 'catalog' && (
+        <>
+          {/* Filters + Create */}
+          <div className="panel mb-6">
+            <div className="panel-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {ALBION_CATEGORIES.map((cat) => {
+                  const IconComponent = cat.icon
+                  const isActive = activeCategory === cat.id
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`chip ${isActive ? 'active' : ''}`}
+                    >
+                      <IconComponent className="w-3.5 h-3.5" />
+                      <span>{cat.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              <Link href="/buildy/create" className="btn btn-primary btn-sm">
+                <Flame className="h-4 w-4" /> Stwórz Build
+              </Link>
+            </div>
+          </div>
+
+          <BuildComparator builds={builds} />
+
+          {/* Builds Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           <p className="text-[var(--text-muted)] italic col-span-full text-center py-10">Pobieranie buildów...</p>
@@ -211,6 +257,8 @@ export default function BuildyPage() {
           })
         )}
       </div>
+        </>
+      )}
     </div>
   )
 }

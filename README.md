@@ -20,6 +20,7 @@ Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 ### Faza II — Nowe Moduły i Funkcje
 
 - [x] **P31: 📈 Wykresy Historii Cen (Albion Data History API)** — interaktywny wykres cen z ostatnich 24h, 7d i 30d z trendami w kalkulatorze craftingu i na rynku.
+- [x] **P32: 🗡️ Tierlista Meta & Stats 1v1 (MurderLedger / 1v1 Engine)** — ranking broni 1v1 (Tier S+, S, A, B), winraty %, popularność, zestawienia kontrujące oraz interaktywne podglądy zestawów.
 
 Gotowe i wdrożone:
 
