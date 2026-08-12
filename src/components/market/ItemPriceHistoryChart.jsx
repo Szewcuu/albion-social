@@ -34,6 +34,8 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
   const [error, setError] = useState(null)
   const [hoveredPoint, setHoveredPoint] = useState(null)
 
+  const [allLocationsData, setAllLocationsData] = useState([])
+
   useEffect(() => {
     if (!itemId) return
 
@@ -41,34 +43,24 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
     setLoading(true)
     setError(null)
 
-    fetch(`/api/prices?mode=history&item=${encodeURIComponent(itemId)}&city=${encodeURIComponent(city)}&range=${range}`)
+    // Query history without city filter so all cities are fetched at once
+    fetch(`/api/prices?mode=history&item=${encodeURIComponent(itemId)}&range=${range}`)
       .then(res => res.json())
       .then(resData => {
         if (!isMounted) return
         if (resData.error) {
           setError(resData.error.message || 'Brak danych historycznych dla tego przedmiotu.')
+          setAllLocationsData([])
           setHistoryData([])
         } else {
-          // Flatten data array from response
-          const rawLocationData = Array.isArray(resData.data) ? resData.data[0] : resData.data
-          const points = rawLocationData?.data || rawLocationData?.location_data || []
-          
-          // Filter valid prices and sort chronologically
-          const validPoints = points
-            .filter(p => p && (p.avg_price > 0 || p.price > 0))
-            .map(p => ({
-              price: p.avg_price || p.price || 0,
-              volume: p.item_count || p.count || 0,
-              timestamp: p.timestamp,
-            }))
-            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-
-          setHistoryData(validPoints)
+          const list = Array.isArray(resData.data) ? resData.data : [resData.data]
+          setAllLocationsData(list)
         }
       })
       .catch(() => {
         if (isMounted) {
           setError('Nie udało się połączyć z API historii cen.')
+          setAllLocationsData([])
           setHistoryData([])
         }
       })
@@ -79,7 +71,42 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
     return () => {
       isMounted = false
     }
-  }, [itemId, city, range])
+  }, [itemId, range])
+
+  // Extract history data whenever city or allLocationsData changes
+  useEffect(() => {
+    if (!allLocationsData || !allLocationsData.length) {
+      setHistoryData([])
+      return
+    }
+
+    const cityClean = city.replace(/\s+/g, '').toLowerCase()
+    const match = allLocationsData.find(d => {
+      const loc = (d?.location || d?.location_name || d?.Location || '').replace(/\s+/g, '').toLowerCase()
+      return loc === cityClean
+    })
+
+    const points = match?.data || match?.location_data || []
+    const validPoints = points
+      .filter(p => p && (p.avg_price > 0 || p.price > 0))
+      .map(p => ({
+        price: p.avg_price || p.price || 0,
+        volume: p.item_count || p.count || 0,
+        timestamp: p.timestamp,
+      }))
+      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+
+    setHistoryData(validPoints)
+  }, [city, allLocationsData])
+
+  // Identify available cities with scanned data
+  const availableCities = useMemo(() => {
+    if (!allLocationsData.length) return []
+    return allLocationsData
+      .filter(d => d && Array.isArray(d.data || d.location_data) && (d.data || d.location_data).some(p => p.avg_price > 0 || p.price > 0))
+      .map(d => d.location || d.location_name || d.Location)
+      .filter(Boolean)
+  }, [allLocationsData])
 
   const stats = useMemo(() => {
     if (!historyData.length) return null
@@ -195,10 +222,28 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
             <span>Pobieranie historii transakcji...</span>
           </div>
         ) : error || !historyData.length ? (
-          <div className="h-32 flex flex-col items-center justify-center text-xs text-gray-400 font-mono gap-1 text-center p-4">
-            <AlertCircle className="w-5 h-5 text-amber-400/80 mb-1" />
-            <p className="font-bold text-gray-300">{error || 'Brak wpisów skanera rynkowego'}</p>
-            <p className="text-[10px] text-gray-500">Zmień miasto lub zakres czasu, aby zobaczyć starsze dane.</p>
+          <div className="min-h-32 flex flex-col items-center justify-center text-xs text-gray-400 font-mono gap-1.5 text-center p-4">
+            <AlertCircle className="w-5 h-5 text-amber-400/80 mb-0.5" />
+            <p className="font-bold text-gray-200">
+              {error || `Brak skanów w miasteczku ${city} (${range})`}
+            </p>
+            <p className="text-[10px] text-gray-400 max-w-sm">
+              Gracze z klientem Albion Data Project nie skanowali tego rynku w wybranym okresie. Zmień zakres na 30 Dni lub przełącz miasto.
+            </p>
+            {availableCities.length > 0 && (
+              <div className="pt-2 flex flex-wrap items-center justify-center gap-1.5 text-[10px]">
+                <span className="text-gray-400 text-[9px]">Skanowane rynki:</span>
+                {availableCities.map(availCity => (
+                  <button
+                    key={availCity}
+                    onClick={() => setCity(availCity)}
+                    className="px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 transition cursor-pointer font-bold"
+                  >
+                    {availCity}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : chartSvg && (
           <div className="relative">

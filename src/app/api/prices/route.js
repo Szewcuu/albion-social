@@ -68,19 +68,20 @@ export async function GET(request) {
 
     if (mode === 'history') {
       const itemId = searchParams.get('item')?.trim().toUpperCase()
-      const city = cleanEnum(searchParams.get('city'), MARKET_CITIES)
+      const rawCity = searchParams.get('city')
+      const city = rawCity ? cleanEnum(rawCity, MARKET_CITIES) : null
       const quality = Number(searchParams.get('quality') || 1)
       const range = cleanEnum(searchParams.get('range') || '7d', Object.keys(MARKET_RANGES))
 
       if (!isSafeItemId(itemId)) return errorResponse('Nieprawidłowy identyfikator przedmiotu.', 'INVALID_ITEM', 400)
-      if (!city) return errorResponse('Nieobsługiwane miasto.', 'INVALID_CITY', 400)
+      if (rawCity && !city) return errorResponse('Nieobsługiwane miasto.', 'INVALID_CITY', 400)
       if (!(quality in MARKET_QUALITIES)) return errorResponse('Nieobsługiwana jakość.', 'INVALID_QUALITY', 400)
       if (!range) return errorResponse('Nieobsługiwany zakres czasu.', 'INVALID_RANGE', 400)
 
       const data = await getMarketHistory({ itemId, city, quality, region, range })
       return NextResponse.json({
         data,
-        meta: { ...commonMeta({ mode, region, cacheSeconds: 300 }), itemId, city, quality, range },
+        meta: { ...commonMeta({ mode, region, cacheSeconds: 300 }), itemId, city: city || 'ALL', quality, range },
       })
     }
 

@@ -80,7 +80,7 @@ export async function getCurrentMarketPrices({ itemIds, cities, qualities, regio
   return fetchMarketJson(`${host}/api/v2/stats/prices/${itemPath}.json?${params}`, { revalidate: 60 })
 }
 
-export async function getMarketHistory({ itemId, city, quality, region, range }) {
+export async function getMarketHistory({ itemId, city, quality = 1, region = 'europe', range = '7d' }) {
   const host = MARKET_REGIONS[region]
   const rangeConfig = MARKET_RANGES[range]
   if (!host) throw new Error('INVALID_REGION')
@@ -90,8 +90,11 @@ export async function getMarketHistory({ itemId, city, quality, region, range })
   const start = new Date(end)
   start.setUTCDate(start.getUTCDate() - rangeConfig.days)
 
+  const defaultLocations = 'Caerleon,Bridgewatch,FortSterling,Lymhurst,Martlock,Thetford,Brecilien'
+  const locationsParam = city ? city.replace(/\s+/g, '') : defaultLocations
+
   const params = new URLSearchParams({
-    locations: city,
+    locations: locationsParam,
     qualities: String(quality),
     'time-scale': String(rangeConfig.timeScale),
     date: toDateParameter(start),
