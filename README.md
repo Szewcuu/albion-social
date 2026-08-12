@@ -21,6 +21,8 @@ Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 
 - [x] **P31: 📈 Wykresy Historii Cen (Albion Data History API)** — interaktywny wykres cen z ostatnich 24h, 7d i 30d z trendami w kalkulatorze craftingu i na rynku.
 - [x] **P32: 🗡️ Tierlista Meta & Stats 1v1 (MurderLedger / 1v1 Engine)** — ranking broni 1v1 (Tier S+, S, A, B), winraty %, popularność, zestawienia kontrujące oraz interaktywne podglądy zestawów.
+- [x] **P33: 📊 Rozszerzone Wykresy Kursu Złota (Gold API)** — wykres historii kursu Złota 24h/7d/30d, statystyki zmienności, kalkulator wymiany oraz przelicznik kosztu Premium (30 Dni).
+- [x] **P34: 🔔 Centrum Powiadomień na Żywo (Header Bell)** — dzwonek powiadomień w nagłówku z licznikiem nieprzeczytanych wiadomości, dedykowanymi ikonami kategorii, oznaczaniem pojedynczych i zbiorczych powiadomień oraz subskrypcją Supabase Realtime.
 
 Gotowe i wdrożone:
 

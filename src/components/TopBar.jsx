@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, CheckCheck, ChevronDown, LogIn, LogOut, Map, Menu, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Bell, CheckCheck, ChevronDown, LogIn, LogOut, Map, Menu, RefreshCw, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, Sparkles } from 'lucide-react'
 
 const PAGE_NAMES = {
   '/': 'Tawerna',
@@ -22,12 +22,22 @@ const PAGE_NAMES = {
   '/prywatnosc': 'Polityka Prywatności',
 }
 
+const getNotificationIcon = (type, title) => {
+  const t = (type || title || '').toLowerCase()
+  if (t.includes('expedition') || t.includes('wypraw') || t.includes('zgłoszeni')) return Swords
+  if (t.includes('market') || t.includes('rynek') || t.includes('ofert')) return ShoppingBag
+  if (t.includes('comment') || t.includes('komentarz')) return MessageSquare
+  if (t.includes('system') || t.includes('admin') || t.includes('kara')) return ShieldAlert
+  return Bell
+}
+
 export default function TopBar({
   user,
   logout,
   notifications,
   notificationState,
   markAllAsRead,
+  markSingleAsRead,
   refreshNotifications,
   loginWithDiscord,
   onMenuToggle,
@@ -96,21 +106,39 @@ export default function TopBar({
                     ) : notificationState?.error ? (
                       <div className="notification-empty error">{notificationState.error}<button type="button" onClick={refreshNotifications}>Spróbuj ponownie</button></div>
                     ) : notifications?.length > 0 ? (
-                      notifications.slice(0, 8).map((notification) => (
-                        <Link
-                          key={notification.id}
-                          href={notification.link || '#'}
-                          className={`notification-item ${notification.is_read ? 'read' : 'unread'}`}
-                          onClick={() => setShowNotifs(false)}
-                        >
-                          <span className="notification-dot" />
-                          <span>
-                            <strong>{notification.title || 'Nowe powiadomienie'}</strong>
-                            <small>{notification.message || notification.content || 'Otwórz, aby zobaczyć szczegóły.'}</small>
-                            {notification.created_at && <time>{new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(notification.created_at))}</time>}
-                          </span>
-                        </Link>
-                      ))
+                      notifications.slice(0, 10).map((notification) => {
+                        const IconComponent = getNotificationIcon(notification.type, notification.title)
+
+                        return (
+                          <Link
+                            key={notification.id}
+                            href={notification.link || '#'}
+                            className={`notification-item ${notification.is_read ? 'read' : 'unread'}`}
+                            onClick={() => {
+                              if (!notification.is_read && markSingleAsRead) {
+                                markSingleAsRead(notification.id)
+                              }
+                              setShowNotifs(false)
+                            }}
+                          >
+                            <div className="w-8 h-8 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
+                              <IconComponent className="w-4 h-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <strong className="truncate font-bold text-white text-xs">{notification.title || 'Nowe powiadomienie'}</strong>
+                                {!notification.is_read && <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />}
+                              </div>
+                              <small className="line-clamp-2 text-gray-300 text-[11px] font-sans mt-0.5">{notification.message || notification.content || 'Otwórz, aby zobaczyć szczegóły.'}</small>
+                              {notification.created_at && (
+                                <time className="block text-[9px] font-mono text-gray-500 mt-1">
+                                  {new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(notification.created_at))}
+                                </time>
+                              )}
+                            </div>
+                          </Link>
+                        )
+                      })
                     ) : (
                       <div className="notification-empty"><Bell /><strong>Cisza w gołębniku</strong><span>Nowe zgłoszenia do gildii i wypraw pojawią się tutaj.</span></div>
                     )}

@@ -75,6 +75,20 @@ export default function AppShell({ children }) {
     return true
   }, [user])
 
+  const markSingleAsRead = useCallback(async (notificationId) => {
+    if (!user || !notificationId) return
+    setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n)))
+    try {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId)
+        .eq('user_id', user.id)
+    } catch {
+      // Ignore error
+    }
+  }, [user])
+
   useEffect(() => {
     let active = true
 
@@ -177,6 +191,7 @@ export default function AppShell({ children }) {
             notifications={notifications}
             notificationState={notificationState}
             markAllAsRead={markAllAsRead}
+            markSingleAsRead={markSingleAsRead}
             refreshNotifications={() => user?.id && fetchNotifications(user.id)}
             loginWithDiscord={loginWithDiscord}
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
