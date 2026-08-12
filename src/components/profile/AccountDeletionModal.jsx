@@ -36,8 +36,8 @@ export default function AccountDeletionModal({ isOpen, onClose, userId }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fade-in">
-      <div className="panel w-full max-w-md space-y-5 p-6 relative border-rose-500/40 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
+      <div className="panel w-full max-w-md space-y-5 p-6 relative border-rose-500/40 shadow-2xl">
         
         <div className="flex items-center justify-between border-b border-white/8 pb-4">
           <div className="flex items-center gap-3 text-rose-400">

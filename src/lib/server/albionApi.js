@@ -1,4 +1,5 @@
 import 'server-only'
+import { supabase } from '@/lib/supabase'
 
 export const ALBION_REGIONS = {
   europe: {
@@ -265,15 +266,42 @@ export async function searchAlbionPlayersAllRegions(query, preferredRegion = 'eu
   return allPlayers
 }
 
-export async function getAlbionPlayerOverview(playerId, region, limit = 6) {
-  const safeId = encodeURIComponent(playerId)
-  const [profileResult, killsResult, deathsResult] = await Promise.allSettled([
-    fetchAlbionJson(`/players/${safeId}`, { region, revalidate: 120, timeoutMs: 8000 }),
-    fetchAlbionJson(`/players/${safeId}/kills?limit=${limit}&offset=0`, { region, revalidate: 90, timeoutMs: 10000 }),
-    fetchAlbionJson(`/players/${safeId}/deaths?limit=${limit}&offset=0`, { region, revalidate: 90, timeoutMs: 10000 }),
-  ])
+export async function getAlbionPlayerOverview(playerIdOrNick, region, limit = 6) {
+  let safeId = encodeURIComponent(playerIdOrNick)
+  let activeRegion = region
 
-  if (profileResult.status === 'rejected') throw profileResult.reason
+  let profileResult, killsResult, deathsResult
+
+  try {
+    [profileResult, killsResult, deathsResult] = await Promise.allSettled([
+      fetchAlbionJson(`/players/${safeId}`, { region: activeRegion, revalidate: 120, timeoutMs: 8000 }),
+      fetchAlbionJson(`/players/${safeId}/kills?limit=${limit}&offset=0`, { region: activeRegion, revalidate: 90, timeoutMs: 10000 }),
+      fetchAlbionJson(`/players/${safeId}/deaths?limit=${limit}&offset=0`, { region: activeRegion, revalidate: 90, timeoutMs: 10000 }),
+    ])
+
+    if (profileResult.status === 'rejected') throw profileResult.reason
+  } catch (err) {
+    if (err?.upstreamStatus === 404 || err?.status === 404) {
+      const searchResults = await searchAlbionPlayersAllRegions(playerIdOrNick, region)
+      if (searchResults && searchResults.length > 0) {
+        const found = searchResults.find(p => (p.name || '').toLowerCase() === playerIdOrNick.toLowerCase()) || searchResults[0]
+        safeId = encodeURIComponent(found.id)
+        if (found.region) activeRegion = found.region
+
+        ;[profileResult, killsResult, deathsResult] = await Promise.allSettled([
+          fetchAlbionJson(`/players/${safeId}`, { region: activeRegion, revalidate: 120, timeoutMs: 8000 }),
+          fetchAlbionJson(`/players/${safeId}/kills?limit=${limit}&offset=0`, { region: activeRegion, revalidate: 90, timeoutMs: 10000 }),
+          fetchAlbionJson(`/players/${safeId}/deaths?limit=${limit}&offset=0`, { region: activeRegion, revalidate: 90, timeoutMs: 10000 }),
+        ])
+
+        if (profileResult.status === 'rejected') throw profileResult.reason
+      } else {
+        throw err
+      }
+    } else {
+      throw err
+    }
+  }
 
   const profile = normalizePlayer(profileResult.value)
   const warnings = []
@@ -301,6 +329,22 @@ export async function getAlbionPlayerOverview(playerId, region, limit = 6) {
     if (ipValues.length > 0) {
       const avg = ipValues.reduce((a, b) => a + b, 0) / ipValues.length
       profile.averageItemPower = Math.round(avg)
+    }
+  }
+
+  if (profile.averageItemPower === 0 && profile.name) {
+    try {
+      const { data: dbProfile } = await supabase
+        .from('profiles')
+        .select('avg_ip')
+        .or(`verified_player_id.eq.${profile.id},ingame_nick.ilike.${profile.name}`)
+        .maybeSingle()
+
+      if (dbProfile?.avg_ip && Number(dbProfile.avg_ip) > 0) {
+        profile.averageItemPower = Number(dbProfile.avg_ip)
+      }
+    } catch {
+      // ignore
     }
   }
 
