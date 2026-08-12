@@ -103,13 +103,37 @@ export default function ProfilePage() {
         avg_ip: profileResult.data.avg_ip || 1400,
       })
       if (profileResult.data.is_verified || profileResult.data.verified_player_id || profileResult.data.ingame_nick) {
+        const pId = profileResult.data.verified_player_id || profileResult.data.ingame_nick
+        const pServer = profileResult.data.verified_server || profileResult.data.main_server || 'Europa'
+        const region = pServer.toLowerCase().includes('ameryka') ? 'america' : pServer.toLowerCase().includes('azja') ? 'asia' : 'europe'
+
         setVerifiedState({
           is_verified: true,
-          verified_player_id: profileResult.data.verified_player_id || profileResult.data.ingame_nick,
-          verified_server: profileResult.data.verified_server || profileResult.data.main_server || 'Europa',
+          verified_player_id: pId,
+          verified_server: pServer,
           pvp_fame: profileResult.data.pvp_fame || 0,
           pve_fame: profileResult.data.pve_fame || 0,
         })
+
+        fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(pId)}&region=${region}`)
+          .then(res => res.json())
+          .then(apiRes => {
+            const p = apiRes?.data?.player
+            if (p) {
+              const freshPvp = p.killFame || 0
+              const freshPve = p.fame?.pve || 0
+              setVerifiedState(prev => ({
+                ...prev,
+                pvp_fame: freshPvp,
+                pve_fame: freshPve,
+              }))
+              supabase.from('profiles').update({
+                pvp_fame: freshPvp,
+                pve_fame: freshPve,
+              }).eq('id', userId).then(() => {})
+            }
+          })
+          .catch(() => {})
       } else if (typeof window !== 'undefined') {
         try {
           const cached = localStorage.getItem(`aopp_verified_${userId}`)
@@ -313,7 +337,7 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35" aria-label={`Kompletność profilu ${completion}%`}>
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35" role="progressbar" aria-valuenow={completion} aria-valuemin={0} aria-valuemax={100} aria-label={`Kompletność profilu ${completion}%`}>
                   <div className="h-full rounded-full bg-gradient-to-r from-[#b9872c] to-[#f0cf77]" style={{ width: `${completion}%` }} />
                 </div>
                 <p className="mt-2 text-[9px] text-[var(--text-secondary)]">Kompletność karty: {completion}%</p>

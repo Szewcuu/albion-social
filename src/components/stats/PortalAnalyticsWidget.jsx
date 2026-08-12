@@ -6,27 +6,32 @@ import { supabase } from '@/lib/supabase'
 
 export default function PortalAnalyticsWidget() {
   const [stats, setStats] = useState({
-    verifiedPlayers: 42,
-    totalPvpFame: 154800000,
-    activeBuilds: 18,
-    activeMarketOffers: 24,
+    verifiedPlayers: 0,
+    totalPvpFame: 0,
+    activeBuilds: 0,
+    activeMarketOffers: 0,
   })
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const { count: profilesCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
-        const { count: buildsCount } = await supabase.from('builds').select('*', { count: 'exact', head: true })
-        const { count: marketCount } = await supabase.from('market_items').select('*', { count: 'exact', head: true })
+        const [profilesRes, buildsRes, marketRes, pvpFameRes] = await Promise.all([
+          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('builds').select('*', { count: 'exact', head: true }),
+          supabase.from('market_items').select('*', { count: 'exact', head: true }),
+          supabase.from('profiles').select('pvp_fame'),
+        ])
 
-        setStats(prev => ({
-          ...prev,
-          verifiedPlayers: profilesCount || prev.verifiedPlayers,
-          activeBuilds: buildsCount || prev.activeBuilds,
-          activeMarketOffers: marketCount || prev.activeMarketOffers,
-        }))
+        const totalPvp = (pvpFameRes.data || []).reduce((sum, p) => sum + Number(p.pvp_fame || 0), 0)
+
+        setStats({
+          verifiedPlayers: profilesRes.count || 0,
+          totalPvpFame: totalPvp,
+          activeBuilds: buildsRes.count || 0,
+          activeMarketOffers: marketRes.count || 0,
+        })
       } catch {
-        // Keep fallback stats
+        // Keep current stats
       }
     }
 
@@ -64,7 +69,13 @@ export default function PortalAnalyticsWidget() {
           <div className="flex items-center gap-1.5 text-rose-400 text-[10px] uppercase font-bold">
             <Swords className="w-3.5 h-3.5" /> Łączny PvP Fame
           </div>
-          <p className="text-xl font-black text-rose-300">~{(stats.totalPvpFame / 1_000_000).toFixed(1)}M</p>
+          <p className="text-xl font-black text-rose-300">
+            {stats.totalPvpFame >= 1_000_000
+              ? `~${(stats.totalPvpFame / 1_000_000).toFixed(1)}M`
+              : stats.totalPvpFame >= 1_000
+              ? `~${(stats.totalPvpFame / 1_000).toFixed(0)}k`
+              : stats.totalPvpFame.toLocaleString('pl-PL')}
+          </p>
         </div>
 
         <div className="p-4 rounded-2xl bg-black/30 border border-white/8 space-y-1">

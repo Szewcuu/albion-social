@@ -145,28 +145,46 @@ function totalGatheringFame(gathering) {
     .reduce((sum, key) => sum + (gathering?.[key]?.Total || 0), 0)
 }
 
+function getFameTotal(category, fallbackValue = 0) {
+  if (typeof fallbackValue === 'number' && Number.isFinite(fallbackValue) && fallbackValue > 0) {
+    return fallbackValue
+  }
+  if (typeof category === 'number' && Number.isFinite(category)) return category
+  if (!category || typeof category !== 'object') return 0
+  if (Number.isFinite(category.Total)) return category.Total
+  if (Number.isFinite(category.total)) return category.total
+  const sum = Object.values(category).reduce((acc, val) => acc + (typeof val === 'number' ? val : 0), 0)
+  return sum
+}
+
 function normalizePlayer(player) {
-  const lifetime = player.LifetimeStatistics || {}
+  const lifetime = player.LifetimeStatistics || player.lifetimeStatistics || {}
+  const pveFame = getFameTotal(lifetime.PvE || lifetime.pve, player.PvEFame || player.PveFame || player.pveFame)
+  const craftingFame = getFameTotal(lifetime.Crafting || lifetime.crafting, player.CraftingFame)
+  const gatheringFame = totalGatheringFame(lifetime.Gathering || lifetime.gathering)
+  const fishingFame = getFameTotal(lifetime.Fishing || lifetime.fishing, player.FishingFame)
+  const farmingFame = getFameTotal(lifetime.Farming || lifetime.farming, player.FarmingFame)
+
   return {
-    id: player.Id,
-    name: player.Name,
-    guildName: player.GuildName || '',
-    guildId: player.GuildId || '',
-    allianceName: player.AllianceName || '',
-    allianceId: player.AllianceId || '',
-    allianceTag: player.AllianceTag || '',
+    id: player.Id || player.id || '',
+    name: player.Name || player.name || '',
+    guildName: player.GuildName || player.guildName || '',
+    guildId: player.GuildId || player.guildId || '',
+    allianceName: player.AllianceName || player.allianceName || '',
+    allianceId: player.AllianceId || player.allianceId || '',
+    allianceTag: player.AllianceTag || player.allianceTag || '',
     avatar: player.Avatar || '',
     avatarRing: player.AvatarRing || '',
-    killFame: player.KillFame || 0,
-    deathFame: player.DeathFame || 0,
-    fameRatio: Number(player.FameRatio || 0),
+    killFame: player.KillFame ?? player.killFame ?? 0,
+    deathFame: player.DeathFame ?? player.deathFame ?? 0,
+    fameRatio: Number(player.FameRatio ?? player.fameRatio ?? 0),
     averageItemPower: Math.round(player.AverageItemPower || 0),
     fame: {
-      pve: lifetime.PvE?.Total || 0,
-      gathering: totalGatheringFame(lifetime.Gathering),
-      crafting: lifetime.Crafting?.Total || 0,
-      fishing: lifetime.FishingFame || 0,
-      farming: lifetime.FarmingFame || 0,
+      pve: pveFame,
+      gathering: gatheringFame,
+      crafting: craftingFame,
+      fishing: fishingFame,
+      farming: farmingFame,
     },
   }
 }
@@ -268,6 +286,23 @@ export async function getAlbionPlayerOverview(playerId, region, limit = 6) {
 
   if (killsResult.status === 'rejected') warnings.push('Historia zabójstw jest chwilowo niedostępna.')
   if (deathsResult.status === 'rejected') warnings.push('Historia zgonów jest chwilowo niedostępna.')
+
+  if (profile.averageItemPower === 0) {
+    const ipValues = []
+    const allEvents = [...kills, ...deaths]
+    for (const ev of allEvents) {
+      if (ev.killer?.id === profile.id && ev.killer.averageItemPower > 0) {
+        ipValues.push(ev.killer.averageItemPower)
+      }
+      if (ev.victim?.id === profile.id && ev.victim.averageItemPower > 0) {
+        ipValues.push(ev.victim.averageItemPower)
+      }
+    }
+    if (ipValues.length > 0) {
+      const avg = ipValues.reduce((a, b) => a + b, 0) / ipValues.length
+      profile.averageItemPower = Math.round(avg)
+    }
+  }
 
   let guild = null
   if (profile.guildId) {

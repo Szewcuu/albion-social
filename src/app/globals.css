@@ -102,7 +102,7 @@ a { color: inherit; text-decoration: none; }
   z-index: -3;
   background:
     linear-gradient(105deg, rgba(10, 7, 5, .96), rgba(17, 12, 8, .9)),
-    url('/albion-bg.jpg') center/cover no-repeat;
+    url('/albion-bg.webp') center/cover no-repeat;
 }
 
 .world-backdrop::after {
@@ -142,7 +142,7 @@ a { color: inherit; text-decoration: none; }
   border-right: 1px solid var(--border-warm);
   background:
     linear-gradient(rgba(20, 14, 10, .96), rgba(13, 9, 7, .985)),
-    url('/albion-bg.jpg') 22% center/auto 100% no-repeat;
+    url('/albion-bg.webp') 22% center/auto 100% no-repeat;
   box-shadow: 18px 0 50px rgba(0,0,0,.32), inset -1px 0 rgba(255,255,255,.025);
 }
 

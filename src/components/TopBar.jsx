@@ -122,7 +122,7 @@ export default function TopBar({
             <div ref={userRef} className="relative">
               <button className="topbar-user" onClick={() => setShowUserMenu((current) => !current)} aria-label={`Menu użytkownika ${displayName}`} aria-expanded={showUserMenu}>
                 {avatarUrl ? (
-                  <Image src={avatarUrl} alt={displayName} width={30} height={30} className="topbar-avatar" />
+                  <Image src={avatarUrl} alt="" width={30} height={30} className="topbar-avatar" />
                 ) : (
                   <div className="topbar-avatar flex items-center justify-center bg-[var(--bg-panel)] text-[var(--gold)] text-xs font-bold" style={{ fontFamily: 'var(--font-heading)' }}>{displayName?.charAt(0).toUpperCase()}</div>
                 )}

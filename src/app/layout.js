@@ -70,7 +70,7 @@ export default function RootLayout({ children }) {
       className={`${cinzel.variable} ${lora.variable} h-full antialiased`}
     >
       <head>
-        <link rel="preload" href="/albion-bg.jpg" as="image" fetchPriority="high" />
+        <link rel="preload" href="/albion-bg.webp" as="image" fetchPriority="high" />
       </head>
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
