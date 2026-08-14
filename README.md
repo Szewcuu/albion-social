@@ -54,8 +54,8 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 - [x] zastąpić dwa workflow jednym pipeline na Node 22
 - [x] usunąć wszystkie błędy i ostrzeżenia lint
 - [x] wykonać lokalny build i publiczne testy E2E
-- [ ] potwierdzić zielony workflow GitHub Actions po publikacji gałęzi
-- [ ] dodać konto testowe i uruchomić pełne authenticated E2E
+- [x] potwierdzić zielony workflow GitHub Actions po publikacji gałęzi
+- [x] dodać konto testowe i uruchomić pełne authenticated E2E
 
 ### P5.1 — spójność Supabase
 
@@ -159,7 +159,7 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 
 ### Priorytet B — stabilność kluczowych przepływów
 
-- [ ] uruchomić pełne testy E2E zalogowanego użytkownika po dodaniu dedykowanego konta `E2E_USER_*` do GitHub Actions
+- [x] uruchomić pełne testy E2E zalogowanego użytkownika po dodaniu dedykowanego konta `E2E_USER_*` do GitHub Actions
   - [x] dodać Playwright, test logowania i testy kluczowych ekranów: czat, build, wyprawa, rynek oraz Loot Split
   - [x] dodać publiczne testy bramki logowania, Regulaminu i Prywatności
   - [x] uruchamiać lint, build i publiczne E2E automatycznie w CI
@@ -171,7 +171,7 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 - [x] dodać kontrolowane ponowienie publikacji wyprawy na Discordzie bez ponownego tworzenia ogłoszenia
 - [x] wdrożyć i zweryfikować migrację `supabase/migrations/008_priority_b_stability.sql` na produkcyjnym Supabase
 - [x] zweryfikować `CRON_SECRET` dla środowisk Preview i Production Vercela
-- [ ] wykonać produkcyjny smoke test po wdrożeniu gałęzi
+- [x] wykonać produkcyjny smoke test po wdrożeniu gałęzi
 
 ### Priorytet C — funkcje społecznościowe
 
@@ -325,13 +325,13 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 ### Etap P14 — Automatyzacja CI/CD GitHub Actions Workflow
 
 - [x] Jeden przepływ GitHub Actions (`.github/workflows/quality.yml`) uruchamiający lint, build i Playwright na Node 22 przy pushu oraz Pull Requescie do `main`.
-- [ ] Potwierdzenie zielonego przebiegu na GitHubie po publikacji gałęzi P5.
+- [x] Potwierdzenie zielonego przebiegu na GitHubie po publikacji gałęzi P5.
 
 ### Etap P15 — Zestaw Testów End-to-End (E2E Integration Test Suite)
 
 - [x] Publiczne i zalogowane scenariusze Playwright znajdują się w aktywnym katalogu `tests/e2e`.
 - [x] Publiczna bramka, Regulamin, Prywatność i chronione endpointy przechodzą 10/10 testów.
-- [ ] Zalogowane testy wymagają konta `E2E_USER_*` w sekretach GitHub.
+- [x] Zalogowane testy korzystają z dedykowanego konta `E2E_USER_*` w sekretach GitHub.
 
 ### Etap P16 — Wygasanie, Odnawianie & Archiwizacja Ofert Rynkowych
 
