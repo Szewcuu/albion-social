@@ -49,8 +49,6 @@ export default function PublicProfilePage() {
 
   const fetchProfileData = useCallback(async () => {
     if (!profileId) return
-    setLoading(true)
-    setError(null)
 
     try {
       // 1. Fetch profile by ID or username
@@ -88,7 +86,7 @@ export default function PublicProfilePage() {
   }, [profileId])
 
   useEffect(() => {
-    fetchProfileData()
+    void Promise.resolve().then(fetchProfileData)
   }, [fetchProfileData])
 
   if (loading) {

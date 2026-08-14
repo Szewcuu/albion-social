@@ -52,7 +52,7 @@ function KillboardContent() {
 
   const [searchNick, setSearchNick] = useState(initialNick || '')
   const [region, setRegion] = useState(initialRegion || 'europe')
-  const [searching, setSearching] = useState(false)
+  const [searching, setSearching] = useState(Boolean(initialNick))
   const [loadingPlayer, setLoadingPlayer] = useState(false)
   const [searchResults, setSearchResults] = useState([])
   const [overview, setOverview] = useState(null)
@@ -62,9 +62,7 @@ function KillboardContent() {
 
   useEffect(() => {
     if (initialNick) {
-      const targetRegion = initialRegion || region
-      setSearchNick(initialNick)
-      setSearching(true)
+      const targetRegion = initialRegion || 'europe'
       fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(initialNick)}&region=${targetRegion}`)
         .then((res) => res.json())
         .then((payload) => {

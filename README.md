@@ -20,8 +20,8 @@ Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 ### Faza II — Nowe Moduły i Funkcje
 
 - [x] **P31: 📈 Wykresy Historii Cen (Albion Data History API)** — interaktywny wykres cen z ostatnich 24h, 7d i 30d z trendami w kalkulatorze craftingu i na rynku.
-- [x] **P32: 🗡️ Tierlista Meta & Stats 1v1 (MurderLedger / 1v1 Engine)** — ranking broni 1v1 (Tier S+, S, A, B), winraty %, popularność, zestawienia kontrujące oraz interaktywne podglądy zestawów.
-- [x] **P33: 📊 Rozszerzone Wykresy Kursu Złota (Gold API)** — wykres historii kursu Złota 24h/7d/30d, statystyki zmienności, kalkulator wymiany oraz przelicznik kosztu Premium (30 Dni).
+- [ ] **P32: 🗡️ Tierlista Meta & Stats 1v1** — interfejs istnieje, ale obecne rankingi są danymi demonstracyjnymi; przed oznaczeniem etapu jako gotowy trzeba podłączyć wiarygodne źródło albo jawnie opisać metodologię.
+- [ ] **P33: 📊 Rozszerzone Wykresy Kursu Złota (Gold API)** — interfejs i pobieranie danych istnieją, ale moduł wymaga usunięcia ukrytego kursu zastępczego i czytelnej obsługi niedostępnego API.
 - [x] **P34: 🔔 Centrum Powiadomień na Żywo (Header Bell)** — dzwonek powiadomień w nagłówku z licznikiem nieprzeczytanych wiadomości, dedykowanymi ikonami kategorii, oznaczaniem pojedynczych i zbiorczych powiadomień oraz subskrypcją Supabase Realtime.
 
 Gotowe i wdrożone:
@@ -42,9 +42,49 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **Priorytet B: stabilność kluczowych przepływów — implementacja gotowa do wdrożenia**
+> **P5: stabilizacja po audycie z 14 sierpnia 2026**
 
-P4.2 i Priorytet A są wdrożone. Gałąź Priorytetu B dodaje testy przeglądarkowe, monitoring błędów i zależności, status usług w panelu personelu oraz trwałe szkice i wersje raportów Loot Splitu. Migracja `008_priority_b_stability.sql` została wdrożona i zweryfikowana na produkcyjnym projekcie Supabase, a `CRON_SECRET` jest skonfigurowany w Preview i Production Vercela. Do zamknięcia etapu pozostają produkcyjny smoke test oraz pełne testy zalogowanego użytkownika z osobnym kontem E2E w sekretach GitHub.
+P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat profili, porządkują RLS i przywracają zielony lokalny pipeline. Następnym etapem jest P5.2: prawdziwe usuwanie konta, autoryzowany health check oraz usunięcie lub jednoznaczne oznaczenie danych demonstracyjnych.
+
+### P5.0 — bezpieczeństwo i CI
+
+- [x] usunąć publiczny `handle_build_vote`, który przyjmował dowolne `p_user_id`
+- [x] odebrać rolom `anon` bezpośredni dostęp do funkcji `SECURITY DEFINER`
+- [x] zabezpieczyć funkcje triggerów przez pusty `search_path`
+- [x] zastąpić dwa workflow jednym pipeline na Node 22
+- [x] usunąć wszystkie błędy i ostrzeżenia lint
+- [x] wykonać lokalny build i 9 publicznych testów E2E
+- [ ] potwierdzić zielony workflow GitHub Actions po publikacji gałęzi
+- [ ] dodać konto testowe i uruchomić pełne authenticated E2E
+
+### P5.1 — spójność Supabase
+
+- [x] dodać do produkcyjnego `profiles` brakujące pola weryfikacji i Fame
+- [x] zastąpić nieskuteczne `CREATE TABLE IF NOT EXISTS` migracją opartą o `ALTER TABLE`
+- [x] scalić duplikaty polityk profili, powiadomień i starych ofert
+- [x] przepisać polityki `auth.uid()` na wydajniejsze InitPlan
+- [x] dodać 18 brakujących indeksów kluczy obcych
+- [x] ograniczyć publiczne odczyty moderowanych tabel do rekordów `visible`
+- [x] wdrożyć i zweryfikować migracje P5 na produkcyjnym Supabase
+
+### P5.2 — prawdziwe przepływy użytkownika
+
+- [ ] wdrożyć serwerowe usuwanie użytkownika z `auth.users` i danych zależnych
+- [ ] poprawić tekst Polityki Prywatności po wdrożeniu rzeczywistego usuwania
+- [ ] zabezpieczyć `/api/admin/health` rolą personelu i prawdziwie testować Discord
+- [ ] przenieść tworzenie powiadomień dla innych użytkowników do walidowanych endpointów serwerowych
+- [ ] zastąpić dane meta 1v1 wiarygodnym źródłem albo oznaczyć moduł jako demonstracyjny
+- [ ] usunąć ukryty kurs zastępczy złota i pokazywać jawny stan błędu/stare dane
+- [ ] zapisywać przypomnienia, obserwowane elementy i ulubione po stronie konta
+
+### P5.3 — PWA, zależności i pełne QA
+
+- [ ] dodać brakujący favicon i naprawić instalację cache service workera
+- [ ] nie cache'ować prywatnych stron użytkownika strategią cache-first
+- [ ] zaktualizować podatne zależności wskazane przez `npm audit`
+- [ ] przenieść fonty do lokalnych assetów, aby build nie wymagał Google Fonts
+- [ ] oblewać testy przy nieoczekiwanym błędzie konsoli lub odpowiedzi `4xx/5xx`
+- [ ] powtórzyć Lighthouse desktop/mobile bez rozszerzeń, jako gość i użytkownik
 
 ### Zakończony Priorytet A
 
@@ -260,12 +300,12 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P11 — System Obserwowania & Centrum Powiadomień Portalu
 
-- [x] Przycisk "Obserwuj" dla graczy, gildii i buildów zapisuący subskrypcje powiadomień w profilu użytkownika.
+- [ ] Przycisk "Obserwuj" działa lokalnie w przeglądarce; synchronizacja subskrypcji z profilem użytkownika pozostaje do wdrożenia.
 - [x] Komponent Centrum Powiadomień (`NotificationCenterModal.jsx`) z powiadomieniami o nowych wyprawach, ofertach rynkowych i aktualizacjach obserwowanych gildii.
 
 ### Etap P12 — PWA Offline Service Worker, Manifest & Wydajność Web Vitals
 
-- [x] Rejestracja Service Workera dla aplikacji PWA umożliwiająca zapisywanie w pamięci podręcznej i działanie w trybie offline.
+- [ ] Fundament Service Workera i manifest istnieją, ale instalacja cache i bezpieczna strategia dla prywatnych tras wymagają naprawy przed uznaniem trybu offline za gotowy.
 - [x] Konfiguracja powiadomień diagnostycznych wydajności (Speed Insights / Core Web Vitals) dla ulepszenia czasy ładowania na urządzeniach mobilnych.
 
 ### Etap P13 — Unikalne Metadane SEO & Open Graph dla Wszystkich Podstron Portalu
@@ -275,13 +315,14 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P14 — Automatyzacja CI/CD GitHub Actions Workflow
 
-- [x] Utworzenie przepływu pracy GitHub Actions (`.github/workflows/ci.yml`) weryfikującego poprawność budowania aplikacji (`npm run build`) przy każdym commit/push oraz Pull Requescie.
-- [x] Automatyczna kontrola błędów statycznych, Next.js Turbopack builda oraz TypeScript typecheck przed wdrożeniem.
+- [x] Jeden przepływ GitHub Actions (`.github/workflows/quality.yml`) uruchamiający lint, build i Playwright na Node 22 przy pushu oraz Pull Requescie do `main`.
+- [ ] Potwierdzenie zielonego przebiegu na GitHubie po publikacji gałęzi P5.
 
 ### Etap P15 — Zestaw Testów End-to-End (E2E Integration Test Suite)
 
-- [x] Utworzenie zestawu testów integracyjnych `e2e/portal.spec.js` weryfikującego główne podstrony (Tawerna, Zbrojownia Buildów, Rynek P2P, Kalkulator Craftingu, Loot Split).
-- [x] Dodanie skryptu testowania `npm run test:e2e` dla ciągłej weryfikacji przepływów przed wdrożeniem na produkcję.
+- [x] Publiczne i zalogowane scenariusze Playwright znajdują się w aktywnym katalogu `tests/e2e`.
+- [x] Publiczna bramka, Regulamin i Prywatność przechodzą 9/9 testów.
+- [ ] Zalogowane testy wymagają konta `E2E_USER_*` w sekretach GitHub.
 
 ### Etap P16 — Wygasanie, Odnawianie & Archiwizacja Ofert Rynkowych
 
@@ -290,13 +331,15 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P17 — Procedura Usunięcia Konta & Retencja Danych RODO
 
-- [x] Przycisk i modal trwałego usunięcia konta użytkownika z bazy Supabase w zakładce Ustawień Profilu (`/profil`).
+- [x] Interfejs przycisku i modalu usunięcia konta w zakładce Ustawień Profilu (`/profil`).
+- [ ] Serwerowe usunięcie `auth.users`, profilu i danych zależnych wraz z obsługą błędów oraz audytem.
 - [x] Zapisanie zasad retencji danych osobowych i procedur anonimizacji w Polityce Prywatności (`/prywatnosc`).
 
 ### Etap P18 — Wersjonowane Migracje Supabase & Indeksy Wydajnościowe
 
-- [x] Stworzenie reprezentacji schematu bazy jako wersjonowanej migracji SQL (`supabase/migrations/20260811000000_schema_and_indexes.sql`).
-- [x] Utworzenie indeksów wydajnościowych B-Tree dla najczęstszych sortowań, relacji kluczy obcych i filtrów rynkowych.
+- [x] Dodanie idempotentnej migracji P5 synchronizującej istniejący schemat przez `ALTER TABLE`.
+- [x] Utworzenie indeksów B-Tree pokrywających wszystkie produkcyjne klucze obce wskazane przez Supabase Advisor.
+- [ ] Uporządkowanie historycznych migracji `001`–`008` względem rejestru migracji produkcyjnych.
 
 ### Etap P19 — Statystyki Portalu & Analityka Aktywności Graczy
 
@@ -352,7 +395,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P30 — Końcowy Audyt Gotowości Wdrożeniowej (Production Build & CI Verification)
 
-- [x] Pełny audyt statyczny, 100% sukcesu kompilacji Next.js Turbopack, spójność wszystkich 38 tras, Service Workera PWA oraz GitHub Actions CI/CD.
+- [ ] Audyt statyczny i lokalny build przechodzą; zielony GitHub Actions, poprawiony Service Worker i ponowny Lighthouse pozostają częścią P5.
 
 ## Audyt dostępnych API Albion Online
 

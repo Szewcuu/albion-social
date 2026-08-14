@@ -1,23 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Bell, BellOff, Check } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Bell, Check } from 'lucide-react'
 import { isFollowingItem, toggleFollowItem } from '@/lib/followSystem'
 
 export default function FollowButton({ id, name, type = 'guild', className = '' }) {
-  const [following, setFollowing] = useState(false)
+  const followKey = `${type}:${id || ''}`
+  const [followState, setFollowState] = useState({ key: '', value: false })
+  const following = followState.key === followKey && followState.value
 
   useEffect(() => {
-    if (id) {
-      setFollowing(isFollowingItem(id, type))
-    }
-  }, [id, type])
+    const timeoutId = window.setTimeout(() => {
+      setFollowState({
+        key: followKey,
+        value: Boolean(id && isFollowingItem(id, type)),
+      })
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [followKey, id, type])
 
   const handleToggle = (e) => {
     e.preventDefault()
     e.stopPropagation()
     const nextState = toggleFollowItem({ id, name, type })
-    setFollowing(nextState)
+    setFollowState({ key: followKey, value: nextState })
   }
 
   return (

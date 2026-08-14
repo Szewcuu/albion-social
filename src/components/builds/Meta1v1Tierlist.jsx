@@ -23,8 +23,6 @@ export default function Meta1v1Tierlist() {
 
   useEffect(() => {
     let isMounted = true
-    setLoading(true)
-    setError(null)
 
     fetch('/api/albion/meta')
       .then(res => res.json())

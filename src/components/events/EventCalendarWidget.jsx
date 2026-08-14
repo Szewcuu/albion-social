@@ -265,7 +265,7 @@ export default function EventCalendarWidget({ expeditions = [] }) {
           </div>
 
           <p className="text-[11px] text-center text-gray-400 font-mono">
-            💡 Godziny podane w formacie czasu serwera Albionu (UTC). Kliknij "Przypomnij" w widoku listy, aby włączyć alerty.
+            💡 Godziny podane w formacie czasu serwera Albionu (UTC). Kliknij &quot;Przypomnij&quot; w widoku listy, aby włączyć alerty.
           </p>
         </div>
       )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Coins, ArrowRightLeft, TrendingUp, TrendingDown, RefreshCw, BarChart2, ShieldCheck, Zap } from 'lucide-react'
 
 const RANGES = [
@@ -13,12 +13,11 @@ export default function GoldExchangeWidget() {
   const [region, setRegion] = useState('europe')
   const [range, setRange] = useState('7d')
   const [goldData, setGoldData] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [goldInput, setGoldInput] = useState(100)
   const [hoveredPoint, setHoveredPoint] = useState(null)
 
-  const fetchGoldHistory = async () => {
-    setLoading(true)
+  const fetchGoldHistory = useCallback(async () => {
     try {
       const res = await fetch(`/api/prices?mode=gold&region=${region}&range=${range}`)
       if (res.ok) {
@@ -39,11 +38,11 @@ export default function GoldExchangeWidget() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [range, region])
 
   useEffect(() => {
-    fetchGoldHistory()
-  }, [region, range])
+    void Promise.resolve().then(fetchGoldHistory)
+  }, [fetchGoldHistory])
 
   const latestPrice = useMemo(() => {
     if (!goldData.length) return 7528
@@ -113,7 +112,10 @@ export default function GoldExchangeWidget() {
           {/* Region selector */}
           <select
             value={region}
-            onChange={e => setRegion(e.target.value)}
+            onChange={e => {
+              setLoading(true)
+              setRegion(e.target.value)
+            }}
             className="bg-black/50 border border-white/10 rounded-xl px-3 py-1.5 text-gray-200 text-xs outline-none focus:border-amber-400/60"
           >
             <option value="europe" className="bg-[#120d0a]">Europa (AMS)</option>
@@ -126,7 +128,10 @@ export default function GoldExchangeWidget() {
             {RANGES.map(r => (
               <button
                 key={r.id}
-                onClick={() => setRange(r.id)}
+                onClick={() => {
+                  setLoading(true)
+                  setRange(r.id)
+                }}
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
                   range === r.id ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40' : 'text-gray-400 hover:text-white'
                 }`}
@@ -137,7 +142,10 @@ export default function GoldExchangeWidget() {
           </div>
 
           <button
-            onClick={fetchGoldHistory}
+            onClick={() => {
+              setLoading(true)
+              fetchGoldHistory()
+            }}
             disabled={loading}
             className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer"
             title="Odśwież dane"

@@ -52,7 +52,7 @@ export default function PrivacyPage() {
       id: 'retention',
       title: 'Okres przechowywania & Procedura Usunięcia Konta (RODO)',
       icon: Clock3,
-      content: <><p>Dane konta są przechowywane przez czas korzystania z profilu. Użytkownik posiada prawo do natychmiastowego i trwałego usunięcia swojego profilu oraz wszystkich powiązanych danych w dowolnym momencie.</p><p><strong className="text-[#eee7d9]">Procedura usunięcia konta:</strong> W zakładce Ustawień Profilu (<a href="/profil" className="font-bold text-amber-300 hover:text-amber-200">/profil</a>) znajduje się dedykowany przycisk <strong className="text-rose-300 font-mono">"Usuń Konto & Dane RODO"</strong>. Po potwierdzeniu frazą "USUŃ KONTO" profil użytkownika, wpisy na forum, oferty rynkowe P2P oraz powiązane dane osobowe są trwale kasowane z bazy Supabase.</p></>,
+      content: <><p>Dane konta są przechowywane przez czas korzystania z profilu. Użytkownik może w dowolnym momencie zażądać usunięcia profilu i powiązanych danych, z zastrzeżeniem danych, które operator musi zachować ze względów bezpieczeństwa lub prawnych.</p><p><strong className="text-[#eee7d9]">Procedura usunięcia konta:</strong> automatyczne usuwanie z poziomu ustawień profilu jest obecnie w trakcie wdrażania i nie należy uznawać samego wylogowania za potwierdzenie usunięcia danych. Do czasu uruchomienia kompletnej procedury żądanie należy przesłać przez <a href="https://github.com/Szewcuu/albion-social" className="font-bold text-sky-300 hover:text-sky-200">repozytorium projektu</a>. Operator zweryfikuje właściciela konta i potwierdzi wykonanie żądania.</p></>,
     },
     {
       id: 'rights',
