@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import {
+  createSupabaseAdminClient,
   createSupabaseRequestClient,
   getPortalRole,
   isPortalAdmin,
@@ -58,7 +59,8 @@ export async function PATCH(request) {
     const reason = cleanText(body?.reason, { min: 3, max: 500 })
     if (!isModerationId(userId) || !role || !reason) return jsonError('Nieprawidłowa zmiana roli.', 400)
 
-    const { data, error } = await access.supabase.rpc('set_portal_role', {
+    const { data, error } = await createSupabaseAdminClient().rpc('service_set_portal_role', {
+      p_actor_id: access.auth.user.id,
       p_user_id: userId,
       p_role: role,
       p_reason: reason,

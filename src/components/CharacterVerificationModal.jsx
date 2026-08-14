@@ -90,7 +90,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
     }
   }
 
-  const handleConfirmVerification = () => {
+  const handleConfirmVerification = async () => {
     if (!selectedCandidate || !overview) return
 
     setVerifying(true)
@@ -100,6 +100,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
       ingame_nick: player.name || selectedCandidate.name || selectedCandidate.Name,
       guild_name: player.guildName || selectedCandidate.guildName || selectedCandidate.GuildName || '',
       verified_player_id: player.id || selectedCandidate.id || selectedCandidate.Id,
+      region,
       verified_server: region === 'america' ? 'Ameryka' : region === 'asia' ? 'Azja' : 'Europa',
       pvp_fame: player.killFame || selectedCandidate.killFame || 0,
       pve_fame: player.fame?.pve || 0,
@@ -107,9 +108,12 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
       verified_at: new Date().toISOString(),
     }
 
-    if (onVerifySuccess) onVerifySuccess(verificationData)
-    setVerifying(false)
-    onClose()
+    try {
+      const verified = onVerifySuccess ? await onVerifySuccess(verificationData) : true
+      if (verified !== false) onClose()
+    } finally {
+      setVerifying(false)
+    }
   }
 
   return (

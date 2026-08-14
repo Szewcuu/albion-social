@@ -102,8 +102,8 @@ export default function ProfilePage() {
         main_role: profileResult.data.main_role || 'DPS',
         avg_ip: profileResult.data.avg_ip || 1400,
       })
-      if (profileResult.data.is_verified || profileResult.data.verified_player_id || profileResult.data.ingame_nick) {
-        const pId = profileResult.data.verified_player_id || profileResult.data.ingame_nick
+      if (profileResult.data.is_verified && profileResult.data.verified_player_id) {
+        const pId = profileResult.data.verified_player_id
         const pServer = profileResult.data.verified_server || profileResult.data.main_server || 'Europa'
         const region = pServer.toLowerCase().includes('ameryka') ? 'america' : pServer.toLowerCase().includes('azja') ? 'asia' : 'europe'
 
@@ -127,22 +127,11 @@ export default function ProfilePage() {
                 pvp_fame: freshPvp,
                 pve_fame: freshPve,
               }))
-              supabase.from('profiles').update({
-                pvp_fame: freshPvp,
-                pve_fame: freshPve,
-              }).eq('id', userId).then(() => {})
             }
           })
           .catch(() => {})
-      } else if (typeof window !== 'undefined') {
-        try {
-          const cached = localStorage.getItem(`aopp_verified_${userId}`)
-          if (cached) {
-            setVerifiedState(JSON.parse(cached))
-          }
-        } catch {
-          // ignore
-        }
+      } else {
+        setVerifiedState(null)
       }
     }
 
@@ -203,64 +192,45 @@ export default function ProfilePage() {
   }
 
   async function handleVerifySuccess(data) {
-    if (!user) return
-    setFormData((prev) => ({
-      ...prev,
-      ingame_nick: data.ingame_nick,
-      guild_name: data.guild_name,
-      main_server: data.verified_server || prev.main_server,
-    }))
-    const verifiedPayload = {
-      is_verified: true,
-      verified_player_id: data.verified_player_id,
-      verified_server: data.verified_server,
-      pvp_fame: data.pvp_fame,
-      pve_fame: data.pve_fame,
-      verified_at: data.verified_at,
+    if (!user) return false
+
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) {
+      setNotice({ type: 'error', text: 'Sesja wygasła. Zaloguj się ponownie.' })
+      return false
     }
-    setVerifiedState(verifiedPayload)
 
     try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`aopp_verified_${user.id}`, JSON.stringify(verifiedPayload))
-      }
-    } catch {
-      // ignore
-    }
-
-    // 1. Spróbuj pełnego zapisu z nowymi kolumnami
-    let { error } = await supabase
-      .from('profiles')
-      .update({
-        ingame_nick: data.ingame_nick,
-        guild_name: data.guild_name,
-        main_server: data.verified_server || 'Europa',
-        verified_player_id: data.verified_player_id,
-        verified_server: data.verified_server,
-        pvp_fame: data.pvp_fame,
-        pve_fame: data.pve_fame,
-        is_verified: true,
-        verified_at: data.verified_at,
+      const response = await fetch('/api/profile/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ playerId: data.verified_player_id, region: data.region }),
       })
-      .eq('id', user.id)
+      const result = await response.json().catch(() => null)
+      if (!response.ok || !result?.profile) {
+        throw new Error(result?.error || 'Nie udało się zweryfikować postaci.')
+      }
 
-    // 2. Jeśli baza zgłosi brak kolumn przed migracją 004, wykonaj bezpieczny fallback
-    if (error) {
-      const fallbackResult = await supabase
-        .from('profiles')
-        .update({
-          ingame_nick: data.ingame_nick,
-          guild_name: data.guild_name,
-          main_server: data.verified_server || 'Europa',
-        })
-        .eq('id', user.id)
-
-      error = fallbackResult.error
+      const verifiedPayload = result.profile
+      setFormData((prev) => ({
+        ...prev,
+        ingame_nick: verifiedPayload.ingame_nick,
+        guild_name: verifiedPayload.guild_name,
+        main_server: verifiedPayload.verified_server || prev.main_server,
+      }))
+      setVerifiedState(verifiedPayload)
+      setNotice({
+        type: 'success',
+        text: `Postać „${verifiedPayload.ingame_nick}” została zweryfikowana w API Albion Online!`,
+      })
+      return true
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message || 'Nie udało się zapisać profilu.' })
+      return false
     }
-
-    setNotice(error
-      ? { type: 'error', text: 'Nie udało się zapisać profilu. Spróbuj ponownie.' }
-      : { type: 'success', text: `Postać „${data.ingame_nick}” została oficjalnie zweryfikowana w API Albion Online!` })
   }
 
   if (loading) return <ProfileSkeleton />

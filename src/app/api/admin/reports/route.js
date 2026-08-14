@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { isModerationId } from '@/lib/server/moderation'
 import {
+  createSupabaseAdminClient,
   createSupabaseRequestClient,
   isPortalStaff,
   requireApiUser,
@@ -45,7 +46,8 @@ export async function PATCH(request) {
     }
     if (!reason) return jsonError('Podaj powód decyzji moderacyjnej.', 400)
 
-    const { data, error } = await supabase.rpc('review_build_reports_batch', {
+    const { data, error } = await createSupabaseAdminClient().rpc('service_review_build_reports_batch', {
+      p_actor_id: auth.user.id,
       p_report_ids: ids,
       p_action: action,
       p_reason: reason,

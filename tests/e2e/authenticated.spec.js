@@ -1,6 +1,29 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
+  test('odrzuca konto bez roli personelu z API moderacji i ról', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage)
+        .find((key) => /^sb-.+-auth-token$/.test(key))
+      if (!storageKey) return null
+
+      try {
+        return JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null
+      } catch {
+        return null
+      }
+    })
+
+    expect(accessToken).toBeTruthy()
+    const headers = { Authorization: `Bearer ${accessToken}` }
+    const moderationQueue = await request.get('/api/admin/content', { headers })
+    const roleManagement = await request.get('/api/admin/roles', { headers })
+
+    expect(moderationQueue.status()).toBe(403)
+    expect(roleManagement.status()).toBe(403)
+  })
+
   test('otwiera czat społeczności', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { name: 'Tawerna społeczności' })).toBeVisible()
