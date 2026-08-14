@@ -36,12 +36,20 @@ test.describe('publiczna bramka portalu', () => {
   test('odrzuca anonimowe wywołania endpointów personelu i usuwania konta', async ({ request }) => {
     const healthRead = await request.get('/api/admin/health')
     const healthRun = await request.post('/api/admin/health')
+    const moderationQueue = await request.get('/api/admin/content')
+    const roleManagement = await request.get('/api/admin/roles')
+    const profileVerification = await request.post('/api/profile/verify', {
+      data: { playerId: 'anonymous-test', region: 'europe' },
+    })
     const accountDelete = await request.delete('/api/profile/account', {
       data: { confirmation: 'USUŃ KONTO' },
     })
 
     expect(healthRead.status()).toBe(401)
     expect(healthRun.status()).toBe(401)
+    expect(moderationQueue.status()).toBe(401)
+    expect(roleManagement.status()).toBe(401)
+    expect(profileVerification.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
   })
 

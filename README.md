@@ -72,13 +72,22 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 - [x] wdrożyć serwerowe usuwanie użytkownika z `auth.users` i danych zależnych
 - [x] poprawić tekst Polityki Prywatności po wdrożeniu rzeczywistego usuwania
 - [x] zabezpieczyć `/api/admin/health` rolą personelu i prawdziwie testować Discord
-- [ ] przenieść tworzenie powiadomień dla innych użytkowników do walidowanych endpointów serwerowych — kod gotowy, migrację `20260814221358` zastosować dopiero razem z wdrożeniem P5.2
+- [x] przenieść tworzenie powiadomień dla innych użytkowników do walidowanych endpointów serwerowych i odebrać klientom bezpośredni `INSERT`
 - [x] jednoznacznie oznaczyć obecny moduł meta 1v1 jako demonstracyjny i usunąć fałszywą informację o danych live
 - [x] usunąć ukryty kurs zastępczy złota i pokazywać jawny stan błędu
 - [x] synchronizować przypomnienia, własne timery, obserwowane elementy i ulubione karty po stronie konta
 
 ### P5.3 — PWA, zależności i pełne QA
 
+- [x] przygotować serwerowe RPC dla moderacji i zarządzania rolami, dostępne wyłącznie przez `service_role`
+- [x] przełączyć endpointy panelu administratora na nowe RPC z jawnym identyfikatorem zweryfikowanego aktora
+- [x] zablokować samodzielną zmianę `profiles.role` i `profiles.is_admin` przez zwykłe konto
+- [x] przenieść zapis weryfikacji postaci i Fame z klienta do walidowanego endpointu serwerowego
+- [x] usunąć lokalny fallback, który mógł prezentować nieweryfikowany nick jako zweryfikowaną postać
+- [x] zweryfikować migrację na produkcyjnym schemacie w transakcji zakończonej `ROLLBACK`
+- [x] zastosować migrację fazy 1 przed wdrożeniem kodu
+- [ ] po wdrożeniu odebrać `authenticated` dostęp do czterech starych RPC
+- [x] rozszerzyć E2E o odmowę dostępu do API moderacji dla gościa i zwykłego użytkownika
 - [ ] dodać brakujący favicon i naprawić instalację cache service workera
 - [ ] nie cache'ować prywatnych stron użytkownika strategią cache-first
 - [ ] zaktualizować podatne zależności wskazane przez `npm audit`

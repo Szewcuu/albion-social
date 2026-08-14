@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { isCommunityId } from '@/lib/server/buildCommunity'
 import {
+  createSupabaseAdminClient,
   createSupabaseRequestClient,
   isPortalStaff,
   requireApiUser,
@@ -29,7 +30,8 @@ export async function PATCH(request, { params }) {
     if (!action) return jsonError('Nieprawidłowa akcja moderacyjna.', 400)
     if (reason.length < 3) return jsonError('Podaj powód decyzji moderacyjnej.', 400)
 
-    const { data: report, error: reviewError } = await supabase.rpc('review_build_report', {
+    const { data: report, error: reviewError } = await createSupabaseAdminClient().rpc('service_review_build_report', {
+      p_actor_id: auth.user.id,
       p_report_id: id,
       p_action: action,
       p_reason: reason,

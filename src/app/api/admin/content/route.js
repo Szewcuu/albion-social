@@ -9,6 +9,7 @@ import {
   toModerationDto,
 } from '@/lib/server/moderation'
 import {
+  createSupabaseAdminClient,
   createSupabaseRequestClient,
   isPortalStaff,
   requireApiUser,
@@ -71,7 +72,8 @@ export async function PATCH(request) {
     if (!ids.length || ids.length > 50 || ids.some((id) => !isModerationId(id))) return jsonError('Wybierz od 1 do 50 prawidłowych rekordów.', 400)
     if (!reason) return jsonError('Podaj powód o długości od 3 do 500 znaków.', 400)
 
-    const { data, error } = await access.supabase.rpc('moderate_content_batch', {
+    const { data, error } = await createSupabaseAdminClient().rpc('service_moderate_content_batch', {
+      p_actor_id: access.auth.user.id,
       p_entity_type: type,
       p_entity_ids: ids,
       p_action: action,
