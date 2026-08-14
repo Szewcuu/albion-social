@@ -33,6 +33,18 @@ test.describe('publiczna bramka portalu', () => {
     await expect(page.getByRole('heading', { name: /Twoje dane mają służyć Tobie/i })).toBeVisible()
   })
 
+  test('odrzuca anonimowe wywołania endpointów personelu i usuwania konta', async ({ request }) => {
+    const healthRead = await request.get('/api/admin/health')
+    const healthRun = await request.post('/api/admin/health')
+    const accountDelete = await request.delete('/api/profile/account', {
+      data: { confirmation: 'USUŃ KONTO' },
+    })
+
+    expect(healthRead.status()).toBe(401)
+    expect(healthRun.status()).toBe(401)
+    expect(accountDelete.status()).toBe(401)
+  })
+
   for (const path of ['/buildy', '/gildie', '/killboard', '/loot-split', '/wyprawy', '/admin']) {
     test(`blokuje gościom ${path}`, async ({ page }) => {
       await page.goto(path)

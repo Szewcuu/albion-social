@@ -46,13 +46,13 @@ export default function PrivacyPage() {
       id: 'local-storage',
       title: 'Cookies i pamięć lokalna',
       icon: Cookie,
-      content: <><p>Supabase wykorzystuje mechanizmy przeglądarki niezbędne do utrzymania bezpiecznej sesji logowania. Portal zapisuje lokalnie na urządzeniu m.in. ulubione przedmioty i progi cenowe, własne timery oraz szkic Loot Splitu.</p><p>Dane lokalne nie trafiają do Supabase, dopóki konkretna funkcja nie informuje o zapisie serwerowym. Można je usunąć przez przyciski czyszczenia w module albo ustawienia danych witryny w przeglądarce.</p></>,
+      content: <><p>Supabase wykorzystuje mechanizmy przeglądarki niezbędne do utrzymania bezpiecznej sesji logowania. Portal zapisuje lokalnie na urządzeniu m.in. progi cenowe i szkic Loot Splitu.</p><p>Ulubione karty, obserwowane elementy, własne timery i przypomnienia są dodatkowo synchronizowane z kontem użytkownika w Supabase, aby działały na różnych urządzeniach. Lokalne kopie można usunąć w ustawieniach danych witryny, a kopia konta jest usuwana razem z użytkownikiem.</p></>,
     },
     {
       id: 'retention',
       title: 'Okres przechowywania & Procedura Usunięcia Konta (RODO)',
       icon: Clock3,
-      content: <><p>Dane konta są przechowywane przez czas korzystania z profilu. Użytkownik może w dowolnym momencie zażądać usunięcia profilu i powiązanych danych, z zastrzeżeniem danych, które operator musi zachować ze względów bezpieczeństwa lub prawnych.</p><p><strong className="text-[#eee7d9]">Procedura usunięcia konta:</strong> automatyczne usuwanie z poziomu ustawień profilu jest obecnie w trakcie wdrażania i nie należy uznawać samego wylogowania za potwierdzenie usunięcia danych. Do czasu uruchomienia kompletnej procedury żądanie należy przesłać przez <a href="https://github.com/Szewcuu/albion-social" className="font-bold text-sky-300 hover:text-sky-200">repozytorium projektu</a>. Operator zweryfikuje właściciela konta i potwierdzi wykonanie żądania.</p></>,
+      content: <><p>Dane konta są przechowywane przez czas korzystania z profilu. Użytkownik może w dowolnym momencie trwale usunąć konto i powiązane dane, z zastrzeżeniem zanonimizowanych zapisów, które operator musi zachować ze względów bezpieczeństwa lub prawnych.</p><p><strong className="text-[#eee7d9]">Procedura usunięcia konta:</strong> w ustawieniach profilu należy wybrać opcję usunięcia konta i potwierdzić ją frazą <strong className="text-rose-300 font-mono">&quot;USUŃ KONTO&quot;</strong>. Portal usuwa użytkownika z Supabase Auth, profil, treści i dane zależne oraz lokalne ustawienia tej witryny. Historia działań moderacyjnych pozostaje bez identyfikatora usuniętego konta.</p></>,
     },
     {
       id: 'rights',

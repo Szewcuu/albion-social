@@ -202,37 +202,30 @@ export default function Wyprawy() {
     ])
 
     if (!error) {
-      const myNick = signupData.ingame_nick.trim() || user.user_metadata?.full_name || 'Gracz'
-
-      // Powiadomienie w Supabase dla lidera
-      if (activeExpeditionForSignup.user_id && activeExpeditionForSignup.user_id !== user.id) {
-        await supabase.from('notifications').insert([
-          {
-            user_id: activeExpeditionForSignup.user_id,
-            title: '⚔️ Nowy gracz w drużynie!',
-            message: `${myNick} dołączył do wyprawy "${activeExpeditionForSignup.title}" jako ${role} (${signupData.player_ip} IP).`,
-            type: 'info',
-            link: '/wyprawy'
-          }
-        ])
-      }
-
       const totalMax = activeExpeditionForSignup.max_tanks + activeExpeditionForSignup.max_healers + activeExpeditionForSignup.max_dps + activeExpeditionForSignup.max_supports
       const totalJoined = signups.length + 1
+      let partyFull = totalJoined >= totalMax && totalMax > 0
 
-      if (totalJoined >= totalMax && totalMax > 0) {
-        if (activeExpeditionForSignup.user_id) {
-          await supabase.from('notifications').insert([
-            {
-              user_id: activeExpeditionForSignup.user_id,
-              title: '🎉 Skład skompletowany!',
-              message: `Twoja wyprawa "${activeExpeditionForSignup.title}" ma już komplet graczy!`,
-              type: 'success',
-              link: '/wyprawy'
-            }
-          ])
+      try {
+        const notificationResponse = await authenticatedFetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            kind: 'expedition_joined',
+            expeditionId: activeExpeditionForSignup.id,
+          }),
+        })
+        const notificationResult = await notificationResponse.json().catch(() => ({}))
+        if (!notificationResponse.ok) {
+          console.warn('Nie udało się utworzyć powiadomienia wyprawy:', notificationResult.error || notificationResponse.status)
+        } else {
+          partyFull = notificationResult.partyFull === true
         }
+      } catch (notificationError) {
+        console.warn('Błąd powiadomienia wyprawy:', notificationError)
+      }
 
+      if (partyFull) {
         try {
           const res = await authenticatedFetch('/api/webhooks/expedition', {
             method: 'POST',

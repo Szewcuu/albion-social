@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Bell, Check } from 'lucide-react'
 import { isFollowingItem, toggleFollowItem } from '@/lib/followSystem'
+import { PREFERENCES_SYNCED_EVENT } from '@/lib/preferenceSync'
 
 export default function FollowButton({ id, name, type = 'guild', className = '' }) {
   const followKey = `${type}:${id || ''}`
@@ -10,14 +11,21 @@ export default function FollowButton({ id, name, type = 'guild', className = '' 
   const following = followState.key === followKey && followState.value
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
+    const refreshState = () => {
       setFollowState({
         key: followKey,
         value: Boolean(id && isFollowingItem(id, type)),
       })
+    }
+    const timeoutId = window.setTimeout(() => {
+      refreshState()
     }, 0)
+    window.addEventListener(PREFERENCES_SYNCED_EVENT, refreshState)
 
-    return () => window.clearTimeout(timeoutId)
+    return () => {
+      window.clearTimeout(timeoutId)
+      window.removeEventListener(PREFERENCES_SYNCED_EVENT, refreshState)
+    }
   }, [followKey, id, type])
 
   const handleToggle = (e) => {

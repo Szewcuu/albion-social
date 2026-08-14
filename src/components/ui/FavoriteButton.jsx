@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { isItemFavorite, toggleFavoriteItem } from '@/lib/favoriteSystem'
+import { PREFERENCES_SYNCED_EVENT } from '@/lib/preferenceSync'
 
 export default function FavoriteButton({ id, title, type = 'build', className = '' }) {
   const favoriteKey = `${type}:${id || ''}`
@@ -10,14 +11,21 @@ export default function FavoriteButton({ id, title, type = 'build', className = 
   const isFav = favoriteState.key === favoriteKey && favoriteState.value
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
+    const refreshState = () => {
       setFavoriteState({
         key: favoriteKey,
         value: Boolean(id && isItemFavorite(id, type)),
       })
+    }
+    const timeoutId = window.setTimeout(() => {
+      refreshState()
     }, 0)
+    window.addEventListener(PREFERENCES_SYNCED_EVENT, refreshState)
 
-    return () => window.clearTimeout(timeoutId)
+    return () => {
+      window.clearTimeout(timeoutId)
+      window.removeEventListener(PREFERENCES_SYNCED_EVENT, refreshState)
+    }
   }, [favoriteKey, id, type])
 
   const handleToggle = (e) => {

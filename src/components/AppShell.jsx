@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { syncPortalPreferences } from '@/lib/preferenceSync'
 import AppSidebar from './AppSidebar'
 import TopBar from './TopBar'
 import MobileBottomNav from './MobileBottomNav'
@@ -100,6 +101,7 @@ export default function AppShell({ children }) {
       if (currentUser) {
         fetchNotifications(currentUser.id)
         readAdminStatus(currentUser.id)
+        void syncPortalPreferences(currentUser.id)
       } else {
         setIsAdmin(false)
       }
@@ -113,6 +115,7 @@ export default function AppShell({ children }) {
       if (currentUser) {
         fetchNotifications(currentUser.id)
         readAdminStatus(currentUser.id)
+        void syncPortalPreferences(currentUser.id)
       } else {
         setNotifications([])
         setIsAdmin(false)

@@ -1,13 +1,7 @@
-const FOLLOWS_KEY = 'aopp-followed-items-v1'
+import { getLocalPreference, savePortalPreference } from '@/lib/preferenceSync'
 
 export function getFollowedItems() {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = localStorage.getItem(FOLLOWS_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
+  return getLocalPreference('follows')
 }
 
 export function isFollowingItem(id, type = 'guild') {
@@ -27,11 +21,7 @@ export function toggleFollowItem(item) {
     updated = [...items, { ...item, followedAt: new Date().toISOString() }]
   }
 
-  try {
-    localStorage.setItem(FOLLOWS_KEY, JSON.stringify(updated))
-  } catch (err) {
-    console.error('Błąd zapisu obserwowanych:', err)
-  }
+  void savePortalPreference('follows', updated)
 
   return !exists
 }

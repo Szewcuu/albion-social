@@ -21,8 +21,11 @@ import {
   Zap,
 } from 'lucide-react'
 import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
-
-const CUSTOM_TIMERS_KEY = 'aopp-custom-timers-v2'
+import {
+  getLocalPreference,
+  PREFERENCES_SYNCED_EVENT,
+  savePortalPreference,
+} from '@/lib/preferenceSync'
 
 const SERVER_CONFIG = {
   Europa: {
@@ -113,18 +116,21 @@ export default function TimeryPage() {
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
-    const hydrationTimer = setTimeout(() => {
-      try {
-        const stored = JSON.parse(localStorage.getItem(CUSTOM_TIMERS_KEY) || '[]')
-        if (Array.isArray(stored)) setCustomTimers(stored.filter((entry) => entry?.id && entry?.name && entry?.date).slice(0, 20))
-      } catch {
-        localStorage.removeItem(CUSTOM_TIMERS_KEY)
+    const loadTimers = (event) => {
+      const stored = event?.detail?.timers || getLocalPreference('timers')
+      if (Array.isArray(stored)) {
+        setCustomTimers(stored.filter((entry) => entry?.id && entry?.name && entry?.date).slice(0, 20))
       }
+    }
+    const hydrationTimer = setTimeout(() => {
+      loadTimers()
     }, 0)
+    window.addEventListener(PREFERENCES_SYNCED_EVENT, loadTimers)
 
     return () => {
       clearInterval(timer)
       clearTimeout(hydrationTimer)
+      window.removeEventListener(PREFERENCES_SYNCED_EVENT, loadTimers)
     }
   }, [])
 
@@ -147,7 +153,7 @@ export default function TimeryPage() {
 
   function saveCustomTimers(next) {
     setCustomTimers(next)
-    localStorage.setItem(CUSTOM_TIMERS_KEY, JSON.stringify(next))
+    void savePortalPreference('timers', next)
   }
 
   function addTimer(event) {
@@ -161,7 +167,7 @@ export default function TimeryPage() {
     saveCustomTimers(next)
     setTimerName('')
     setTimerDate('')
-    setNotice('Timer został zapisany na tym urządzeniu.')
+    setNotice('Timer został zapisany i zsynchronizowany z kontem.')
   }
 
   function removeTimer(id) {

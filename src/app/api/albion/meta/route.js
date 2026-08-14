@@ -204,11 +204,11 @@ export async function GET() {
   return NextResponse.json({
     data: META_1V1_DATA,
     meta: {
-      source: 'Albion Online 1v1 Combat Engine',
+      source: 'Ręcznie przygotowany zestaw demonstracyjny',
       mode: 'Solo Mists & Corrupted 1v1',
-      season: 'Sezon 2026',
-      totalAnalyzedMatches: 48290,
-      updatedAt: new Date().toISOString(),
+      methodology: 'Przykładowa prezentacja interfejsu — nie jest aktualnym rankingiem ani wynikiem analizy API.',
+      isDemo: true,
+      updatedAt: '2026-08-14T00:00:00.000Z',
     },
   })
 }

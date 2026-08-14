@@ -1,0 +1,157 @@
+import { NextResponse } from 'next/server'
+
+import { isModerationId } from '@/lib/server/moderation'
+import { createNotification } from '@/lib/server/notifications'
+import { checkRateLimit } from '@/lib/server/rateLimit'
+import {
+  createSupabaseAdminClient,
+  requireApiUser,
+} from '@/lib/server/supabaseAdmin'
+import { cleanInteger, cleanText } from '@/lib/server/validation'
+
+const jsonError = (message, status, headers) => (
+  NextResponse.json({ error: message }, { status, headers })
+)
+
+function displayNameFor(user, profile) {
+  return cleanText(
+    profile?.ingame_nick
+      || profile?.username
+      || user.user_metadata?.full_name
+      || user.user_metadata?.name
+      || 'Gracz',
+    { min: 1, max: 80 },
+  ) || 'Gracz'
+}
+
+async function createMarketOfferNotification({ auth, supabase, body }) {
+  const offerId = isModerationId(body?.offerId) ? body.offerId : null
+  const offeredPrice = cleanInteger(body?.offeredPrice, { min: 1, max: 1_000_000_000_000 })
+  const message = cleanText(body?.message || '', { max: 500 })
+  if (!offerId || !offeredPrice || message === null) {
+    return { error: 'Nieprawidłowe dane propozycji.', status: 400 }
+  }
+
+  const [{ data: offer, error: offerError }, { data: profile, error: profileError }] = await Promise.all([
+    supabase
+      .from('market_items')
+      .select('id, user_id, title, price, status')
+      .eq('id', offerId)
+      .maybeSingle(),
+    supabase
+      .from('profiles')
+      .select('username, ingame_nick')
+      .eq('id', auth.user.id)
+      .maybeSingle(),
+  ])
+  if (offerError || profileError) throw offerError || profileError
+  if (!offer || offer.status === 'removed') return { error: 'Oferta nie jest już dostępna.', status: 404 }
+  if (offer.user_id === auth.user.id) return { error: 'Nie możesz wysłać propozycji do własnej oferty.', status: 400 }
+
+  const buyerName = displayNameFor(auth.user, profile)
+  const notification = await createNotification({
+    userId: offer.user_id,
+    title: '💬 Nowa oferta zakupu na rynku!',
+    message: `${buyerName} proponuje ${offeredPrice.toLocaleString('pl-PL')} Silver za „${offer.title}”. Wiadomość: „${message || 'Chcę dokonać transakcji.'}”`,
+    type: 'info',
+    link: `/profil/${auth.user.id}`,
+  })
+  if (!notification) throw new Error('Nie udało się utworzyć powiadomienia rynkowego.')
+
+  return { created: 1 }
+}
+
+async function createExpeditionNotification({ auth, supabase, body }) {
+  const expeditionId = isModerationId(body?.expeditionId) ? body.expeditionId : null
+  if (!expeditionId) return { error: 'Nieprawidłowy identyfikator wyprawy.', status: 400 }
+
+  const [{ data: expedition, error: expeditionError }, { data: signup, error: signupError }] = await Promise.all([
+    supabase
+      .from('expeditions')
+      .select('id, user_id, title, max_tanks, max_healers, max_dps, max_supports, status')
+      .eq('id', expeditionId)
+      .maybeSingle(),
+    supabase
+      .from('expedition_signups')
+      .select('role_type, ingame_nick, player_ip')
+      .eq('expedition_id', expeditionId)
+      .eq('user_id', auth.user.id)
+      .maybeSingle(),
+  ])
+  if (expeditionError || signupError) throw expeditionError || signupError
+  if (!expedition || !signup || expedition.status === 'removed') {
+    return { error: 'Nie znaleziono aktywnego zapisu na tę wyprawę.', status: 404 }
+  }
+  const { count, error: countError } = await supabase
+    .from('expedition_signups')
+    .select('id', { count: 'exact', head: true })
+    .eq('expedition_id', expeditionId)
+  if (countError) throw countError
+
+  const totalMax = Number(expedition.max_tanks || 0)
+    + Number(expedition.max_healers || 0)
+    + Number(expedition.max_dps || 0)
+    + Number(expedition.max_supports || 0)
+  const partyFull = totalMax > 0 && (count || 0) >= totalMax
+
+  let created = 0
+  if (expedition.user_id !== auth.user.id) {
+    const joined = await createNotification({
+      userId: expedition.user_id,
+      title: '⚔️ Nowy gracz w drużynie!',
+      message: `${signup.ingame_nick || 'Gracz'} dołączył do wyprawy „${expedition.title}” jako ${signup.role_type} (${signup.player_ip} IP).`,
+      type: 'info',
+      link: '/wyprawy',
+    })
+    if (!joined) throw new Error('Nie udało się utworzyć powiadomienia wyprawy.')
+    created += 1
+  }
+
+  if (partyFull) {
+    const fullNotification = await createNotification({
+      userId: expedition.user_id,
+      title: '🎉 Skład skompletowany!',
+      message: `Twoja wyprawa „${expedition.title}” ma już komplet graczy!`,
+      type: 'success',
+      link: '/wyprawy',
+    })
+    if (!fullNotification) throw new Error('Nie udało się utworzyć powiadomienia o pełnym składzie.')
+    created += 1
+  }
+
+  return { created, partyFull }
+}
+
+export async function POST(request) {
+  try {
+    const auth = await requireApiUser(request)
+    if (auth.error) return jsonError(auth.error, auth.status)
+
+    const rateLimit = await checkRateLimit(`notification-action:${auth.user.id}`, {
+      limit: 12,
+      windowMs: 10 * 60 * 1000,
+    })
+    if (!rateLimit.allowed) {
+      return jsonError('Wysyłasz zbyt wiele powiadomień. Spróbuj ponownie później.', 429, {
+        'Retry-After': String(rateLimit.retryAfter),
+      })
+    }
+
+    const body = await request.json().catch(() => null)
+    const supabase = createSupabaseAdminClient()
+    let result
+    if (body?.kind === 'market_offer') {
+      result = await createMarketOfferNotification({ auth, supabase, body })
+    } else if (body?.kind === 'expedition_joined') {
+      result = await createExpeditionNotification({ auth, supabase, body })
+    } else {
+      return jsonError('Nieobsługiwany rodzaj powiadomienia.', 400)
+    }
+
+    if (result.error) return jsonError(result.error, result.status)
+    return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } })
+  } catch (error) {
+    console.error('Błąd walidowanego powiadomienia:', error)
+    return jsonError('Nie udało się wysłać powiadomienia.', 500)
+  }
+}

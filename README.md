@@ -53,7 +53,7 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 - [x] zabezpieczyć funkcje triggerów przez pusty `search_path`
 - [x] zastąpić dwa workflow jednym pipeline na Node 22
 - [x] usunąć wszystkie błędy i ostrzeżenia lint
-- [x] wykonać lokalny build i 9 publicznych testów E2E
+- [x] wykonać lokalny build i publiczne testy E2E
 - [ ] potwierdzić zielony workflow GitHub Actions po publikacji gałęzi
 - [ ] dodać konto testowe i uruchomić pełne authenticated E2E
 
@@ -69,13 +69,13 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 
 ### P5.2 — prawdziwe przepływy użytkownika
 
-- [ ] wdrożyć serwerowe usuwanie użytkownika z `auth.users` i danych zależnych
-- [ ] poprawić tekst Polityki Prywatności po wdrożeniu rzeczywistego usuwania
-- [ ] zabezpieczyć `/api/admin/health` rolą personelu i prawdziwie testować Discord
-- [ ] przenieść tworzenie powiadomień dla innych użytkowników do walidowanych endpointów serwerowych
-- [ ] zastąpić dane meta 1v1 wiarygodnym źródłem albo oznaczyć moduł jako demonstracyjny
-- [ ] usunąć ukryty kurs zastępczy złota i pokazywać jawny stan błędu/stare dane
-- [ ] zapisywać przypomnienia, obserwowane elementy i ulubione po stronie konta
+- [x] wdrożyć serwerowe usuwanie użytkownika z `auth.users` i danych zależnych
+- [x] poprawić tekst Polityki Prywatności po wdrożeniu rzeczywistego usuwania
+- [x] zabezpieczyć `/api/admin/health` rolą personelu i prawdziwie testować Discord
+- [ ] przenieść tworzenie powiadomień dla innych użytkowników do walidowanych endpointów serwerowych — kod gotowy, migrację `20260814221358` zastosować dopiero razem z wdrożeniem P5.2
+- [x] jednoznacznie oznaczyć obecny moduł meta 1v1 jako demonstracyjny i usunąć fałszywą informację o danych live
+- [x] usunąć ukryty kurs zastępczy złota i pokazywać jawny stan błędu
+- [x] synchronizować przypomnienia, własne timery, obserwowane elementy i ulubione karty po stronie konta
 
 ### P5.3 — PWA, zależności i pełne QA
 
@@ -321,7 +321,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 ### Etap P15 — Zestaw Testów End-to-End (E2E Integration Test Suite)
 
 - [x] Publiczne i zalogowane scenariusze Playwright znajdują się w aktywnym katalogu `tests/e2e`.
-- [x] Publiczna bramka, Regulamin i Prywatność przechodzą 9/9 testów.
+- [x] Publiczna bramka, Regulamin, Prywatność i chronione endpointy przechodzą 10/10 testów.
 - [ ] Zalogowane testy wymagają konta `E2E_USER_*` w sekretach GitHub.
 
 ### Etap P16 — Wygasanie, Odnawianie & Archiwizacja Ofert Rynkowych
@@ -332,7 +332,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 ### Etap P17 — Procedura Usunięcia Konta & Retencja Danych RODO
 
 - [x] Interfejs przycisku i modalu usunięcia konta w zakładce Ustawień Profilu (`/profil`).
-- [ ] Serwerowe usunięcie `auth.users`, profilu i danych zależnych wraz z obsługą błędów oraz audytem.
+- [x] Serwerowe usunięcie `auth.users`, profilu i danych zależnych wraz z obsługą błędów oraz anonimizacją audytu.
 - [x] Zapisanie zasad retencji danych osobowych i procedur anonimizacji w Polityce Prywatności (`/prywatnosc`).
 
 ### Etap P18 — Wersjonowane Migracje Supabase & Indeksy Wydajnościowe
