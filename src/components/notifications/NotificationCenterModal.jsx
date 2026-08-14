@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Bell, Check, Trash2, X, Swords, ShoppingBag, Shield, Sparkles } from 'lucide-react'
 import { getFollowedItems } from '@/lib/followSystem'
 
@@ -42,14 +42,7 @@ const MOCK_NOTIFICATIONS = [
 
 export default function NotificationCenterModal({ isOpen, onClose }) {
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
-  const [followedCount, setFollowedCount] = useState(0)
-
-  useEffect(() => {
-    if (isOpen) {
-      const items = getFollowedItems()
-      setFollowedCount(items.length)
-    }
-  }, [isOpen])
+  const followedCount = isOpen ? getFollowedItems().length : 0
 
   if (!isOpen) return null
 

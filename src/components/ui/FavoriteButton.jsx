@@ -1,23 +1,30 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { isItemFavorite, toggleFavoriteItem } from '@/lib/favoriteSystem'
 
 export default function FavoriteButton({ id, title, type = 'build', className = '' }) {
-  const [isFav, setIsFav] = useState(false)
+  const favoriteKey = `${type}:${id || ''}`
+  const [favoriteState, setFavoriteState] = useState({ key: '', value: false })
+  const isFav = favoriteState.key === favoriteKey && favoriteState.value
 
   useEffect(() => {
-    if (id) {
-      setIsFav(isItemFavorite(id, type))
-    }
-  }, [id, type])
+    const timeoutId = window.setTimeout(() => {
+      setFavoriteState({
+        key: favoriteKey,
+        value: Boolean(id && isItemFavorite(id, type)),
+      })
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [favoriteKey, id, type])
 
   const handleToggle = (e) => {
     e.preventDefault()
     e.stopPropagation()
     const nextState = toggleFavoriteItem({ id, title, type })
-    setIsFav(nextState)
+    setFavoriteState({ key: favoriteKey, value: nextState })
   }
 
   return (

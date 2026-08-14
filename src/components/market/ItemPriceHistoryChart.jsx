@@ -29,8 +29,7 @@ function formatDateLabel(isoString, range) {
 export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon', compact = false }) {
   const [city, setCity] = useState(defaultCity)
   const [range, setRange] = useState('7d')
-  const [historyData, setHistoryData] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [hoveredPoint, setHoveredPoint] = useState(null)
 
@@ -40,8 +39,6 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
     if (!itemId) return
 
     let isMounted = true
-    setLoading(true)
-    setError(null)
 
     // Query history without city filter so all cities are fetched at once
     fetch(`/api/prices?mode=history&item=${encodeURIComponent(itemId)}&range=${range}`)
@@ -51,7 +48,6 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
         if (resData.error) {
           setError(resData.error.message || 'Brak danych historycznych dla tego przedmiotu.')
           setAllLocationsData([])
-          setHistoryData([])
         } else {
           const list = Array.isArray(resData.data) ? resData.data : [resData.data]
           setAllLocationsData(list)
@@ -61,7 +57,6 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
         if (isMounted) {
           setError('Nie udało się połączyć z API historii cen.')
           setAllLocationsData([])
-          setHistoryData([])
         }
       })
       .finally(() => {
@@ -73,12 +68,9 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
     }
   }, [itemId, range])
 
-  // Extract history data whenever city or allLocationsData changes
-  useEffect(() => {
-    if (!allLocationsData || !allLocationsData.length) {
-      setHistoryData([])
-      return
-    }
+  // Extract history data from the selected city without duplicating derived state.
+  const historyData = useMemo(() => {
+    if (!allLocationsData || !allLocationsData.length) return []
 
     const cityClean = city.replace(/\s+/g, '').toLowerCase()
     const match = allLocationsData.find(d => {
@@ -96,7 +88,7 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
       }))
       .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
 
-    setHistoryData(validPoints)
+    return validPoints
   }, [city, allLocationsData])
 
   // Identify available cities with scanned data
@@ -179,7 +171,11 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
             {RANGES.map(r => (
               <button
                 key={r.id}
-                onClick={() => setRange(r.id)}
+                onClick={() => {
+                  setLoading(true)
+                  setError(null)
+                  setRange(r.id)
+                }}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition ${range === r.id ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40' : 'text-gray-400 hover:text-white'}`}
               >
                 {r.label}

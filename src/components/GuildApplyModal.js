@@ -1,7 +1,7 @@
 'use client'
 
 import CustomSelect from '@/components/ui/CustomSelect'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Swords, X, Send, Award, User } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
@@ -24,24 +24,27 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
   }, [currentUser])
 
   const [formData, setFormData] = useState({
-    ingameNick: '',
+    ingameNick: defaultNick,
     totalFame: '',
     mainRole: 'Tank',
     message: '',
   })
   const [status, setStatus] = useState({ loading: false, success: false, error: null })
 
-  useEffect(() => {
-    if (isOpen) {
-      setFormData({
-        ingameNick: defaultNick,
-        totalFame: '',
-        mainRole: 'Tank',
-        message: '',
-      })
-      setStatus({ loading: false, success: false, error: null })
-    }
-  }, [isOpen, guild?.id, defaultNick])
+  const resetForm = () => {
+    setFormData({
+      ingameNick: defaultNick,
+      totalFame: '',
+      mainRole: 'Tank',
+      message: '',
+    })
+    setStatus({ loading: false, success: false, error: null })
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -64,8 +67,7 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
 
       setStatus({ loading: false, success: true, error: null })
       setTimeout(() => {
-        onClose()
-        setStatus({ loading: false, success: false, error: null })
+        handleClose()
       }, 1500)
     } catch (err) {
       setStatus({ loading: false, success: false, error: err.message })
@@ -86,7 +88,7 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
             {/* Przycisk Zamknięcia */}
             <button 
               type="button"
-              onClick={onClose} 
+              onClick={handleClose}
               aria-label="Zamknij formularz rekrutacyjny"
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition p-1.5 rounded-lg hover:bg-[#2b181a]"
             >
