@@ -1,20 +1,8 @@
-import { Cinzel, Lora } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 import PwaRegister from "@/components/PwaRegister";
 import AppShell from "@/components/AppShell";
-
-const cinzel = Cinzel({
-  variable: "--font-cinzel",
-  subsets: ["latin", "latin-ext"],
-  weight: ["500", "600", "700", "800"],
-});
-
-const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin", "latin-ext"],
-});
 
 export const metadata = {
   metadataBase: new URL('https://albion-social.vercel.app'),
@@ -65,10 +53,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="pl"
-      className={`${cinzel.variable} ${lora.variable} h-full antialiased`}
-    >
+    <html lang="pl" className="h-full antialiased">
       <head>
         <link rel="preload" href="/albion-bg.webp" as="image" fetchPriority="high" />
       </head>
