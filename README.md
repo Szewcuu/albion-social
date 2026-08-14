@@ -86,7 +86,7 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 - [x] usunąć lokalny fallback, który mógł prezentować nieweryfikowany nick jako zweryfikowaną postać
 - [x] zweryfikować migrację na produkcyjnym schemacie w transakcji zakończonej `ROLLBACK`
 - [x] zastosować migrację fazy 1 przed wdrożeniem kodu
-- [ ] po wdrożeniu odebrać `authenticated` dostęp do czterech starych RPC
+- [x] po wdrożeniu odebrać `authenticated` dostęp do czterech starych RPC
 - [x] rozszerzyć E2E o odmowę dostępu do API moderacji dla gościa i zwykłego użytkownika
 - [ ] dodać brakujący favicon i naprawić instalację cache service workera
 - [ ] nie cache'ować prywatnych stron użytkownika strategią cache-first
