@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { X, Send, Check, Copy, MessageSquare, HandCoins, ShieldCheck } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 export default function ContactSellerModal({ isOpen, onClose, offer, currentUser }) {
   const [message, setMessage] = useState('')
@@ -11,6 +11,7 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
   const [sending, setSending] = useState(false)
   const [sentSuccess, setSentSuccess] = useState(false)
   const [copiedWhisper, setCopiedWhisper] = useState(false)
+  const [sendError, setSendError] = useState('')
 
   if (!isOpen || !offer) return null
 
@@ -27,28 +28,26 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
     e.preventDefault()
     if (!currentUser) return
     setSending(true)
+    setSendError('')
 
     try {
-      const buyerName = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || 'Gracz'
-      const priceText = offeredPrice ? `${Number(offeredPrice).toLocaleString('pl-PL')} Silver` : `${Number(offer.price).toLocaleString('pl-PL')} Silver`
-
-      const { error } = await supabase.from('notifications').insert([
-        {
-          user_id: offer.user_id,
-          title: '💬 Nowa oferta zakupu na rynku!',
-          message: `${buyerName} przesłał propozycję kupna przedmiotu "${offer.title}" za ${priceText}. Treść: "${message || 'Chcę dokonać transakcji.'}"`,
-          type: 'info',
-          link: `/profil/${currentUser.id}`,
-        },
-      ])
-
-      if (error) {
-        console.error('Błąd wysyłania powiadomienia:', error)
-      }
+      const response = await authenticatedFetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          kind: 'market_offer',
+          offerId: offer.id,
+          offeredPrice: Number(offeredPrice || offer.price),
+          message,
+        }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się wysłać propozycji.')
 
       setSentSuccess(true)
     } catch (err) {
       console.error('Błąd powiadomienia sprzedawcy:', err)
+      setSendError(err.message || 'Nie udało się wysłać propozycji.')
     } finally {
       setSending(false)
     }
@@ -165,6 +164,7 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
                   <span>{sending ? 'Wysyłanie...' : 'Wyślij ofertę w portalu'}</span>
                 </button>
               </div>
+              {sendError && <p className="rounded-lg border border-rose-400/25 bg-rose-400/8 p-2 text-rose-300">{sendError}</p>}
             </div>
           </form>
         )}

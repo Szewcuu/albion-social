@@ -1,157 +1,82 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
 
-async function runHealthChecks() {
-  const now = new Date().toISOString()
-  const checks = []
-  const events = []
+import {
+  createSupabaseRequestClient,
+  isPortalStaff,
+  requireApiUser,
+} from '@/lib/server/supabaseAdmin'
+import { runIntegrationChecks } from '@/lib/server/monitoring'
 
-  // 1. Supabase Check
-  const supabaseStart = Date.now()
-  try {
-    const { error } = await supabase.from('profiles').select('id', { head: true, count: 'exact' })
-    const latency = Date.now() - supabaseStart
-    if (error) {
-      checks.push({
-        service: 'supabase',
-        status: 'degraded',
-        message: `Błąd odpowiedzi Supabase: ${error.message}`,
-        latency_ms: latency,
-        checked_at: now,
-      })
-      events.push({
-        id: `evt-supabase-${Date.now()}`,
-        level: 'warning',
-        source: 'Supabase DB',
-        event_type: 'DB_WARNING',
-        message: error.message,
-        created_at: now,
-      })
-    } else {
-      checks.push({
-        service: 'supabase',
-        status: 'operational',
-        message: 'Baza danych i uwierzytelnianie Supabase działają stabilnie.',
-        latency_ms: latency,
-        checked_at: now,
-      })
-    }
-  } catch (err) {
-    checks.push({
-      service: 'supabase',
-      status: 'down',
-      message: `Brak połączenia z Supabase: ${err.message}`,
-      latency_ms: Date.now() - supabaseStart,
-      checked_at: now,
-    })
-    events.push({
-      id: `evt-supabase-fail-${Date.now()}`,
-      level: 'error',
-      source: 'Supabase DB',
-      event_type: 'DB_OFFLINE',
-      message: err.message,
-      created_at: now,
-    })
+const jsonError = (message, status) => NextResponse.json({ error: message }, { status })
+
+async function authorizeStaff(request) {
+  const auth = await requireApiUser(request)
+  if (auth.error) return { error: jsonError(auth.error, auth.status) }
+
+  const supabase = createSupabaseRequestClient(request)
+  if (!(await isPortalStaff(supabase, auth.user.id))) {
+    return { error: jsonError('Nie masz uprawnień personelu moderacyjnego.', 403) }
   }
 
-  // 2. Albion Gameinfo API Check
-  const albionStart = Date.now()
-  try {
-    const res = await fetch('https://gameinfo-ams.albiononline.com/api/gameinfo/search?q=Albion', {
-      headers: { Accept: 'application/json', 'User-Agent': 'Albion-Social/1.0' },
-      next: { revalidate: 30 },
-      signal: AbortSignal.timeout(6000),
-    })
-    const latency = Date.now() - albionStart
-    if (res.ok) {
-      checks.push({
-        service: 'albion_api',
-        status: 'operational',
-        message: 'Oficjalne Gameinfo API Albionu odpowiada poprawnie.',
-        latency_ms: latency,
-        checked_at: now,
-      })
-    } else {
-      checks.push({
-        service: 'albion_api',
-        status: 'degraded',
-        message: `Gameinfo API zwróciło status HTTP ${res.status}.`,
-        latency_ms: latency,
-        checked_at: now,
-      })
-    }
-  } catch (err) {
-    checks.push({
-      service: 'albion_api',
-      status: 'down',
-      message: 'Przekroczono limit czasu odpowiedzi serwerów Gameinfo API Albionu.',
-      latency_ms: Date.now() - albionStart,
-      checked_at: now,
-    })
-    events.push({
-      id: `evt-albion-fail-${Date.now()}`,
-      level: 'error',
-      source: 'Gameinfo API',
-      event_type: 'API_TIMEOUT',
-      message: err.message || 'Przekroczono limit czasu połączenia z Gameinfo API',
-      created_at: now,
-    })
-  }
-
-  // 3. Albion Data Project API Check
-  const marketStart = Date.now()
-  try {
-    const res = await fetch('https://europe.albion-online-data.com/api/v2/stats/prices/T8_BAG.json', {
-      headers: { Accept: 'application/json', 'User-Agent': 'Albion-Social/1.0' },
-      next: { revalidate: 60 },
-      signal: AbortSignal.timeout(6000),
-    })
-    const latency = Date.now() - marketStart
-    if (res.ok) {
-      checks.push({
-        service: 'market_api',
-        status: 'operational',
-        message: 'Albion Data Project API dostarcza dane o cenach rynkowych.',
-        latency_ms: latency,
-        checked_at: now,
-      })
-    } else {
-      checks.push({
-        service: 'market_api',
-        status: 'degraded',
-        message: `Albion Data Project zwrócił status HTTP ${res.status}.`,
-        latency_ms: latency,
-        checked_at: now,
-      })
-    }
-  } catch (err) {
-    checks.push({
-      service: 'market_api',
-      status: 'down',
-      message: 'Brak połączenia z Albion Data Project API.',
-      latency_ms: Date.now() - marketStart,
-      checked_at: now,
-    })
-  }
-
-  // 4. Discord Integration Check
-  checks.push({
-    service: 'discord',
-    status: 'operational',
-    message: 'Integracja Discord OAuth2 oraz powiadomienia Webhook są aktywne.',
-    latency_ms: 1,
-    checked_at: now,
-  })
-
-  return { checks, events }
+  return { supabase }
 }
 
-export async function GET() {
-  const healthData = await runHealthChecks()
-  return NextResponse.json(healthData)
+async function readHealthData(supabase) {
+  const [checksResult, eventsResult] = await Promise.all([
+    supabase
+      .from('integration_checks')
+      .select('service, status, latency_ms, message, metadata, checked_at')
+      .order('checked_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('system_events')
+      .select('id, level, source, event_type, message, created_at')
+      .order('created_at', { ascending: false })
+      .limit(50),
+  ])
+  if (checksResult.error || eventsResult.error) {
+    throw checksResult.error || eventsResult.error
+  }
+
+  const latestByService = new Map()
+  for (const check of checksResult.data || []) {
+    if (!latestByService.has(check.service)) latestByService.set(check.service, check)
+  }
+
+  return {
+    checks: [...latestByService.values()],
+    events: eventsResult.data || [],
+  }
 }
 
-export async function POST() {
-  const healthData = await runHealthChecks()
-  return NextResponse.json({ ok: true, ...healthData })
+export async function GET(request) {
+  try {
+    const access = await authorizeStaff(request)
+    if (access.error) return access.error
+
+    return NextResponse.json(
+      await readHealthData(access.supabase),
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
+  } catch (error) {
+    console.error('Błąd odczytu monitoringu integracji:', error)
+    return jsonError('Nie udało się pobrać monitoringu integracji.', 500)
+  }
+}
+
+export async function POST(request) {
+  try {
+    const access = await authorizeStaff(request)
+    if (access.error) return access.error
+
+    const checks = await runIntegrationChecks()
+    return NextResponse.json({
+      ok: checks.every((check) => check.status !== 'down'),
+      checks,
+      checkedAt: new Date().toISOString(),
+    })
+  } catch (error) {
+    console.error('Błąd ręcznej kontroli integracji:', error)
+    return jsonError('Nie udało się wykonać kontroli integracji.', 500)
+  }
 }

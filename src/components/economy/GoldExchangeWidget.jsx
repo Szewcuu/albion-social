@@ -14,27 +14,31 @@ export default function GoldExchangeWidget() {
   const [range, setRange] = useState('7d')
   const [goldData, setGoldData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [goldInput, setGoldInput] = useState(100)
   const [hoveredPoint, setHoveredPoint] = useState(null)
 
   const fetchGoldHistory = useCallback(async () => {
     try {
+      setError('')
       const res = await fetch(`/api/prices?mode=gold&region=${region}&range=${range}`)
-      if (res.ok) {
-        const result = await res.json()
-        const rawPoints = Array.isArray(result.data) ? result.data : []
-        const formattedPoints = rawPoints
-          .filter(p => p && p.price > 0)
-          .map(p => ({
-            price: Number(p.price),
-            timestamp: p.timestamp,
-          }))
-          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-        setGoldData(formattedPoints)
-      }
+      const result = await res.json()
+      const rawPoints = Array.isArray(result.data) ? result.data : []
+      const formattedPoints = rawPoints
+        .filter(p => p && p.price > 0)
+        .map(p => ({
+          price: Number(p.price),
+          timestamp: p.timestamp,
+        }))
+        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+      if (!formattedPoints.length) throw new Error('Brak punktów kursu')
+
+      setGoldData(formattedPoints)
     } catch {
-      // Fallback if request fails
+      setGoldData([])
+      setError('Aktualny kurs złota jest chwilowo niedostępny. Kalkulator został wyłączony, aby nie pokazywać zmyślonej ceny.')
     } finally {
       setLoading(false)
     }
@@ -45,11 +49,12 @@ export default function GoldExchangeWidget() {
   }, [fetchGoldHistory])
 
   const latestPrice = useMemo(() => {
-    if (!goldData.length) return 7528
+    if (!goldData.length) return null
     return goldData[goldData.length - 1].price
   }, [goldData])
 
   const silverResult = useMemo(() => {
+    if (!latestPrice) return null
     return Math.round(goldInput * latestPrice)
   }, [goldInput, latestPrice])
 
@@ -159,7 +164,7 @@ export default function GoldExchangeWidget() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
         <div className="p-3.5 rounded-2xl bg-black/40 border border-white/8 space-y-1">
           <span className="text-[9px] text-gray-400 uppercase block">Aktualny Kurs (1 Gold)</span>
-          <p className="text-xl font-black text-amber-300">{latestPrice.toLocaleString()} <span className="text-xs font-normal text-gray-400">Silver</span></p>
+          <p className="text-xl font-black text-amber-300">{latestPrice ? latestPrice.toLocaleString() : '—'} <span className="text-xs font-normal text-gray-400">Silver</span></p>
         </div>
 
         <div className="p-3.5 rounded-2xl bg-black/40 border border-white/8 space-y-1">
@@ -184,6 +189,12 @@ export default function GoldExchangeWidget() {
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="rounded-xl border border-rose-400/25 bg-rose-400/8 px-4 py-3 text-xs leading-5 text-rose-200" role="status">
+          {error}
+        </div>
+      )}
 
       {/* HISTORICAL CHART CANVAS */}
       <div className="relative w-full overflow-hidden rounded-2xl bg-black/50 border border-white/8 p-3">
@@ -249,11 +260,12 @@ export default function GoldExchangeWidget() {
               max={1000000}
               value={goldInput}
               onChange={e => setGoldInput(Math.max(1, Number(e.target.value) || 1))}
+              disabled={!latestPrice}
               className="w-24 bg-black/70 border border-white/15 rounded-xl p-2 text-amber-300 font-bold text-xs text-center outline-none focus:border-amber-400"
               placeholder="Gold"
             />
             <span className="text-gray-400">Gold =</span>
-            <span className="font-bold text-emerald-300 text-sm">{silverResult.toLocaleString()} Silver</span>
+            <span className="font-bold text-emerald-300 text-sm">{silverResult ? `${silverResult.toLocaleString()} Silver` : 'Brak kursu'}</span>
           </div>
         </div>
 
@@ -267,7 +279,7 @@ export default function GoldExchangeWidget() {
           <div className="flex items-baseline justify-between">
             <span className="text-xs text-gray-300">Wymagane Srebro:</span>
             <span className="text-base font-black text-amber-300 font-mono">
-              {(3750 * latestPrice).toLocaleString()} Silver
+              {latestPrice ? `${(3750 * latestPrice).toLocaleString()} Silver` : 'Brak kursu'}
             </span>
           </div>
         </div>

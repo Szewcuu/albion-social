@@ -15,6 +15,7 @@ const TIER_COLORS = {
 
 export default function Meta1v1Tierlist() {
   const [metaWeapons, setMetaWeapons] = useState([])
+  const [metadata, setMetadata] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -30,6 +31,7 @@ export default function Meta1v1Tierlist() {
         if (!isMounted) return
         if (resData.data) {
           setMetaWeapons(resData.data)
+          setMetadata(resData.meta || null)
         } else {
           setError('Nie udało się pobrać danych 1v1 Meta.')
         }
@@ -76,7 +78,7 @@ export default function Meta1v1Tierlist() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="badge badge-amber font-mono text-[9px] uppercase font-bold">1v1 Solo Meta</span>
+                <span className="badge badge-amber font-mono text-[9px] uppercase font-bold">Model demonstracyjny</span>
                 <span className="text-[10px] text-gray-400 font-mono">Solo Mists & Corrupted 1v1</span>
               </div>
               <h2 className="font-display text-2xl font-black text-white mt-1">Tierlista Uzbrojenia 1v1</h2>
@@ -85,8 +87,12 @@ export default function Meta1v1Tierlist() {
 
           <div className="flex items-center gap-2 font-mono text-xs text-amber-300 bg-black/40 border border-white/10 px-3.5 py-2 rounded-xl">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Ranking oparty o <strong>48 000+</strong> starć z API</span>
+            <span>Kuratorski podgląd — <strong>bez danych live</strong></span>
           </div>
+        </div>
+
+        <div className="rounded-xl border border-amber-400/25 bg-amber-400/8 px-4 py-3 text-[11px] leading-5 text-amber-100">
+          {metadata?.methodology || 'Te wartości służą wyłącznie jako demonstracja modułu i nie są bieżącą tierlistą Albion Online.'}
         </div>
 
         {/* WYSZUKIWARKA I FILTRY TIERÓW */}
@@ -124,7 +130,7 @@ export default function Meta1v1Tierlist() {
       {loading ? (
         <div className="panel p-16 text-center text-xs font-mono text-gray-400 space-y-3">
           <RefreshCw className="w-6 h-6 animate-spin mx-auto text-amber-400" />
-          <p>Analizowanie statystyk 1v1 Meta z Albion API...</p>
+          <p>Wczytywanie demonstracyjnego zestawienia 1v1...</p>
         </div>
       ) : error ? (
         <div className="panel p-8 text-center text-xs font-mono text-rose-300 space-y-2 border-rose-500/30">

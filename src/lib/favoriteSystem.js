@@ -1,13 +1,7 @@
-const FAVORITES_KEY = 'aopp-favorites-v1'
+import { getLocalPreference, savePortalPreference } from '@/lib/preferenceSync'
 
 export function getFavoriteItems() {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = localStorage.getItem(FAVORITES_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
+  return getLocalPreference('favorites')
 }
 
 export function isItemFavorite(id, type = 'build') {
@@ -27,11 +21,7 @@ export function toggleFavoriteItem(item) {
     updated = [...favorites, { ...item, savedAt: new Date().toISOString() }]
   }
 
-  try {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated))
-  } catch (err) {
-    console.error('Błąd zapisu ulubionych:', err)
-  }
+  void savePortalPreference('favorites', updated)
 
   return !exists
 }

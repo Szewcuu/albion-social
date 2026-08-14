@@ -3,16 +3,26 @@
 import { useState } from 'react'
 import { AlertTriangle, Trash2, X, LoaderCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
-export default function AccountDeletionModal({ isOpen, onClose, userId }) {
+const CONFIRMATION = 'USUŃ KONTO'
+
+export default function AccountDeletionModal({ isOpen, onClose }) {
   const [confirmText, setConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
 
   if (!isOpen) return null
 
+  const handleClose = () => {
+    if (deleting) return
+    setConfirmText('')
+    setError('')
+    onClose()
+  }
+
   const handleDelete = async () => {
-    if (confirmText !== 'USUŃ KONTO') {
+    if (confirmText !== CONFIRMATION) {
       setError('Wpisz dokładnie frazę "USUŃ KONTO" aby zatwierdzić.')
       return
     }
@@ -21,14 +31,19 @@ export default function AccountDeletionModal({ isOpen, onClose, userId }) {
     setError('')
 
     try {
-      // 1. Usunięcie profilu z Supabase
-      if (userId) {
-        await supabase.from('profiles').delete().eq('id', userId)
+      const response = await authenticatedFetch('/api/profile/account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: confirmText }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok || !payload.deleted) {
+        throw new Error(payload.error || 'Nie udało się trwale usunąć konta.')
       }
-      
-      // 2. Wylogowanie
-      await supabase.auth.signOut()
-      window.location.href = '/'
+
+      await supabase.auth.signOut({ scope: 'local' })
+      window.localStorage.clear()
+      window.location.replace('/')
     } catch (err) {
       setError(err.message || 'Błąd podczas usuwania konta.')
       setDeleting(false)
@@ -46,7 +61,7 @@ export default function AccountDeletionModal({ isOpen, onClose, userId }) {
             </div>
             <h3 className="font-display text-lg font-black text-white">Usuwanie Konta & Danych RODO</h3>
           </div>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white transition">
+          <button onClick={handleClose} disabled={deleting} className="p-1 text-gray-400 hover:text-white transition disabled:opacity-40">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -80,12 +95,12 @@ export default function AccountDeletionModal({ isOpen, onClose, userId }) {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <button onClick={onClose} className="btn btn-ghost btn-sm flex-1">
+          <button onClick={handleClose} disabled={deleting} className="btn btn-ghost btn-sm flex-1 disabled:opacity-40">
             Anuluj
           </button>
           <button
             onClick={handleDelete}
-            disabled={deleting || confirmText !== 'USUŃ KONTO'}
+            disabled={deleting || confirmText !== CONFIRMATION}
             className="btn btn-sm bg-rose-600 hover:bg-rose-500 text-white font-bold flex-1 flex items-center justify-center gap-1.5 disabled:opacity-40"
           >
             {deleting ? (

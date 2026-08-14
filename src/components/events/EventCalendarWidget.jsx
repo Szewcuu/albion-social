@@ -1,7 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Calendar as CalendarIcon, Clock, Users, Swords, Shield, Sparkles, Filter, ChevronLeft, ChevronRight, BellCheck } from 'lucide-react'
+import {
+  getLocalPreference,
+  PREFERENCES_SYNCED_EVENT,
+  savePortalPreference,
+} from '@/lib/preferenceSync'
 
 const OFFICIAL_ALBION_EVENTS = [
   {
@@ -55,11 +60,26 @@ export default function EventCalendarWidget({ expeditions = [] }) {
   const [selectedCategory, setSelectedCategory] = useState('ALL')
   const [reminderSetIds, setReminderSetIds] = useState({})
 
+  useEffect(() => {
+    const loadReminders = (event) => {
+      setReminderSetIds(event?.detail?.reminders || getLocalPreference('reminders'))
+    }
+    const timeoutId = window.setTimeout(loadReminders, 0)
+    window.addEventListener(PREFERENCES_SYNCED_EVENT, loadReminders)
+    return () => {
+      window.clearTimeout(timeoutId)
+      window.removeEventListener(PREFERENCES_SYNCED_EVENT, loadReminders)
+    }
+  }, [])
+
   const toggleReminder = (id) => {
-    setReminderSetIds(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }))
+    setReminderSetIds(prev => {
+      const next = { ...prev }
+      if (next[id]) delete next[id]
+      else next[id] = true
+      void savePortalPreference('reminders', next)
+      return next
+    })
   }
 
   // Combine official Albion events with user expeditions

@@ -504,7 +504,6 @@ export default function ProfilePage() {
       <AccountDeletionModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        userId={user?.id}
       />
     </div>
   )
