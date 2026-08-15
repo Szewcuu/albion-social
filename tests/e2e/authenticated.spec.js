@@ -37,6 +37,34 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
   })
 
+  test('zwraca zalogowanemu wątkowane komentarze buildu', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage)
+        .find((key) => /^sb-.+-auth-token$/.test(key))
+      if (!storageKey) return null
+      return JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null
+    })
+    expect(accessToken).toBeTruthy()
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const buildsResponse = await request.get(`${supabaseUrl}/rest/v1/builds?select=id&status=eq.visible&order=created_at.desc&limit=1`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    })
+    expect(buildsResponse.status()).toBe(200)
+    const [build] = await buildsResponse.json()
+    expect(build?.id).toBeTruthy()
+
+    const commentsResponse = await request.get(`/api/builds/${build.id}/comments`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    expect(commentsResponse.status()).toBe(200)
+    const payload = await commentsResponse.json()
+    expect(Array.isArray(payload.comments)).toBe(true)
+    expect(typeof payload.count).toBe('number')
+  })
+
   test('otwiera formularze wyprawy i rynku', async ({ page }) => {
     await page.goto('/wyprawy')
     await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()

@@ -25,8 +25,10 @@ export async function ensureBuildExists(supabase, buildId) {
 export function toCommentDto(row, viewerId = null) {
   return {
     id: row.id,
+    parentId: row.parent_id || null,
     content: row.content,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     author: row.profiles?.username || 'Anonimowy wojownik',
     own: Boolean(viewerId && row.user_id === viewerId),
   }

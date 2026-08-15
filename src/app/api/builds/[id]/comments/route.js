@@ -43,16 +43,36 @@ export async function GET(request, { params }) {
 
     const { data, error, count } = await supabase
       .from('build_comments')
-      .select('id, content, created_at, user_id, profiles!build_comments_user_id_fkey(username)', { count: 'exact' })
+      .select('id, parent_id, content, created_at, updated_at, user_id, profiles!build_comments_user_id_fkey(username)', { count: 'exact' })
       .eq('build_id', buildId)
       .eq('status', 'visible')
       .order('created_at', { ascending: false })
-      .limit(50)
+      .limit(100)
 
     if (error) throw new Error('Nie udało się pobrać komentarzy.')
 
+    // Najnowsza setka może zawierać odpowiedź do starszego wpisu. Dociągamy
+    // maksymalnie trzy poziomy przodków, aby podgląd odpowiedzi nigdy nie osierociał.
+    let comments = data || []
+    for (let depth = 0; depth < 3; depth += 1) {
+      const knownIds = new Set(comments.map((comment) => comment.id))
+      const missingParentIds = [...new Set(comments
+        .map((comment) => comment.parent_id)
+        .filter((parentId) => parentId && !knownIds.has(parentId)))]
+      if (missingParentIds.length === 0) break
+
+      const { data: parents, error: parentsError } = await supabase
+        .from('build_comments')
+        .select('id, parent_id, content, created_at, updated_at, user_id, profiles!build_comments_user_id_fkey(username)')
+        .eq('build_id', buildId)
+        .eq('status', 'visible')
+        .in('id', missingParentIds)
+      if (parentsError) throw new Error('Nie udało się odtworzyć wątków komentarzy.')
+      comments = [...comments, ...(parents || [])]
+    }
+
     return NextResponse.json({
-      comments: (data || []).reverse().map((row) => toCommentDto(row, viewer?.id)),
+      comments: comments.map((row) => toCommentDto(row, viewer?.id)),
       count: count || 0,
     })
   } catch (error) {
@@ -82,15 +102,35 @@ export async function POST(request, { params }) {
     const body = await request.json().catch(() => null)
     const content = cleanText(body?.content, { min: COMMENT_MIN_LENGTH, max: COMMENT_MAX_LENGTH })
     if (!content) return jsonError(`Komentarz musi mieć od ${COMMENT_MIN_LENGTH} do ${COMMENT_MAX_LENGTH} znaków.`, 400)
+    const parentId = body?.parentId == null ? null : body.parentId
+    if (parentId && !isBuildId(parentId)) return jsonError('Nieprawidłowy komentarz nadrzędny.', 400)
 
     const supabase = createSupabaseRequestClient(request)
     if (!(await ensureBuildExists(supabase, buildId))) return jsonError('Nie znaleziono buildu.', 404)
 
+    let parentComment = null
+    if (parentId) {
+      const { data: parent, error: parentError } = await supabase
+        .from('build_comments')
+        .select('id, user_id, parent_id, profiles!build_comments_user_id_fkey(username)')
+        .eq('id', parentId)
+        .eq('build_id', buildId)
+        .eq('status', 'visible')
+        .maybeSingle()
+
+      if (parentError) throw new Error('Nie udało się sprawdzić komentarza nadrzędnego.')
+      if (!parent) return jsonError('Komentarz, na który odpowiadasz, nie istnieje.', 404)
+      parentComment = parent
+    }
+
     const { data, error } = await supabase
       .from('build_comments')
-      .insert({ build_id: buildId, user_id: auth.user.id, content })
-      .select('id, content, created_at, user_id, profiles!build_comments_user_id_fkey(username)')
+      .insert({ build_id: buildId, user_id: auth.user.id, content, parent_id: parentId })
+      .select('id, parent_id, content, created_at, updated_at, user_id, profiles!build_comments_user_id_fkey(username)')
       .single()
+    if (error?.message?.includes('build_comment_thread_too_deep')) {
+      return jsonError('Ten wątek osiągnął maksymalny poziom zagnieżdżenia.', 400)
+    }
     if (error) throw new Error('Nie udało się zapisać komentarza.')
 
     // Notification to build author
@@ -100,13 +140,27 @@ export async function POST(request, { params }) {
       .eq('id', buildId)
       .maybeSingle()
 
-    if (buildData && buildData.user_id && buildData.user_id !== auth.user.id) {
-      const commenterName = data.profiles?.username || 'Gracz'
+    const commenterName = data.profiles?.username || 'Gracz'
+    if (parentComment?.user_id && parentComment.user_id !== auth.user.id) {
+      await createNotification({
+        userId: parentComment.user_id,
+        title: 'Nowa odpowiedź w dyskusji',
+        message: `${commenterName} odpowiedział na Twój komentarz.`,
+        link: `/buildy/${buildId}#comment-${data.id}`,
+        type: 'build_comment_reply',
+      })
+    }
+
+    if (
+      buildData?.user_id
+      && buildData.user_id !== auth.user.id
+      && buildData.user_id !== parentComment?.user_id
+    ) {
       await createNotification({
         userId: buildData.user_id,
         title: 'Nowy komentarz pod Twoim buildem',
         message: `${commenterName} skomentował Twój zestaw "${buildData.title}".`,
-        link: `/buildy/${buildId}`,
+        link: `/buildy/${buildId}#comment-${data.id}`,
         type: 'build_comment',
       })
     }

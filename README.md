@@ -208,7 +208,11 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] dodać trwałą Wartownię obserwowanych elementów i przyciski w czterech typach treści
   - [x] powiadamiać o nowych buildach i ofertach graczy, komentarzach buildów, wydarzeniach gildii i zmianach ofert
   - [x] zabezpieczyć obserwacje RLS, jawnymi grantami, walidacją encji i ochroną przed obserwowaniem własnych treści
-- [ ] rozbudować komentarze o odpowiedzi, edycję własnej treści i sortowanie
+- [x] rozbudować komentarze o odpowiedzi, edycję własnej treści i sortowanie
+  - [x] dodać wątki odpowiedzi z podglądem komentowanej treści, kotwicami i powiadomieniem autora
+  - [x] naprawić RLS edycji własnego komentarza oraz ograniczyć granty do dozwolonych kolumn
+  - [x] sortować całe wątki według aktywności, daty najnowszej lub najstarszej
+  - [x] zachować odpowiedzi po usunięciu komentarza nadrzędnego i ograniczyć głębokość wątku w bazie
 - [ ] dodać bezpieczny przepływ kontaktu kupujący–sprzedający bez publikowania danych prywatnych
 
 ### Priorytet D — dane Albionu i narzędzia
