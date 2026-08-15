@@ -47,6 +47,7 @@ jobs:
         run: npm run test:e2e:auth
         env:
           E2E_SKIP_BUILD: '1'
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
         if: failure()
