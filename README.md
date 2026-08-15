@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **P5: stabilizacja po audycie z 14 sierpnia 2026**
 
-P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat profili, porządkują RLS i przywracają zielony lokalny pipeline. Następnym etapem jest P5.2: prawdziwe usuwanie konta, autoryzowany health check oraz usunięcie lub jednoznaczne oznaczenie danych demonstracyjnych.
+Zakres implementacyjny P5.0–P5.4 jest ukończony: bezpieczeństwo Supabase, prawdziwe przepływy konta, moderacja, PWA, zależności i optymalizacje mobile zostały wdrożone. Powtórne pomiary Lighthouse świadomie odkładamy; po domknięciu P5.3 kolejnym etapem produktowym jest Priorytet C, zaczynając od pełnych publicznych profili graczy.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -88,10 +88,10 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 - [x] zastosować migrację fazy 1 przed wdrożeniem kodu
 - [x] po wdrożeniu odebrać `authenticated` dostęp do czterech starych RPC
 - [x] rozszerzyć E2E o odmowę dostępu do API moderacji dla gościa i zwykłego użytkownika
-- [ ] dodać brakujący favicon i naprawić instalację cache service workera
-- [ ] nie cache'ować prywatnych stron użytkownika strategią cache-first
-- [ ] zaktualizować podatne zależności wskazane przez `npm audit`
-- [ ] przenieść fonty do lokalnych assetów, aby build nie wymagał Google Fonts
+- [x] dodać brakujący favicon i naprawić instalację cache service workera
+- [x] nie cache'ować prywatnych stron użytkownika strategią cache-first
+- [x] zaktualizować podatne zależności wskazane przez `npm audit`
+- [x] przenieść fonty do lokalnych assetów, aby build nie wymagał Google Fonts
 - [x] oblewać testy przy nieoczekiwanym błędzie konsoli lub odpowiedzi `4xx/5xx`
 - [ ] powtórzyć Lighthouse desktop/mobile bez rozszerzeń, jako gość i użytkownik
 
@@ -334,7 +334,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P12 — PWA Offline Service Worker, Manifest & Wydajność Web Vitals
 
-- [ ] Fundament Service Workera i manifest istnieją, ale instalacja cache i bezpieczna strategia dla prywatnych tras wymagają naprawy przed uznaniem trybu offline za gotowy.
+- [x] Service Worker instaluje jawny cache publicznych assetów, nie zapisuje prywatnych dokumentów ani API i pokazuje bezpieczny ekran offline.
 - [x] Konfiguracja powiadomień diagnostycznych wydajności (Speed Insights / Core Web Vitals) dla ulepszenia czasy ładowania na urządzeniach mobilnych.
 
 ### Etap P13 — Unikalne Metadane SEO & Open Graph dla Wszystkich Podstron Portalu
@@ -424,7 +424,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P30 — Końcowy Audyt Gotowości Wdrożeniowej (Production Build & CI Verification)
 
-- [ ] Audyt statyczny i lokalny build przechodzą; zielony GitHub Actions, poprawiony Service Worker i ponowny Lighthouse pozostają częścią P5.
+- [ ] Audyt statyczny, lokalny build, GitHub Actions i bezpieczny Service Worker są gotowe; do późniejszego wykonania pozostaje wyłącznie świadomie odłożony Lighthouse.
 
 ## Audyt dostępnych API Albion Online
 

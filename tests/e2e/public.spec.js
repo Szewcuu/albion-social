@@ -52,6 +52,40 @@ test.describe('publiczna bramka portalu', () => {
     expect(response.headers()['x-item-image-fallback']).toBe('1')
   })
 
+  test('udostępnia bezpieczny Service Worker bez cache prywatnych stron', async ({ request }) => {
+    const response = await request.get('/sw.js')
+    const source = await response.text()
+
+    expect(response.status()).toBe(200)
+    expect(response.headers()['content-type']).toContain('application/javascript')
+    expect(response.headers()['cache-control']).toContain('no-store')
+    expect(source).toContain("event.request.mode === 'navigate'")
+    expect(source).toContain("url.pathname.startsWith('/api/')")
+    expect(source).not.toContain("caches.match('/')")
+  })
+
+  test('instaluje wyłącznie publiczny cache PWA', async ({ page }) => {
+    await page.goto('/')
+
+    const cacheState = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.ready
+      const cacheNames = await caches.keys()
+      const cachedUrls = (await Promise.all(cacheNames.map(async (name) => {
+        const cache = await caches.open(name)
+        return (await cache.keys()).map((request) => new URL(request.url).pathname)
+      }))).flat()
+
+      return { scriptUrl: registration.active?.scriptURL || '', cacheNames, cachedUrls }
+    })
+
+    expect(cacheState.scriptUrl).toContain('/sw.js')
+    expect(cacheState.cacheNames).toContain('albion-social-static-v2')
+    expect(cacheState.cachedUrls).toContain('/offline.html')
+    expect(cacheState.cachedUrls).not.toContain('/')
+    expect(cacheState.cachedUrls.some((path) => path.startsWith('/api/'))).toBe(false)
+    expect(cacheState.cachedUrls.some((path) => path.startsWith('/auth/'))).toBe(false)
+  })
+
   for (const path of ['/buildy', '/gildie', '/killboard', '/loot-split', '/wyprawy', '/admin']) {
     test(`blokuje gościom ${path}`, async ({ page }) => {
       await page.goto(path)

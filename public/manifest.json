@@ -2,11 +2,14 @@
   "name": "Albion Online Polska Portal",
   "short_name": "AOPP",
   "description": "Polski portal społecznościowy i narzędziowy graczy Albion Online",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
+  "lang": "pl",
   "display": "standalone",
   "background_color": "#080506",
   "theme_color": "#c59b27",
-  "orientation": "portrait",
+  "orientation": "any",
   "icons": [
     {
       "src": "/logo-256.webp",

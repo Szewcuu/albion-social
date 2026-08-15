@@ -4,11 +4,14 @@ import { useEffect } from 'react';
 
 export default function PwaRegister() {
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.error('Błąd rejestracji Service Workera PWA:', err);
-      });
-    }
+    if (!('serviceWorker' in navigator)) return
+
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+      .then((registration) => registration.update())
+      .catch(() => {
+        console.warn('Service Worker PWA nie został zarejestrowany.')
+      })
   }, []);
 
   return null;
