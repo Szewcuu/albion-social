@@ -93,7 +93,7 @@ export default function ProfilePage() {
     const [profileResult, expeditionsResult, marketResult] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
       supabase.from('expeditions').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-      supabase.from('market_items').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('market_items').select('id, created_at, user_id, title, price, city, category, description, status, item_name, server').eq('user_id', userId).order('created_at', { ascending: false }),
     ])
 
     if (profileResult.data) {

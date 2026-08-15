@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   CalendarDays,
   BellRing,
+  MessageSquareText,
   X,
 } from 'lucide-react'
 
@@ -51,6 +52,7 @@ const NAV_SECTIONS = [
     items: [
       { href: '/profil', label: 'Mój Profil', icon: User, desc: 'Postać' },
       { href: '/obserwowane', label: 'Obserwowane', icon: BellRing, desc: 'Wartownia zmian' },
+      { href: '/wiadomosci', label: 'Skrzynka handlowa', icon: MessageSquareText, desc: 'Prywatne negocjacje' },
     ],
   },
 ]

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { X, Send, Check, Copy, MessageSquare, HandCoins, ShieldCheck } from 'lucide-react'
+import { X, Send, Check, HandCoins, ShieldCheck } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 export default function ContactSellerModal({ isOpen, onClose, offer, currentUser }) {
@@ -10,20 +10,12 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
   const [offeredPrice, setOfferedPrice] = useState(offer?.price || '')
   const [sending, setSending] = useState(false)
   const [sentSuccess, setSentSuccess] = useState(false)
-  const [copiedWhisper, setCopiedWhisper] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [conversationId, setConversationId] = useState(null)
 
   if (!isOpen || !offer) return null
 
   const sellerName = (offer.profiles?.username || 'Sprzedawca').replace(/#0$/, '')
-  const ingameWhisperCommand = `/w ${sellerName} Cześć! Piszę z portalu Albion Polska ws. oferty "${offer.title}".`
-
-  const handleCopyWhisper = () => {
-    navigator.clipboard.writeText(ingameWhisperCommand)
-    setCopiedWhisper(true)
-    setTimeout(() => setCopiedWhisper(false), 3000)
-  }
-
   const handleSubmitOffer = async (e) => {
     e.preventDefault()
     if (!currentUser) return
@@ -31,12 +23,11 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
     setSendError('')
 
     try {
-      const response = await authenticatedFetch('/api/notifications', {
+      const response = await authenticatedFetch('/api/market/conversations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          kind: 'market_offer',
-          offerId: offer.id,
+          marketItemId: offer.id,
           offeredPrice: Number(offeredPrice || offer.price),
           message,
         }),
@@ -44,6 +35,7 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Nie udało się wysłać propozycji.')
 
+      setConversationId(payload.conversationId)
       setSentSuccess(true)
     } catch (err) {
       console.error('Błąd powiadomienia sprzedawcy:', err)
@@ -88,31 +80,18 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
               Wiadomość wysłana!
             </h4>
             <p className="text-xs text-[var(--text-body)] max-w-md mx-auto leading-relaxed">
-              Sprzedawca <strong>{sellerName}</strong> otrzymał powiadomienie w portalu i odpowie Ci na czacie.
+              Prywatny wątek ze sprzedawcą <strong>{sellerName}</strong> jest gotowy. Nikt poza Wami nie zobaczy jego treści.
             </p>
-            <button onClick={onClose} className="btn btn-primary btn-sm mt-2">
-              Zamknij okno
-            </button>
+            <div className="flex justify-center gap-2 pt-2">
+              <button onClick={onClose} className="btn btn-ghost btn-sm">Zamknij</button>
+              <Link href={`/wiadomosci?conversation=${conversationId}`} className="btn btn-primary btn-sm">Otwórz rozmowę</Link>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmitOffer} className="space-y-4 font-mono text-xs">
-            {/* Direct In-game whisper copy box */}
-            <div className="p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-stone)] space-y-2">
-              <div className="flex justify-between items-center text-[10px] text-[var(--text-muted)] uppercase font-bold">
-                <span>Komenda w grze (Whisper)</span>
-                <span className="text-[var(--gold)]">Szybki kontakt</span>
-              </div>
-              <div className="flex items-center gap-2 bg-[var(--bg-panel)] p-2 rounded-lg border border-[var(--border)] text-xs text-[var(--text-bright)] overflow-x-auto">
-                <code>{ingameWhisperCommand}</code>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyWhisper}
-                className="btn btn-ghost btn-sm w-full text-[10px] flex items-center justify-center gap-1.5"
-              >
-                {copiedWhisper ? <Check className="w-3.5 h-3.5 text-[var(--forest)]" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedWhisper ? 'Skopiowano komendę!' : 'Kopiuj komendę do gry'}</span>
-              </button>
+            <div className="flex gap-2 rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-3 text-[11px] leading-5 text-emerald-100">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+              <span>Nie publikujemy Discorda ani innych danych kontaktowych. Rozmowa pozostaje w prywatnej skrzynce portalu.</span>
             </div>
 
             {/* In-portal Offer Message Form */}
@@ -148,6 +127,8 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
                 </label>
                 <textarea
                   rows={3}
+                  required
+                  maxLength={1000}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="np. Cześć! Mogę odebrać przedmiot w Bridgewatch po 20:00."

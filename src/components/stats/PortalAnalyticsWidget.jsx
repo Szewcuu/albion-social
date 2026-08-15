@@ -18,7 +18,7 @@ export default function PortalAnalyticsWidget() {
         const [profilesRes, buildsRes, marketRes, pvpFameRes] = await Promise.all([
           supabase.from('profiles').select('*', { count: 'exact', head: true }),
           supabase.from('builds').select('*', { count: 'exact', head: true }),
-          supabase.from('market_items').select('*', { count: 'exact', head: true }),
+          supabase.from('market_items').select('id', { count: 'exact', head: true }),
           supabase.from('profiles').select('pvp_fame'),
         ])
 

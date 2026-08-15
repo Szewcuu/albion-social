@@ -39,8 +39,7 @@ export default function Rynek() {
     price: '',
     city: 'Caerleon',
     category: 'Ekwipunek',
-    server: 'Europa',
-    contact_info: ''
+    server: 'Europa'
   })
   const [formMessage, setFormMessage] = useState('')
 
@@ -48,7 +47,7 @@ export default function Rynek() {
     setLoading(true)
     const { data, error } = await supabase
       .from('market_items')
-      .select('*, profiles!market_items_user_id_fkey(username)')
+      .select('id, created_at, user_id, title, price, city, category, description, status, item_name, server, profiles!market_items_user_id_fkey(username)')
       .order('created_at', { ascending: false })
 
     if (!error && data) setOffers(data)
@@ -92,15 +91,15 @@ export default function Rynek() {
       return
     }
 
-    const contactVal = formData.contact_info?.trim() || 'W grze'
     const insertPayload = {
       title: formData.title.trim(),
       item_name: formData.item_name ? formData.item_name.trim().toUpperCase() : '',
       price: parseInt(formData.price),
       city: formData.city,
       category: formData.category,
-      contact: contactVal,
-      contact_info: contactVal,
+      server: formData.server,
+      contact: 'Kontakt przez portal',
+      contact_info: null,
       user_id: user.id,
     }
 
@@ -116,8 +115,7 @@ export default function Rynek() {
         price: '',
         city: 'Caerleon',
         category: 'Ekwipunek',
-        server: 'Europa',
-        contact_info: ''
+        server: 'Europa'
       })
       fetchOffers()
     }
@@ -183,7 +181,7 @@ export default function Rynek() {
                   <Plus className="h-4 w-4" />
                   <span>Wystaw ofertę</span>
                 </h2>
-                <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Dodaj cenę, miejsce odbioru i sposób kontaktu. Ogłoszenie od razu trafi na tablicę.</p>
+                <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Dodaj cenę i miejsce odbioru. Kontakt ze sprzedawcą pozostaje prywatny w portalu.</p>
               </div>
 
               {!user ? (
@@ -266,17 +264,6 @@ export default function Rynek() {
                         options={['Europa', 'Ameryka', 'Azja']}
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Kontakt w grze / Discord</label>
-                    <input 
-                      type="text" 
-                      value={formData.contact_info} 
-                      onChange={e => setFormData({ ...formData, contact_info: e.target.value })} 
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs"
-                      placeholder="np. Pisz na priv w grze lub Discord: SirLancelot#1234" 
-                    />
                   </div>
 
                   <button 
@@ -447,11 +434,7 @@ export default function Rynek() {
                             </Link>
                           </div>
                           
-                          {offer.contact_info && (
-                            <p className="text-xs text-gray-400 font-mono">
-                              Kontakt: <span className="text-gray-200">{offer.contact_info}</span>
-                            </p>
-                          )}
+                          <p className="text-xs text-emerald-300/80 font-mono">Kontakt chroniony przez prywatną skrzynkę portalu</p>
                         </div>
                       </div>
 
@@ -484,7 +467,7 @@ export default function Rynek() {
                             onClick={() => setSelectedOfferForContact(offer)}
                             className="btn btn-secondary btn-sm flex items-center gap-1.5"
                           >
-                            <HandCoins className="w-3.5 h-3.5 text-[var(--gold)]" /> Kup / Kontakt
+                            <HandCoins className="w-3.5 h-3.5 text-[var(--gold)]" /> Napisz do sprzedawcy
                           </button>
                         )}
                       </div>
@@ -513,6 +496,7 @@ export default function Rynek() {
       </div>
 
       <ContactSellerModal
+        key={selectedOfferForContact?.id || 'closed'}
         isOpen={!!selectedOfferForContact}
         onClose={() => setSelectedOfferForContact(null)}
         offer={selectedOfferForContact}

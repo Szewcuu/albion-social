@@ -49,7 +49,7 @@ export default function Home() {
   const fetchGlobalStats = useCallback(async () => {
     const [{ count: guildsCount }, { count: marketOffersCount }] = await Promise.all([
       supabase.from('guilds').select('*', { count: 'exact', head: true }),
-      supabase.from('market_items').select('*', { count: 'exact', head: true }),
+      supabase.from('market_items').select('id', { count: 'exact', head: true }),
     ])
     setGlobalStats({ guildsCount: guildsCount || 0, marketOffersCount: marketOffersCount || 0 })
   }, [])
