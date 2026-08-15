@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import {
   AlertTriangle,
   ChevronRight,
+  Coins,
   ExternalLink,
   Fish,
   Flame,
@@ -123,12 +124,14 @@ function KillboardContent() {
     setLoadingPlayer(true)
     setErrorMsg('')
     setActiveHistory('kills')
+    const playerRegion = player.region || region
 
     try {
-      const response = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(player.id)}&region=${region}&limit=6`)
+      const response = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(player.id)}&region=${playerRegion}&limit=6`)
       const payload = await response.json()
       if (!response.ok) throw new Error(getErrorMessage(payload, 'Nie udało się pobrać profilu gracza.'))
 
+      setRegion(playerRegion)
       setOverview(payload.data)
       setMeta(payload.meta)
       setSearchResults([])
@@ -143,6 +146,8 @@ function KillboardContent() {
   const player = overview?.player
   const currentRegion = REGIONS.find(item => item.id === region)
   const history = activeHistory === 'kills' ? overview?.kills || [] : overview?.deaths || []
+  const historyLossValue = history.reduce((sum, event) => sum + (Number(event.lossValuation?.estimatedValue) || 0), 0)
+  const valuedHistoryCount = history.filter((event) => event.lossValuation?.pricedItems > 0).length
   const calculatedRatio = player ? player.killFame / Math.max(1, player.deathFame) : 0
 
   return (
@@ -289,7 +294,14 @@ function KillboardContent() {
                     <button type="button" onClick={() => setActiveHistory('kills')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'kills' ? 'border border-emerald-300/30 bg-emerald-300/10 text-emerald-200' : 'border border-white/8 bg-black/20 text-[var(--text-secondary)]'}`}>Zabójstwa ({overview.kills.length})</button>
                     <button type="button" onClick={() => setActiveHistory('deaths')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'deaths' ? 'border border-rose-300/30 bg-rose-300/10 text-rose-200' : 'border border-white/8 bg-black/20 text-[var(--text-secondary)]'}`}>Zgony ({overview.deaths.length})</button>
                   </div>
-                  <p className="text-[9px] text-[#625e57]">Ostatnie zdarzenia z Gameinfo</p>
+                  <div className="flex flex-wrap items-center justify-end gap-2 text-[9px]">
+                    {historyLossValue > 0 && (
+                      <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/20 bg-amber-300/[.06] px-2.5 py-1.5 font-black uppercase tracking-[.08em] text-amber-200">
+                        <Coins className="h-3.5 w-3.5" /> {activeHistory === 'kills' ? 'Straty przeciwników' : 'Własne straty'}: {formatNumber(historyLossValue)} Silver
+                      </span>
+                    )}
+                    <span className="text-[#625e57]">Wyceniono {valuedHistoryCount}/{history.length} · {currentRegion?.short}</span>
+                  </div>
                 </div>
 
                 {history.length > 0 ? history.map(event => <CombatEventCard key={`${event.perspective}-${event.id}`} event={event} />) : (
@@ -322,7 +334,7 @@ function KillboardContent() {
                   </section>
                 )}
 
-                {meta && <p className="px-2 text-[8px] leading-4 text-[#514e49]">Źródło: {meta.source}. Dane pobrano {new Date(meta.fetchedAt).toLocaleString('pl-PL')}. Cache: {meta.cacheSeconds}s.</p>}
+                {meta && <p className="px-2 text-[8px] leading-4 text-[#514e49]">Walki: {meta.source}. Wycena: {overview.marketPricing?.source || 'niedostępna'} ({currentRegion?.short}). Dane cenowe pochodzą ze społecznościowych skanów; świeże do 12 h, ostrzegane po 48 h. Pobrano {new Date(meta.fetchedAt).toLocaleString('pl-PL')}.</p>}
               </aside>
             </section>
           </div>

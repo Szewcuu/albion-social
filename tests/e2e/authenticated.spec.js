@@ -77,6 +77,47 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('pokazuje regionalną wycenę utraconego zestawu w Killboardzie', async ({ page }) => {
+    await page.route('**/api/albion/player?mode=search**', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { players: [{ id: 'pricing-player', name: 'PricingKnight', guildName: 'Codex', killFame: 123456, region: 'europe' }] },
+          meta: { source: 'E2E', region: 'europe', fetchedAt: '2026-08-15T18:00:00Z', cacheSeconds: 45 },
+        }),
+      })
+    })
+    await page.route('**/api/albion/player?mode=overview**', async (route) => {
+      const emptyEquipment = { MainHand: null, OffHand: null, Head: null, Armor: null, Shoes: null, Bag: null, Cape: null, Mount: null, Potion: null, Food: null }
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: {
+            player: { id: 'pricing-player', name: 'PricingKnight', guildName: 'Codex', killFame: 123456, deathFame: 20000, averageItemPower: 1450, fame: {} },
+            kills: [{
+              id: 'pricing-event', perspective: 'kill', timestamp: '2026-08-15T18:00:00Z', fame: 8748, killArea: 'OPEN_WORLD', participantCount: 1,
+              killer: { id: 'pricing-player', name: 'PricingKnight', averageItemPower: 1450, equipment: emptyEquipment },
+              victim: { id: 'victim', name: 'LostKnight', averageItemPower: 1300, equipment: { ...emptyEquipment, MainHand: { type: 'T6_MAIN_SWORD', count: 1, quality: 1 } } },
+              lossValuation: { estimatedValue: 125000, pricedItems: 1, totalItems: 1, coveragePercent: 100, freshness: 'fresh', maxAgeHours: 2, fallbackItems: 0, items: [{ total: 125000, quote: { city: 'Martlock', source: 'sell' } }] },
+            }],
+            deaths: [], guild: null, warnings: [], marketPricing: { available: true, source: 'Albion Online Data Project', region: 'europe' },
+          },
+          meta: { source: 'Albion Online Gameinfo', region: 'europe', fetchedAt: '2026-08-15T18:00:00Z', cacheSeconds: 90 },
+        }),
+      })
+    })
+
+    await page.goto('/killboard')
+    await page.getByLabel('Nick gracza').fill('PricingKnight')
+    await page.getByRole('button', { name: 'Szukaj', exact: true }).click()
+    await page.getByRole('button', { name: /PricingKnight/ }).click()
+
+    await expect(page.getByText('Wartość utraconego zestawu')).toBeVisible()
+    await expect(page.getByText('125 000 Silver')).toBeVisible()
+    await expect(page.getByText(/Świeże · 2 h/)).toBeVisible()
+    await expect(page.getByText(/Straty przeciwników: 125 tys\. Silver/)).toBeVisible()
+  })
+
   test('otwiera prywatną skrzynkę handlową i jej API', async ({ page, request }) => {
     await page.goto('/wiadomosci')
     await expect(page.getByRole('heading', { name: 'Skrzynka handlowa' })).toBeVisible()

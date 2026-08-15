@@ -80,6 +80,30 @@ export async function getCurrentMarketPrices({ itemIds, cities, qualities, regio
   return fetchMarketJson(`${host}/api/v2/stats/prices/${itemPath}.json?${params}`, { revalidate: 60 })
 }
 
+export async function getEquipmentMarketPrices({ equipmentSets, region }) {
+  const items = (equipmentSets || [])
+    .flatMap((equipment) => Object.values(equipment || {}))
+    .filter((item) => item?.type && isSafeItemId(item.type))
+  const itemIds = [...new Set(items.map((item) => item.type))]
+  const qualities = [...new Set(items.map((item) => Number(item.quality) || 1))]
+
+  if (!itemIds.length) return []
+
+  const chunks = []
+  for (let index = 0; index < itemIds.length; index += 30) {
+    chunks.push(itemIds.slice(index, index + 30))
+  }
+
+  const responses = await Promise.all(chunks.map((chunk) => getCurrentMarketPrices({
+    itemIds: chunk,
+    cities: MARKET_CITIES,
+    qualities,
+    region,
+  })))
+
+  return responses.flat()
+}
+
 export async function getMarketHistory({ itemId, city, quality = 1, region = 'europe', range = '7d' }) {
   const host = MARKET_REGIONS[region]
   const rangeConfig = MARKET_RANGES[range]
