@@ -195,7 +195,7 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 
 ### Priorytet C — funkcje społecznościowe
 
-- [ ] dodać publiczne profile graczy z przypiętą postacią Albionu, ulubionymi buildami i aktywnością
+- [x] dodać publiczne profile graczy z przypiętą postacią Albionu, opcjonalnie udostępnianymi ulubionymi buildami i chronologiczną aktywnością
 - [ ] rozbudować strony gildii o role, rekrutację, wydarzenia, skład i historię aktywności
 - [ ] dodać kalendarz wydarzeń oraz zapisy z przypomnieniami w centrum powiadomień
 - [ ] dodać obserwowanie buildów, gildii, ofert i graczy oraz powiadomienia o zmianach
