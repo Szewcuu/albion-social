@@ -228,21 +228,31 @@ function KillboardContent() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              {searchResults.map(result => (
-                <button key={result.id} type="button" onClick={() => loadPlayer(result)} className="panel panel-interactive group flex items-center justify-between gap-4 p-4 text-left sm:p-5">
+              {searchResults.map(result => {
+                const ResultElement = result.externalUrl ? 'a' : 'button'
+                const resultProps = result.externalUrl
+                  ? { href: result.externalUrl, target: '_blank', rel: 'noopener noreferrer' }
+                  : { type: 'button', onClick: () => loadPlayer(result) }
+
+                return (
+                <ResultElement key={result.id} {...resultProps} className="panel panel-interactive group flex items-center justify-between gap-4 p-4 text-left sm:p-5">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-rose-400/20 bg-rose-400/8 text-rose-300"><Skull className="h-5 w-5" /></div>
                     <div className="min-w-0">
                       <p className="font-display truncate text-lg font-black text-[#fff]">{result.name}</p>
-                      <p className="truncate text-[10px] text-[var(--text-secondary)]">{result.guildName || 'Bez gildii'}{result.allianceName ? ` • ${result.allianceName}` : ''}</p>
+                      <p className="truncate text-[10px] text-[var(--text-secondary)]">
+                        {result.partial ? 'Potwierdzony w archiwum społecznościowym' : (result.guildName || 'Bez gildii')}
+                        {!result.partial && result.allianceName ? ` • ${result.allianceName}` : ''}
+                      </p>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
-                    <div className="text-right"><p className="text-[8px] font-black uppercase tracking-[.12em] text-[#625e57]">Kill Fame</p><p className="text-xs font-bold text-rose-200">{formatNumber(result.killFame)}</p></div>
-                    <ChevronRight className="h-4 w-4 text-[#5d5952] transition group-hover:translate-x-1 group-hover:text-[var(--amber)]" />
+                    <div className="text-right"><p className="text-[8px] font-black uppercase tracking-[.12em] text-[#625e57]">{result.partial ? 'Źródło' : 'Kill Fame'}</p><p className="text-xs font-bold text-rose-200">{result.partial ? 'KillBoard#1' : formatNumber(result.killFame)}</p></div>
+                    {result.partial ? <ExternalLink className="h-4 w-4 text-[#5d5952] transition group-hover:text-[var(--amber)]" /> : <ChevronRight className="h-4 w-4 text-[#5d5952] transition group-hover:translate-x-1 group-hover:text-[var(--amber)]" />}
                   </div>
-                </button>
-              ))}
+                </ResultElement>
+                )
+              })}
             </div>
           </section>
         )}
