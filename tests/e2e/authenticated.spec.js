@@ -123,7 +123,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       await route.fulfill({
         status: 503,
         contentType: 'application/json',
-        headers: { 'Retry-After': '60' },
+        headers: { 'Retry-After': '60', 'x-e2e-expected-error': 'true' },
         body: JSON.stringify({
           error: {
             code: 'REGION_UNAVAILABLE',

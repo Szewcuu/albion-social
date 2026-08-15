@@ -26,6 +26,7 @@ export const test = base.extend({
       }
     }
     const onResponse = (response) => {
+      if (response.headers()['x-e2e-expected-error'] === 'true') return
       if (response.status() < 400) return
       const responseUrl = new URL(response.url())
       if (responseUrl.pathname.startsWith('/_vercel/speed-insights/')) return
