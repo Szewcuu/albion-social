@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet D: dane Albionu i narzędzia**
 
-Zakres P5 oraz Priorytet C są ukończone. Etap D.1 zastąpił heurystyczne ceny zestawów w Killboardzie regionalną wyceną z Albion Online Data Project, oceną aktualności skanów i jawnym fallbackiem. Następnym etapem jest D.2: porównanie buildów, umiejętności przedmiotów i kosztu zestawu w wybranych miastach.
+Zakres P5 oraz Priorytet C są ukończone. Etapy D.1–D.2 dostarczyły regionalną wycenę utraconego ekwipunku oraz pełne porównanie dwóch buildów z prawdziwymi cenami rynku. Następnym etapem jest D.3: obserwowane postacie i automatyczne podsumowania ich nowych walk.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -228,7 +228,13 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] objąć logikę wyceny testami jednostkowymi i przepływ Killboardu testem E2E
   - [x] odróżniać brak postaci od czasowej awarii regionalnego Gameinfo i wskazywać niedostępny serwer
   - [x] zabezpieczyć podgląd ekwipunku przed niepełnymi historycznymi danymi buildów oraz oznaczać stare logi jako historyczne
-- [ ] dodać porównanie buildów, umiejętności przedmiotów oraz koszt zestawu w wybranych miastach
+- [x] dodać porównanie buildów, umiejętności przedmiotów oraz koszt zestawu w wybranych miastach
+  - [x] zastąpić heurystyczne ceny zapytaniami do Albion Online Data Project dla Europy, Ameryki i Azji
+  - [x] wyceniać oba buildy równolegle w dwóch wybranych miastach z pokryciem i wiekiem skanów
+  - [x] porównywać układ 10 slotów, estymowane IP oraz rotacje zapisane przez autora buildu
+  - [x] sumować stosy mikstur i jedzenia, rozróżniać jakość oraz używać ceny kupna tylko jako jawnego fallbacku
+  - [x] nie wskazywać tańszego zestawu, jeśli wycena któregokolwiek buildu jest niepełna
+  - [x] objąć konwersję buildów, porcjowanie zapytań i wycenę testami jednostkowymi
 - [ ] umożliwić zapis obserwowanych postaci i automatyczne podsumowania ich nowych walk
 - [ ] aktualizować katalog przedmiotów automatycznie z wersjonowanym fallbackiem lokalnym
 - [ ] dodać historię zmian cen i alerty cenowe przechowywane po stronie serwera
@@ -334,10 +340,10 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Wyświetlanie sumarycznej wartości zniszczonego sprzętu (z podziałem na zwycięzcę i pokonanego) w monetach Silver (~1.5M Silver).
 - [x] Kalendarz nadchodzących wydarzeń gildyjnych i wypraw z opcją zapisów i powiadomień.
 
-### Etap P8 — Porównywarka Buildów & Kalkulator Kosztów Zestawów
+### Etap P8 / D.2 — Porównywarka Buildów & Kalkulator Kosztów Zestawów
 
-- [x] Narzędzie do porównywania 2 zestawów bojowych side-by-side (ekwipunek, spelle, szacowane IP i koszty).
-- [x] Kalkulator łącznego kosztu zakupu całego buildu w miastach królewskich na podstawie danych cenowych z API.
+- [x] Narzędzie do porównywania 2 zestawów side-by-side: układ ekwipunku, zapisane rotacje, szacowane IP i różnice slotów.
+- [x] Kalkulator kosztu obu buildów w dwóch wybranych miastach, oparty na rzeczywistych skanach Albion Online Data Project zamiast cen heurystycznych.
 
 ### Etap P9 — Kalkulator Bonusu Miast & Podatku Stoiska Rzemieślniczego
 

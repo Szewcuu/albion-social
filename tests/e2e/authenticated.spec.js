@@ -37,6 +37,36 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
   })
 
+  test('porównuje dwa buildy z regionalną wyceną rynku', async ({ page }) => {
+    await page.route('**/api/prices?**', async (route) => {
+      const url = new URL(route.request().url())
+      const itemIds = (url.searchParams.get('items') || '').split(',').filter(Boolean)
+      const cities = (url.searchParams.get('cities') || '').split(',').filter(Boolean)
+      const qualities = (url.searchParams.get('qualities') || '1').split(',').map(Number)
+      const observedAt = new Date().toISOString()
+      const data = itemIds.flatMap((itemId) => cities.flatMap((city) => qualities.map((quality) => ({
+        item_id: itemId,
+        city,
+        quality,
+        sell_price_min: city === 'Martlock' ? 1_000 : 2_000,
+        sell_price_min_date: observedAt,
+        buy_price_max: 0,
+        buy_price_max_date: '0001-01-01T00:00:00',
+      }))))
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data, meta: { source: 'E2E' } }) })
+    })
+
+    await page.goto('/buildy')
+    const openComparator = page.getByRole('button', { name: 'Rozpocznij porównanie' })
+    await expect(openComparator).toBeVisible()
+    await openComparator.click()
+
+    await expect(page.getByRole('heading', { name: 'Różnice slot po slocie' })).toBeVisible()
+    await expect(page.getByText(/Ceny pochodzą z Albion Online Data Project/)).toBeVisible()
+    await expect(page.getByText('Świeże skany').first()).toBeVisible()
+    await expect(page.getByText(/Silver/).first()).toBeVisible()
+  })
+
   test('zwraca zalogowanemu wątkowane komentarze buildu', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await page.evaluate(() => {
