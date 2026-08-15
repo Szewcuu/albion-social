@@ -38,7 +38,7 @@ export default function Gildie() {
     setLoading(true)
     const { data, error } = await supabase
       .from('guilds')
-      .select('id, name, description, activity_type, main_city, server, discord_link, user_id, created_at, profiles!guilds_user_id_fkey(username)')
+      .select('id, name, description, activity_type, main_city, server, discord_link, user_id, created_at, recruitment_open, recruitment_headline, profiles!guilds_user_id_fkey(username)')
       .order('created_at', { ascending: false })
 
     if (!error && data) setGuilds(data)
@@ -344,7 +344,7 @@ export default function Gildie() {
 
                       <div className="flex flex-wrap items-center gap-2 text-xs font-mono font-bold">
                         <span className="flex items-center gap-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full uppercase">
-                          <Globe className="w-3 h-3" /> {guild.server || 'Europa'}
+                          <Globe className="w-3 h-3" /> {guild.server || 'Nieustalony'}
                         </span>
                         
                         <span className="flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full uppercase">
@@ -354,12 +354,18 @@ export default function Gildie() {
                         <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full uppercase">
                           <Shield className="w-3 h-3" /> {guild.activity_type}
                         </span>
+
+                        <span className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 uppercase ${guild.recruitment_open ? 'border-emerald-300/30 bg-emerald-300/10 text-emerald-300' : 'border-rose-300/30 bg-rose-300/10 text-rose-300'}`}>
+                          {guild.recruitment_open ? 'Rekrutacja otwarta' : 'Rekrutacja zamknięta'}
+                        </span>
                       </div>
                     </div>
 
                     <p className="relative whitespace-pre-wrap rounded-2xl border border-white/[.06] bg-black/25 p-4 text-sm leading-6 text-[#c7c1b7]">
                       {guild.description}
                     </p>
+
+                    {guild.recruitment_headline && <p className="relative rounded-xl border border-emerald-300/15 bg-emerald-300/[.04] px-4 py-3 text-xs font-bold leading-5 text-emerald-100">{guild.recruitment_headline}</p>}
 
                     <div className="relative flex flex-wrap items-center justify-between gap-3 border-t border-white/[.07] pt-4 text-xs text-gray-400">
                       <p className="flex items-center gap-2">
@@ -390,10 +396,11 @@ export default function Gildie() {
 
                         <button
                           onClick={() => setSelectedGuildForApply(guild)}
-                          className="btn btn-primary flex min-h-11 items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider"
+                          disabled={!guild.recruitment_open}
+                          className="btn btn-primary flex min-h-11 items-center gap-1.5 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wider disabled:cursor-not-allowed disabled:opacity-45"
                         >
                           <Swords className="w-3.5 h-3.5" />
-                          <span>Aplikuj</span>
+                          <span>{guild.recruitment_open ? 'Aplikuj' : 'Zamknięta'}</span>
                         </button>
 
                         <a 
