@@ -428,6 +428,32 @@ export async function getAlbionPlayerOverview(playerIdOrNick, region, limit = 6)
   }
 }
 
+export async function getAlbionPlayerWatchSnapshot(playerId, region, limit = 20) {
+  const safeId = encodeURIComponent(playerId)
+  const safeLimit = Math.max(1, Math.min(20, Number(limit) || 20))
+  const [profileResult, killsResult, deathsResult] = await Promise.allSettled([
+    fetchAlbionJson(`/players/${safeId}`, { region, revalidate: 60, timeoutMs: 8000 }),
+    fetchAlbionJson(`/players/${safeId}/kills?limit=${safeLimit}&offset=0`, { region, revalidate: 30, timeoutMs: 10000 }),
+    fetchAlbionJson(`/players/${safeId}/deaths?limit=${safeLimit}&offset=0`, { region, revalidate: 30, timeoutMs: 10000 }),
+  ])
+
+  if (profileResult.status === 'rejected') throw profileResult.reason
+
+  return {
+    player: normalizePlayer(profileResult.value),
+    kills: killsResult.status === 'fulfilled' && Array.isArray(killsResult.value)
+      ? killsResult.value.slice(0, safeLimit).map((event) => normalizeEvent(event, 'kill'))
+      : [],
+    deaths: deathsResult.status === 'fulfilled' && Array.isArray(deathsResult.value)
+      ? deathsResult.value.slice(0, safeLimit).map((event) => normalizeEvent(event, 'death'))
+      : [],
+    warnings: [
+      ...(killsResult.status === 'rejected' ? ['Historia zabójstw jest chwilowo niedostępna.'] : []),
+      ...(deathsResult.status === 'rejected' ? ['Historia zgonów jest chwilowo niedostępna.'] : []),
+    ],
+  }
+}
+
 export async function searchAlbionGuilds(query, region) {
   const result = await fetchAlbionJson(`/search?q=${encodeURIComponent(query)}`, {
     region,
