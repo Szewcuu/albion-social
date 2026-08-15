@@ -59,14 +59,19 @@ function KillboardContent() {
   const [overview, setOverview] = useState(null)
   const [meta, setMeta] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [recoveryUrl, setRecoveryUrl] = useState('')
   const [activeHistory, setActiveHistory] = useState('kills')
 
   useEffect(() => {
     if (initialNick) {
       const targetRegion = initialRegion || 'europe'
       fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(initialNick)}&region=${targetRegion}`)
-        .then((res) => res.json())
-        .then((payload) => {
+        .then(async (res) => ({ response: res, payload: await res.json() }))
+        .then(({ response, payload }) => {
+          if (!response.ok) {
+            setRecoveryUrl(payload?.error?.details?.archiveUrl || '')
+            throw new Error(getErrorMessage(payload, 'Nie udało się wyszukać gracza.'))
+          }
           const players = payload.data?.players || []
           setSearchResults(players)
           setMeta(payload.meta)
@@ -81,6 +86,7 @@ function KillboardContent() {
     setOverview(null)
     setMeta(null)
     setErrorMsg('')
+    setRecoveryUrl('')
   }
 
   const handleRegionChange = (value) => {
@@ -95,6 +101,7 @@ function KillboardContent() {
 
     setSearching(true)
     setErrorMsg('')
+    setRecoveryUrl('')
     setOverview(null)
     setMeta(null)
 
@@ -102,7 +109,10 @@ function KillboardContent() {
       const response = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(query)}&region=${region}`)
       const payload = await response.json()
 
-      if (!response.ok) throw new Error(getErrorMessage(payload, 'Nie udało się wyszukać gracza.'))
+      if (!response.ok) {
+        setRecoveryUrl(payload?.error?.details?.archiveUrl || '')
+        throw new Error(getErrorMessage(payload, 'Nie udało się wyszukać gracza.'))
+      }
 
       const players = payload.data?.players || []
       const sorted = [...players].sort((a, b) => {
@@ -206,7 +216,15 @@ function KillboardContent() {
           {errorMsg && (
             <div className="flex items-start gap-3 rounded-2xl border border-rose-400/25 bg-rose-950/25 p-4 text-xs text-rose-200">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div><p className="font-bold">Nie udało się otworzyć kroniki.</p><p className="mt-1 text-rose-200/65">{errorMsg}</p></div>
+              <div>
+                <p className="font-bold">Nie udało się otworzyć kroniki.</p>
+                <p className="mt-1 text-rose-200/65">{errorMsg}</p>
+                {recoveryUrl && (
+                  <a href={recoveryUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-lg border border-rose-200/20 bg-black/20 px-3 py-2 text-[9px] font-black uppercase tracking-[.1em] text-rose-100 transition hover:border-rose-200/40 hover:bg-black/35">
+                    Sprawdź w archiwum społecznościowym <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
             </div>
           )}
 
