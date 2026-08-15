@@ -118,6 +118,30 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByText(/Straty przeciwników:\s*125\s*tys\.\s*Silver/)).toBeVisible()
   })
 
+  test('nie zgłasza braku gracza, gdy wybrany region Gameinfo jest niedostępny', async ({ page }) => {
+    await page.route('**/api/albion/player?mode=search**', async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        headers: { 'Retry-After': '60' },
+        body: JSON.stringify({
+          error: {
+            code: 'REGION_UNAVAILABLE',
+            message: 'Nie można potwierdzić, czy gracz „Localniaq” istnieje. Gameinfo chwilowo nie odpowiada dla: Ameryka. Spróbuj ponownie później.',
+            details: { unavailableRegions: ['america'] },
+          },
+        }),
+      })
+    })
+
+    await page.goto('/killboard')
+    await page.getByLabel('Nick gracza').fill('Localniaq')
+    await page.getByRole('button', { name: 'Szukaj', exact: true }).click()
+
+    await expect(page.getByText(/Gameinfo chwilowo nie odpowiada dla: Ameryka/)).toBeVisible()
+    await expect(page.getByText(/Nie znaleziono gracza/)).toHaveCount(0)
+  })
+
   test('otwiera prywatną skrzynkę handlową i jej API', async ({ page, request }) => {
     await page.goto('/wiadomosci')
     await expect(page.getByRole('heading', { name: 'Skrzynka handlowa' })).toBeVisible()

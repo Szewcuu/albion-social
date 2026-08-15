@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerOverview, searchAlbionPlayers, searchAlbionPlayersAllRegions } from '@/lib/server/albionApi'
+import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerOverview, searchAlbionPlayers, searchAlbionPlayersAllRegionsDetailed } from '@/lib/server/albionApi'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { cleanAlbionId, cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
 
@@ -27,9 +27,15 @@ function apiResponse(data, { region, mode, status = 200, warnings = [] } = {}) {
   }, { status })
 }
 
-function apiError(message, { code, status = 500, retryAfter = null } = {}) {
+function apiError(message, { code, status = 500, retryAfter = null, details = null } = {}) {
   const headers = retryAfter ? { 'Retry-After': String(retryAfter) } : undefined
-  return NextResponse.json({ error: { message, code: code || 'INTERNAL_ERROR' } }, { status, headers })
+  return NextResponse.json({
+    error: {
+      message,
+      code: code || 'INTERNAL_ERROR',
+      ...(details ? { details } : {}),
+    },
+  }, { status, headers })
 }
 
 export async function GET(request) {
@@ -59,17 +65,41 @@ export async function GET(request) {
       }
 
       let players = []
+      const unavailableRegions = []
       try {
         players = await searchAlbionPlayers(query, region)
-      } catch {
+      } catch (error) {
         players = []
+        unavailableRegions.push({
+          region,
+          code: error?.code || 'UPSTREAM_UNAVAILABLE',
+          status: error?.status || 503,
+        })
       }
 
       if (players.length === 0) {
-        players = await searchAlbionPlayersAllRegions(query, region)
+        const regionalSearch = await searchAlbionPlayersAllRegionsDetailed(query, region, [region])
+        players = regionalSearch.players
+        unavailableRegions.push(...regionalSearch.unavailableRegions)
       }
 
       if (players.length === 0) {
+        if (unavailableRegions.length > 0) {
+          const labels = unavailableRegions
+            .map((item) => ALBION_REGIONS[item.region]?.label)
+            .filter(Boolean)
+
+          return apiError(
+            `Nie można potwierdzić, czy gracz „${query}” istnieje. Gameinfo chwilowo nie odpowiada dla: ${labels.join(', ')}. Spróbuj ponownie później.`,
+            {
+              code: 'REGION_UNAVAILABLE',
+              status: 503,
+              retryAfter: 60,
+              details: { unavailableRegions: unavailableRegions.map((item) => item.region) },
+            },
+          )
+        }
+
         return apiError(`Nie znaleziono gracza „${query}” na żadnym serwerze (Europa, Ameryka, Azja).`, { code: 'PLAYER_NOT_FOUND', status: 404 })
       }
 
@@ -84,7 +114,8 @@ export async function GET(request) {
     if (!limit) return apiError('Limit historii musi mieścić się w zakresie 1–10.', { code: 'INVALID_LIMIT', status: 400 })
 
     const overview = await getAlbionPlayerOverview(playerId, region, limit)
-    return apiResponse(overview, { region, mode, warnings: overview.warnings })
+    const activeRegion = overview.marketPricing?.region || region
+    return apiResponse(overview, { region: activeRegion, mode, warnings: overview.warnings })
   } catch (error) {
     if (error instanceof AlbionApiError) {
       return apiError(error.message, { code: error.code, status: error.status })

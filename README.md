@@ -226,6 +226,8 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] preferować najświeższą klasę ofert sprzedaży, używać ceny kupna tylko jako jawnego fallbacku i raportować pokrycie zestawu
   - [x] prezentować łączną wartość strat, miasto skanu, wiek danych oraz status świeże / starsze / nieaktualne
   - [x] objąć logikę wyceny testami jednostkowymi i przepływ Killboardu testem E2E
+  - [x] odróżniać brak postaci od czasowej awarii regionalnego Gameinfo i wskazywać niedostępny serwer
+  - [x] zabezpieczyć podgląd ekwipunku przed niepełnymi historycznymi danymi buildów oraz oznaczać stare logi jako historyczne
 - [ ] dodać porównanie buildów, umiejętności przedmiotów oraz koszt zestawu w wybranych miastach
 - [ ] umożliwić zapis obserwowanych postaci i automatyczne podsumowania ich nowych walk
 - [ ] aktualizować katalog przedmiotów automatycznie z wersjonowanym fallbackiem lokalnym
