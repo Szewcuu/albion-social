@@ -37,6 +37,18 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
   })
 
+  test('otwiera wątkowaną Radę wojowników z sortowaniem', async ({ page }) => {
+    await page.goto('/buildy')
+    const buildLink = page.getByRole('link', { name: /Otwórz build:/ }).first()
+    await expect(buildLink).toBeVisible()
+    await buildLink.click()
+
+    await expect(page.getByRole('heading', { name: 'Rada wojowników' })).toBeVisible()
+    await expect(page.getByText('Sortowanie dyskusji')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Ostatnio aktywne' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Opublikuj komentarz' })).toBeVisible()
+  })
+
   test('otwiera formularze wyprawy i rynku', async ({ page }) => {
     await page.goto('/wyprawy')
     await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()

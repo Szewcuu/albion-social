@@ -2,7 +2,7 @@
 
 import CustomSelect from '@/components/ui/CustomSelect'
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
   Flag,
   MessageSquareText,
@@ -47,6 +47,46 @@ function formatCommentDate(value) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(date)
+}
+
+function wasEdited(comment) {
+  const createdAt = new Date(comment.createdAt).getTime()
+  const updatedAt = new Date(comment.updatedAt).getTime()
+  return Number.isFinite(createdAt) && Number.isFinite(updatedAt) && updatedAt - createdAt > 1000
+}
+
+function buildCommentTree(comments, sortOrder) {
+  const nodes = new Map(comments.map((comment) => [comment.id, { ...comment, replies: [], replyTarget: null }]))
+  const roots = []
+
+  for (const node of nodes.values()) {
+    const parent = node.parentId ? nodes.get(node.parentId) : null
+    if (parent) {
+      node.replyTarget = parent
+      parent.replies.push(node)
+    } else {
+      roots.push(node)
+    }
+  }
+
+  const prepareNode = (node, depth = 0) => {
+    node.depth = depth
+    node.replies.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+    let activityAt = new Date(node.createdAt).getTime() || 0
+    for (const reply of node.replies) {
+      activityAt = Math.max(activityAt, prepareNode(reply, depth + 1))
+    }
+    node.activityAt = activityAt
+    return activityAt
+  }
+
+  roots.forEach((root) => prepareNode(root))
+  roots.sort((a, b) => {
+    if (sortOrder === 'oldest') return new Date(a.createdAt) - new Date(b.createdAt)
+    if (sortOrder === 'active') return b.activityAt - a.activityAt
+    return new Date(b.createdAt) - new Date(a.createdAt)
+  })
+  return roots
 }
 
 function ReportDialog({ open, target, busy, onClose, onSubmit }) {
@@ -136,6 +176,119 @@ function ReportDialog({ open, target, busy, onClose, onSubmit }) {
   )
 }
 
+function CommentThread({
+  comment,
+  busy,
+  editingId,
+  editContent,
+  onEditContentChange,
+  onStartEditing,
+  onCancelEditing,
+  onSaveEdit,
+  onReply,
+  onDelete,
+  onReport,
+}) {
+  const isEditing = editingId === comment.id
+  const canReply = comment.depth < 3
+  const replyPreview = comment.replyTarget?.content?.replace(/\s+/g, ' ').trim()
+
+  return (
+    <li id={`comment-${comment.id}`} className={comment.depth ? 'mt-3 border-l border-[var(--border-warm)] pl-3 sm:pl-5' : ''}>
+      <article className={`rounded-xl border bg-[var(--bg-stone)] p-4 sm:p-5 ${comment.depth ? 'border-[var(--border)]' : 'border-[var(--border-warm)]'}`}>
+        {comment.replyTarget && (
+          <a href={`#comment-${comment.replyTarget.id}`} className="mb-3 block rounded-lg border border-[var(--border)] bg-[var(--bg-panel)] px-3 py-2 text-[10px] leading-5 text-[var(--text-muted)] transition hover:border-[var(--gold-dim)] hover:text-[var(--text-body)]">
+            <span className="font-bold text-[var(--gold)]">Odpowiedź do {comment.replyTarget.author}</span>
+            <span className="ml-2">{replyPreview?.slice(0, 120)}{replyPreview?.length > 120 ? '…' : ''}</span>
+          </a>
+        )}
+
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border-warm)] bg-[var(--gold-glow)] font-bold text-[var(--gold-bright)]" style={{ fontFamily: 'var(--font-heading)' }} aria-hidden="true">
+            {comment.author.slice(0, 1).toUpperCase() || <UserRound className="h-4 w-4" />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold text-[var(--text-bright)]">
+                  {comment.author}
+                  {comment.own && <span className="ml-2 text-[9px] font-bold uppercase tracking-wider text-[var(--gold)]">(Twój wpis)</span>}
+                </p>
+                <p className="mt-0.5 flex flex-wrap gap-x-2 font-mono text-[9px] text-[var(--text-muted)]">
+                  <time dateTime={comment.createdAt}>{formatCommentDate(comment.createdAt)}</time>
+                  {wasEdited(comment) && <span title={formatCommentDate(comment.updatedAt)}>(edytowano)</span>}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onReply(comment)}
+                  disabled={!canReply}
+                  aria-label={`Odpowiedz użytkownikowi ${comment.author}`}
+                  className="btn-icon disabled:cursor-not-allowed disabled:opacity-35"
+                  title={canReply ? 'Odpowiedz' : 'Osiągnięto maksymalny poziom odpowiedzi'}
+                >
+                  <Reply className="h-3.5 w-3.5" />
+                </button>
+
+                {comment.own ? (
+                  <>
+                    <button type="button" onClick={() => (isEditing ? onCancelEditing() : onStartEditing(comment))} aria-label="Edytuj komentarz" className="btn-icon text-[var(--gold)]" title="Edytuj wpis">
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button type="button" onClick={() => onDelete(comment)} aria-label="Usuń komentarz" className="btn-icon text-[var(--blood)]" title="Usuń wpis">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" onClick={() => onReport({ commentId: comment.id })} aria-label="Zgłoś komentarz" className="btn-icon text-[var(--blood)]" title="Zgłoś komentarz">
+                    <Flag className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {isEditing ? (
+              <div className="mt-3 space-y-2">
+                <textarea value={editContent} onChange={(event) => onEditContentChange(event.target.value)} maxLength={COMMENT_MAX_LENGTH} rows={3} className="w-full resize-y rounded-lg border border-[var(--gold-dim)] bg-[var(--bg-panel)] p-2.5 text-xs text-[var(--text-primary)] outline-none" />
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={onCancelEditing} className="btn btn-ghost btn-sm">Anuluj</button>
+                  <button type="button" onClick={() => onSaveEdit(comment.id)} disabled={busy === `edit-${comment.id}` || editContent.trim().length < 2} className="btn btn-primary btn-sm">
+                    <Check className="h-3.5 w-3.5" /> Zapisz
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-6 text-[var(--text-body)]">{comment.content}</p>
+            )}
+          </div>
+        </div>
+      </article>
+
+      {comment.replies.length > 0 && (
+        <ol aria-label={`Odpowiedzi na komentarz użytkownika ${comment.author}`}>
+          {comment.replies.map((reply) => (
+            <CommentThread
+              key={reply.id}
+              comment={reply}
+              busy={busy}
+              editingId={editingId}
+              editContent={editContent}
+              onEditContentChange={onEditContentChange}
+              onStartEditing={onStartEditing}
+              onCancelEditing={onCancelEditing}
+              onSaveEdit={onSaveEdit}
+              onReply={onReply}
+              onDelete={onDelete}
+              onReport={onReport}
+            />
+          ))}
+        </ol>
+      )}
+    </li>
+  )
+}
+
 export default function BuildComments({ buildId }) {
   const [user, setUser] = useState(null)
   const [comments, setComments] = useState([])
@@ -147,10 +300,10 @@ export default function BuildComments({ buildId }) {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [reportTarget, setReportTarget] = useState(null)
 
-  // Social Features: Sort, Edit & Reply
-  const [sortOrder, setSortOrder] = useState('newest') // 'newest' | 'oldest'
+  const [sortOrder, setSortOrder] = useState('active')
   const [editingId, setEditingId] = useState(null)
   const [editContent, setEditContent] = useState('')
+  const [replyingTo, setReplyingTo] = useState(null)
   const textareaRef = useRef(null)
 
   const loadComments = useCallback(async (session) => {
@@ -207,12 +360,13 @@ export default function BuildComments({ buildId }) {
       const payload = await readJson(await authenticatedFetch(`/api/builds/${buildId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: trimmed }),
+        body: JSON.stringify({ content: trimmed, parentId: replyingTo?.id || null }),
       }))
       setComments((current) => [...current, payload.comment])
       setCount((current) => current + 1)
       setContent('')
-      setNotice({ type: 'success', text: 'Komentarz został opublikowany.' })
+      setReplyingTo(null)
+      setNotice({ type: 'success', text: replyingTo ? 'Odpowiedź została opublikowana.' : 'Komentarz został opublikowany.' })
     } catch (error) {
       setNotice({ type: 'error', text: error.message })
     } finally {
@@ -237,7 +391,7 @@ export default function BuildComments({ buildId }) {
         body: JSON.stringify({ content: trimmed }),
       }))
       setComments((current) =>
-        current.map((c) => (c.id === commentId ? { ...c, content: payload.comment.content } : c))
+        current.map((c) => (c.id === commentId ? { ...c, content: payload.comment.content, updatedAt: payload.comment.updatedAt } : c))
       )
       setEditingId(null)
       setEditContent('')
@@ -249,11 +403,9 @@ export default function BuildComments({ buildId }) {
     }
   }
 
-  const handleReply = (authorName) => {
-    const mention = `@${authorName} `
-    if (!content.includes(mention)) {
-      setContent((prev) => `${mention}${prev}`)
-    }
+  const handleReply = (comment) => {
+    if (!requireLogin()) return
+    setReplyingTo(comment)
     textareaRef.current?.focus()
     textareaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
@@ -266,7 +418,9 @@ export default function BuildComments({ buildId }) {
       await readJson(await authenticatedFetch(`/api/builds/${buildId}/comments/${deleteTarget.id}`, {
         method: 'DELETE',
       }))
-      setComments((current) => current.filter((comment) => comment.id !== deleteTarget.id))
+      setComments((current) => current
+        .filter((comment) => comment.id !== deleteTarget.id)
+        .map((comment) => comment.parentId === deleteTarget.id ? { ...comment, parentId: null } : comment))
       setCount((current) => Math.max(0, current - 1))
       setDeleteTarget(null)
       setNotice({ type: 'success', text: 'Komentarz został usunięty.' })
@@ -300,11 +454,7 @@ export default function BuildComments({ buildId }) {
     }
   }
 
-  const sortedComments = [...comments].sort((a, b) => {
-    const timeA = new Date(a.createdAt).getTime()
-    const timeB = new Date(b.createdAt).getTime()
-    return sortOrder === 'newest' ? timeB - timeA : timeA - timeB
-  })
+  const commentThreads = useMemo(() => buildCommentTree(comments, sortOrder), [comments, sortOrder])
 
   return (
     <section className="panel relative overflow-hidden p-5 sm:p-7 lg:p-8" aria-labelledby="build-comments-title">
@@ -329,15 +479,20 @@ export default function BuildComments({ buildId }) {
               <span className="badge badge-gold font-mono">{count}</span>
             </div>
 
-            {/* Sort toggle */}
-            <button
-              onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
-              className="btn btn-ghost btn-sm text-[11px] flex items-center gap-1.5"
-              title="Zmień kolejność komentarzy"
-            >
-              <ArrowUpDown className="w-3.5 h-3.5 text-[var(--gold)]" />
-              <span>{sortOrder === 'newest' ? 'Najnowsze pierwsze' : 'Najstarsze pierwsze'}</span>
-            </button>
+            <div className="flex min-w-[190px] items-center gap-2">
+              <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-[var(--gold)]" aria-hidden="true" />
+              <CustomSelect
+                label="Sortowanie dyskusji"
+                value={sortOrder}
+                onChange={setSortOrder}
+                options={[
+                  { value: 'active', label: 'Ostatnio aktywne' },
+                  { value: 'newest', label: 'Najnowsze wątki' },
+                  { value: 'oldest', label: 'Najstarsze wątki' },
+                ]}
+                className="min-w-0"
+              />
+            </div>
           </div>
 
           {loading ? (
@@ -346,111 +501,22 @@ export default function BuildComments({ buildId }) {
             <EmptyState icon={MessageSquareText} title="Jeszcze cisza przy stole" description="Rozpocznij dyskusję i zostaw pierwszą wskazówkę dla autora buildu." />
           ) : (
             <ol className="space-y-3">
-              {sortedComments.map((comment) => {
-                const isEditing = editingId === comment.id
-
-                return (
-                  <li key={comment.id} className="rounded-xl border border-[var(--border)] bg-[var(--bg-stone)] p-4 sm:p-5">
-                    <div className="flex items-start gap-3">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border-warm)] bg-[var(--gold-glow)] font-bold text-[var(--gold-bright)]" style={{ fontFamily: 'var(--font-heading)' }} aria-hidden="true">
-                        {comment.author.slice(0, 1).toUpperCase() || <UserRound className="h-4 w-4" />}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start justify-between gap-2">
-                          <div>
-                            <p className="text-xs font-bold text-[var(--text-bright)]">
-                              {comment.author}
-                              {comment.own && <span className="ml-2 text-[9px] uppercase tracking-wider text-[var(--gold)] font-bold">(Twój wpis)</span>}
-                            </p>
-                            <time dateTime={comment.createdAt} className="mt-0.5 block font-mono text-[9px] text-[var(--text-muted)]">
-                              {formatCommentDate(comment.createdAt)}
-                            </time>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {/* Reply button */}
-                            <button
-                              type="button"
-                              onClick={() => handleReply(comment.author)}
-                              aria-label={`Odpowiedz użytkownikowi ${comment.author}`}
-                              className="btn-icon"
-                              title="Odpowiedz"
-                            >
-                              <Reply className="h-3.5 h-3.5" />
-                            </button>
-
-                            {comment.own ? (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => (isEditing ? setEditingId(null) : startEditing(comment))}
-                                  aria-label={`Edytuj komentarz`}
-                                  className="btn-icon text-[var(--gold)]"
-                                  title="Edytuj wpis"
-                                >
-                                  <Pencil className="h-3.5 h-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setDeleteTarget(comment)}
-                                  aria-label={`Usuń komentarz`}
-                                  className="btn-icon text-[var(--blood)]"
-                                  title="Usuń wpis"
-                                >
-                                  <Trash2 className="h-3.5 h-3.5" />
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => openReport({ commentId: comment.id })}
-                                aria-label={`Zgłoś komentarz`}
-                                className="btn-icon text-[var(--blood)]"
-                                title="Zgłoś komentarz"
-                              >
-                                <Flag className="h-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Inline Edit Form vs Display */}
-                        {isEditing ? (
-                          <div className="mt-3 space-y-2">
-                            <textarea
-                              value={editContent}
-                              onChange={(e) => setEditContent(e.target.value)}
-                              maxLength={COMMENT_MAX_LENGTH}
-                              rows={3}
-                              className="w-full resize-y rounded-lg border border-[var(--gold-dim)] bg-[var(--bg-panel)] p-2.5 text-xs text-[var(--text-primary)] outline-none"
-                            />
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                type="button"
-                                onClick={() => setEditingId(null)}
-                                className="btn btn-ghost btn-sm"
-                              >
-                                Anuluj
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => saveEdit(comment.id)}
-                                disabled={busy === `edit-${comment.id}` || editContent.trim().length < 2}
-                                className="btn btn-primary btn-sm"
-                              >
-                                <Check className="w-3.5 h-3.5" /> Zapisz
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-6 text-[var(--text-body)]">
-                            {comment.content}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                )
-              })}
+              {commentThreads.map((comment) => (
+                <CommentThread
+                  key={comment.id}
+                  comment={comment}
+                  busy={busy}
+                  editingId={editingId}
+                  editContent={editContent}
+                  onEditContentChange={setEditContent}
+                  onStartEditing={startEditing}
+                  onCancelEditing={() => { setEditingId(null); setEditContent('') }}
+                  onSaveEdit={saveEdit}
+                  onReply={handleReply}
+                  onDelete={setDeleteTarget}
+                  onReport={openReport}
+                />
+              ))}
             </ol>
           )}
         </div>
@@ -458,9 +524,22 @@ export default function BuildComments({ buildId }) {
         <aside className="h-fit rounded-2xl border border-[var(--border)] bg-[var(--bg-wood)] p-4 sm:p-5">
           <div className="flex items-center gap-2 text-[var(--gold-bright)]">
             <ShieldCheck className="h-4 w-4" aria-hidden="true" />
-            <h3 style={{ fontFamily: 'var(--font-heading)' }} className="text-xs font-bold uppercase tracking-wider">Dodaj komentarz</h3>
+            <h3 style={{ fontFamily: 'var(--font-heading)' }} className="text-xs font-bold uppercase tracking-wider">{replyingTo ? 'Napisz odpowiedź' : 'Dodaj komentarz'}</h3>
           </div>
           <form onSubmit={addComment} className="mt-4">
+            {replyingTo && (
+              <div className="mb-3 rounded-xl border border-[var(--gold-dim)] bg-[var(--gold-glow)] p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--gold-bright)]">Odpowiadasz: {replyingTo.author}</p>
+                    <p className="mt-1 line-clamp-2 text-[10px] leading-5 text-[var(--text-body)]">{replyingTo.content}</p>
+                  </div>
+                  <button type="button" onClick={() => setReplyingTo(null)} aria-label="Anuluj odpowiedź" className="btn-icon shrink-0">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
             <label htmlFor="build-comment" className="sr-only">Treść komentarza</label>
             <textarea
               ref={textareaRef}
@@ -471,7 +550,7 @@ export default function BuildComments({ buildId }) {
               rows={5}
               disabled={busy === 'comment'}
               className="w-full resize-y rounded-xl border border-[var(--border)] bg-[var(--bg-panel)] px-3 py-3 text-xs leading-6 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-faded)] focus:border-[var(--gold-dim)] disabled:opacity-60"
-              placeholder={user ? 'Dodaj wskazówkę, odpowiedź lub opinię…' : 'Zaloguj się, aby dołączyć do dyskusji…'}
+              placeholder={user ? (replyingTo ? `Odpowiedz użytkownikowi ${replyingTo.author}…` : 'Dodaj wskazówkę lub opinię…') : 'Zaloguj się, aby dołączyć do dyskusji…'}
             />
             <div className="mt-2 flex items-center justify-between gap-3">
               <span className="font-mono text-[9px] text-[var(--text-faded)]">{content.length}/{COMMENT_MAX_LENGTH}</span>
@@ -483,7 +562,7 @@ export default function BuildComments({ buildId }) {
               className="btn btn-primary mt-4 flex min-h-11 w-full items-center justify-center gap-2 px-4 text-xs font-bold uppercase disabled:cursor-not-allowed disabled:opacity-45"
             >
               <Send className="h-4 w-4" aria-hidden="true" />
-              {busy === 'comment' ? 'Publikowanie…' : 'Opublikuj'}
+              {busy === 'comment' ? 'Publikowanie…' : (replyingTo ? 'Opublikuj odpowiedź' : 'Opublikuj komentarz')}
             </button>
           </form>
           <p className="mt-4 border-t border-[var(--border)] pt-4 text-[10px] leading-5 text-[var(--text-faded)]">
@@ -494,7 +573,7 @@ export default function BuildComments({ buildId }) {
 
       {notice && <StatusNotice type={notice.type} className="relative mt-5">{notice.text}</StatusNotice>}
 
-      <ConfirmDialog open={Boolean(deleteTarget)} title="Usunąć komentarz?" description="Ta operacja jest trwała. Wraz z komentarzem znikną powiązane z nim zgłoszenia." confirmLabel={busy === 'delete' ? 'Usuwanie…' : 'Usuń komentarz'} onConfirm={deleteComment} onOpenChange={(open) => !open && busy !== 'delete' && setDeleteTarget(null)} />
+      <ConfirmDialog open={Boolean(deleteTarget)} title="Usunąć komentarz?" description="Ta operacja jest trwała. Odpowiedzi innych graczy pozostaną w dyskusji, a powiązane zgłoszenia zostaną usunięte." confirmLabel={busy === 'delete' ? 'Usuwanie…' : 'Usuń komentarz'} onConfirm={deleteComment} onOpenChange={(open) => !open && busy !== 'delete' && setDeleteTarget(null)} />
       <ReportDialog key={reportTarget?.commentId || (reportTarget ? 'build' : 'closed')} open={Boolean(reportTarget)} target={reportTarget} busy={busy === 'report'} onClose={() => busy !== 'report' && setReportTarget(null)} onSubmit={submitReport} />
     </section>
   )

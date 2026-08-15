@@ -84,7 +84,7 @@ export async function PATCH(request, { params }) {
       .eq('id', commentId)
       .eq('build_id', id)
       .eq('user_id', auth.user.id)
-      .select('id, content, created_at, user_id, profiles!build_comments_user_id_fkey(username)')
+      .select('id, parent_id, content, created_at, updated_at, user_id, profiles!build_comments_user_id_fkey(username)')
       .maybeSingle()
 
     if (error) throw new Error('Nie udało się zaktualizować komentarza.')
