@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet D: dane Albionu i narzędzia**
 
-Zakres P5 oraz Priorytet C są ukończone. Etapy D.1–D.3 dostarczyły regionalną wycenę utraconego ekwipunku, pełne porównanie dwóch buildów z prawdziwymi cenami rynku oraz Wartownię śledzącą nowe walki dowolnych postaci. Następnym etapem jest D.4: automatycznie aktualizowany katalog przedmiotów z bezpiecznym fallbackiem lokalnym.
+Zakres P5 oraz Priorytet C są ukończone. Etapy D.1–D.4 dostarczyły regionalną wycenę utraconego ekwipunku, porównanie buildów z cenami rynku, Wartownię śledzącą nowe walki oraz szybki, polski katalog przedmiotów aktualizowany automatycznie. Następnym etapem jest D.5: historia zmian cen i alerty cenowe po stronie serwera.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -242,7 +242,14 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] wysyłać jedno idempotentne podsumowanie nowych zabójstw, zgonów i Fame zamiast serii powiadomień
   - [x] dodać ręczne odświeżanie Wartowni z limitem oraz automatyczną kontrolę w istniejącym zadaniu cron
   - [x] objąć wykrywanie nowych zdarzeń testami jednostkowymi, a obserwowanie i Wartownię testami E2E
-- [ ] aktualizować katalog przedmiotów automatycznie z wersjonowanym fallbackiem lokalnym
+- [x] aktualizować katalog przedmiotów automatycznie z wersjonowanym fallbackiem lokalnym
+  - [x] generować zweryfikowany snapshot z polskimi i angielskimi nazwami na podstawie commita `ao-data/ao-bin-dumps`
+  - [x] zapisywać hash treści, commit źródłowy, datę wersji i liczbę rekordów
+  - [x] usunąć pobieranie i parsowanie wielomegabajtowego katalogu z ruchu użytkowników
+  - [x] odświeżać snapshot co tydzień przez GitHub Actions i tworzyć osobny PR tylko przy realnej zmianie
+  - [x] zatrzymać aktualizację przy uszkodzonym źródle, zbyt małym katalogu, niespójnym hashu lub błędnym rekordzie oraz bezpiecznie deduplikować identyfikatory
+  - [x] wyszukiwać po polskiej nazwie, angielskiej nazwie oraz identyfikatorze przedmiotu
+  - [x] walidować snapshot w CI oraz testować normalizację, kategorie i kontrakt API
 - [ ] dodać historię zmian cen i alerty cenowe przechowywane po stronie serwera
 
 ### Priorytet E — wydajność, SEO i jakość UI
@@ -470,7 +477,7 @@ Stan zweryfikowany: **1 sierpnia 2026**. Endpointy zostały dodatkowo sprawdzone
 | [Albion Online Data Project](https://www.albion-online-data.com/api/) | aktualne buy/sell orders, historia cen sprzedaży, kurs złota; regiony Europe/Americas/Asia | używamy podstawowego endpointu cen | główne źródło danych ekonomicznych |
 | Gameinfo API Albion Online | wyszukiwanie, profile graczy, kill/death events, wydarzenia, gildie i członkowie | używamy wyszukiwarki i profilu gracza | używać przez własny adapter, cache i fallback; API jest nieudokumentowane i bez gwarancji stabilności |
 | [Render Service](https://wiki.albiononline.com/wiki/API%3ARender_service) | ikony przedmiotów, zaklęć, wardrobe, Destiny Board i logotypy gildii | używamy ikon przedmiotów | rozszerzyć o skille i elementy profilu gildii |
-| [ao-bin-dumps](https://github.com/ao-data/ao-bin-dumps/tree/master/formatted) | identyfikatory oraz metadane przedmiotów i świata | mamy lokalny, ograniczony katalog | przygotować okresowo aktualizowany katalog wyszukiwania |
+| [ao-bin-dumps](https://github.com/ao-data/ao-bin-dumps/tree/master/formatted) | identyfikatory oraz polskie i angielskie nazwy przedmiotów | wersjonowany snapshot 3663 przedmiotów aktualizowany co tydzień | każdą zmianę źródła walidować i publikować przez osobny PR |
 | [OpenAlbion](https://openalbion.com/) | bronie, pancerze, akcesoria, consumables, statystyki i spelle | brak integracji | opcjonalne wzbogacenie kreatora buildów; nie uzależniać od niego krytycznych funkcji |
 | MurderLedger / społecznościowe kill API | przetworzone dane PvP i matchupy | brak integracji | na razie nie używać jako fundamentu; stabilność i świeżość bywają zależne od Gameinfo |
 

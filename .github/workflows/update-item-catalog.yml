@@ -1,0 +1,60 @@
+name: Update Albion item catalog
+
+on:
+  schedule:
+    - cron: '40 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-albion-item-catalog
+  cancel-in-progress: false
+
+jobs:
+  update-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Synchronize versioned snapshot
+        run: npm run catalog:sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Validate snapshot
+        run: npm run catalog:validate
+      - name: Open or update catalog pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          if git diff --quiet -- src/data/albion-items.snapshot.json; then
+            echo "Catalog is already current."
+            exit 0
+          fi
+
+          branch="automation/albion-item-catalog"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C "$branch"
+          git add src/data/albion-items.snapshot.json
+          git commit -m "Update Albion item catalog"
+          git push --force origin "HEAD:$branch"
+
+          if [ "$(gh pr list --head "$branch" --state open --json number --jq 'length')" -gt 0 ]; then
+            echo "Catalog pull request updated."
+          else
+            gh pr create --base main --head "$branch" --title "Update Albion item catalog" --body "Automatyczna aktualizacja wersjonowanego katalogu przedmiotów z ao-data/ao-bin-dumps. Pełne testy uruchomi workflow Quality."
+          fi
+
+          gh workflow run quality.yml --ref "$branch"

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAlbionItemCatalog, ITEM_CATEGORIES } from '@/lib/server/albionItemCatalog'
+import { getAlbionItemCatalog, getAlbionItemCatalogMeta, ITEM_CATEGORIES } from '@/lib/server/albionItemCatalog'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { cleanEnum, cleanInteger } from '@/lib/server/validation'
 
@@ -31,21 +31,25 @@ export async function GET(request) {
     return NextResponse.json({ error: { message: 'Nieprawidłowy limit.', code: 'INVALID_LIMIT' } }, { status: 400 })
   }
 
-  const catalog = await getAlbionItemCatalog()
+  const catalog = getAlbionItemCatalog()
+  const catalogMeta = getAlbionItemCatalogMeta()
   const filtered = catalog.filter((item) => {
     if (category && item.category !== category) return false
     if (!search) return true
-    return item.name.toLocaleLowerCase('en').includes(search) || item.id.toLocaleLowerCase('en').includes(search)
+    return item.name.toLocaleLowerCase('pl').includes(search)
+      || item.nameEn.toLocaleLowerCase('en').includes(search)
+      || item.id.toLocaleLowerCase('en').includes(search)
   })
 
   if (search) {
     const upperSearch = search.toUpperCase()
     const score = (item) => {
-      const lowerName = item.name.toLocaleLowerCase('en')
+      const lowerName = item.name.toLocaleLowerCase('pl')
+      const lowerEnglishName = item.nameEn.toLocaleLowerCase('en')
       if (item.id === upperSearch) return 0
       if (item.id.endsWith(`_${upperSearch}`)) return 1
-      if (lowerName === search) return 2
-      if (lowerName.startsWith(search)) return 3
+      if (lowerName === search || lowerEnglishName === search) return 2
+      if (lowerName.startsWith(search) || lowerEnglishName.startsWith(search)) return 3
       if (item.id.includes(`_${upperSearch}_`)) return 4
       if (item.id.includes(upperSearch)) return 5
       return 6
@@ -59,11 +63,21 @@ export async function GET(request) {
     count: items.length,
     meta: {
       totalMatches: filtered.length,
-      catalogSize: catalog.length,
+      catalogSize: catalogMeta.catalogSize,
       category,
       query: search,
-      source: catalog.length > 100 ? 'Albion Online Data Project item dump' : 'local-fallback',
-      cacheSeconds: 86_400,
+      source: catalogMeta.source,
+      version: catalogMeta.version,
+      sourceCommit: catalogMeta.sourceCommit,
+      sourceUpdatedAt: catalogMeta.sourceUpdatedAt,
+      locale: catalogMeta.locale,
+      cacheSeconds: 300,
+      catalogRefreshSeconds: 604_800,
+    },
+  }, {
+    headers: {
+      'Cache-Control': 'private, max-age=300',
+      'X-Item-Catalog-Version': catalogMeta.version.slice(0, 16),
     },
   })
 }

@@ -37,6 +37,31 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
   })
 
+  test('wyszukuje polskie i angielskie nazwy w wersjonowanym katalogu przedmiotów', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage)
+        .find((key) => /^sb-.+-auth-token$/.test(key))
+      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
+    })
+    expect(accessToken).toBeTruthy()
+
+    const headers = { Authorization: `Bearer ${accessToken}` }
+    const polishResponse = await request.get('/api/items?search=Kaptur%20%C5%81owcy&category=heads&limit=10', { headers })
+    const englishResponse = await request.get('/api/items?search=Hunter%20Hood&category=heads&limit=10', { headers })
+    expect(polishResponse.status()).toBe(200)
+    expect(englishResponse.status()).toBe(200)
+
+    const polish = await polishResponse.json()
+    const english = await englishResponse.json()
+    expect(polish.items.some((item) => item.id === 'T5_HEAD_LEATHER_SET2')).toBe(true)
+    expect(english.items.some((item) => item.id === 'T5_HEAD_LEATHER_SET2')).toBe(true)
+    expect(polish.meta.catalogSize).toBeGreaterThan(3_000)
+    expect(polish.meta.version).toMatch(/^[0-9a-f]{64}$/)
+    expect(polish.meta.sourceCommit).toMatch(/^[0-9a-f]{40}$/)
+    expect(polishResponse.headers()['x-item-catalog-version']).toBe(polish.meta.version.slice(0, 16))
+  })
+
   test('porównuje dwa buildy z regionalną wyceną rynku', async ({ page }) => {
     await page.route('**/api/prices?**', async (route) => {
       const url = new URL(route.request().url())
