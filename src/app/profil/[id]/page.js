@@ -8,6 +8,8 @@ import { Activity, ArrowLeft, Bookmark, CalendarDays, ChevronRight, CircleUserRo
 
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { EmptyState, SkeletonBlock } from '@/components/ui/FeedbackState'
+import FollowButton from '@/components/ui/FollowButton'
+import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { buildFromDbRow } from '@/lib/buildSlots'
 import { supabase } from '@/lib/supabase'
 
@@ -73,6 +75,7 @@ function BuildCard({ build, favorite = false }) {
 
 export default function PublicProfilePage() {
   const { id: profileId } = useParams()
+  const { user } = usePortalSession()
   const [profile, setProfile] = useState(null)
   const [builds, setBuilds] = useState([])
   const [favorites, setFavorites] = useState([])
@@ -152,7 +155,7 @@ export default function PublicProfilePage() {
             </div>
             <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.24em] text-amber-300">Karta gracza</p><h1 className="font-display mt-2 truncate text-3xl font-black text-white sm:text-4xl">{displayName}</h1><div className="mt-3 flex flex-wrap items-center gap-2"><span className={`rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] ${roleStyle}`}>{profile.main_role || 'Gracz'}</span>{verified && <span className="flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] text-emerald-200"><ShieldCheck className="h-3.5 w-3.5" /> zweryfikowany</span>}<span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><CalendarDays className="h-3.5 w-3.5" /> w portalu od {formatDate(profile.created_at)}</span></div></div>
           </div>
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">{[[Trophy, 'Buildy', builds.length], [Activity, 'Aktywność', timeline.length], [Bookmark, 'Polecane', profile.favorite_builds_public ? favorites.length : '—']].map(([Icon, label, value]) => <div key={label} className="min-w-[84px] rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p></div>)}</div>
+          <div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[[Trophy, 'Buildy', builds.length], [Activity, 'Aktywność', timeline.length], [Bookmark, 'Polecane', profile.favorite_builds_public ? favorites.length : '—']].map(([Icon, label, value]) => <div key={label} className="min-w-[84px] rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p></div>)}</div>{user?.id !== profile.id && <FollowButton id={profile.id} name={displayName} type="player" className="mt-3 w-full" />}</div>
         </div>
       </header>
 

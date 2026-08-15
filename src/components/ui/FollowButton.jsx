@@ -1,61 +1,110 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bell, Check } from 'lucide-react'
-import { isFollowingItem, toggleFollowItem } from '@/lib/followSystem'
-import { PREFERENCES_SYNCED_EVENT } from '@/lib/preferenceSync'
+import { Bell, BellRing, LoaderCircle } from 'lucide-react'
 
-export default function FollowButton({ id, name, type = 'guild', className = '' }) {
-  const followKey = `${type}:${id || ''}`
-  const [followState, setFollowState] = useState({ key: '', value: false })
-  const following = followState.key === followKey && followState.value
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { supabase } from '@/lib/supabase'
+
+export const FOLLOWS_CHANGED_EVENT = 'aopp-entity-follows-changed'
+let cachedFollows = null
+let cachedUserId = null
+let followsPromise = null
+
+async function readJson(response) {
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(payload.error || 'Nie udało się zmienić obserwowania.')
+  return payload
+}
+
+async function loadFollows() {
+  const { data: { session } } = await supabase.auth.getSession()
+  const userId = session?.user?.id || null
+  if (cachedUserId !== userId) {
+    cachedFollows = null
+    followsPromise = null
+    cachedUserId = userId
+  }
+  if (cachedFollows) return cachedFollows
+  if (!followsPromise) {
+    followsPromise = authenticatedFetch('/api/follows')
+      .then(readJson)
+      .then((payload) => {
+        cachedFollows = payload.follows || []
+        return cachedFollows
+      })
+      .finally(() => { followsPromise = null })
+  }
+  return followsPromise
+}
+
+function hasFollow(type, id) {
+  return Boolean(cachedFollows?.some((follow) => follow.entity_type === type && follow.entity_id === String(id)))
+}
+
+export default function FollowButton({ id, name, type = 'guild', className = '', compact = false }) {
+  const [following, setFollowing] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    const refreshState = () => {
-      setFollowState({
-        key: followKey,
-        value: Boolean(id && isFollowingItem(id, type)),
-      })
-    }
-    const timeoutId = window.setTimeout(() => {
-      refreshState()
-    }, 0)
-    window.addEventListener(PREFERENCES_SYNCED_EVENT, refreshState)
+    let active = true
+    const refresh = () => active && setFollowing(hasFollow(type, id))
 
+    loadFollows().then(refresh).catch(() => {
+      if (active) setError('Nie udało się odczytać obserwowanych.')
+    }).finally(() => {
+      if (active) setLoading(false)
+    })
+    window.addEventListener(FOLLOWS_CHANGED_EVENT, refresh)
     return () => {
-      window.clearTimeout(timeoutId)
-      window.removeEventListener(PREFERENCES_SYNCED_EVENT, refreshState)
+      active = false
+      window.removeEventListener(FOLLOWS_CHANGED_EVENT, refresh)
     }
-  }, [followKey, id, type])
+  }, [id, type])
 
-  const handleToggle = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const nextState = toggleFollowItem({ id, name, type })
-    setFollowState({ key: followKey, value: nextState })
+  async function toggle(event) {
+    event.preventDefault()
+    event.stopPropagation()
+    if (busy || loading) return
+    setBusy(true)
+    setError('')
+    try {
+      const payload = await readJson(await authenticatedFetch('/api/follows', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, id: String(id), following: !following }),
+      }))
+      cachedFollows = payload.following
+        ? [...(cachedFollows || []).filter((item) => !(item.entity_type === type && item.entity_id === String(id))), { entity_type: type, entity_id: String(id), label: payload.label || name || '' }]
+        : (cachedFollows || []).filter((item) => !(item.entity_type === type && item.entity_id === String(id)))
+      setFollowing(payload.following)
+      window.dispatchEvent(new CustomEvent(FOLLOWS_CHANGED_EVENT))
+    } catch (toggleError) {
+      setError(toggleError.message)
+    } finally {
+      setBusy(false)
+    }
   }
 
+  const Icon = busy || loading ? LoaderCircle : following ? BellRing : Bell
+  const label = following ? 'Obserwujesz' : 'Obserwuj'
+
   return (
-    <button
-      onClick={handleToggle}
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl font-bold text-xs transition cursor-pointer ${
-        following
-          ? 'bg-amber-400/20 border border-amber-400 text-amber-300 shadow-sm'
-          : 'bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:text-white'
-      } ${className}`}
-      title={following ? `Obserwujesz: ${name}` : `Zaobserwuj: ${name}`}
-    >
-      {following ? (
-        <>
-          <Check className="w-3.5 h-3.5 text-amber-400" />
-          <span>Obserwujesz</span>
-        </>
-      ) : (
-        <>
-          <Bell className="w-3.5 h-3.5 text-gray-400" />
-          <span>Obserwuj</span>
-        </>
-      )}
-    </button>
+    <span className={`inline-flex flex-col ${className}`} title={error || undefined}>
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={busy || loading}
+        aria-pressed={following}
+        aria-label={`${label}: ${name}`}
+        className={`aopp-ghost-button inline-flex min-h-10 items-center justify-center gap-2 px-3 text-[10px] font-black transition disabled:cursor-wait disabled:opacity-55 ${following ? 'border-amber-300/35 bg-amber-300/10 text-amber-200' : ''}`}
+      >
+        <Icon className={`h-4 w-4 ${busy || loading ? 'animate-spin' : ''}`} />
+        {!compact && label}
+      </button>
+      {error && !compact && <span role="status" className="mt-1 max-w-52 text-[9px] text-rose-300">{error}</span>}
+    </span>
   )
 }

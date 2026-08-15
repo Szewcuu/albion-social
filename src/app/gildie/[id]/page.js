@@ -10,6 +10,7 @@ import GuildApplyModal from '@/components/GuildApplyModal'
 import GuildCommandPanel from '@/components/guilds/GuildCommandPanel'
 import GuildZvZInspectorModal from '@/components/guilds/GuildZvZInspectorModal'
 import { EmptyState, SkeletonBlock } from '@/components/ui/FeedbackState'
+import FollowButton from '@/components/ui/FollowButton'
 import { supabase } from '@/lib/supabase'
 
 const ROLE_LABELS = { leader: 'Lider', officer: 'Oficer', member: 'Członek', recruit: 'Rekrut' }
@@ -129,7 +130,7 @@ export default function GuildDetailPage() {
         </div>
         <div className="relative flex flex-wrap items-center justify-between gap-4 border-t border-white/8 bg-black/15 px-6 py-4 sm:px-8 lg:px-10">
           <p className="text-[10px] text-[var(--text-secondary)]">Lider: <Link href={`/profil/${guild.user_id}`} className="font-bold text-amber-200 hover:underline">{leaderName}</Link> · w portalu od {formatDate(guild.created_at)}</p>
-          <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setIsZvZOpen(true)} className="aopp-ghost-button inline-flex min-h-10 items-center gap-2 px-4 text-[10px] font-black"><Swords className="h-4 w-4" /> Inspekcja ZvZ</button>{guild.discord_link && <a href={guild.discord_link} target="_blank" rel="noopener noreferrer" className="aopp-ghost-button inline-flex min-h-10 items-center gap-2 px-4 text-[10px] font-black"><ExternalLink className="h-4 w-4" /> Discord</a>}<button type="button" disabled={!guild.recruitment_open} onClick={() => setIsApplyOpen(true)} className="btn btn-primary inline-flex min-h-10 items-center gap-2 px-4 text-[10px] font-black disabled:cursor-not-allowed disabled:opacity-45"><Users className="h-4 w-4" /> Złóż podanie</button></div>
+          <div className="flex flex-wrap gap-2">{user?.id !== guild.user_id && <FollowButton id={guild.id} name={guild.name} type="guild" />}<button type="button" onClick={() => setIsZvZOpen(true)} className="aopp-ghost-button inline-flex min-h-10 items-center gap-2 px-4 text-[10px] font-black"><Swords className="h-4 w-4" /> Inspekcja ZvZ</button>{guild.discord_link && <a href={guild.discord_link} target="_blank" rel="noopener noreferrer" className="aopp-ghost-button inline-flex min-h-10 items-center gap-2 px-4 text-[10px] font-black"><ExternalLink className="h-4 w-4" /> Discord</a>}<button type="button" disabled={!guild.recruitment_open} onClick={() => setIsApplyOpen(true)} className="btn btn-primary inline-flex min-h-10 items-center gap-2 px-4 text-[10px] font-black disabled:cursor-not-allowed disabled:opacity-45"><Users className="h-4 w-4" /> Złóż podanie</button></div>
         </div>
       </header>
 
