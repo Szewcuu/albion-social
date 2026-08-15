@@ -108,6 +108,15 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   })
 
   test('pokazuje regionalną wycenę utraconego zestawu w Killboardzie', async ({ page }) => {
+    await page.route('**/api/follows', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ follows: [] }) })
+        return
+      }
+      const body = route.request().postDataJSON()
+      expect(body).toMatchObject({ type: 'albion_player', id: 'pricing-player', region: 'europe', following: true })
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ following: true, label: 'PricingKnight' }) })
+    })
     await page.route('**/api/albion/player?mode=search**', async (route) => {
       await route.fulfill({
         contentType: 'application/json',
@@ -146,6 +155,11 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByText('125 000 Silver')).toBeVisible()
     await expect(page.getByText(/Świeże · 2 h/)).toBeVisible()
     await expect(page.getByText(/Straty przeciwników:\s*125\s*tys\.\s*Silver/)).toBeVisible()
+
+    const followPlayer = page.getByRole('button', { name: 'Obserwuj: PricingKnight' })
+    await expect(followPlayer).toBeEnabled()
+    await followPlayer.click()
+    await expect(page.getByRole('button', { name: 'Obserwujesz: PricingKnight' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('nie zgłasza braku gracza, gdy wybrany region Gameinfo jest niedostępny', async ({ page }) => {
@@ -193,9 +207,28 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   })
 
   test('otwiera Wartownię obserwowanych elementów', async ({ page }) => {
+    await page.route('**/api/follows', async (route) => {
+      if (route.request().method() === 'POST') {
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true, result: { newEvents: 2, checked: 1, failed: 0 } }) })
+        return
+      }
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ follows: [{
+          entity_type: 'albion_player', entity_id: 'watched-player', label: 'WatchedKnight', region: 'america',
+          last_checked_at: '2026-08-15T18:00:00Z', last_error: null,
+          last_summary: { kills: 1, deaths: 1, killFame: 8748, deathFame: 5000 },
+          created_at: '2026-08-15T17:00:00Z',
+        }] }),
+      })
+    })
     await page.goto('/obserwowane')
     await expect(page.getByRole('heading', { name: 'Obserwowane' })).toBeVisible()
-    await expect(page.getByText(/Buildy, gildie, oferty i gracze/)).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Obserwowane postacie' })).toBeVisible()
+    await expect(page.getByText('WatchedKnight')).toBeVisible()
+    await expect(page.getByText('8,7 tys.')).toBeVisible()
+    await page.getByRole('button', { name: 'Sprawdź nowe walki' }).click()
+    await expect(page.getByText(/Znaleziono 2 nowych walk/)).toBeVisible()
   })
 
   test('zapisuje i przywraca lokalny szkic podziału łupów', async ({ page }) => {

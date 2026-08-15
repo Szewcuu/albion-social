@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet D: dane Albionu i narzędzia**
 
-Zakres P5 oraz Priorytet C są ukończone. Etapy D.1–D.2 dostarczyły regionalną wycenę utraconego ekwipunku oraz pełne porównanie dwóch buildów z prawdziwymi cenami rynku. Następnym etapem jest D.3: obserwowane postacie i automatyczne podsumowania ich nowych walk.
+Zakres P5 oraz Priorytet C są ukończone. Etapy D.1–D.3 dostarczyły regionalną wycenę utraconego ekwipunku, pełne porównanie dwóch buildów z prawdziwymi cenami rynku oraz Wartownię śledzącą nowe walki dowolnych postaci. Następnym etapem jest D.4: automatycznie aktualizowany katalog przedmiotów z bezpiecznym fallbackiem lokalnym.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -235,7 +235,13 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] sumować stosy mikstur i jedzenia, rozróżniać jakość oraz używać ceny kupna tylko jako jawnego fallbacku
   - [x] nie wskazywać tańszego zestawu, jeśli wycena któregokolwiek buildu jest niepełna
   - [x] objąć konwersję buildów, porcjowanie zapytań i wycenę testami jednostkowymi
-- [ ] umożliwić zapis obserwowanych postaci i automatyczne podsumowania ich nowych walk
+- [x] umożliwić zapis obserwowanych postaci i automatyczne podsumowania ich nowych walk
+  - [x] pozwolić obserwować dowolną postać bez wymagania konta w portalu i zapisać jej region
+  - [x] zainicjalizować kursor historią już znanych walk, aby pierwsza obserwacja nie tworzyła fałszywych alertów
+  - [x] grupować obserwacje tej samej postaci i pobierać jej historię tylko raz podczas synchronizacji
+  - [x] wysyłać jedno idempotentne podsumowanie nowych zabójstw, zgonów i Fame zamiast serii powiadomień
+  - [x] dodać ręczne odświeżanie Wartowni z limitem oraz automatyczną kontrolę w istniejącym zadaniu cron
+  - [x] objąć wykrywanie nowych zdarzeń testami jednostkowymi, a obserwowanie i Wartownię testami E2E
 - [ ] aktualizować katalog przedmiotów automatycznie z wersjonowanym fallbackiem lokalnym
 - [ ] dodać historię zmian cen i alerty cenowe przechowywane po stronie serwera
 

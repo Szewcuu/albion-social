@@ -23,6 +23,7 @@ import {
   Wheat,
 } from 'lucide-react'
 import CombatEventCard from '@/components/killboard/CombatEventCard'
+import FollowButton from '@/components/ui/FollowButton'
 
 const REGIONS = [
   { id: 'europe', label: 'Europa', short: 'EU' },
@@ -297,9 +298,12 @@ function KillboardContent() {
                     </div>
                   </div>
                 </div>
-                <a href={`https://albiononline.com/killboard/player/${player.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[9px] font-black uppercase tracking-[.12em]">
-                  Oficjalna kronika <ExternalLink className="h-3.5 w-3.5" />
-                </a>
+                <div className="flex flex-wrap items-center gap-2">
+                  <FollowButton id={player.id} name={player.name} type="albion_player" region={region} />
+                  <a href={`https://albiononline.com/killboard/player/${player.id}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[9px] font-black uppercase tracking-[.12em]">
+                    Oficjalna kronika <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </div>
               </div>
 
               <div className="grid gap-px bg-white/8 sm:grid-cols-2 lg:grid-cols-4">

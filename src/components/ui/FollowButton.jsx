@@ -42,7 +42,7 @@ function hasFollow(type, id) {
   return Boolean(cachedFollows?.some((follow) => follow.entity_type === type && follow.entity_id === String(id)))
 }
 
-export default function FollowButton({ id, name, type = 'guild', className = '', compact = false }) {
+export default function FollowButton({ id, name, type = 'guild', region = null, className = '', compact = false }) {
   const [following, setFollowing] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
@@ -74,10 +74,10 @@ export default function FollowButton({ id, name, type = 'guild', className = '',
       const payload = await readJson(await authenticatedFetch('/api/follows', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, id: String(id), following: !following }),
+        body: JSON.stringify({ type, id: String(id), name, region, following: !following }),
       }))
       cachedFollows = payload.following
-        ? [...(cachedFollows || []).filter((item) => !(item.entity_type === type && item.entity_id === String(id))), { entity_type: type, entity_id: String(id), label: payload.label || name || '' }]
+        ? [...(cachedFollows || []).filter((item) => !(item.entity_type === type && item.entity_id === String(id))), { entity_type: type, entity_id: String(id), label: payload.label || name || '', region }]
         : (cachedFollows || []).filter((item) => !(item.entity_type === type && item.entity_id === String(id)))
       setFollowing(payload.following)
       window.dispatchEvent(new CustomEvent(FOLLOWS_CHANGED_EVENT))
