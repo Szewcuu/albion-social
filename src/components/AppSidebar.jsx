@@ -15,6 +15,7 @@ import {
   Hammer,
   User,
   ShieldCheck,
+  CalendarDays,
   X,
 } from 'lucide-react'
 
@@ -25,6 +26,7 @@ const NAV_SECTIONS = [
       { href: '/', label: 'Tawerna', icon: Home, desc: 'Strona główna' },
       { href: '/gildie', label: 'Gildie', icon: Shield, desc: 'Rejestr formacji' },
       { href: '/wyprawy', label: 'Wyprawy', icon: Users, desc: 'Zbiórki grupowe' },
+      { href: '/kalendarz', label: 'Kalendarz', icon: CalendarDays, desc: 'Wydarzenia gildii' },
     ],
   },
   {

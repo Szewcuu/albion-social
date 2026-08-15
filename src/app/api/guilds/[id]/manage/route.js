@@ -72,7 +72,7 @@ export async function GET(request, { params }) {
         .order('joined_at', { ascending: true }),
       admin
         .from('guild_events')
-        .select('id, title, description, event_type, starts_at, server, status, created_at')
+        .select('id, title, description, event_type, starts_at, server, status, location, audience, capacity, signup_open, created_at')
         .eq('guild_id', guildId)
         .order('starts_at', { ascending: false })
         .limit(50),
@@ -138,9 +138,12 @@ export async function POST(request, { params }) {
       const description = cleanText(body.description || '', { max: 600 })
       const eventType = cleanEnum(body.eventType, EVENT_TYPES)
       const server = cleanEnum(body.server, SERVERS)
+      const location = cleanText(body.location || '', { max: 120 })
+      const audience = cleanEnum(body.audience || 'public', ['public', 'guild'])
+      const capacity = Number(body.capacity)
       const startsAt = new Date(body.startsAt)
       const maxDate = Date.now() + 366 * 24 * 60 * 60 * 1000
-      if (!title || description === null || !eventType || !server || Number.isNaN(startsAt.getTime()) || startsAt.getTime() < Date.now() - 60_000 || startsAt.getTime() > maxDate) {
+      if (!title || description === null || location === null || !audience || !eventType || !server || !Number.isInteger(capacity) || capacity < 2 || capacity > 200 || Number.isNaN(startsAt.getTime()) || startsAt.getTime() < Date.now() - 60_000 || startsAt.getTime() > maxDate) {
         return jsonError('Sprawdź nazwę, termin, typ i serwer wydarzenia.', 400)
       }
 
@@ -152,7 +155,10 @@ export async function POST(request, { params }) {
         event_type: eventType,
         starts_at: startsAt.toISOString(),
         server,
-      }).select('id, title, description, event_type, starts_at, server, status, created_at').single()
+        location,
+        audience,
+        capacity,
+      }).select('id, title, description, event_type, starts_at, server, status, location, audience, capacity, signup_open, created_at').single()
       if (error) throw new Error('Nie udało się utworzyć wydarzenia.')
 
       await logActivity(admin, {
@@ -169,9 +175,12 @@ export async function POST(request, { params }) {
 
     if (action === 'cancel_event') {
       if (!UUID_PATTERN.test(body.eventId || '')) return jsonError('Nieprawidłowe wydarzenie.', 400)
-      const { data: event, error } = await admin.from('guild_events').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', body.eventId).eq('guild_id', guildId).neq('status', 'cancelled').select('id, title').maybeSingle()
+      const { data: event, error } = await admin.rpc('service_cancel_guild_event', {
+        p_event_id: body.eventId,
+        p_guild_id: Number(guildId),
+        p_actor_id: auth.user.id,
+      })
       if (error) throw new Error('Nie udało się odwołać wydarzenia.')
-      if (!event) return jsonError('Wydarzenie nie istnieje lub zostało już odwołane.', 404)
       await logActivity(admin, { guild_id: guildId, actor_id: auth.user.id, event_type: 'event_cancelled', title: `Odwołano: ${event.title}`, entity_type: 'event', entity_id: event.id })
       return NextResponse.json({ success: true })
     }
