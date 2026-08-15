@@ -46,7 +46,7 @@ export async function POST(request) {
     const supabase = createSupabaseAdminClient()
     const { data: guild, error: guildError } = await supabase
       .from('guilds')
-      .select('id, name, user_id, webhook_url')
+      .select('id, name, user_id, webhook_url, recruitment_open')
       .eq('id', guildId)
       .maybeSingle()
 
@@ -58,6 +58,10 @@ export async function POST(request) {
       return jsonError('Nie znaleziono wskazanej gildii.', 404)
     }
 
+    if (!guild.recruitment_open) {
+      return jsonError('Ta gildia ma obecnie zamkniętą rekrutację.', 409)
+    }
+
     const metadata = auth.user.user_metadata || {}
     const userDiscord = cleanText(
       metadata.custom_claims?.global_name
@@ -67,6 +71,47 @@ export async function POST(request) {
         || 'Nieznany użytkownik',
       { min: 1, max: 100 },
     ) || 'Nieznany użytkownik'
+
+    const discordIdentity = auth.user.identities?.find((identity) => identity.provider === 'discord')
+    const applicantDiscordId = cleanText(
+      String(discordIdentity?.identity_data?.sub || discordIdentity?.id || auth.user.id),
+      { min: 1, max: 100 },
+    ) || auth.user.id
+
+    const { data: application, error: applicationError } = await supabase
+      .from('guild_applications')
+      .insert({
+        guild_id: guild.id,
+        applicant_user_id: auth.user.id,
+        applicant_discord_id: applicantDiscordId,
+        applicant_username: userDiscord,
+        guild_name: guild.name,
+        ingame_nick: ingameNick,
+        total_fame: totalFame,
+        main_role: mainRole,
+        message,
+        status: 'pending',
+      })
+      .select('id, created_at')
+      .single()
+
+    if (applicationError?.code === '23505') {
+      return jsonError('Masz już oczekujące podanie do tej gildii.', 409)
+    }
+    if (applicationError) {
+      throw new Error('Nie udało się zapisać podania.')
+    }
+
+    const { error: activityError } = await supabase.from('guild_activity').insert({
+      guild_id: guild.id,
+      actor_id: auth.user.id,
+      event_type: 'application_received',
+      title: `Nowe podanie: ${ingameNick}`,
+      details: `${mainRole} · Fame ${totalFame}`,
+      entity_type: 'application',
+      entity_id: application.id,
+    })
+    if (activityError) console.error('Nie udało się dopisać podania do kroniki gildii:', activityError)
 
     let discordDelivered = false
     if (isSafeDiscordWebhook(guild.webhook_url)) {
@@ -110,16 +155,15 @@ export async function POST(request) {
           title: '⚔️ Nowy kandydat do gildii!',
           message: `${ingameNick} złożył podanie do Twojej gildii "${guild.name}" (Rola: ${mainRole}, Fame: ${totalFame}).`,
           type: 'info',
-          link: '/gildie',
+          link: `/gildie/${guild.id}`,
         },
       ])
 
-    if (notificationError) {
-      throw new Error('Nie udało się zapisać powiadomienia dla gildii.')
-    }
+    if (notificationError) console.error('Nie udało się zapisać powiadomienia dla gildii:', notificationError)
 
     return NextResponse.json({
       success: true,
+      applicationId: application.id,
       discordDelivered,
       message: 'Aplikacja została wysłana pomyślnie!',
     })
