@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerOverview, searchAlbionPlayers, searchAlbionPlayersAllRegionsDetailed } from '@/lib/server/albionApi'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { cleanAlbionId, cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
+import { searchKillboardCommunityPlayer } from '@/lib/killboardCommunity'
 
 const CACHE_SECONDS = {
   search: 45,
@@ -13,11 +14,11 @@ function getClientKey(request) {
   return forwarded || request.headers.get('x-real-ip') || 'anonymous'
 }
 
-function apiResponse(data, { region, mode, status = 200, warnings = [] } = {}) {
+function apiResponse(data, { region, mode, status = 200, warnings = [], source = 'Albion Online Gameinfo' } = {}) {
   return NextResponse.json({
     data,
     meta: {
-      source: 'Albion Online Gameinfo',
+      source,
       region,
       mode,
       fetchedAt: new Date().toISOString(),
@@ -85,6 +86,23 @@ export async function GET(request) {
 
       if (players.length === 0) {
         if (unavailableRegions.length > 0) {
+          const selectedRegionUnavailable = unavailableRegions.some((item) => item.region === region)
+          const communityPlayer = selectedRegionUnavailable
+            ? await searchKillboardCommunityPlayer(query, region)
+            : null
+
+          if (communityPlayer) {
+            return apiResponse(
+              { players: [communityPlayer] },
+              {
+                region,
+                mode,
+                source: 'KillBoard#1 community index',
+                warnings: ['Gameinfo jest chwilowo niedostępne. Wynik potwierdzono w społecznościowym archiwum walk; pełne statystyki mogą być nieaktualne lub niedostępne.'],
+              },
+            )
+          }
+
           const labels = unavailableRegions
             .map((item) => ALBION_REGIONS[item.region]?.label)
             .filter(Boolean)
