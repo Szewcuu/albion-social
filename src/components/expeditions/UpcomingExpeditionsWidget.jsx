@@ -11,7 +11,7 @@ export default function UpcomingExpeditionsWidget({ expeditions = [] }) {
             <Compass className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-display text-base font-bold text-white">Nadchodzące Wyprawy Graczy</h3>
+            <h2 className="font-display text-base font-bold text-white">Nadchodzące Wyprawy Graczy</h2>
             <p className="text-xs text-gray-400">Brak aktywnych wypraw w najbliższym czasie. Zwołaj pierwszą drużynę poniżej!</p>
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function UpcomingExpeditionsWidget({ expeditions = [] }) {
               </span>
               <span className="text-[10px] text-gray-400 font-mono">Dołącz przed wymarszem</span>
             </div>
-            <h3 className="font-display text-lg font-black text-white mt-0.5">Nadchodzące Wyprawy Graczy</h3>
+            <h2 className="font-display text-lg font-black text-white mt-0.5">Nadchodzące Wyprawy Graczy</h2>
           </div>
         </div>
       </div>
@@ -58,7 +58,7 @@ export default function UpcomingExpeditionsWidget({ expeditions = [] }) {
                     <Clock className="w-3 h-3" /> {exp.start_time || exp.event_time ? new Date(exp.event_time || exp.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Dziś'}
                   </span>
                 </div>
-                <h4 className="font-bold text-sm text-white line-clamp-1">{exp.title}</h4>
+                <h3 className="font-bold text-sm text-white line-clamp-1">{exp.title}</h3>
                 <p className="text-[11px] text-gray-400 font-mono">Min. IP: <span className="text-amber-300 font-bold">{exp.min_ip}+</span></p>
               </div>
 

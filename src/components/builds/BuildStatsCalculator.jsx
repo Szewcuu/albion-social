@@ -65,12 +65,13 @@ export default function BuildStatsCalculator({ slots, quality = 1, specBonus = 0
           {/* SPECJALIZACJA (MASTERY BONUS) */}
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-[10px] font-mono text-gray-400 uppercase">
+              <label htmlFor="build-specialization" className="text-[10px] font-mono text-gray-400 uppercase">
                 Specjalizacja (Mastery):
               </label>
               <span className="text-xs font-mono font-bold text-rose-400">+{activeSpec} IP</span>
             </div>
             <input
+              id="build-specialization"
               type="range"
               min={0}
               max={240}

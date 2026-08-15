@@ -1,15 +1,6 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './browser-health.js'
 
 test.describe('publiczna bramka portalu', () => {
-  test.beforeEach(async ({ page }) => {
-    page.on('pageerror', (error) => console.error(`[browser pageerror] ${error.message}`))
-    page.on('console', (message) => {
-      if (message.type() === 'error' && !message.text().includes('/_vercel/speed-insights/')) {
-        console.error(`[browser console] ${message.text()}`)
-      }
-    })
-  })
-
   test('pokazuje wyłącznie ekran powitalny i logowanie', async ({ page }) => {
     await page.goto('/')
 
@@ -51,6 +42,14 @@ test.describe('publiczna bramka portalu', () => {
     expect(roleManagement.status()).toBe(401)
     expect(profileVerification.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
+  })
+
+  test('zwraca bezpieczny obraz zastępczy dla nieprawidłowego ID przedmiotu', async ({ request }) => {
+    const response = await request.get('/api/item-image?id=TEST')
+
+    expect(response.status()).toBe(200)
+    expect(response.headers()['content-type']).toContain('image/svg+xml')
+    expect(response.headers()['x-item-image-fallback']).toBe('1')
   })
 
   for (const path of ['/buildy', '/gildie', '/killboard', '/loot-split', '/wyprawy', '/admin']) {

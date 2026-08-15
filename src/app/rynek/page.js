@@ -382,8 +382,10 @@ export default function Rynek() {
                           {cleanItemName.length >= 3 ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img
-                              src={`https://render.albiononline.com/v1/item/${encodeURIComponent(cleanItemName)}.png?count=1&quality=1`}
+                              src={`/api/item-image?id=${encodeURIComponent(cleanItemName)}`}
                               alt={offer.title}
+                              width="48"
+                              height="48"
                               className="h-12 w-12 object-contain"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none'

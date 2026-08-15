@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './browser-health.js'
 
 test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   test('odrzuca konto bez roli personelu z API moderacji i ról', async ({ page, request }) => {
@@ -33,12 +33,15 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   test('otwiera formularz publikacji buildu', async ({ page }) => {
     await page.goto('/buildy/create')
     await expect(page.getByLabel('Nazwa buildu *')).toBeVisible()
+    await expect(page.getByLabel('Specjalizacja (Mastery):')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
   })
 
   test('otwiera formularze wyprawy i rynku', async ({ page }) => {
     await page.goto('/wyprawy')
-    await expect(page.getByText('Cel / Tytuł Wyprawy *')).toBeVisible()
+    await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()
+    await expect(page.getByLabel('Min. IP *')).toBeVisible()
+    await expect(page.getByLabel('Tank')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Ogłoś Wyprawę' })).toBeVisible()
 
     await page.goto('/rynek')

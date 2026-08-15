@@ -116,6 +116,7 @@ export default function GoldExchangeWidget() {
         <div className="flex items-center gap-2 font-mono text-xs">
           {/* Region selector */}
           <select
+            aria-label="Region rynku złota"
             value={region}
             onChange={e => {
               setLoading(true)

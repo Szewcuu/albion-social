@@ -42,7 +42,7 @@ export default function EquipmentGrid({ slots, onSlotChange }) {
 
   return (
     <div className="bg-[#050204] border border-[#260f16] rounded-2xl p-4 sm:p-6">
-      <div className="text-[10px] font-mono text-gray-500 text-center uppercase tracking-wider mb-4">
+      <div className="text-[10px] font-mono text-gray-400 text-center uppercase tracking-wider mb-4">
         Ekwipunek — kliknij slot aby wybrać przedmiot
       </div>
 

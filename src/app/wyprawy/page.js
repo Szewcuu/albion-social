@@ -337,8 +337,9 @@ export default function Wyprawy() {
               ) : (
                 <form onSubmit={handleCreateExpedition} className="space-y-3 text-xs">
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Cel / Tytuł Wyprawy *</label>
+                    <label htmlFor="expedition-title" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Cel / Tytuł Wyprawy *</label>
                     <input 
+                      id="expedition-title"
                       type="text" 
                       required 
                       value={formData.title} 
@@ -373,6 +374,7 @@ export default function Wyprawy() {
                       {/* Pole na własną nazwę aktywności, widoczne tylko po wybraniu "Inna" */}
                       {formData.activity_type === 'Inna / Własna aktywność' && (
                         <input 
+                          aria-label="Własny typ aktywności"
                           type="text"
                           required
                           placeholder="Wpisz własną nazwę aktywności..."
@@ -384,8 +386,9 @@ export default function Wyprawy() {
                     </div>
 
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Min. IP *</label>
+                      <label htmlFor="expedition-min-ip" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Min. IP *</label>
                       <input 
+                        id="expedition-min-ip"
                         type="number" 
                         required 
                         value={formData.min_ip} 
@@ -397,8 +400,9 @@ export default function Wyprawy() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Czas (UTC) *</label>
+                      <label htmlFor="expedition-start-time" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Czas (UTC) *</label>
                       <input 
+                        id="expedition-start-time"
                         type="text" 
                         required 
                         value={formData.start_time} 
@@ -418,31 +422,32 @@ export default function Wyprawy() {
                     </div>
                   </div>
 
-                  <div className="border-t border-[var(--border-hover)] pt-3">
-                    <label className="block text-[var(--amber)] mb-2 font-bold uppercase tracking-wider text-[10px] font-mono">Poszukiwane Role</label>
+                  <fieldset className="border-t border-[var(--border-hover)] pt-3">
+                    <legend className="block text-[var(--amber)] mb-2 font-bold uppercase tracking-wider text-[10px] font-mono">Poszukiwane Role</legend>
                     <div className="grid grid-cols-4 gap-2 text-center">
-                      <div>
+                      <label>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">Tank</span>
                         <input type="number" min="0" max="5" value={formData.max_tanks} onChange={(e) => setFormData({ ...formData, max_tanks: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
-                      </div>
-                      <div>
+                      </label>
+                      <label>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">Heal</span>
                         <input type="number" min="0" max="5" value={formData.max_healers} onChange={(e) => setFormData({ ...formData, max_healers: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
-                      </div>
-                      <div>
+                      </label>
+                      <label>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">DPS</span>
                         <input type="number" min="0" max="20" value={formData.max_dps} onChange={(e) => setFormData({ ...formData, max_dps: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
-                      </div>
-                      <div>
+                      </label>
+                      <label>
                         <span className="text-[10px] text-gray-400 block font-bold font-mono">Supp</span>
                         <input type="number" min="0" max="5" value={formData.max_supports} onChange={(e) => setFormData({ ...formData, max_supports: e.target.value })} className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2 text-center text-gray-100 font-mono text-xs" />
-                      </div>
+                      </label>
                     </div>
-                  </div>
+                  </fieldset>
 
                   <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Opis / Miejsce Zbiórki</label>
+                    <label htmlFor="expedition-description" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Opis / Miejsce Zbiórki</label>
                     <textarea 
+                      id="expedition-description"
                       rows="3" 
                       value={formData.description} 
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })} 
@@ -615,16 +620,17 @@ export default function Wyprawy() {
 
       {/* MODAL ZAPISU DO DRUŻYNY */}
       {activeExpeditionForSignup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+        <div role="dialog" aria-modal="true" aria-labelledby="expedition-signup-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="panel relative w-full max-w-md space-y-4 rounded-3xl p-6 text-gray-200 sm:p-8">
-            <h3 className="font-display border-b border-white/[.07] pb-3 text-xl font-black text-[var(--amber)]">
+            <h2 id="expedition-signup-title" className="font-display border-b border-white/[.07] pb-3 text-xl font-black text-[var(--amber)]">
               Dołącz do Wyprawy: {activeExpeditionForSignup.title}
-            </h3>
+            </h2>
 
             <form onSubmit={handleJoinExpedition} className="space-y-3 text-xs">
               <div>
-                <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Twój Nick w grze *</label>
+                <label htmlFor="expedition-signup-nick" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Twój Nick w grze *</label>
                 <input 
+                  id="expedition-signup-nick"
                   type="text" 
                   required 
                   value={signupData.ingame_nick} 
@@ -661,8 +667,9 @@ export default function Wyprawy() {
               </div>
 
               <div>
-                <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Twoje Deklarowane IP *</label>
+                <label htmlFor="expedition-signup-ip" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Twoje Deklarowane IP *</label>
                 <input 
+                  id="expedition-signup-ip"
                   type="number" 
                   required 
                   value={signupData.player_ip} 

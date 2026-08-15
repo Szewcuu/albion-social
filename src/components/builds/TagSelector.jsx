@@ -5,7 +5,7 @@ function TagGroup({ group, selected, onToggle, max = 7 }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h4 className="text-[11px] font-mono font-bold text-gray-400 uppercase">{group.label}</h4>
+        <h3 className="text-[11px] font-mono font-bold text-gray-400 uppercase">{group.label}</h3>
         <span className="text-[10px] text-gray-600 font-mono">{selected.length}/{max}</span>
       </div>
       <div className="flex flex-wrap gap-1.5">
@@ -61,7 +61,7 @@ export default function TagSelector({ tags, budget, onTagsChange, onBudgetChange
       ))}
 
       <div className="space-y-2">
-        <h4 className="text-[11px] font-mono font-bold text-gray-400 uppercase">Budżet</h4>
+        <h3 className="text-[11px] font-mono font-bold text-gray-400 uppercase">Budżet</h3>
         <div className="flex flex-wrap gap-1.5">
           {BUDGET_TAGS.map(({ id, label }) => (
             <button

@@ -92,8 +92,28 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 - [ ] nie cache'ować prywatnych stron użytkownika strategią cache-first
 - [ ] zaktualizować podatne zależności wskazane przez `npm audit`
 - [ ] przenieść fonty do lokalnych assetów, aby build nie wymagał Google Fonts
-- [ ] oblewać testy przy nieoczekiwanym błędzie konsoli lub odpowiedzi `4xx/5xx`
+- [x] oblewać testy przy nieoczekiwanym błędzie konsoli lub odpowiedzi `4xx/5xx`
 - [ ] powtórzyć Lighthouse desktop/mobile bez rozszerzeń, jako gość i użytkownik
+
+### P5.4 — Lighthouse mobile, dostępność i odporność UI
+
+#### P5.4A — jakość i regresje
+
+- [x] powiązać etykiety z polami kreatora buildu i formularzy wypraw
+- [x] poprawić hierarchię nagłówków kreatora buildu i widżetu wypraw
+- [x] podnieść kontrast opisu ekwipunku oraz poprawić dostępną nazwę marki w sidebarze
+- [x] nadać selektorowi regionu rynku złota dostępną nazwę
+- [x] zastąpić bezpośrednie obrazy ofert rynku bezpiecznym proxy z odpowiedzią zastępczą zamiast `404`
+- [x] dodać automatyczne wykrywanie błędów konsoli, `pageerror`, nieudanych żądań oraz odpowiedzi `4xx/5xx` w Playwright
+- [x] rozszerzyć E2E o weryfikację dostępnych etykiet i fallbacku nieprawidłowego ID przedmiotu
+
+#### P5.4B — wydajność mobile
+
+- [ ] usunąć podwójne klienckie sprawdzanie sesji na stronie głównej i w `AppShell`
+- [ ] renderować statyczny szkielet portalu i nagłówek administratora bez oczekiwania na dane Supabase
+- [ ] opóźnić ładowanie czatu, statystyk, wykresów i kalkulatorów do czasu wyświetlenia podstawowej treści
+- [ ] ograniczyć początkowy DOM rynku i liczbę elementów wykresu SVG
+- [ ] powtórzyć 14 raportów Lighthouse w czystym profilu Chrome i osiągnąć mobile Performance co najmniej `90`
 
 ### Zakończony Priorytet A
 
