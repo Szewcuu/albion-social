@@ -37,16 +37,32 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
   })
 
-  test('otwiera wątkowaną Radę wojowników z sortowaniem', async ({ page }) => {
-    await page.goto('/buildy')
-    const buildLink = page.getByRole('link', { name: /Otwórz build:/ }).first()
-    await expect(buildLink).toBeVisible()
-    await buildLink.click()
+  test('zwraca zalogowanemu wątkowane komentarze buildu', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage)
+        .find((key) => /^sb-.+-auth-token$/.test(key))
+      if (!storageKey) return null
+      return JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null
+    })
+    expect(accessToken).toBeTruthy()
 
-    await expect(page.getByRole('heading', { name: 'Rada wojowników' })).toBeVisible()
-    await expect(page.getByText('Sortowanie dyskusji')).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Ostatnio aktywne' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Opublikuj komentarz' })).toBeVisible()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const buildsResponse = await request.get(`${supabaseUrl}/rest/v1/builds?select=id&status=eq.visible&order=created_at.desc&limit=1`, {
+      headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
+    })
+    expect(buildsResponse.status()).toBe(200)
+    const [build] = await buildsResponse.json()
+    expect(build?.id).toBeTruthy()
+
+    const commentsResponse = await request.get(`/api/builds/${build.id}/comments`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    expect(commentsResponse.status()).toBe(200)
+    const payload = await commentsResponse.json()
+    expect(Array.isArray(payload.comments)).toBe(true)
+    expect(typeof payload.count).toBe('number')
   })
 
   test('otwiera formularze wyprawy i rynku', async ({ page }) => {
