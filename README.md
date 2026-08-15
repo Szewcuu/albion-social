@@ -109,10 +109,10 @@ P5.0 i P5.1 usuwają krytyczny legacy RPC, synchronizują produkcyjny schemat pr
 
 #### P5.4B — wydajność mobile
 
-- [ ] usunąć podwójne klienckie sprawdzanie sesji na stronie głównej i w `AppShell`
-- [ ] renderować statyczny szkielet portalu i nagłówek administratora bez oczekiwania na dane Supabase
-- [ ] opóźnić ładowanie czatu, statystyk, wykresów i kalkulatorów do czasu wyświetlenia podstawowej treści
-- [ ] ograniczyć początkowy DOM rynku i liczbę elementów wykresu SVG
+- [x] usunąć podwójne klienckie sprawdzanie sesji na stronie głównej i w `AppShell`
+- [x] renderować statyczny szkielet portalu i nagłówek administratora bez oczekiwania na dane Supabase
+- [x] opóźnić ładowanie czatu, statystyk, wykresów i kalkulatorów do czasu wyświetlenia podstawowej treści
+- [x] ograniczyć początkowy DOM rynku i liczbę elementów wykresu SVG
 - [ ] powtórzyć 14 raportów Lighthouse w czystym profilu Chrome i osiągnąć mobile Performance co najmniej `90`
 
 ### Zakończony Priorytet A

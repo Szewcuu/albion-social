@@ -300,7 +300,18 @@ export default function AdminPage() {
     }
   }
 
-  if (state.loading) return <div className="page-content space-y-4"><SkeletonBlock className="h-36" /><SkeletonBlock className="h-72" /></div>
+  if (state.loading) return (
+    <div className="page-content">
+      <div className="subpage-header">
+        <h1><ShieldCheck className="h-6 w-6 text-[var(--amber)]" /> Centrum moderacji</h1>
+        <p>Jedna kolejka dla całego portalu, role personelu i nieusuwalny dziennik decyzji.</p>
+      </div>
+      <div className="space-y-4" role="status" aria-label="Ładowanie centrum moderacji">
+        <SkeletonBlock className="h-28" />
+        <SkeletonBlock className="h-72" />
+      </div>
+    </div>
+  )
   if (state.forbidden) return <AccessDenied />
 
   const tabs = [

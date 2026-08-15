@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -18,9 +19,15 @@ import {
   Swords,
   Users,
 } from 'lucide-react'
-import ChatBox from '@/components/ChatBox'
-import PortalAnalyticsWidget from '@/components/stats/PortalAnalyticsWidget'
 import { supabase } from '@/lib/supabase'
+import { usePortalSession } from '@/contexts/PortalSessionContext'
+
+const ChatBox = dynamic(() => import('@/components/ChatBox'), {
+  loading: () => <div className="panel min-h-[430px] animate-pulse" aria-label="Ładowanie czatu tawerny" />,
+})
+const PortalAnalyticsWidget = dynamic(() => import('@/components/stats/PortalAnalyticsWidget'), {
+  loading: () => <div className="panel min-h-[240px] animate-pulse" aria-label="Ładowanie statystyk portalu" />,
+})
 
 const MODULES = [
   { href: '/gildie', eyebrow: 'Formacje i ZvZ', label: 'Rejestr Gildii', desc: 'Znajdź kompanię, sprawdź jej kroniki bitewne albo wystaw własny manifest rekrutacyjny.', icon: Shield, tone: 'forest', marker: 'I' },
@@ -34,9 +41,7 @@ const MODULES = [
 ]
 
 export default function Home() {
-  const [user, setUser] = useState(null)
-  const [authReady, setAuthReady] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const { user, isAdmin, loginWithDiscord: startDiscordLogin } = usePortalSession()
   const [loginBusy, setLoginBusy] = useState(false)
   const [authError, setAuthError] = useState('')
   const [globalStats, setGlobalStats] = useState({ guildsCount: 0, marketOffersCount: 0 })
@@ -49,60 +54,24 @@ export default function Home() {
     setGlobalStats({ guildsCount: guildsCount || 0, marketOffersCount: marketOffersCount || 0 })
   }, [])
 
-  const readAdminStatus = useCallback(async (userId) => {
-    const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).maybeSingle()
-    if (!error) {
-      setIsAdmin(['moderator', 'admin'].includes(data?.role))
-      return
-    }
-    const { data: legacyProfile } = await supabase.from('profiles').select('is_admin').eq('id', userId).maybeSingle()
-    setIsAdmin(legacyProfile?.is_admin === true)
-  }, [])
-
   useEffect(() => {
-    let active = true
     const statsTimer = window.setTimeout(fetchGlobalStats, 0)
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!active) return
-      const currentUser = session?.user || null
-      setUser(currentUser)
-      setAuthReady(true)
-      if (currentUser) readAdminStatus(currentUser.id)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return
-      const currentUser = session?.user || null
-      setUser(currentUser)
-      setAuthReady(true)
-      if (currentUser) readAdminStatus(currentUser.id)
-      else setIsAdmin(false)
-    })
-
     return () => {
-      active = false
       window.clearTimeout(statsTimer)
-      subscription.unsubscribe()
     }
-  }, [fetchGlobalStats, readAdminStatus])
+  }, [fetchGlobalStats])
 
   const loginWithDiscord = async () => {
     if (loginBusy) return
     setLoginBusy(true)
     setAuthError('')
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'discord',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    })
-    if (error) {
+    try {
+      await startDiscordLogin()
+    } catch {
       setAuthError('Nie udało się rozpocząć logowania Discord. Spróbuj ponownie.')
       setLoginBusy(false)
     }
-  }
-
-  if (!authReady) {
-    return <div className="auth-loading-screen" role="status"><span className="loading-crest" /> Otwieranie bramy Albionu…</div>
   }
 
   if (!user) {

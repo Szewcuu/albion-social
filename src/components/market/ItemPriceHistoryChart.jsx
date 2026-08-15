@@ -9,6 +9,16 @@ const RANGES = [
   { id: '7d', label: '7 Dni' },
   { id: '30d', label: '30 Dni' },
 ]
+const MAX_RENDERED_POINTS = 48
+
+function sampleChartPoints(points) {
+  if (points.length <= MAX_RENDERED_POINTS) return points
+
+  return Array.from({ length: MAX_RENDERED_POINTS }, (_, index) => {
+    const sourceIndex = Math.round((index / (MAX_RENDERED_POINTS - 1)) * (points.length - 1))
+    return points[sourceIndex]
+  })
+}
 
 function formatPriceShort(price) {
   if (!price || price <= 0) return '0'
@@ -119,17 +129,19 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
   const chartSvg = useMemo(() => {
     if (!historyData || historyData.length < 2) return null
 
+    const renderedData = sampleChartPoints(historyData)
+
     const width = 500
     const height = compact ? 120 : 160
     const padding = 20
 
-    const prices = historyData.map(p => p.price)
+    const prices = renderedData.map(p => p.price)
     const min = Math.min(...prices)
     const max = Math.max(...prices)
     const rangeVal = max - min || 1
 
-    const points = historyData.map((pt, i) => {
-      const x = padding + (i / (historyData.length - 1)) * (width - padding * 2)
+    const points = renderedData.map((pt, i) => {
+      const x = padding + (i / (renderedData.length - 1)) * (width - padding * 2)
       const y = height - padding - ((pt.price - min) / rangeVal) * (height - padding * 2)
       return { x, y, pt }
     })

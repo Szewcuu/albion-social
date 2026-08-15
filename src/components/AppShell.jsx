@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { syncPortalPreferences } from '@/lib/preferenceSync'
 import AppSidebar from './AppSidebar'
 import TopBar from './TopBar'
 import MobileBottomNav from './MobileBottomNav'
+import { PortalSessionProvider } from '@/contexts/PortalSessionContext'
 
 const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc'])
 
@@ -30,18 +31,19 @@ export default function AppShell({ children }) {
     setIsAdmin(!error && (data?.is_admin === true || ['moderator', 'admin'].includes(data?.role)))
   }, [])
 
-  const loginWithDiscord = async () => {
-    await supabase.auth.signInWithOAuth({
+  const loginWithDiscord = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'discord',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
-  }
+    if (error) throw error
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)
     setIsAdmin(false)
-  }
+  }, [])
 
   const fetchNotifications = useCallback(async (userId) => {
     setNotificationState({ loading: true, error: '' })
@@ -162,6 +164,14 @@ export default function AppShell({ children }) {
     if (guestBlocked) router.replace('/')
   }, [guestBlocked, router])
 
+  const sessionValue = useMemo(() => ({
+    user,
+    isAdmin,
+    authReady,
+    loginWithDiscord,
+    logout,
+  }), [authReady, isAdmin, loginWithDiscord, logout, user])
+
   if (!authReady || guestBlocked) {
     return (
       <div className="auth-loading-screen" role="status" aria-live="polite">
@@ -175,6 +185,7 @@ export default function AppShell({ children }) {
   const guestLegalPage = guestPublicPage && pathname !== '/'
 
   return (
+    <PortalSessionProvider value={sessionValue}>
     <div className={`app-shell ${guestLanding ? 'guest-landing' : ''} ${guestLegalPage ? 'guest-public' : ''} ${authReady ? 'auth-ready' : 'auth-pending'}`}>
       <a href="#main-content" className="skip-link">Przejdź do treści</a>
       <div className="world-backdrop" aria-hidden="true" />
@@ -206,5 +217,6 @@ export default function AppShell({ children }) {
 
       {user && <MobileBottomNav />}
     </div>
+    </PortalSessionProvider>
   )
 }

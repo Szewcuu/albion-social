@@ -2,19 +2,27 @@
 
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User, ExternalLink, RefreshCw, Clock } from 'lucide-react'
-import MarketIntelligence from '@/components/market/MarketIntelligence'
-import TradeArbitrageCalculator from '@/components/market/TradeArbitrageCalculator'
-import LiveMarketPriceEstimator from '@/components/market/LiveMarketPriceEstimator'
-import ContactSellerModal from '@/components/market/ContactSellerModal'
 import CustomSelect from '@/components/ui/CustomSelect'
 import FavoriteButton from '@/components/ui/FavoriteButton'
-import GoldExchangeWidget from '@/components/economy/GoldExchangeWidget'
+import { usePortalSession } from '@/contexts/PortalSessionContext'
+
+const LiveMarketPriceEstimator = dynamic(() => import('@/components/market/LiveMarketPriceEstimator'), {
+  loading: () => <div className="min-h-24 rounded-xl border border-white/8 bg-black/20 animate-pulse" aria-label="Ładowanie wyceny rynkowej" />,
+})
+const ContactSellerModal = dynamic(() => import('@/components/market/ContactSellerModal'))
+const GoldExchangeWidget = dynamic(() => import('@/components/economy/GoldExchangeWidget'), {
+  loading: () => <div className="panel min-h-48 animate-pulse" aria-label="Ładowanie kursu złota" />,
+})
+const MarketIntelligence = dynamic(() => import('@/components/market/MarketIntelligence'), {
+  loading: () => <div className="panel min-h-72 animate-pulse" aria-label="Ładowanie analizy rynku" />,
+})
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
-  const [user, setUser] = useState(null)
+  const { user } = usePortalSession()
   const [loading, setLoading] = useState(true)
   const [selectedOfferForContact, setSelectedOfferForContact] = useState(null)
 
@@ -22,6 +30,7 @@ export default function Rynek() {
   const [filterCity, setFilterCity] = useState('ALL')
   const [filterCategory, setFilterCategory] = useState('ALL')
   const [sortBy, setSortBy] = useState('newest')
+  const [showAllOffers, setShowAllOffers] = useState(false)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -57,10 +66,8 @@ export default function Rynek() {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      fetchOffers()
-    })
+    const timer = window.setTimeout(fetchOffers, 0)
+    return () => window.clearTimeout(timer)
   }, [fetchOffers])
 
   const handleCreateOffer = async (e) => {
@@ -128,6 +135,7 @@ export default function Rynek() {
       if (sortBy === 'price_desc') return Number(b.price) - Number(a.price)
       return new Date(b.created_at) - new Date(a.created_at)
     })
+  const visibleOffers = showAllOffers ? filteredOffers : filteredOffers.slice(0, 8)
 
   const numericPrice = Number(formData.price) || 0
   const formattedPricePreview = numericPrice > 0
@@ -364,7 +372,7 @@ export default function Rynek() {
                   <p className="mt-1 text-xs text-[var(--text-secondary)]">Zmień filtry albo wystaw własne ogłoszenie.</p>
                 </div>
               ) : (
-                filteredOffers.map(offer => {
+                visibleOffers.map(offer => {
                   const isOwner = user && user.id === offer.user_id
                   const cleanItemName = (offer.item_name || '').trim().toUpperCase()
                   const createdDate = offer.created_at ? new Date(offer.created_at) : new Date()
@@ -475,6 +483,15 @@ export default function Rynek() {
                     </article>
                   )
                 })
+              )}
+              {!loading && filteredOffers.length > visibleOffers.length && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllOffers(true)}
+                  className="btn btn-secondary mx-auto flex items-center"
+                >
+                  Pokaż pozostałe oferty ({filteredOffers.length - visibleOffers.length})
+                </button>
               )}
             </div>
           </div>
