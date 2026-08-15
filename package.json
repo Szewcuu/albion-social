@@ -8,6 +8,7 @@
     "start": "next start",
     "start:e2e": "next start --hostname 127.0.0.1 --port 4173",
     "lint": "eslint",
+    "test:unit": "node --experimental-default-type=module --test tests/unit/*.test.js",
     "test:e2e": "playwright test",
     "test:e2e:public": "playwright test --project=public",
     "test:e2e:auth": "cross-env E2E_REQUIRE_AUTH=1 playwright test --project=authenticated"

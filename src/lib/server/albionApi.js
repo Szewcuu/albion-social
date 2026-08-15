@@ -1,5 +1,7 @@
 import 'server-only'
 import { supabase } from '@/lib/supabase'
+import { valuateEquipment } from '@/lib/marketValuation'
+import { getEquipmentMarketPrices } from '@/lib/server/albionMarketApi'
 
 export const ALBION_REGIONS = {
   europe: {
@@ -305,15 +307,23 @@ export async function getAlbionPlayerOverview(playerIdOrNick, region, limit = 6)
 
   const profile = normalizePlayer(profileResult.value)
   const warnings = []
-  const kills = killsResult.status === 'fulfilled'
+  let kills = killsResult.status === 'fulfilled'
     ? (Array.isArray(killsResult.value) ? killsResult.value : []).slice(0, limit).map(event => normalizeEvent(event, 'kill'))
     : []
-  const deaths = deathsResult.status === 'fulfilled'
+  let deaths = deathsResult.status === 'fulfilled'
     ? (Array.isArray(deathsResult.value) ? deathsResult.value : []).slice(0, limit).map(event => normalizeEvent(event, 'death'))
     : []
 
   if (killsResult.status === 'rejected') warnings.push('Historia zabójstw jest chwilowo niedostępna.')
   if (deathsResult.status === 'rejected') warnings.push('Historia zgonów jest chwilowo niedostępna.')
+
+  const marketPricesPromise = getEquipmentMarketPrices({
+    equipmentSets: [...kills, ...deaths].map((event) => event.victim?.equipment),
+    region: activeRegion,
+  }).then(
+    (rows) => ({ rows, error: null }),
+    (error) => ({ rows: [], error }),
+  )
 
   if (profile.averageItemPower === 0) {
     const ipValues = []
@@ -366,7 +376,38 @@ export async function getAlbionPlayerOverview(playerIdOrNick, region, limit = 6)
     }
   }
 
-  return { player: profile, kills, deaths, guild, warnings }
+  let pricingAvailable = true
+  const marketPricesResult = await marketPricesPromise
+  if (!marketPricesResult.error) {
+    const pricedAt = Date.now()
+    kills = kills.map((event) => ({
+      ...event,
+      lossValuation: valuateEquipment(event.victim?.equipment, marketPricesResult.rows, pricedAt),
+    }))
+    deaths = deaths.map((event) => ({
+      ...event,
+      lossValuation: valuateEquipment(event.victim?.equipment, marketPricesResult.rows, pricedAt),
+    }))
+  } else {
+    pricingAvailable = false
+    console.error('Błąd wyceny ekwipunku Killboardu:', marketPricesResult.error)
+    warnings.push('Regionalna wycena utraconego ekwipunku jest chwilowo niedostępna.')
+  }
+
+  return {
+    player: profile,
+    kills,
+    deaths,
+    guild,
+    warnings,
+    marketPricing: {
+      available: pricingAvailable,
+      source: 'Albion Online Data Project',
+      region: activeRegion,
+      freshWithinHours: 12,
+      agingWithinHours: 48,
+    },
+  }
 }
 
 export async function searchAlbionGuilds(query, region) {

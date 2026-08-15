@@ -42,9 +42,9 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **P5: stabilizacja po audycie z 14 sierpnia 2026**
+> **Priorytet D: dane Albionu i narzędzia**
 
-Zakres implementacyjny P5.0–P5.4 jest ukończony: bezpieczeństwo Supabase, prawdziwe przepływy konta, moderacja, PWA, zależności i optymalizacje mobile zostały wdrożone. Powtórne pomiary Lighthouse świadomie odkładamy; po domknięciu P5.3 kolejnym etapem produktowym jest Priorytet C, zaczynając od pełnych publicznych profili graczy.
+Zakres P5 oraz Priorytet C są ukończone. Etap D.1 zastąpił heurystyczne ceny zestawów w Killboardzie regionalną wyceną z Albion Online Data Project, oceną aktualności skanów i jawnym fallbackiem. Następnym etapem jest D.2: porównanie buildów, umiejętności przedmiotów i kosztu zestawu w wybranych miastach.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -221,7 +221,11 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 
 ### Priorytet D — dane Albionu i narzędzia
 
-- [ ] wyceniać utracony ekwipunek w Killboardzie na podstawie wybranego regionu i aktualności ceny
+- [x] wyceniać utracony ekwipunek w Killboardzie na podstawie wybranego regionu i aktualności ceny
+  - [x] pobierać ceny wyposażenia ofiary z właściwego hosta Europa, Ameryka lub Azja i grupować zapytania w bezpieczne paczki
+  - [x] preferować najświeższą klasę ofert sprzedaży, używać ceny kupna tylko jako jawnego fallbacku i raportować pokrycie zestawu
+  - [x] prezentować łączną wartość strat, miasto skanu, wiek danych oraz status świeże / starsze / nieaktualne
+  - [x] objąć logikę wyceny testami jednostkowymi i przepływ Killboardu testem E2E
 - [ ] dodać porównanie buildów, umiejętności przedmiotów oraz koszt zestawu w wybranych miastach
 - [ ] umożliwić zapis obserwowanych postaci i automatyczne podsumowania ich nowych walk
 - [ ] aktualizować katalog przedmiotów automatycznie z wersjonowanym fallbackiem lokalnym
