@@ -115,7 +115,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByText('Wartość utraconego zestawu')).toBeVisible()
     await expect(page.getByText('125 000 Silver')).toBeVisible()
     await expect(page.getByText(/Świeże · 2 h/)).toBeVisible()
-    await expect(page.getByText(/Straty przeciwników: 125 tys\. Silver/)).toBeVisible()
+    await expect(page.getByText(/Straty przeciwników:\s*125\s*tys\.\s*Silver/)).toBeVisible()
   })
 
   test('otwiera prywatną skrzynkę handlową i jej API', async ({ page, request }) => {
