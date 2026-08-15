@@ -30,6 +30,7 @@ test.describe('publiczna bramka portalu', () => {
     const moderationQueue = await request.get('/api/admin/content')
     const roleManagement = await request.get('/api/admin/roles')
     const eventCalendar = await request.get('/api/events')
+    const followedEntities = await request.get('/api/follows')
     const profileVerification = await request.post('/api/profile/verify', {
       data: { playerId: 'anonymous-test', region: 'europe' },
     })
@@ -42,6 +43,7 @@ test.describe('publiczna bramka portalu', () => {
     expect(moderationQueue.status()).toBe(401)
     expect(roleManagement.status()).toBe(401)
     expect(eventCalendar.status()).toBe(401)
+    expect(followedEntities.status()).toBe(401)
     expect(profileVerification.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
   })
@@ -88,7 +90,7 @@ test.describe('publiczna bramka portalu', () => {
     expect(cacheState.cachedUrls.some((path) => path.startsWith('/auth/'))).toBe(false)
   })
 
-  for (const path of ['/buildy', '/gildie', '/kalendarz', '/killboard', '/loot-split', '/wyprawy', '/admin']) {
+  for (const path of ['/buildy', '/gildie', '/kalendarz', '/killboard', '/loot-split', '/obserwowane', '/wyprawy', '/admin']) {
     test(`blokuje gościom ${path}`, async ({ page }) => {
       await page.goto(path)
 

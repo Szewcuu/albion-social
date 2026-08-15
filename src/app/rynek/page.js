@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User, ExternalLink, RefreshCw, Clock } from 'lucide-react'
 import CustomSelect from '@/components/ui/CustomSelect'
 import FavoriteButton from '@/components/ui/FavoriteButton'
+import FollowButton from '@/components/ui/FollowButton'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 
 const LiveMarketPriceEstimator = dynamic(() => import('@/components/market/LiveMarketPriceEstimator'), {
@@ -69,6 +70,13 @@ export default function Rynek() {
     const timer = window.setTimeout(fetchOffers, 0)
     return () => window.clearTimeout(timer)
   }, [fetchOffers])
+
+  useEffect(() => {
+    if (loading) return
+    const offerId = new URLSearchParams(window.location.search).get('offer')
+    if (!offerId) return
+    window.requestAnimationFrame(() => document.getElementById(`offer-${offerId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }, [loading])
 
   const handleCreateOffer = async (e) => {
     e.preventDefault()
@@ -383,6 +391,7 @@ export default function Rynek() {
                   return (
                     <article
                       key={offer.id}
+                      id={`offer-${offer.id}`}
                       className={`panel p-5 transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isExpired ? 'opacity-70 border-rose-500/20' : 'hover:border-[var(--amber-muted)]'}`}
                     >
                       <div className="flex items-start gap-4 min-w-0 flex-1">
@@ -422,7 +431,7 @@ export default function Rynek() {
 
                           <div className="flex items-center justify-between gap-3">
                             <h3 className="font-display text-xl font-black leading-tight text-[#fff]">{offer.title}</h3>
-                            <FavoriteButton id={offer.id} title={offer.title} type="market" />
+                            <div className="flex shrink-0 items-center gap-2"><FavoriteButton id={offer.id} title={offer.title} type="market" />{!isOwner && <FollowButton id={offer.id} name={offer.title} type="market" compact />}</div>
                           </div>
                           
                           <div className="text-[10px] font-bold uppercase tracking-[.14em] text-[var(--text-secondary)] flex items-center gap-1.5 flex-wrap">

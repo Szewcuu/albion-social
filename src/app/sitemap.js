@@ -13,6 +13,7 @@ export default async function sitemap() {
     '/wyprawy',
     '/kalendarz',
     '/profil',
+    '/obserwowane',
     '/prywatnosc',
     '/regulamin'
   ].map(route => ({

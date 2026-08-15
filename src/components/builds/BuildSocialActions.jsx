@@ -5,6 +5,7 @@ import { Bookmark, Check, Share2, ThumbsUp } from 'lucide-react'
 
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { supabase } from '@/lib/supabase'
+import FollowButton from '@/components/ui/FollowButton'
 
 async function readJson(response) {
   const payload = await response.json().catch(() => ({}))
@@ -12,7 +13,7 @@ async function readJson(response) {
   return payload
 }
 
-export default function BuildSocialActions({ buildId, initialVotes = 0 }) {
+export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 }) {
   const [user, setUser] = useState(null)
   const [votes, setVotes] = useState(initialVotes)
   const [userVote, setUserVote] = useState(false)
@@ -127,6 +128,8 @@ export default function BuildSocialActions({ buildId, initialVotes = 0 }) {
           {userVote ? 'Lubisz' : 'Polub'}
           <span className="rounded-md bg-black/20 px-1.5 py-0.5 font-mono text-[10px]">{votes}</span>
         </button>
+
+        {user?.id !== ownerId && <FollowButton id={buildId} name="ten build" type="build" />}
 
         <button
           type="button"

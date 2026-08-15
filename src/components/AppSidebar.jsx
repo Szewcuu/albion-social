@@ -16,6 +16,7 @@ import {
   User,
   ShieldCheck,
   CalendarDays,
+  BellRing,
   X,
 } from 'lucide-react'
 
@@ -49,6 +50,7 @@ const NAV_SECTIONS = [
     label: 'Gracz',
     items: [
       { href: '/profil', label: 'Mój Profil', icon: User, desc: 'Postać' },
+      { href: '/obserwowane', label: 'Obserwowane', icon: BellRing, desc: 'Wartownia zmian' },
     ],
   },
 ]

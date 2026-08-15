@@ -49,6 +49,12 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('otwiera Wartownię obserwowanych elementów', async ({ page }) => {
+    await page.goto('/obserwowane')
+    await expect(page.getByRole('heading', { name: 'Obserwowane' })).toBeVisible()
+    await expect(page.getByText(/Buildy, gildie, oferty i gracze/)).toBeVisible()
+  })
+
   test('zapisuje i przywraca lokalny szkic podziału łupów', async ({ page }) => {
     await page.goto('/loot-split')
     await page.getByLabel('Nazwa rozliczenia').fill('E2E Ava Roads')

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, CalendarDays, CheckCheck, ChevronDown, LogIn, LogOut, Map, Menu, RefreshCw, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, Sparkles } from 'lucide-react'
+import { Bell, BookOpen, CalendarDays, CheckCheck, ChevronDown, LogIn, LogOut, Map, Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound } from 'lucide-react'
 
 const PAGE_NAMES = {
   '/': 'Tawerna',
@@ -19,6 +19,7 @@ const PAGE_NAMES = {
   '/wyprawy': 'Wyprawy & Party',
   '/kalendarz': 'Kalendarz Wydarzeń',
   '/profil': 'Mój Profil',
+  '/obserwowane': 'Obserwowane',
   '/regulamin': 'Regulamin',
   '/prywatnosc': 'Polityka Prywatności',
 }
@@ -29,6 +30,9 @@ const getNotificationIcon = (type, title) => {
   if (t.includes('market') || t.includes('rynek') || t.includes('ofert')) return ShoppingBag
   if (t.includes('comment') || t.includes('komentarz')) return MessageSquare
   if (t.includes('event') || t.includes('wydarzeni')) return CalendarDays
+  if (t.includes('build')) return BookOpen
+  if (t.includes('guild') || t.includes('gildi')) return Shield
+  if (t.includes('player') || t.includes('gracz')) return UserRound
   if (t.includes('system') || t.includes('admin') || t.includes('kara')) return ShieldAlert
   return Bell
 }

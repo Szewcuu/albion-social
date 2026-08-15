@@ -204,7 +204,10 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] dodać globalny kalendarz z filtrami serwera, typu wydarzenia i własnych zapisów
   - [x] dodać role, limit miejsc, kolejkę rezerwową oraz wydarzenia publiczne i tylko dla gildii
   - [x] wysyłać przypomnienia i informacje o odwołaniu przez centrum powiadomień
-- [ ] dodać obserwowanie buildów, gildii, ofert i graczy oraz powiadomienia o zmianach
+- [x] dodać obserwowanie buildów, gildii, ofert i graczy oraz powiadomienia o zmianach
+  - [x] dodać trwałą Wartownię obserwowanych elementów i przyciski w czterech typach treści
+  - [x] powiadamiać o nowych buildach i ofertach graczy, komentarzach buildów, wydarzeniach gildii i zmianach ofert
+  - [x] zabezpieczyć obserwacje RLS, jawnymi grantami, walidacją encji i ochroną przed obserwowaniem własnych treści
 - [ ] rozbudować komentarze o odpowiedzi, edycję własnej treści i sortowanie
 - [ ] dodać bezpieczny przepływ kontaktu kupujący–sprzedający bez publikowania danych prywatnych
 

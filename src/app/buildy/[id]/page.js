@@ -139,7 +139,7 @@ export default async function BuildDetailPage({ params }) {
             </div>
 
             <div className="mt-6">
-              <BuildSocialActions buildId={row.id} initialVotes={votes} />
+              <BuildSocialActions buildId={row.id} ownerId={row.user_id} initialVotes={votes} />
             </div>
           </div>
         </header>
@@ -188,7 +188,7 @@ export default async function BuildDetailPage({ params }) {
               </section>
             )}
 
-            <BuildComments buildId={row.id} />
+            <div id="comments"><BuildComments buildId={row.id} /></div>
           </div>
 
           <aside className="space-y-5">
