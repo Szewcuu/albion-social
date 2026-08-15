@@ -36,9 +36,14 @@ export const test = base.extend({
     }
     const onRequestFailed = (request) => {
       const requestUrl = new URL(request.url())
+      const failure = request.failure()?.errorText || 'unknown error'
       if (requestUrl.pathname.startsWith('/_vercel/speed-insights/')) return
+      // Next.js may cancel speculative RSC prefetches when a component rerenders or
+      // navigation changes. Chromium reports those intentional cancellations as a
+      // failed request even though the visible navigation succeeds.
+      if (failure === 'net::ERR_ABORTED' && requestUrl.searchParams.has('_rsc')) return
       if (trackedOrigins.has(requestUrl.origin)) {
-        issues.push(`requestfailed: ${request.failure()?.errorText || 'unknown error'} ${request.url()}`)
+        issues.push(`requestfailed: ${failure} ${request.url()}`)
       }
     }
 
