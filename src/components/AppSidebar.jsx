@@ -69,7 +69,7 @@ export default function AppSidebar({ isOpen, isAdmin = false, onClose }) {
       <aside className={`sidebar ${isOpen ? 'open' : ''}`} aria-label="Główna nawigacja">
         {/* Brand */}
         <div className="sidebar-brand">
-          <Link href="/" className="sidebar-brand-link" onClick={onClose} aria-label="Albion Polska — strona główna">
+          <Link href="/" className="sidebar-brand-link" onClick={onClose}>
             <span className="sidebar-brand-icon"><Image src="/logo-256.webp" alt="" width={42} height={42} priority /></span>
             <span className="sidebar-brand-text">
               <strong>Albion Polska</strong>
