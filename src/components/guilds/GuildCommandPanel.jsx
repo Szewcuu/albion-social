@@ -13,6 +13,9 @@ const EMPTY_EVENT = {
   eventType: 'ZvZ',
   startsAt: '',
   server: 'Europa',
+  location: '',
+  audience: 'public',
+  capacity: 20,
 }
 
 async function readJson(response) {
@@ -116,8 +119,15 @@ export default function GuildCommandPanel({ guild, onChanged }) {
             </label>
             <CustomSelect label="Typ" value={eventForm.eventType} onChange={(value) => setEventForm((current) => ({ ...current, eventType: value }))} options={['ZvZ', 'PvP', 'PvE', 'Avalon', 'Ekonomia', 'Spotkanie', 'Inne']} />
             <CustomSelect label="Serwer" value={eventForm.server} onChange={(value) => setEventForm((current) => ({ ...current, server: value }))} options={['Europa', 'Ameryka', 'Azja']} />
+            <CustomSelect label="Dostęp" value={eventForm.audience} onChange={(value) => setEventForm((current) => ({ ...current, audience: value }))} options={[{ value: 'public', label: 'Cała społeczność' }, { value: 'guild', label: 'Tylko członkowie gildii' }]} />
+            <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Limit miejsc
+              <input type="number" min="2" max="200" required value={eventForm.capacity} onChange={(event) => setEventForm((current) => ({ ...current, capacity: Number(event.target.value) }))} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
+            </label>
             <label className="sm:col-span-2 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Termin
               <input type="datetime-local" required value={eventForm.startsAt} onChange={(event) => setEventForm((current) => ({ ...current, startsAt: event.target.value }))} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
+            </label>
+            <label className="sm:col-span-2 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Miejsce zbiórki
+              <input maxLength={120} value={eventForm.location} onChange={(event) => setEventForm((current) => ({ ...current, location: event.target.value }))} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" placeholder="np. Fort Sterling, hideout, kanał Discord" />
             </label>
             <label className="sm:col-span-2 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Opis
               <textarea rows={3} maxLength={600} value={eventForm.description} onChange={(event) => setEventForm((current) => ({ ...current, description: event.target.value }))} className="mt-1.5 w-full resize-y rounded-xl border px-3 py-3 text-sm font-normal normal-case leading-6 tracking-normal text-[var(--text-primary)] outline-none" />

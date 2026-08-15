@@ -200,7 +200,10 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] dodać centrum gildii z manifestem, publicznym składem, wydarzeniami i kroniką
   - [x] dodać panel dowodzenia lidera/oficera, trwałą rekrutację i powiadomienia kandydatów
   - [x] wdrożyć atomowe przyjmowanie podań, RLS, jawne granty i indeksy na produkcyjnym Supabase
-- [ ] dodać kalendarz wydarzeń oraz zapisy z przypomnieniami w centrum powiadomień
+- [x] dodać kalendarz wydarzeń oraz zapisy z przypomnieniami w centrum powiadomień
+  - [x] dodać globalny kalendarz z filtrami serwera, typu wydarzenia i własnych zapisów
+  - [x] dodać role, limit miejsc, kolejkę rezerwową oraz wydarzenia publiczne i tylko dla gildii
+  - [x] wysyłać przypomnienia i informacje o odwołaniu przez centrum powiadomień
 - [ ] dodać obserwowanie buildów, gildii, ofert i graczy oraz powiadomienia o zmianach
 - [ ] rozbudować komentarze o odpowiedzi, edycję własnej treści i sortowanie
 - [ ] dodać bezpieczny przepływ kontaktu kupujący–sprzedający bez publikowania danych prywatnych

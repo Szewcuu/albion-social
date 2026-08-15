@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, CheckCheck, ChevronDown, LogIn, LogOut, Map, Menu, RefreshCw, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, Sparkles } from 'lucide-react'
+import { Bell, CalendarDays, CheckCheck, ChevronDown, LogIn, LogOut, Map, Menu, RefreshCw, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, Sparkles } from 'lucide-react'
 
 const PAGE_NAMES = {
   '/': 'Tawerna',
@@ -17,6 +17,7 @@ const PAGE_NAMES = {
   '/loot-split': 'Podział Łupów',
   '/timery': 'Timery Świata',
   '/wyprawy': 'Wyprawy & Party',
+  '/kalendarz': 'Kalendarz Wydarzeń',
   '/profil': 'Mój Profil',
   '/regulamin': 'Regulamin',
   '/prywatnosc': 'Polityka Prywatności',
@@ -27,6 +28,7 @@ const getNotificationIcon = (type, title) => {
   if (t.includes('expedition') || t.includes('wypraw') || t.includes('zgłoszeni')) return Swords
   if (t.includes('market') || t.includes('rynek') || t.includes('ofert')) return ShoppingBag
   if (t.includes('comment') || t.includes('komentarz')) return MessageSquare
+  if (t.includes('event') || t.includes('wydarzeni')) return CalendarDays
   if (t.includes('system') || t.includes('admin') || t.includes('kara')) return ShieldAlert
   return Bell
 }

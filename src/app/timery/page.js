@@ -1,7 +1,7 @@
 'use client'
 
 import CustomSelect from '@/components/ui/CustomSelect'
-import EventCalendarWidget from '@/components/events/EventCalendarWidget'
+import Link from 'next/link'
 
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -246,7 +246,7 @@ export default function TimeryPage() {
           </div>
         </section>
 
-        <EventCalendarWidget />
+        <section className="panel flex flex-col gap-4 rounded-[24px] border-violet-300/15 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Kalendarz społeczności</p><h2 className="font-display mt-1 text-xl font-black text-white">Prawdziwe wydarzenia i zapisy</h2><p className="mt-2 text-xs text-[var(--text-secondary)]">Mobilizacje gildii, role w składzie i przypomnienia znajdziesz w jednym kalendarzu.</p></div><Link href="/kalendarz" className="btn btn-primary inline-flex min-h-11 shrink-0 items-center justify-center gap-2 px-5 text-xs font-black"><CalendarClock className="h-4 w-4" /> Otwórz kalendarz</Link></section>
 
         <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
           <section className="panel rounded-[28px] p-5 sm:p-6">

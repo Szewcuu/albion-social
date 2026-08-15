@@ -11,6 +11,7 @@ export default async function sitemap() {
     '/loot-split',
     '/timery',
     '/wyprawy',
+    '/kalendarz',
     '/profil',
     '/prywatnosc',
     '/regulamin'
