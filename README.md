@@ -213,7 +213,11 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] naprawić RLS edycji własnego komentarza oraz ograniczyć granty do dozwolonych kolumn
   - [x] sortować całe wątki według aktywności, daty najnowszej lub najstarszej
   - [x] zachować odpowiedzi po usunięciu komentarza nadrzędnego i ograniczyć głębokość wątku w bazie
-- [ ] dodać bezpieczny przepływ kontaktu kupujący–sprzedający bez publikowania danych prywatnych
+- [x] dodać bezpieczny przepływ kontaktu kupujący–sprzedający bez publikowania danych prywatnych
+  - [x] zastąpić publiczne pola Discord/kontakt prywatnym wątkiem powiązanym z ofertą
+  - [x] dodać skrzynkę handlową, historię odpowiedzi, licznik nieprzeczytanych oraz zamykanie i wznawianie rozmów
+  - [x] zabezpieczyć rozmowy i wiadomości RLS, jawnymi grantami service-only, kontrolą uczestników i trwałym rate limitingiem
+  - [x] odciąć klientowi dostęp do historycznych pól kontaktowych i ograniczyć rynek do bezpiecznych kolumn
 
 ### Priorytet D — dane Albionu i narzędzia
 

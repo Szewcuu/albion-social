@@ -90,7 +90,7 @@ test.describe('publiczna bramka portalu', () => {
     expect(cacheState.cachedUrls.some((path) => path.startsWith('/auth/'))).toBe(false)
   })
 
-  for (const path of ['/buildy', '/gildie', '/kalendarz', '/killboard', '/loot-split', '/obserwowane', '/wyprawy', '/admin']) {
+  for (const path of ['/buildy', '/gildie', '/kalendarz', '/killboard', '/loot-split', '/obserwowane', '/wiadomosci', '/wyprawy', '/admin']) {
     test(`blokuje gościom ${path}`, async ({ page }) => {
       await page.goto(path)
 

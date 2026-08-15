@@ -20,6 +20,7 @@ const PAGE_NAMES = {
   '/kalendarz': 'Kalendarz Wydarzeń',
   '/profil': 'Mój Profil',
   '/obserwowane': 'Obserwowane',
+  '/wiadomosci': 'Skrzynka handlowa',
   '/regulamin': 'Regulamin',
   '/prywatnosc': 'Polityka Prywatności',
 }
@@ -164,6 +165,7 @@ export default function TopBar({
               </button>
               {showUserMenu && (
                 <div className="user-popover">
+                  <Link href="/wiadomosci" onClick={() => setShowUserMenu(false)}><MessageSquare /> Skrzynka handlowa</Link>
                   <button onClick={() => { logout(); setShowUserMenu(false) }}><LogOut /> Wyloguj się</button>
                 </div>
               )}

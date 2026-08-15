@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       id: 'data',
       title: 'Jakie dane przetwarzamy',
       icon: Database,
-      content: <><p><strong className="text-[#eee7d9]">Konto Discord:</strong> identyfikator konta, nazwa, awatar oraz adres e-mail, jeżeli Discord udostępni go w procesie logowania.</p><p><strong className="text-[#eee7d9]">Karta postaci:</strong> dobrowolnie wpisany nick w grze, serwer, gildia, rola i deklarowane Item Power.</p><p><strong className="text-[#eee7d9]">Treści społecznościowe:</strong> wiadomości czatu, ogłoszenia gildii i rynku P2P, wyprawy, zapisy, buildy, dane kontaktowe podane w ogłoszeniu oraz powiadomienia.</p><p><strong className="text-[#eee7d9]">Dane techniczne:</strong> dane sesji, podstawowe logi bezpieczeństwa i działania aplikacji oraz zagregowane pomiary wydajności.</p></>,
+      content: <><p><strong className="text-[#eee7d9]">Konto Discord:</strong> identyfikator konta, nazwa, awatar oraz adres e-mail, jeżeli Discord udostępni go w procesie logowania.</p><p><strong className="text-[#eee7d9]">Karta postaci:</strong> dobrowolnie wpisany nick w grze, serwer, gildia, rola i deklarowane Item Power.</p><p><strong className="text-[#eee7d9]">Treści społecznościowe:</strong> wiadomości czatu, ogłoszenia gildii i rynku P2P, prywatne rozmowy kupującego ze sprzedającym, wyprawy, zapisy, buildy oraz powiadomienia. Prywatne rozmowy są widoczne wyłącznie dla ich uczestników.</p><p><strong className="text-[#eee7d9]">Dane techniczne:</strong> dane sesji, podstawowe logi bezpieczeństwa i działania aplikacji oraz zagregowane pomiary wydajności.</p></>,
     },
     {
       id: 'purposes',
@@ -68,5 +68,5 @@ export default function PrivacyPage() {
     },
   ]
 
-  return <LegalDocument type="privacy" eyebrow="Skarbiec danych • Prywatność" title="Twoje dane mają służyć Tobie," highlightedTitle="nie być ukrytym kosztem portalu." description="Przejrzyste podsumowanie informacji, które zapisujemy, powodów ich użycia oraz praw przysługujących użytkownikowi." icon={LockKeyhole} stats={[{ label: 'Aktualizacja', value: '1 sierpnia 2026' }, { label: 'Logowanie', value: 'Discord OAuth' }, { label: 'Baza danych', value: 'Supabase' }]} sections={sections} notice="Operator powinien przed dalszą komercjalizacją lub rozszerzeniem projektu uzupełnić pełną nazwę i adres kontaktowy administratora oraz zatwierdzić okresy retencji z ustawieniami Supabase i Vercel." />
+  return <LegalDocument type="privacy" eyebrow="Skarbiec danych • Prywatność" title="Twoje dane mają służyć Tobie," highlightedTitle="nie być ukrytym kosztem portalu." description="Przejrzyste podsumowanie informacji, które zapisujemy, powodów ich użycia oraz praw przysługujących użytkownikowi." icon={LockKeyhole} stats={[{ label: 'Aktualizacja', value: '15 sierpnia 2026' }, { label: 'Logowanie', value: 'Discord OAuth' }, { label: 'Baza danych', value: 'Supabase' }]} sections={sections} notice="Operator powinien przed dalszą komercjalizacją lub rozszerzeniem projektu uzupełnić pełną nazwę i adres kontaktowy administratora oraz zatwierdzić okresy retencji z ustawieniami Supabase i Vercel." />
 }

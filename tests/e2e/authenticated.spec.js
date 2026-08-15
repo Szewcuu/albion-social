@@ -77,6 +77,26 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('otwiera prywatną skrzynkę handlową i jej API', async ({ page, request }) => {
+    await page.goto('/wiadomosci')
+    await expect(page.getByRole('heading', { name: 'Skrzynka handlowa' })).toBeVisible()
+    await expect(page.getByText(/Tylko uczestnicy rozmowy/)).toBeVisible()
+
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage)
+        .find((key) => /^sb-.+-auth-token$/.test(key))
+      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
+    })
+    expect(accessToken).toBeTruthy()
+
+    const response = await request.get('/api/market/conversations', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    expect(response.status()).toBe(200)
+    const payload = await response.json()
+    expect(Array.isArray(payload.conversations)).toBe(true)
+  })
+
   test('otwiera Wartownię obserwowanych elementów', async ({ page }) => {
     await page.goto('/obserwowane')
     await expect(page.getByRole('heading', { name: 'Obserwowane' })).toBeVisible()
