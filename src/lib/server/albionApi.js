@@ -239,16 +239,25 @@ export async function searchAlbionPlayers(query, region) {
   }))
 }
 
-export async function searchAlbionPlayersAllRegions(query, preferredRegion = 'europe') {
-  const regions = ['europe', 'america', 'asia']
+export async function searchAlbionPlayersAllRegionsDetailed(query, preferredRegion = 'europe', excludedRegions = []) {
+  const excluded = new Set(excludedRegions)
+  const regions = ['europe', 'america', 'asia'].filter((region) => !excluded.has(region))
   const results = await Promise.allSettled(
     regions.map((r) => searchAlbionPlayers(query, r))
   )
 
   const allPlayers = []
-  results.forEach((res) => {
+  const unavailableRegions = []
+  results.forEach((res, index) => {
     if (res.status === 'fulfilled' && Array.isArray(res.value)) {
       allPlayers.push(...res.value)
+    } else if (res.status === 'rejected') {
+      const error = res.reason
+      unavailableRegions.push({
+        region: regions[index],
+        code: error?.code || 'UPSTREAM_UNAVAILABLE',
+        status: error?.status || 503,
+      })
     }
   })
 
@@ -265,7 +274,16 @@ export async function searchAlbionPlayersAllRegions(query, preferredRegion = 'eu
     return (b.killFame || 0) - (a.killFame || 0)
   })
 
-  return allPlayers
+  return {
+    players: allPlayers,
+    checkedRegions: regions.filter((region) => !unavailableRegions.some((item) => item.region === region)),
+    unavailableRegions,
+  }
+}
+
+export async function searchAlbionPlayersAllRegions(query, preferredRegion = 'europe') {
+  const result = await searchAlbionPlayersAllRegionsDetailed(query, preferredRegion)
+  return result.players
 }
 
 export async function getAlbionPlayerOverview(playerIdOrNick, region, limit = 6) {
@@ -362,8 +380,8 @@ export async function getAlbionPlayerOverview(playerIdOrNick, region, limit = 6)
   if (profile.guildId) {
     const guildId = encodeURIComponent(profile.guildId)
     const [guildResult, membersResult] = await Promise.allSettled([
-      fetchAlbionJson(`/guilds/${guildId}`, { region, revalidate: 600, timeoutMs: 8000 }),
-      fetchAlbionJson(`/guilds/${guildId}/members`, { region, revalidate: 600, timeoutMs: 12000 }),
+      fetchAlbionJson(`/guilds/${guildId}`, { region: activeRegion, revalidate: 600, timeoutMs: 8000 }),
+      fetchAlbionJson(`/guilds/${guildId}/members`, { region: activeRegion, revalidate: 600, timeoutMs: 12000 }),
     ])
 
     if (guildResult.status === 'fulfilled') {

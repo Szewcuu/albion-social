@@ -36,7 +36,8 @@ function SlotCell({ slot, slotData, onChange, offHandBlocked }) {
 }
 
 export default function EquipmentGrid({ slots, onSlotChange }) {
-  const offHandBlocked = isTwoHandedWeapon(slots.main_hand?.main)
+  const safeSlots = slots && typeof slots === 'object' ? slots : {}
+  const offHandBlocked = isTwoHandedWeapon(safeSlots.main_hand?.main)
 
   const getSlot = (key) => EQUIPMENT_SLOTS.find(s => s.key === key)
 
@@ -52,7 +53,7 @@ export default function EquipmentGrid({ slots, onSlotChange }) {
             <SlotCell
               key={key}
               slot={getSlot(key)}
-              slotData={slots[key]}
+              slotData={safeSlots[key]}
               onChange={(data) => onSlotChange(key, data)}
               offHandBlocked={offHandBlocked}
             />
@@ -70,6 +71,7 @@ export default function EquipmentGrid({ slots, onSlotChange }) {
 }
 
 export function EquipmentPreview({ slots, size = 'md' }) {
+  const safeSlots = slots && typeof slots === 'object' ? slots : {}
   const isCard = size === 'card'
   const iconSize = size === 'sm' ? 'h-8 w-8' : isCard ? 'h-14 w-14' : 'h-11 w-11'
   const cellSize = size === 'sm' ? 'min-h-10' : isCard ? 'min-h-16' : 'min-h-14'
@@ -80,7 +82,7 @@ export function EquipmentPreview({ slots, size = 'md' }) {
     <div className={`mx-auto grid w-full grid-cols-3 gap-2 ${layoutWidth}`}>
       {EQUIPMENT_LAYOUT.flatMap((row, rowIndex) => row.map((key, columnIndex) => {
         if (!key) return <div key={`empty-${rowIndex}-${columnIndex}`} aria-hidden="true" />
-        const itemId = slots[key]?.main
+        const itemId = safeSlots[key]?.main
         return (
           <div key={key} className={`relative grid ${cellSize} place-items-center rounded-md border border-white/8 bg-black/20`}>
             {itemId ? (

@@ -46,6 +46,7 @@ async function readHealthData(supabase) {
   return {
     checks: [...latestByService.values()],
     events: eventsResult.data || [],
+    generatedAt: new Date().toISOString(),
   }
 }
 

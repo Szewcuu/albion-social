@@ -85,7 +85,7 @@ export default function AdminPage() {
   const [selectedReportIds, setSelectedReportIds] = useState([])
   const [auditEntries, setAuditEntries] = useState([])
   const [roleUsers, setRoleUsers] = useState([])
-  const [health, setHealth] = useState({ checks: [], events: [] })
+  const [health, setHealth] = useState({ checks: [], events: [], generatedAt: null })
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(null)
@@ -165,7 +165,7 @@ export default function AdminPage() {
       const response = await authenticatedFetch('/api/admin/health', { cache: 'no-store' })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Nie udało się pobrać monitoringu.')
-      setHealth({ checks: payload.checks || [], events: payload.events || [] })
+      setHealth({ checks: payload.checks || [], events: payload.events || [], generatedAt: payload.generatedAt || new Date().toISOString() })
       setNotice(runChecks ? { type: 'success', text: 'Kontrola integracji została zakończona.' } : null)
     } catch (error) {
       setNotice({ type: 'error', text: error.message })
@@ -348,6 +348,9 @@ export default function AdminPage() {
 }
 
 function HealthPanel({ health, busy, onRefresh, onRun }) {
+  const historicalAfterMs = 24 * 60 * 60 * 1000
+  const generatedAtMs = health.generatedAt ? new Date(health.generatedAt).getTime() : 0
+
   return (
     <div className="space-y-5">
       <section className="panel overflow-hidden">
@@ -367,7 +370,11 @@ function HealthPanel({ health, busy, onRefresh, onRun }) {
       <section className="panel overflow-hidden">
         <PanelHeading eyebrow="Frontend i backend" title="Ostatnie błędy" />
         <div className="space-y-2 p-4">
-          {health.events.length === 0 ? <EmptyState icon={CheckCircle2} title="Brak zarejestrowanych awarii" description="Nowe błędy aplikacji i integracji pojawią się tutaj." /> : health.events.map((event) => <article key={event.id} className="grid gap-3 rounded-xl border border-[var(--border)] bg-black/15 p-4 sm:grid-cols-[130px_1fr_auto]"><span className={`badge ${event.level === 'error' ? 'badge-rose' : 'badge-amber'} w-fit`}>{event.source}</span><div><strong className="text-xs text-white">{event.event_type}</strong><p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{event.message}</p></div><time className="flex items-center gap-1 text-[9px] text-[var(--text-muted)]"><Clock3 className="h-3 w-3" /> {new Date(event.created_at).toLocaleString('pl-PL')}</time></article>)}
+          {health.events.length > 0 && <p className="pb-1 text-[10px] leading-4 text-[var(--text-muted)]">To dziennik zdarzeń, nie lista aktywnych awarii. Wpis bez nawrotu przez ponad 24 godziny oznaczamy jako historyczny.</p>}
+          {health.events.length === 0 ? <EmptyState icon={CheckCircle2} title="Brak zarejestrowanych awarii" description="Nowe błędy aplikacji i integracji pojawią się tutaj." /> : health.events.map((event) => {
+            const historical = generatedAtMs - new Date(event.created_at).getTime() > historicalAfterMs
+            return <article key={event.id} className={`grid gap-3 rounded-xl border p-4 sm:grid-cols-[150px_1fr_auto] ${historical ? 'border-[var(--border)] bg-black/10 opacity-70' : 'border-rose-400/20 bg-rose-400/[.035]'}`}><div className="flex flex-wrap gap-1"><span className={`badge ${event.level === 'error' ? 'badge-rose' : 'badge-amber'} w-fit`}>{event.source}</span>{historical && <span className="badge w-fit">Historyczny</span>}</div><div><strong className="text-xs text-white">{event.event_type}</strong><p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{event.message}</p>{historical && <p className="mt-1 text-[9px] text-emerald-300/70">Brak zarejestrowanego nawrotu w ciągu ostatnich 24 godzin.</p>}</div><time className="flex items-center gap-1 text-[9px] text-[var(--text-muted)]"><Clock3 className="h-3 w-3" /> {new Date(event.created_at).toLocaleString('pl-PL')}</time></article>
+          })}
         </div>
       </section>
     </div>
