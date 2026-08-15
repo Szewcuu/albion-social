@@ -38,6 +38,8 @@ const INITIAL_FORM = {
   guild_name: '',
   main_role: 'DPS',
   avg_ip: 1400,
+  bio: '',
+  favorite_builds_public: false,
 }
 
 const ROLE_STYLES = {
@@ -101,6 +103,8 @@ export default function ProfilePage() {
         guild_name: profileResult.data.guild_name || '',
         main_role: profileResult.data.main_role || 'DPS',
         avg_ip: profileResult.data.avg_ip || 1400,
+        bio: profileResult.data.bio || '',
+        favorite_builds_public: Boolean(profileResult.data.favorite_builds_public),
       })
       if (profileResult.data.is_verified && profileResult.data.verified_player_id) {
         const pId = profileResult.data.verified_player_id
@@ -166,9 +170,10 @@ export default function ProfilePage() {
     const nick = formData.ingame_nick.trim()
     const guild = formData.guild_name.trim()
     const avgIp = Number(formData.avg_ip)
+    const bio = formData.bio.trim()
 
-    if (nick.length > 80 || guild.length > 100 || !Number.isInteger(avgIp) || avgIp < 0 || avgIp > 3000) {
-      setNotice({ type: 'error', text: 'Sprawdź długość nazw i podaj Item Power od 0 do 3000.' })
+    if (nick.length > 80 || guild.length > 100 || bio.length > 500 || !Number.isInteger(avgIp) || avgIp < 0 || avgIp > 3000) {
+      setNotice({ type: 'error', text: 'Sprawdź długość nazw i opisu oraz podaj Item Power od 0 do 3000.' })
       return
     }
 
@@ -182,6 +187,8 @@ export default function ProfilePage() {
         guild_name: guild,
         main_role: formData.main_role,
         avg_ip: avgIp,
+        bio,
+        favorite_builds_public: formData.favorite_builds_public,
       })
       .eq('id', user.id)
 
@@ -420,6 +427,32 @@ export default function ProfilePage() {
                     <input type="number" min="0" max="3000" value={formData.avg_ip} onChange={(event) => setFormData({ ...formData, avg_ip: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
                   </label>
                 </div>
+
+                <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">
+                  O mnie
+                  <textarea
+                    rows={4}
+                    maxLength={500}
+                    value={formData.bio}
+                    onChange={(event) => setFormData({ ...formData, bio: event.target.value })}
+                    placeholder="Napisz, czym grasz, jakiej aktywności szukasz i kiedy najczęściej jesteś online."
+                    className="mt-1.5 w-full resize-y rounded-xl border px-3 py-3 text-sm font-normal normal-case leading-6 tracking-normal text-[var(--text-primary)] outline-none"
+                  />
+                  <span className="mt-1 block text-right font-mono text-[9px] font-normal normal-case tracking-normal text-[var(--text-secondary)]">{formData.bio.length}/500</span>
+                </label>
+
+                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-black/20 p-4 normal-case tracking-normal">
+                  <input
+                    type="checkbox"
+                    checked={formData.favorite_builds_public}
+                    onChange={(event) => setFormData({ ...formData, favorite_builds_public: event.target.checked })}
+                    className="mt-0.5 h-4 w-4 accent-[var(--amber)]"
+                  />
+                  <span>
+                    <span className="block text-xs font-bold text-[var(--text-primary)]">Pokaż zapisane buildy na profilu</span>
+                    <span className="mt-1 block text-[10px] leading-5 text-[var(--text-secondary)]">Domyślnie ulubione są prywatne. Włącz tę opcję, jeśli chcesz polecać społeczności swoje zapisane doktryny.</span>
+                  </span>
+                </label>
 
                 <div className="flex flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
                   <p className="flex items-start gap-2 text-[10px] leading-5 text-[var(--text-secondary)]"><Gamepad2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" /> Nick i statystyki są deklarowane przez użytkownika.</p>

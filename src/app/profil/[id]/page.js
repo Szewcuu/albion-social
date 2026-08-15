@@ -1,413 +1,184 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import {
-  ShieldCheck,
-  Shield,
-  Swords,
-  ShoppingBag,
-  Users,
-  Award,
-  ExternalLink,
-  ArrowLeft,
-  Calendar,
-  Sparkles,
-} from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Activity, ArrowLeft, Bookmark, CalendarDays, ChevronRight, CircleUserRound, Compass, Crown, Flame, Heart, MessageSquare, Shield, ShieldCheck, ShoppingBag, Sparkles, Swords, Trophy } from 'lucide-react'
+
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
+import { EmptyState, SkeletonBlock } from '@/components/ui/FeedbackState'
 import { buildFromDbRow } from '@/lib/buildSlots'
+import { supabase } from '@/lib/supabase'
+
+const PROFILE_FIELDS = [
+  'id', 'username', 'avatar_url', 'created_at', 'ingame_nick', 'main_server',
+  'guild_name', 'main_role', 'avg_ip', 'bio', 'favorite_builds_public',
+  'is_verified', 'verified_player_id', 'verified_server', 'pvp_fame', 'pve_fame', 'verified_at',
+].join(', ')
+
+const BUILD_FIELDS = 'id, user_id, title, description, activity_type, weapon, offhand, helmet, armor, shoes, cape, head, potion, food, bag, build_data, votes_count, created_at, status, build_votes(id, vote_type)'
 
 const ROLE_STYLES = {
-  Tank: 'badge-sky',
-  Healer: 'badge-forest',
-  DPS: 'badge-blood',
-  Support: 'badge-purple',
+  Tank: 'border-sky-400/30 bg-sky-400/10 text-sky-200',
+  Healer: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
+  DPS: 'border-rose-400/30 bg-rose-400/10 text-rose-200',
+  Support: 'border-violet-400/30 bg-violet-400/10 text-violet-200',
 }
 
-function formatDate(value) {
-  if (!value) return 'Właśnie dołączył'
+function formatDate(value, withTime = false) {
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' })
+  if (!value || Number.isNaN(date.getTime())) return 'Data nieznana'
+  return new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    ...(withTime ? { hour: '2-digit', minute: '2-digit' } : {}),
+  }).format(date)
+}
+
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString('pl-PL')
+}
+
+function voteCount(build) {
+  return Math.max(
+    (build.build_votes || []).filter((vote) => vote.vote_type === 'up').length,
+    Number(build.votes_count || 0),
+  )
+}
+
+function ProfileSkeleton() {
+  return <div className="page-content space-y-5"><SkeletonBlock className="h-12 w-44 rounded-xl" /><SkeletonBlock className="h-72 rounded-[28px]" /><div className="grid gap-5 lg:grid-cols-2"><SkeletonBlock className="h-72 rounded-[24px]" /><SkeletonBlock className="h-72 rounded-[24px]" /></div></div>
+}
+
+function BuildCard({ build, favorite = false }) {
+  const parsed = buildFromDbRow(build)
+  return (
+    <Link href={`/buildy/${build.id}`} className="panel panel-interactive group flex min-w-0 flex-col overflow-hidden rounded-[22px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--amber)]">
+      <div className="flex items-start justify-between gap-3 p-4 pb-3">
+        <div className="min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-amber-300/25 bg-amber-300/8 px-2.5 py-1 text-[8px] font-black uppercase tracking-[.15em] text-amber-200">{build.activity_type || 'Doktryna'}</span>
+            {favorite && <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-[.13em] text-orange-200"><Bookmark className="h-3 w-3 fill-current" /> polecany</span>}
+          </div>
+          <h3 className="font-display truncate text-lg font-black text-[var(--text-primary)] transition group-hover:text-[var(--amber)]">{build.title}</h3>
+          <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-[var(--text-secondary)]">{build.description || 'Build bez opisu taktycznego.'}</p>
+        </div>
+        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-[var(--text-secondary)] transition group-hover:translate-x-0.5 group-hover:text-[var(--amber)]" />
+      </div>
+      <div className="mx-4 rounded-xl border border-white/8 bg-black/20 p-3"><EquipmentPreview slots={parsed.slots} size="sm" /></div>
+      <div className="mt-auto flex items-center justify-between border-t border-white/8 px-4 py-3 font-mono text-[9px] text-[var(--text-secondary)]"><span>{formatDate(build.created_at)}</span><span className="flex items-center gap-1 text-amber-200"><Heart className="h-3 w-3" /> {voteCount(build)}</span></div>
+    </Link>
+  )
 }
 
 export default function PublicProfilePage() {
-  const params = useParams()
-  const profileId = params?.id
-
+  const { id: profileId } = useParams()
   const [profile, setProfile] = useState(null)
   const [builds, setBuilds] = useState([])
+  const [favorites, setFavorites] = useState([])
   const [offers, setOffers] = useState([])
   const [expeditions, setExpeditions] = useState([])
+  const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [activeTab, setActiveTab] = useState('builds')
+  const [error, setError] = useState('')
+  const [activeTab, setActiveTab] = useState('activity')
 
-  const fetchProfileData = useCallback(async () => {
+  const loadProfile = useCallback(async () => {
     if (!profileId) return
-
+    setLoading(true)
+    setError('')
     try {
-      // 1. Fetch profile by ID or username
-      let profileRes = await supabase.from('profiles').select('*').eq('id', profileId).maybeSingle()
-      
-      if (!profileRes.data) {
-        profileRes = await supabase.from('profiles').select('*').eq('username', profileId).maybeSingle()
-      }
-
-      if (!profileRes.data) {
+      let profileResult = await supabase.from('profiles').select(PROFILE_FIELDS).eq('id', profileId).maybeSingle()
+      if (!profileResult.data && !profileResult.error) profileResult = await supabase.from('profiles').select(PROFILE_FIELDS).eq('username', profileId).maybeSingle()
+      if (profileResult.error) throw profileResult.error
+      if (!profileResult.data) {
         setError('Nie znaleziono profilu danego gracza.')
-        setLoading(false)
         return
       }
 
-      const foundProfile = profileRes.data
-      setProfile(foundProfile)
+      const found = profileResult.data
+      setProfile(found)
+      const requests = [
+        supabase.from('builds').select(BUILD_FIELDS).eq('user_id', found.id).eq('status', 'visible').order('created_at', { ascending: false }).limit(12),
+        supabase.from('market_items').select('id, title, item_name, price, city, category, created_at, status').eq('user_id', found.id).eq('status', 'visible').order('created_at', { ascending: false }).limit(12),
+        supabase.from('expeditions').select('id, title, activity_type, server, start_time, created_at, status').eq('user_id', found.id).eq('status', 'visible').order('created_at', { ascending: false }).limit(12),
+        supabase.from('build_comments').select('id, build_id, content, created_at, status, builds!build_comments_build_id_fkey(id, title)').eq('user_id', found.id).eq('status', 'visible').order('created_at', { ascending: false }).limit(12),
+      ]
+      if (found.favorite_builds_public) requests.push(supabase.from('build_favorites').select(`created_at, builds!build_favorites_build_id_fkey(${BUILD_FIELDS})`).eq('user_id', found.id).order('created_at', { ascending: false }).limit(12))
 
-      // 2. Fetch player's public data in parallel
-      const [buildsRes, offersRes, expeditionsRes] = await Promise.all([
-        supabase.from('builds').select('*, build_votes(id, vote_type)').eq('user_id', foundProfile.id).order('created_at', { ascending: false }),
-        supabase.from('market_items').select('*').eq('user_id', foundProfile.id).order('created_at', { ascending: false }),
-        supabase.from('expeditions').select('*').eq('user_id', foundProfile.id).order('created_at', { ascending: false }),
-      ])
-
-      setBuilds(buildResData(buildsRes.data))
-      setOffers(offersRes.data || [])
-      setExpeditions(expeditionsRes.data || [])
-    } catch (err) {
-      console.error('Błąd pobierania publicznego profilu:', err)
-      setError('Wystąpił błąd podczas ładowania profilu.')
+      const [buildResult, offerResult, expeditionResult, commentResult, favoriteResult] = await Promise.all(requests)
+      const firstError = [buildResult, offerResult, expeditionResult, commentResult, favoriteResult].find((result) => result?.error)?.error
+      if (firstError) throw firstError
+      setBuilds(buildResult.data || [])
+      setOffers(offerResult.data || [])
+      setExpeditions(expeditionResult.data || [])
+      setComments(commentResult.data || [])
+      setFavorites((favoriteResult?.data || []).map((row) => row.builds).filter(Boolean))
+    } catch (loadError) {
+      console.error('Błąd pobierania publicznego profilu:', loadError)
+      setError('Nie udało się załadować karty gracza. Spróbuj ponownie.')
     } finally {
       setLoading(false)
     }
   }, [profileId])
 
-  useEffect(() => {
-    void Promise.resolve().then(fetchProfileData)
-  }, [fetchProfileData])
+  useEffect(() => { void Promise.resolve().then(loadProfile) }, [loadProfile])
 
-  if (loading) {
-    return (
-      <div className="page-content">
-        <div className="subpage-header">
-          <h1>Profil Gracza</h1>
-          <p>Pobieranie karty przygód...</p>
-        </div>
-        <div className="space-y-4">
-          <SkeletonBlock className="h-48 rounded-xl" />
-          <SkeletonBlock className="h-64 rounded-xl" />
-        </div>
-      </div>
-    )
-  }
+  const timeline = useMemo(() => [
+    ...builds.map((item) => ({ id: `build-${item.id}`, at: item.created_at, icon: Swords, tone: 'text-amber-300', label: 'Opublikował build', title: item.title, href: `/buildy/${item.id}` })),
+    ...offers.map((item) => ({ id: `offer-${item.id}`, at: item.created_at, icon: ShoppingBag, tone: 'text-sky-300', label: 'Dodał ofertę na rynku', title: item.title || item.item_name || 'Oferta handlowa', href: '/rynek' })),
+    ...expeditions.map((item) => ({ id: `expedition-${item.id}`, at: item.created_at, icon: Compass, tone: 'text-violet-300', label: 'Zwołał wyprawę', title: item.title, href: '/wyprawy' })),
+    ...comments.map((item) => ({ id: `comment-${item.id}`, at: item.created_at, icon: MessageSquare, tone: 'text-emerald-300', label: 'Dołączył do dyskusji', title: item.builds?.title || 'Rada wojowników', href: `/buildy/${item.build_id}` })),
+  ].sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 16), [builds, comments, expeditions, offers])
 
-  if (error || !profile) {
-    return (
-      <div className="page-content">
-        <div className="subpage-header">
-          <h1>Profil Gracza</h1>
-          <p>Profil nie został odnaleziony.</p>
-        </div>
-        <EmptyState
-          icon={Shield}
-          title="Brak wyników w rejestrze"
-          description={error || 'Szukany profil gracza nie istnieje lub został usunięty.'}
-          actionLabel="Wróć do strony głównej"
-          actionHref="/"
-        />
-      </div>
-    )
-  }
+  if (loading) return <ProfileSkeleton />
+  if (error || !profile) return <div className="page-content"><EmptyState icon={Shield} title="Profil poza rejestrem" description={error || 'Ten profil nie istnieje lub został usunięty.'} actionLabel="Wróć do portalu" actionHref="/" /></div>
 
-  const isVerified = Boolean(profile.is_verified || profile.verified_player_id)
-  const roleBadgeClass = ROLE_STYLES[profile.main_role] || 'badge-gold'
+  const displayName = (profile.username || 'Gracz Albionu').replace(/#0$/, '')
+  const characterName = profile.ingame_nick || 'Postać nieprzypięta'
+  const verified = Boolean(profile.is_verified && profile.verified_player_id)
+  const roleStyle = ROLE_STYLES[profile.main_role] || 'border-amber-300/25 bg-amber-300/8 text-amber-200'
 
   return (
-    <div className="page-content">
-      {/* Back button & Header */}
-      <div className="mb-4">
-        <Link href="/" className="btn btn-ghost btn-sm inline-flex items-center gap-2">
-          <ArrowLeft className="w-4 h-4" /> Wróć do portalu
-        </Link>
+    <div className="page-content space-y-6">
+      <Link href="/" className="aopp-ghost-button inline-flex min-h-11 items-center gap-2 px-4 text-xs font-bold"><ArrowLeft className="h-4 w-4" /> Wróć do portalu</Link>
+
+      <header className="panel relative overflow-hidden rounded-[30px] border-amber-300/20">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(210,158,50,.2),transparent_42%),linear-gradient(120deg,rgba(77,22,12,.35),transparent_55%)]" />
+        <div className="relative grid gap-7 p-6 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center lg:p-10">
+          <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+            <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[22px] border-2 border-amber-300/45 bg-black/30 shadow-[0_18px_50px_rgba(0,0,0,.45)]">
+              {profile.avatar_url ? <Image src={profile.avatar_url} alt={`Awatar ${displayName}`} fill sizes="96px" className="object-cover" /> : <CircleUserRound className="absolute inset-0 m-auto h-11 w-11 text-amber-200" />}
+            </div>
+            <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.24em] text-amber-300">Karta gracza</p><h1 className="font-display mt-2 truncate text-3xl font-black text-white sm:text-4xl">{displayName}</h1><div className="mt-3 flex flex-wrap items-center gap-2"><span className={`rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] ${roleStyle}`}>{profile.main_role || 'Gracz'}</span>{verified && <span className="flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] text-emerald-200"><ShieldCheck className="h-3.5 w-3.5" /> zweryfikowany</span>}<span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><CalendarDays className="h-3.5 w-3.5" /> w portalu od {formatDate(profile.created_at)}</span></div></div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">{[[Trophy, 'Buildy', builds.length], [Activity, 'Aktywność', timeline.length], [Bookmark, 'Polecane', profile.favorite_builds_public ? favorites.length : '—']].map(([Icon, label, value]) => <div key={label} className="min-w-[84px] rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p></div>)}</div>
+        </div>
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-[.9fr_1.1fr]">
+        <section className="panel rounded-[26px] p-5 sm:p-6">
+          <div className="flex items-center gap-3 border-b border-white/8 pb-4"><span className="rounded-xl border border-amber-300/25 bg-amber-300/10 p-2.5 text-amber-200"><Crown className="h-5 w-5" /></span><div><p className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">Przypięta postać</p><h2 className="font-display mt-1 text-xl font-black text-white">{characterName}</h2></div></div>
+          {verified ? <><div className="mt-5 grid grid-cols-2 gap-3"><div className="rounded-2xl border border-rose-300/15 bg-rose-400/5 p-4"><p className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[.15em] text-rose-300"><Swords className="h-3.5 w-3.5" /> PvP Fame</p><p className="font-display mt-2 text-2xl font-black text-white">{formatNumber(profile.pvp_fame)}</p></div><div className="rounded-2xl border border-amber-300/15 bg-amber-400/5 p-4"><p className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[.15em] text-amber-300"><Flame className="h-3.5 w-3.5" /> PvE Fame</p><p className="font-display mt-2 text-2xl font-black text-white">{formatNumber(profile.pve_fame)}</p></div></div><div className="mt-3 grid grid-cols-2 gap-3 text-xs"><InfoBox label="Serwer" value={profile.verified_server || profile.main_server || 'Nieustalony'} /><InfoBox label="Item Power" value={formatNumber(profile.avg_ip)} /></div><Link href={`/killboard?nick=${encodeURIComponent(characterName)}`} className="btn btn-primary mt-4 inline-flex w-full items-center justify-center gap-2 py-3 text-xs font-black uppercase tracking-[.1em]"><Swords className="h-4 w-4" /> Otwórz Killboard</Link></> : <div className="mt-5 rounded-2xl border border-dashed border-white/12 bg-black/15 p-5 text-center"><Shield className="mx-auto h-7 w-7 text-[var(--text-secondary)]" /><p className="mt-3 text-sm font-bold text-[var(--text-primary)]">Postać nie została jeszcze zweryfikowana.</p><p className="mt-1 text-[10px] leading-5 text-[var(--text-secondary)]">Statystyki Fame pojawią się po połączeniu profilu z Albion Online API.</p></div>}
+        </section>
+
+        <section className="panel rounded-[26px] p-5 sm:p-6">
+          <p className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">O graczu</p><h2 className="font-display mt-1 text-xl font-black text-white">Notatka z dziennika</h2><p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-[var(--text-secondary)]">{profile.bio || 'Ten gracz nie uzupełnił jeszcze opisu. Zajrzyj do jego aktywności i opublikowanych doktryn.'}</p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2"><InfoBox label="Gildia" value={profile.guild_name || 'Bez gildii'} icon={Shield} /><InfoBox label="Główny serwer" value={profile.main_server || 'Nieustalony'} icon={Sparkles} /></div>
+        </section>
       </div>
 
-      {/* Main Profile Header Panel */}
-      <div className="panel mb-6" style={{ borderLeft: '4px solid var(--gold-dim)' }}>
-        <div className="panel-body flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            {profile.avatar_url ? (
-              <Image
-                src={profile.avatar_url}
-                alt={profile.username || 'Gracz'}
-                width={80}
-                height={80}
-                className="w-20 h-20 rounded-xl object-cover border border-[var(--border-warm)] shadow-md"
-              />
-            ) : (
-              <div
-                className="w-20 h-20 rounded-xl bg-[var(--bg-stone)] border border-[var(--border-warm)] flex items-center justify-center text-3xl font-bold text-[var(--gold)] shadow-md"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {(profile.username || 'G').charAt(0).toUpperCase()}
-              </div>
-            )}
+      <section>
+        <div className="mb-5 flex gap-2 overflow-x-auto border-b border-white/8 pb-3" role="tablist" aria-label="Sekcje profilu">{[['activity', Activity, `Aktywność (${timeline.length})`], ['builds', Swords, `Buildy (${builds.length})`], ['favorites', Bookmark, `Polecane (${profile.favorite_builds_public ? favorites.length : 0})`]].map(([id, Icon, label]) => <button key={id} type="button" role="tab" aria-selected={activeTab === id} onClick={() => setActiveTab(id)} className={`chip shrink-0 ${activeTab === id ? 'active' : ''}`}><Icon className="h-4 w-4" /> {label}</button>)}</div>
 
-            <div>
-              <div className="flex flex-wrap items-center gap-2.5 mb-1">
-                <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '22px', color: 'var(--text-bright)', fontWeight: 700 }}>
-                  {profile.username || 'Anonimowy Wojownik'}
-                </h1>
-                {isVerified && (
-                  <span className="badge badge-forest flex items-center gap-1" title="Zweryfikowany gracz Albion Online">
-                    <ShieldCheck className="w-3.5 h-3.5" /> Zweryfikowany
-                  </span>
-                )}
-                <span className={`badge ${roleBadgeClass}`}>
-                  {profile.main_role || 'Gracz'}
-                </span>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-body)] mt-2 font-mono">
-                {profile.ingame_nick && (
-                  <span className="flex items-center gap-1">
-                    <Swords className="w-3.5 h-3.5 text-[var(--gold)]" /> Nick w grze: <strong>{profile.ingame_nick}</strong>
-                  </span>
-                )}
-                {profile.guild_name && (
-                  <span className="flex items-center gap-1">
-                    <Shield className="w-3.5 h-3.5 text-[var(--forest)]" /> Gildia: <strong>{profile.guild_name}</strong>
-                  </span>
-                )}
-                {profile.main_server && (
-                  <span className="flex items-center gap-1">
-                    Serwer: <strong>{profile.main_server}</strong>
-                  </span>
-                )}
-                <span className="flex items-center gap-1 text-[var(--text-muted)]">
-                  <Calendar className="w-3.5 h-3.5" /> Dołączył: {formatDate(profile.created_at)}
-                </span>
-                {(profile.ingame_nick || profile.username) && (
-                  <Link
-                    href={`/killboard?nick=${encodeURIComponent(profile.ingame_nick || profile.username)}`}
-                    className="btn btn-ghost btn-xs inline-flex items-center gap-1 text-[10px] text-rose-300 hover:text-rose-200 ml-auto md:ml-0"
-                  >
-                    <Swords className="w-3 h-3 text-rose-400" />
-                    <span>Statystyki Killboard</span>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Player Quick Stats */}
-          <div className="flex items-center gap-3 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-[var(--border)]">
-            <div className="stat-card flex-1 md:flex-none text-center px-4 py-2.5">
-              <span className="stat-card-label">Średnie IP</span>
-              <span className="stat-card-value gold" style={{ fontSize: '18px' }}>
-                {profile.avg_ip || 1400}
-              </span>
-            </div>
-            <div className="stat-card flex-1 md:flex-none text-center px-4 py-2.5">
-              <span className="stat-card-label">Buildy</span>
-              <span className="stat-card-value sky" style={{ fontSize: '18px' }}>
-                {builds.length}
-              </span>
-            </div>
-            <div className="stat-card flex-1 md:flex-none text-center px-4 py-2.5">
-              <span className="stat-card-label">Oferty</span>
-              <span className="stat-card-value forest" style={{ fontSize: '18px' }}>
-                {offers.length}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Trophies & Achievements */}
-      {(() => {
-        const badges = []
-        if (isVerified) badges.push({ emoji: '🛡️', label: 'Zweryfikowany', desc: 'Potwierdzona postać w Albion Online', color: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-300' })
-        if (builds.length >= 1) badges.push({ emoji: '⚔️', label: 'Rzemieślnik Buildów', desc: 'Opublikował co najmniej 1 build', color: 'border-amber-400/30 bg-amber-500/10 text-amber-300' })
-        if (builds.length >= 5) badges.push({ emoji: '🏹', label: 'Mistrz Kuźni', desc: '5+ buildów w Zbrojowni', color: 'border-amber-400/30 bg-amber-500/10 text-amber-300' })
-        if (offers.length >= 1) badges.push({ emoji: '🏪', label: 'Kupiec', desc: 'Wystawił co najmniej 1 ofertę na Rynku', color: 'border-sky-400/30 bg-sky-500/10 text-sky-300' })
-        if (offers.length >= 5) badges.push({ emoji: '💰', label: 'Baron Handlowy', desc: '5+ ofert na Rynku P2P', color: 'border-sky-400/30 bg-sky-500/10 text-sky-300' })
-        if (expeditions.length >= 1) badges.push({ emoji: '🧭', label: 'Poszukiwacz Przygód', desc: 'Uczestnik co najmniej 1 wyprawy', color: 'border-violet-400/30 bg-violet-500/10 text-violet-300' })
-        if (profile.guild_name) badges.push({ emoji: '⚜️', label: 'Gildyjny', desc: `Członek gildii: ${profile.guild_name}`, color: 'border-rose-400/30 bg-rose-500/10 text-rose-300' })
-        const joinDays = profile.created_at ? Math.floor((new Date() - new Date(profile.created_at)) / (1000 * 60 * 60 * 24)) : 0
-        if (joinDays >= 30) badges.push({ emoji: '🏆', label: 'Weteran Portalu', desc: '30+ dni aktywności na portalu', color: 'border-yellow-400/30 bg-yellow-500/10 text-yellow-300' })
-
-        if (badges.length === 0) return null
-        return (
-          <div className="panel mb-6 p-5">
-            <p className="text-[9px] font-black uppercase tracking-[.2em] text-amber-400 mb-3">Trofea i Osiągnięcia</p>
-            <div className="flex flex-wrap gap-2">
-              {badges.map((badge, i) => (
-                <div
-                  key={i}
-                  title={badge.desc}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold font-mono ${badge.color}`}
-                >
-                  <span>{badge.emoji}</span>
-                  <span>{badge.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      })()}
-
-      {/* Tabs Navigation */}
-      <div className="flex gap-2 mb-6 border-b border-[var(--border)] pb-3">
-        <button
-          onClick={() => setActiveTab('builds')}
-          className={`chip ${activeTab === 'builds' ? 'active' : ''}`}
-        >
-          <Swords className="w-4 h-4" /> Doktryny & Buildy ({builds.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('offers')}
-          className={`chip ${activeTab === 'offers' ? 'active' : ''}`}
-        >
-          <ShoppingBag className="w-4 h-4" /> Oferty na Rynku ({offers.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('expeditions')}
-          className={`chip ${activeTab === 'expeditions' ? 'active' : ''}`}
-        >
-          <Users className="w-4 h-4" /> Organizowane Wyprawy ({expeditions.length})
-        </button>
-      </div>
-
-      {/* Tab Content: Builds */}
-      {activeTab === 'builds' && (
-        <div>
-          {builds.length === 0 ? (
-            <EmptyState
-              icon={Swords}
-              title="Brak opublikowanych doktryn"
-              description="Ten gracz nie dodał jeszcze własnego zestawu ekwipunku w Kuźni Buildów."
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {builds.map((b) => {
-                const parsed = buildFromDbRow(b)
-                const voteCount = Math.max(
-                  (b.build_votes || []).filter((vote) => vote.vote_type === 'up').length,
-                  b.votes_count || 0
-                )
-                return (
-                  <article key={b.id} className="panel panel-interactive flex flex-col justify-between overflow-hidden">
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="badge badge-gold">{b.activity_type || 'PvP'}</span>
-                        <span className="text-[11px] text-[var(--text-muted)] font-mono">
-                          {formatDate(b.created_at)}
-                        </span>
-                      </div>
-                      <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '15px', color: 'var(--text-bright)' }} className="hover:text-[var(--gold)] transition">
-                        <Link href={`/buildy/${b.id}`}>{b.title}</Link>
-                      </h3>
-                      <p className="mt-1 line-clamp-2 text-xs text-[var(--text-body)]">
-                        {b.description || 'Brak opisu taktycznego.'}
-                      </p>
-                    </div>
-
-                    <div className="mx-4 mb-3 p-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-stone)]">
-                      <EquipmentPreview slots={parsed.slots} size="sm" />
-                    </div>
-
-                    <div className="flex items-center justify-between px-4 pb-3 pt-2 border-t border-[var(--border)] text-xs text-[var(--text-muted)]">
-                      <span className="font-mono">Głosy: <strong className="text-[var(--gold-bright)]">{voteCount}</strong></span>
-                      <Link href={`/buildy/${b.id}`} className="btn btn-ghost btn-sm">
-                        Zobacz <ExternalLink className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  </article>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab Content: Market Offers */}
-      {activeTab === 'offers' && (
-        <div>
-          {offers.length === 0 ? (
-            <EmptyState
-              icon={ShoppingBag}
-              title="Brak aktywnych ofert"
-              description="Gracz nie posiada aktualnie żadnych ogłoszeń w handlu P2P."
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {offers.map((item) => (
-                <div key={item.id} className="panel p-4 flex flex-col justify-between">
-                  <div>
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`badge ${item.transaction_type === 'SELL' ? 'badge-blood' : 'badge-forest'}`}>
-                        {item.transaction_type === 'SELL' ? 'Sprzedam' : 'Kupię'}
-                      </span>
-                      <span className="text-xs font-mono text-[var(--gold-bright)] font-bold">
-                        {Number(item.price).toLocaleString('pl-PL')} Silver
-                      </span>
-                    </div>
-                    <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '14px', color: 'var(--text-bright)' }}>
-                      {item.item_name}
-                    </h4>
-                    <p className="text-xs text-[var(--text-body)] mt-1">
-                      Miasto: <strong>{item.city || 'Bridgewatch'}</strong>
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Tab Content: Expeditions */}
-      {activeTab === 'expeditions' && (
-        <div>
-          {expeditions.length === 0 ? (
-            <EmptyState
-              icon={Users}
-              title="Brak organizowanych zbiórek"
-              description="Gracz nie zgłosił ostatnio nowych wypraw grupowych."
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {expeditions.map((exp) => (
-                <div key={exp.id} className="panel p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="badge badge-gold">{exp.activity_type || 'Wyprawa'}</span>
-                    <span className="text-xs font-mono text-[var(--text-muted)]">
-                      {formatDate(exp.created_at)}
-                    </span>
-                  </div>
-                  <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '15px', color: 'var(--text-bright)' }}>
-                    {exp.title}
-                  </h4>
-                  <p className="text-xs text-[var(--text-body)] leading-relaxed">
-                    {exp.description || 'Brak dodatkowego opisu.'}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        {activeTab === 'activity' && (timeline.length ? <div className="panel overflow-hidden rounded-[24px]">{timeline.map((item, index) => { const Icon = item.icon; return <Link key={item.id} href={item.href} className={`group flex items-center gap-4 p-4 transition hover:bg-white/[.035] sm:px-5 ${index ? 'border-t border-white/8' : ''}`}><span className={`rounded-xl border border-white/8 bg-black/20 p-2.5 ${item.tone}`}><Icon className="h-4 w-4" /></span><span className="min-w-0 flex-1"><span className="block text-[9px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{item.label}</span><span className="mt-1 block truncate text-sm font-bold text-[var(--text-primary)]">{item.title}</span></span><span className="hidden shrink-0 font-mono text-[9px] text-[var(--text-secondary)] sm:block">{formatDate(item.at, true)}</span><ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-secondary)] transition group-hover:translate-x-0.5 group-hover:text-amber-300" /></Link> })}</div> : <EmptyState icon={Activity} title="Dziennik jest jeszcze pusty" description="Publiczne buildy, wyprawy, oferty i komentarze tego gracza pojawią się tutaj chronologicznie." />)}
+        {activeTab === 'builds' && (builds.length ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{builds.map((build) => <BuildCard key={build.id} build={build} />)}</div> : <EmptyState icon={Swords} title="Brak opublikowanych buildów" description="Ten gracz nie opublikował jeszcze doktryny w Kuźni Buildów." />)}
+        {activeTab === 'favorites' && (profile.favorite_builds_public ? (favorites.length ? <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{favorites.map((build) => <BuildCard key={build.id} build={build} favorite />)}</div> : <EmptyState icon={Bookmark} title="Brak polecanych buildów" description="Gracz udostępnia kolekcję, ale nie zapisał jeszcze żadnego buildu." />) : <EmptyState icon={ShieldCheck} title="Kolekcja prywatna" description="Ulubione buildy są widoczne tylko wtedy, gdy właściciel profilu świadomie udostępni kolekcję." />)}
+      </section>
     </div>
   )
 }
 
-function buildResData(data) {
-  if (!data) return []
-  return data.map((b) => ({
-    ...b,
-    votes_count: (b.build_votes || []).filter((v) => v.vote_type === 'up').length,
-  }))
+function InfoBox({ label, value, icon: Icon }) {
+  return <div className="rounded-xl border border-white/8 bg-black/15 p-3"><p className="text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p><p className="mt-1 flex items-center gap-2 font-bold text-[var(--text-primary)]">{Icon && <Icon className="h-4 w-4 text-emerald-300" />}{value}</p></div>
 }
