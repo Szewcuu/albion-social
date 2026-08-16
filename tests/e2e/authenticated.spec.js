@@ -30,6 +30,26 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByLabel('Napisz wiadomość w tawernie')).toBeVisible()
   })
 
+  test('pobiera jedno zagregowane podsumowanie Tawerny', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
+      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
+    })
+    expect(accessToken).toBeTruthy()
+
+    const response = await request.get('/api/portal-overview', { headers: { Authorization: `Bearer ${accessToken}` } })
+    expect(response.status()).toBe(200)
+    const payload = await response.json()
+    expect(payload.stats).toEqual(expect.objectContaining({
+      verifiedPlayers: expect.any(Number),
+      totalPvpFame: expect.any(Number),
+      activeBuilds: expect.any(Number),
+      activeMarketOffers: expect.any(Number),
+      guildsCount: expect.any(Number),
+    }))
+  })
+
   test('otwiera formularz publikacji buildu', async ({ page }) => {
     await page.goto('/buildy/create')
     await expect(page.getByLabel('Nazwa buildu *')).toBeVisible()

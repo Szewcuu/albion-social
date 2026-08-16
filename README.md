@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet E: wydajność, SEO i jakość UI**
 
-Zakres P5 oraz Priorytety C i D są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów oraz serwerową historię rynku z alertami cenowymi. Następnym etapem jest E.1: podział najcięższych komponentów klienckich i ograniczenie równoległych zapytań przy wejściu na stronę.
+Zakres P5, Priorytety C i D oraz etap E.1 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi oraz odroczone narzędzia rynku. Następnym etapem jest E.2: paginacja lub wirtualizacja długich list czatu, buildów, rynku, komentarzy i zgłoszeń.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -262,7 +262,10 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
 
 ### Priorytet E — wydajność, SEO i jakość UI
 
-- [ ] podzielić najcięższe komponenty klienckie i ograniczyć liczbę równoległych zapytań po wejściu na stronę
+- [x] podzielić najcięższe komponenty klienckie i ograniczyć liczbę równoległych zapytań po wejściu na stronę
+  - [x] zastąpić sześć zapytań statystyk Tawerny jednym uwierzytelnionym podsumowaniem z agregacją w Postgresie
+  - [x] ładować Wywiad rynkowy dopiero przed wejściem sekcji w viewport i Kurs złota dopiero po wybraniu zakładki
+  - [x] nie pobierać modułu wyceny oferty ani modalu kontaktu, zanim użytkownik faktycznie ich nie potrzebuje
 - [ ] dodać paginację lub wirtualizację długich list: czat, buildy, rynek, komentarze i zgłoszenia
 - [ ] przygotować unikalne metadata, Open Graph, sitemapę i canonical URL dla publicznych treści
 - [ ] mierzyć Core Web Vitals oraz budżet rozmiaru JavaScript w CI
