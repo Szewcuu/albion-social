@@ -21,7 +21,7 @@ Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 
 - [x] **P31: 📈 Wykresy Historii Cen (Albion Data History API)** — interaktywny wykres cen z ostatnich 24h, 7d i 30d z trendami w kalkulatorze craftingu i na rynku.
 - [x] **P32: 🗡️ Tierlista Meta & Stats 1v1** — ranking obserwacyjny z najnowszych publicznych pojedynków solo Gameinfo API, z ważeniem małych prób, jawną metodologią i stanem niedostępności bez danych zastępczych.
-- [ ] **P33: 📊 Rozszerzone Wykresy Kursu Złota (Gold API)** — interfejs i pobieranie danych istnieją, ale moduł wymaga usunięcia ukrytego kursu zastępczego i czytelnej obsługi niedostępnego API.
+- [x] **P33: 📊 Rozszerzone Wykresy Kursu Złota (Gold API)** — rzeczywiste zakresy dat, walidacja notowań i świeżości, jawne stany awarii bez kursu zastępczego oraz niezależne działanie analizy rynku przy awarii Gold API.
 - [x] **P34: 🔔 Centrum Powiadomień na Żywo (Header Bell)** — dzwonek powiadomień w nagłówku z licznikiem nieprzeczytanych wiadomości, dedykowanymi ikonami kategorii, oznaczaniem pojedynczych i zbiorczych powiadomień oraz subskrypcją Supabase Realtime.
 
 Gotowe i wdrożone:
@@ -42,9 +42,9 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **P33: rozszerzone wykresy kursu złota**
+> **P1: przypięcie postaci Albionu do profilu portalu**
 
-Zakres P5, Priorytety C–F, etapy E.1–E.6 oraz P32 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, monitoring jakości integracji, automatyczny audyt Lighthouse, macierz 96 inspekcji responsywności oraz opartą na rzeczywistych zdarzeniach tierlistę solo. Następnym etapem jest weryfikacja i domknięcie P33.
+Zakres P5, Priorytety C–F, etapy E.1–E.6 oraz P31–P34 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, wiarygodny kurs złota, monitoring jakości integracji, automatyczny audyt Lighthouse, macierz 96 inspekcji responsywności oraz opartą na rzeczywistych zdarzeniach tierlistę solo. Następnym etapem jest domknięcie zaległej synchronizacji postaci Albionu z profilem użytkownika.
 
 ### P5.0 — bezpieczeństwo i CI
 

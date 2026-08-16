@@ -242,6 +242,25 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('wyłącza przelicznik zamiast pokazywać zastępczy kurs złota', async ({ page }) => {
+    await page.route('**/api/prices?mode=gold**', async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: { code: 'UPSTREAM_EMPTY', message: 'Brak prawidłowych notowań złota.' } }),
+      })
+    })
+
+    await page.goto('/rynek')
+    const goldTab = page.getByRole('tab', { name: 'Kurs złota' })
+    await goldTab.scrollIntoViewIfNeeded()
+    await goldTab.click()
+
+    await expect(page.getByText(/Kalkulator został wyłączony, aby nie pokazywać zmyślonej ceny/)).toBeVisible()
+    await expect(page.getByLabel('Ilość złota do przeliczenia')).toBeDisabled()
+    await expect(page.getByText('Brak kursu').first()).toBeVisible()
+  })
+
   test('pokazuje regionalną wycenę utraconego zestawu w Killboardzie', async ({ page }) => {
     await page.route('**/api/follows', async (route) => {
       if (route.request().method() === 'GET') {

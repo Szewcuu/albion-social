@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { fetchExternalJson } from '@/lib/externalApiClient'
+import { GOLD_RANGES } from '@/lib/goldMarket'
 
 export const MARKET_REGIONS = {
   europe: 'https://europe.albion-online-data.com',
@@ -27,9 +28,9 @@ export const MARKET_QUALITIES = {
 }
 
 export const MARKET_RANGES = {
-  '24h': { days: 1, timeScale: 1, goldCount: 24 },
-  '7d': { days: 7, timeScale: 6, goldCount: 168 },
-  '30d': { days: 30, timeScale: 24, goldCount: 720 },
+  '24h': { days: 1, timeScale: 1 },
+  '7d': { days: 7, timeScale: 6 },
+  '30d': { days: 30, timeScale: 24 },
 }
 
 export function isSafeItemId(value) {
@@ -134,6 +135,9 @@ export async function getGoldHistory({ region, range }) {
   if (!host) throw new Error('INVALID_REGION')
   if (!rangeConfig) throw new Error('INVALID_RANGE')
 
-  const params = new URLSearchParams({ count: String(rangeConfig.goldCount) })
+  // The documented date-range variant currently returns HTTP 500 for gold.
+  // Gold observations are hourly, so request enough recent points and enforce
+  // the exact time window in normalizeGoldHistory before exposing the data.
+  const params = new URLSearchParams({ count: String(GOLD_RANGES[range].hours + 1) })
   return fetchMarketJson(`${host}/api/v2/stats/gold.json?${params}`, { revalidate: 300 })
 }
