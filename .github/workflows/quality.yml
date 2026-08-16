@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
+      E2E_AUTH_MODE: ${{ vars.E2E_AUTH_MODE || 'discord' }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
@@ -58,7 +59,7 @@ jobs:
         env:
           E2E_SKIP_BUILD: '1'
       - name: Authenticated E2E
-        if: ${{ env.E2E_USER_EMAIL != '' && env.E2E_USER_PASSWORD != '' }}
+        if: ${{ env.E2E_AUTH_MODE == 'password' && env.E2E_USER_EMAIL != '' && env.E2E_USER_PASSWORD != '' }}
         run: npm run test:e2e:auth
         env:
           E2E_SKIP_BUILD: '1'
@@ -83,6 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
+      LIGHTHOUSE_GUEST_ONLY: ${{ vars.E2E_AUTH_MODE == 'password' && '0' || '1' }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
