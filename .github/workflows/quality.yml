@@ -45,6 +45,8 @@ jobs:
         run: npm run lint
       - name: Unit tests
         run: npm run test:unit
+      - name: Validate Supabase migration history
+        run: npm run migrations:validate
       - name: Validate item catalog snapshot
         run: npm run catalog:validate
       - name: Production build

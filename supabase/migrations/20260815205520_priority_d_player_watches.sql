@@ -18,7 +18,7 @@ ALTER TABLE public.entity_follows
 ALTER TABLE public.entity_follows
   ADD CONSTRAINT entity_follows_region_check
   CHECK (
-    (entity_type = 'albion_player' AND region IN ('europe', 'america', 'asia'))
+    (entity_type = 'albion_player' AND region IN ('europe', 'americas', 'asia'))
     OR (entity_type <> 'albion_player' AND region IS NULL)
   ),
   ADD CONSTRAINT entity_follows_seen_events_check

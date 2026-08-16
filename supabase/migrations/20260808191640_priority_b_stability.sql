@@ -137,7 +137,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.save_loot_split_report(TEXT, JSONB, TEXT) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.save_loot_split_report(TEXT, JSONB, TEXT) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.save_loot_split_report(TEXT, JSONB, TEXT) TO authenticated;
 
 COMMIT;
