@@ -452,6 +452,15 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
   - [x] Aktywne pliki otrzymały timestampy zgodne z `supabase_migrations.schema_migrations`, a migrację Priority B rozdzielono zgodnie z dwoma wpisami produkcyjnymi.
   - [x] Dodano snapshot historii i walidator CI blokujący brakujące, zdublowane oraz błędnie nazwane migracje.
 
+### Etap P23 — Utwardzenie Auth i prywatnego limitera
+
+- [x] Przenieść techniczne buckety limitera z eksponowanego schematu `public` do `private` oraz usunąć bezpośrednie granty klienta.
+- [x] Ograniczyć `SECURITY DEFINER` limitera pustym `search_path` i zweryfikować działanie RPC po migracji.
+- [x] Wyłączyć nieużywany provider Email, pozostawiając Discord OAuth jako jedyną metodę logowania.
+- [x] Ponownie uruchomić Supabase Security Advisor i obowiązkową bramkę CI.
+  - Pozostaje jedno zaakceptowane ostrzeżenie `auth_leaked_password_protection`: ochrona haseł nie dotyczy portalu, ponieważ provider Email i logowanie hasłem są wyłączone, a plan projektu nie udostępnia tej funkcji.
+- [ ] Zastąpić historyczny fixture authenticated E2E oparty o Email i hasło rozwiązaniem zgodnym z Discord OAuth; do tego czasu obowiązkowe pozostają publiczne E2E, a test hasłowy wymaga jawnego `E2E_AUTH_MODE=password`.
+
 ### Etap P19 — Statystyki Portalu & Analityka Aktywności Graczy
 
 - [x] Widżet analityki żywej aktywności na stronie głównej Tawerny (`/`): liczba zweryfikowanych graczy, łączny rozegrany PvP/PvE Fame, aktywne oferty P2P oraz zbiórki na wyprawy.
@@ -597,7 +606,7 @@ E2E_USER_PASSWORD
 
 `SUPABASE_SERVICE_ROLE_KEY` i webhook Discorda są sekretami serwerowymi — nie wolno nadawać im prefiksu `NEXT_PUBLIC_` ani umieszczać ich w repozytorium.
 
-Zmienne `E2E_USER_EMAIL` i `E2E_USER_PASSWORD` są opcjonalne lokalnie. W GitHub Actions powinny wskazywać osobne konto testowe bez roli moderatora lub administratora.
+Zmienne `E2E_USER_EMAIL` i `E2E_USER_PASSWORD` są historycznym, opcjonalnym fixture lokalnym. Po wyłączeniu providera Email uruchamia się go wyłącznie świadomie z `E2E_AUTH_MODE=password`; domyślny pipeline nie otwiera ponownie logowania hasłem na produkcji.
 
 ## Kontrola jakości
 
@@ -609,6 +618,6 @@ npm run build
 npm run test:e2e:public
 ```
 
-Pełny pakiet zalogowanego użytkownika uruchamia `npm run test:e2e:auth` po skonfigurowaniu konta `E2E_USER_*`.
+Historyczny pakiet zalogowanego użytkownika uruchamia `npx cross-env E2E_AUTH_MODE=password npm run test:e2e:auth` po skonfigurowaniu konta `E2E_USER_*`. Docelowo zastąpi go fixture zgodny z Discord OAuth.
 
 Zmiany wdrażamy przez osobną gałąź, pull request i automatyczny deployment Vercel. Produkcja jest scalana dopiero po poprawnym buildzie i sprawdzeniu najważniejszych widoków.
