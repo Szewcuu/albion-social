@@ -318,7 +318,7 @@ export default function Wyprawy() {
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-        <UpcomingExpeditionsWidget expeditions={expeditions} />
+        <UpcomingExpeditionsWidget expeditions={expeditions} loading={loading} />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           
           {/* FORMULARZ WYPRAWY */}
@@ -476,7 +476,7 @@ export default function Wyprawy() {
             )}
             {loading ? (
               <div
-                className="panel min-h-[520px] animate-pulse rounded-3xl p-6 lg:min-h-[420px]"
+                className="panel min-h-[672px] animate-pulse rounded-3xl p-6 lg:min-h-[420px]"
                 aria-label="Ładowanie aktywnych wypraw"
                 aria-busy="true"
               >

@@ -65,7 +65,7 @@ export function getItemTierLabel(itemId) {
 
 export function itemImageUrl(itemId, quality = 1) {
   if (!itemId) return null
-  return `https://render.albiononline.com/v1/item/${itemId}.png?count=1&quality=${quality}`
+  return `https://render.albiononline.com/v1/item/${itemId}.png?count=1&quality=${quality}&size=128`
 }
 
 export function encodeBuildToUrl(build) {
