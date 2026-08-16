@@ -3,9 +3,12 @@ import "./globals.css";
 
 import PwaRegister from "@/components/PwaRegister";
 import AppShell from "@/components/AppShell";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 export const metadata = {
-  metadataBase: new URL('https://albion-social.vercel.app'),
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
+  alternates: { canonical: '/' },
   title: {
     default: "Albion Online Polska Portal | Zbrojownia, Rynek & Gildie",
     template: "%s | Albion Social"
@@ -25,10 +28,10 @@ export const metadata = {
     url: 'https://albion-social.vercel.app',
     title: 'Albion Online Polska Portal',
     description: 'Ogólnopolski portal graczy Albion Online — zbrojownia buildów, rynek P2P, kalkulatory craftingu, killboard i gildie.',
-    siteName: 'Albion Social',
+    siteName: SITE_NAME,
     images: [
       {
-        url: '/og-banner.jpg',
+        url: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: 'Albion Online Polska Portal Banner',
@@ -39,7 +42,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Albion Online Polska Portal',
     description: 'Baza wiedzy, zbrojownia buildów, rynek P2P i społeczność polskich gildii w Albion Online.',
-    images: ['/og-banner.jpg'],
+    images: [DEFAULT_OG_IMAGE],
   },
   robots: {
     index: true,

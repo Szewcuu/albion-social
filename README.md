@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet E: wydajność, SEO i jakość UI**
 
-Zakres P5, Priorytety C i D oraz etapy E.1–E.2 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, odroczone narzędzia rynku oraz stabilne stronicowanie długich kolejek. Następnym etapem jest E.3: unikalne metadata, Open Graph, sitemap i canonical URL dla publicznych treści.
+Zakres P5, Priorytety C i D oraz etapy E.1–E.3 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie oraz SEO zgodne z faktycznym modelem dostępu. Następnym etapem jest E.4: pomiar Core Web Vitals i budżet rozmiaru JavaScript w CI.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -270,7 +270,11 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] zastosować stabilny kursor `created_at + id`, deduplikację rekordów oraz jawne przyciski wczytywania kolejnych stron
   - [x] dodać indeksy z tie-breakerem `id` dla czatu, buildów, rynku, komentarzy i kolejki zgłoszeń
   - [x] oddzielić stronicowaną kolejkę zgłoszeń od lekkiego podsumowania panelu administratora
-- [ ] przygotować unikalne metadata, Open Graph, sitemapę i canonical URL dla publicznych treści
+- [x] przygotować unikalne metadata, Open Graph, sitemapę i canonical URL dla publicznych treści
+  - [x] ujednolicić canonicale, Open Graph, Twitter Cards i tytuły przez wspólny generator SEO
+  - [x] indeksować wyłącznie publiczną bramę, regulamin i politykę prywatności
+  - [x] oznaczyć chronione moduły jako `noindex` i usunąć je z publicznej sitemapy
+  - [x] dodać dynamiczne metadata dla buildów, gildii i profili graczy bez ujawniania ich w sitemapie
 - [ ] mierzyć Core Web Vitals oraz budżet rozmiaru JavaScript w CI
 - [ ] przeprowadzić ponowny Lighthouse dla mobile i desktop po wdrożeniu obecnej gałęzi
 - [ ] uzupełnić testy wizualne dla 360, 390, 430, 768, 1280 i 1920 px
