@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet E: wydajność, SEO i jakość UI**
 
-Zakres P5, Priorytety C i D oraz etapy E.1–E.3 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie oraz SEO zgodne z faktycznym modelem dostępu. Następnym etapem jest E.4: pomiar Core Web Vitals i budżet rozmiaru JavaScript w CI.
+Zakres P5, Priorytety C i D oraz etapy E.1–E.4 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie, SEO oraz kontrolowany budżet wydajności. Następnym etapem jest E.5: ponowny Lighthouse dla mobile i desktop.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -275,7 +275,11 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] indeksować wyłącznie publiczną bramę, regulamin i politykę prywatności
   - [x] oznaczyć chronione moduły jako `noindex` i usunąć je z publicznej sitemapy
   - [x] dodać dynamiczne metadata dla buildów, gildii i profili graczy bez ujawniania ich w sitemapie
-- [ ] mierzyć Core Web Vitals oraz budżet rozmiaru JavaScript w CI
+- [x] mierzyć Core Web Vitals oraz budżet rozmiaru JavaScript w CI
+  - [x] zachować Vercel Speed Insights jako pełny pomiar rzeczywistych użytkowników
+  - [x] rejestrować w monitoringu portalu wyłącznie słabe wyniki LCP, INP i CLS
+  - [x] blokować CI po przekroczeniu budżetu całego JavaScript, pojedynczego chunku lub najcięższej trasy
+  - [x] publikować raport budżetu jako artefakt każdego workflow Quality
 - [ ] przeprowadzić ponowny Lighthouse dla mobile i desktop po wdrożeniu obecnej gałęzi
 - [ ] uzupełnić testy wizualne dla 360, 390, 430, 768, 1280 i 1920 px
 
