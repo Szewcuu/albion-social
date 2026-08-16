@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet E: wydajność, SEO i jakość UI**
 
-Zakres P5, Priorytety C i D oraz etap E.1 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi oraz odroczone narzędzia rynku. Następnym etapem jest E.2: paginacja lub wirtualizacja długich list czatu, buildów, rynku, komentarzy i zgłoszeń.
+Zakres P5, Priorytety C i D oraz etapy E.1–E.2 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, odroczone narzędzia rynku oraz stabilne stronicowanie długich kolejek. Następnym etapem jest E.3: unikalne metadata, Open Graph, sitemap i canonical URL dla publicznych treści.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -266,7 +266,10 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] zastąpić sześć zapytań statystyk Tawerny jednym uwierzytelnionym podsumowaniem z agregacją w Postgresie
   - [x] ładować Wywiad rynkowy dopiero przed wejściem sekcji w viewport i Kurs złota dopiero po wybraniu zakładki
   - [x] nie pobierać modułu wyceny oferty ani modalu kontaktu, zanim użytkownik faktycznie ich nie potrzebuje
-- [ ] dodać paginację lub wirtualizację długich list: czat, buildy, rynek, komentarze i zgłoszenia
+- [x] dodać paginację lub wirtualizację długich list: czat, buildy, rynek, komentarze i zgłoszenia
+  - [x] zastosować stabilny kursor `created_at + id`, deduplikację rekordów oraz jawne przyciski wczytywania kolejnych stron
+  - [x] dodać indeksy z tie-breakerem `id` dla czatu, buildów, rynku, komentarzy i kolejki zgłoszeń
+  - [x] oddzielić stronicowaną kolejkę zgłoszeń od lekkiego podsumowania panelu administratora
 - [ ] przygotować unikalne metadata, Open Graph, sitemapę i canonical URL dla publicznych treści
 - [ ] mierzyć Core Web Vitals oraz budżet rozmiaru JavaScript w CI
 - [ ] przeprowadzić ponowny Lighthouse dla mobile i desktop po wdrożeniu obecnej gałęzi

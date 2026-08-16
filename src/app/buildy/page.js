@@ -1,6 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, Star } from 'lucide-react'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
@@ -16,6 +16,12 @@ const ALBION_CATEGORIES = [
   { id: 'pve', name: 'PvE & Statyki', icon: Swords },
   { id: 'ganking', name: 'Ganking & Mists', icon: Plus },
 ]
+const BUILDS_PAGE_SIZE = 12
+
+function applyOlderThan(query, cursor) {
+  if (!cursor) return query
+  return query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`)
+}
 
 export default function BuildyPage() {
   const [user, setUser] = useState(null)
@@ -23,25 +29,43 @@ export default function BuildyPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [totalBuilds, setTotalBuilds] = useState(0)
+  const cursorRef = useRef(null)
 
-  const fetchBuilds = useCallback(async () => {
+  const fetchBuilds = useCallback(async ({ append = false } = {}) => {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
     setLoadError('')
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('builds')
-        .select('*, profiles!builds_user_id_fkey(username, avatar_url), build_votes(id, vote_type)')
+        .select('*, profiles!builds_user_id_fkey(username, avatar_url), build_votes(id, vote_type)', { count: append ? undefined : 'exact' })
         .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(BUILDS_PAGE_SIZE + 1)
+
+      if (activeCategory !== 'all') query = query.ilike('activity_type', `%${activeCategory}%`)
+      const { data, error, count } = await applyOlderThan(query, append ? cursorRef.current : null)
 
       if (error) throw error
-      setBuilds(data || [])
+      const hasNextPage = (data || []).length > BUILDS_PAGE_SIZE
+      const page = (data || []).slice(0, BUILDS_PAGE_SIZE)
+      const oldest = page.at(-1)
+      cursorRef.current = oldest ? { created_at: oldest.created_at, id: oldest.id } : null
+      setHasMore(hasNextPage)
+      if (!append) setTotalBuilds(count || 0)
+      setBuilds((current) => append ? [...current, ...page.filter((row) => !current.some((item) => item.id === row.id))] : page)
     } catch (err) {
       console.error('Błąd pobierania buildów:', err)
-      setBuilds([])
+      if (!append) setBuilds([])
       setLoadError('Nie udało się wczytać Zbrojowni. Odśwież stronę lub spróbuj ponownie za chwilę.')
     } finally {
-      setLoading(false)
+      if (append) setLoadingMore(false)
+      else setLoading(false)
     }
-  }, [])
+  }, [activeCategory])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -56,9 +80,7 @@ export default function BuildyPage() {
     if (!error) fetchBuilds()
   }
 
-  const filteredBuilds = activeCategory === 'all'
-    ? builds
-    : builds.filter(b => b.activity_type?.toLowerCase().includes(activeCategory))
+  const filteredBuilds = builds
 
   const totalVotes = builds.reduce((sum, build) => sum + (build.build_votes || []).filter((vote) => vote.vote_type === 'up').length, 0)
 
@@ -75,15 +97,15 @@ export default function BuildyPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="stat-card">
-          <span className="stat-card-label">Zapisane buildy</span>
-          <span className="stat-card-value amber">{builds.length}</span>
+          <span className="stat-card-label">Buildy w kategorii</span>
+          <span className="stat-card-value amber">{totalBuilds}</span>
         </div>
         <div className="stat-card">
-          <span className="stat-card-label">Widoczne</span>
+          <span className="stat-card-label">Wczytane</span>
           <span className="stat-card-value">{filteredBuilds.length}</span>
         </div>
         <div className="stat-card">
-          <span className="stat-card-label">Polubienia</span>
+          <span className="stat-card-label">Polubienia wczytanych</span>
           <span className="stat-card-value emerald">{totalVotes}</span>
         </div>
       </div>
@@ -170,7 +192,7 @@ export default function BuildyPage() {
               <Anvil className="mx-auto h-9 w-9 text-rose-300" />
               <p className="text-lg font-bold text-white">Zbrojownia jest chwilowo niedostępna.</p>
               <p className="text-sm text-[var(--text-secondary)]">{loadError}</p>
-              <button type="button" onClick={fetchBuilds} className="btn btn-ghost btn-sm inline-flex">Spróbuj ponownie</button>
+              <button type="button" onClick={() => fetchBuilds()} className="btn btn-ghost btn-sm inline-flex">Spróbuj ponownie</button>
             </div>
           </div>
         ) : filteredBuilds.length === 0 ? (
@@ -257,6 +279,13 @@ export default function BuildyPage() {
           })
         )}
       </div>
+      {!loading && !loadError && hasMore && (
+        <div className="mt-5 flex justify-center">
+          <button type="button" className="btn btn-secondary" disabled={loadingMore} onClick={() => fetchBuilds({ append: true })}>
+            {loadingMore ? 'Wczytywanie…' : 'Wczytaj kolejne buildy'}
+          </button>
+        </div>
+      )}
         </>
       )}
     </div>
