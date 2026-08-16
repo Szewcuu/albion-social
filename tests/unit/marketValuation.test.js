@@ -4,6 +4,7 @@ import test from 'node:test'
 import {
   classifyPriceFreshness,
   selectMarketQuote,
+  summarizeLossValuations,
   valuateEquipment,
 } from '../../src/lib/marketValuation.js'
 
@@ -55,4 +56,23 @@ test('sumuje stosy, raportuje pokrycie i brakujące sloty', () => {
   assert.equal(valuation.totalItems, 3)
   assert.equal(valuation.coveragePercent, 67)
   assert.deepEqual(valuation.missingSlots, ['Food'])
+  assert.equal(valuation.isComplete, false)
+  assert.equal(valuation.valueKind, 'minimum')
+})
+
+test('podsumowanie historii nie przedstawia częściowej wyceny jako pełnej straty', () => {
+  const summary = summarizeLossValuations([
+    { lossValuation: { estimatedValue: 75_000, pricedItems: 2, totalItems: 3, freshness: 'fresh', fallbackItems: 0 } },
+    { lossValuation: { estimatedValue: 40_000, pricedItems: 1, totalItems: 1, freshness: 'aging', fallbackItems: 1, isComplete: true } },
+  ])
+
+  assert.equal(summary.estimatedValue, 115_000)
+  assert.equal(summary.pricedItems, 3)
+  assert.equal(summary.totalItems, 4)
+  assert.equal(summary.coveragePercent, 75)
+  assert.equal(summary.valuedEvents, 2)
+  assert.equal(summary.fullyValuedEvents, 1)
+  assert.equal(summary.hasPartialCoverage, true)
+  assert.equal(summary.freshness, 'aging')
+  assert.equal(summary.fallbackItems, 1)
 })

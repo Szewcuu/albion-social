@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { AlertTriangle, Clock3, Coins, MapPin, Skull, Swords, Users } from 'lucide-react'
-import { VALUATION_EQUIPMENT_ORDER } from '@/lib/marketValuation'
+import { VALUATION_EQUIPMENT_ORDER, VALUATION_SLOT_LABELS } from '@/lib/marketValuation'
 
 function itemImageUrl(item) {
   if (!item?.type) return null
@@ -27,6 +27,9 @@ function formatDate(value) {
 }
 
 function freshnessPresentation(valuation) {
+  if (!valuation || Number(valuation.totalItems) === 0) {
+    return { label: 'Brak zestawu', classes: 'border-white/10 bg-white/[.03] text-[#8f8980]' }
+  }
   if (!valuation || valuation.freshness === 'missing') {
     return { label: 'Brak skanów', classes: 'border-rose-400/25 bg-rose-400/8 text-rose-200' }
   }
@@ -63,6 +66,7 @@ function EquipmentStrip({ equipment }) {
 function LossValuation({ valuation }) {
   const freshness = freshnessPresentation(valuation)
   const hasValue = Number(valuation?.estimatedValue) > 0
+  const isPartial = hasValue && !(valuation?.isComplete || valuation?.pricedItems === valuation?.totalItems)
   const bestQuote = valuation?.items?.filter((item) => item.quote).sort((a, b) => b.total - a.total)[0]?.quote
 
   return (
@@ -70,7 +74,8 @@ function LossValuation({ valuation }) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-[.15em] text-amber-300"><Coins className="h-3.5 w-3.5" /> Wartość utraconego zestawu</p>
-          <p className={`font-display mt-1 text-lg font-black ${hasValue ? 'text-[#f4d47c]' : 'text-[#8f8980]'}`}>{formatSilverValue(valuation?.estimatedValue)}</p>
+          <p className={`font-display mt-1 text-lg font-black ${hasValue ? 'text-[#f4d47c]' : 'text-[#8f8980]'}`}>{isPartial ? '≥ ' : ''}{formatSilverValue(valuation?.estimatedValue)}</p>
+          {isPartial && <p className="mt-1 text-[8px] text-amber-200/70">Minimum — suma tylko pozycji posiadających cenę.</p>}
         </div>
         <span className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[8px] font-black uppercase tracking-[.08em] ${freshness.classes}`}>
           <Clock3 className="h-3 w-3" /> {freshness.label}
@@ -82,6 +87,31 @@ function LossValuation({ valuation }) {
         {bestQuote?.city && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" /> Największa pozycja: {bestQuote.city}</span>}
         {valuation?.fallbackItems > 0 && <span className="inline-flex items-center gap-1 text-amber-200/75"><AlertTriangle className="h-3 w-3" /> {valuation.fallbackItems}× fallback ceny kupna</span>}
       </div>
+
+      {valuation?.items?.length > 0 && (
+        <details className="group mt-3 border-t border-white/8 pt-2">
+          <summary className="cursor-pointer select-none text-[8px] font-black uppercase tracking-[.1em] text-[#9f998f] transition hover:text-amber-200">
+            Skład wyceny ({valuation.pricedItems}/{valuation.totalItems})
+          </summary>
+          <div className="mt-2 space-y-1.5">
+            {valuation.items.map((item) => (
+              <div key={item.slot} className="flex items-center justify-between gap-3 rounded-lg bg-black/20 px-2.5 py-2 text-[8px]">
+                <div className="min-w-0">
+                  <p className="font-bold text-[#d5cec2]">{VALUATION_SLOT_LABELS[item.slot] || item.slot}{item.count > 1 ? ` ×${item.count}` : ''}</p>
+                  <p className="truncate text-[#6f6a62]">
+                    {item.quote
+                      ? `${item.quote.city} · ${item.quote.source === 'sell' ? 'oferta sprzedaży' : 'cena kupna (fallback)'}`
+                      : 'Brak aktualnej ceny dla jakości przedmiotu'}
+                  </p>
+                </div>
+                <span className={item.quote ? 'shrink-0 font-bold text-amber-200' : 'shrink-0 text-rose-200/70'}>
+                  {item.quote ? formatSilverValue(item.total) : 'brak'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
     </div>
   )
 }

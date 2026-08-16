@@ -312,7 +312,9 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] dodać wybór wyniku, gdy API zwróci kilka podobnych nicków
 - [x] wyświetlać PvP Fame, PvE Fame, Gathering, Crafting i Fame Ratio
 - [x] dodać ostatnie zabójstwa i zgony z wyposażeniem uczestników
-- [ ] wyceniać utracony ekwipunek na podstawie Albion Online Data Project
+- [x] wyceniać utracony ekwipunek na podstawie Albion Online Data Project
+  - [x] rozróżniać pełną wycenę od minimalnej wartości przy częściowym pokryciu cen
+  - [x] pokazywać źródło, miasto, świeżość i fallback ceny kupna dla każdego slotu
 - [x] dodać filtrowanie historii po typie zdarzenia i regionie
 - [x] dodać profil gildii: podstawowe statystyki i lista członków
 - [x] umożliwić przypięcie postaci Albionu do profilu portalu
