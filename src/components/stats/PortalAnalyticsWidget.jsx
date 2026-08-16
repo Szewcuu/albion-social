@@ -1,42 +1,6 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import { Activity, ShieldCheck, Swords, ShoppingBag, Users, Sparkles } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 
-export default function PortalAnalyticsWidget() {
-  const [stats, setStats] = useState({
-    verifiedPlayers: 0,
-    totalPvpFame: 0,
-    activeBuilds: 0,
-    activeMarketOffers: 0,
-  })
-
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const [profilesRes, buildsRes, marketRes, pvpFameRes] = await Promise.all([
-          supabase.from('profiles').select('*', { count: 'exact', head: true }),
-          supabase.from('builds').select('*', { count: 'exact', head: true }),
-          supabase.from('market_items').select('id', { count: 'exact', head: true }),
-          supabase.from('profiles').select('pvp_fame'),
-        ])
-
-        const totalPvp = (pvpFameRes.data || []).reduce((sum, p) => sum + Number(p.pvp_fame || 0), 0)
-
-        setStats({
-          verifiedPlayers: profilesRes.count || 0,
-          totalPvpFame: totalPvp,
-          activeBuilds: buildsRes.count || 0,
-          activeMarketOffers: marketRes.count || 0,
-        })
-      } catch {
-        // Keep current stats
-      }
-    }
-
-    loadStats()
-  }, [])
+export default function PortalAnalyticsWidget({ stats, loading = false }) {
 
   return (
     <div className="panel p-5 sm:p-7 space-y-5 border-amber-400/20 bg-amber-500/5">
@@ -50,7 +14,7 @@ export default function PortalAnalyticsWidget() {
               <span className="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full text-[9px] font-mono font-bold uppercase">
                 Analityka Żywa
               </span>
-              <span className="text-[10px] text-gray-400 font-mono">Aktualizowane z serwera</span>
+              <span className="text-[10px] text-gray-400 font-mono">{loading ? 'Pobieranie jednego podsumowania…' : 'Aktualizowane z serwera'}</span>
             </div>
             <h3 className="font-display text-lg font-black text-white mt-0.5">Statystyki Portalu Albion Polska</h3>
           </div>

@@ -14,11 +14,8 @@ const LiveMarketPriceEstimator = dynamic(() => import('@/components/market/LiveM
   loading: () => <div className="min-h-24 rounded-xl border border-white/8 bg-black/20 animate-pulse" aria-label="Ładowanie wyceny rynkowej" />,
 })
 const ContactSellerModal = dynamic(() => import('@/components/market/ContactSellerModal'))
-const GoldExchangeWidget = dynamic(() => import('@/components/economy/GoldExchangeWidget'), {
-  loading: () => <div className="panel min-h-48 animate-pulse" aria-label="Ładowanie kursu złota" />,
-})
-const MarketIntelligence = dynamic(() => import('@/components/market/MarketIntelligence'), {
-  loading: () => <div className="panel min-h-72 animate-pulse" aria-label="Ładowanie analizy rynku" />,
+const DeferredMarketTools = dynamic(() => import('@/components/market/DeferredMarketTools'), {
+  loading: () => <div className="panel min-h-40 animate-pulse" aria-label="Ładowanie narzędzi rynku" />,
 })
 
 export default function Rynek() {
@@ -213,12 +210,14 @@ export default function Rynek() {
                     />
                   </div>
 
-                  <LiveMarketPriceEstimator
-                    itemId={formData.item_name}
-                    userPrice={formData.price}
-                    server={formData.server}
-                    onSelectPrice={(val) => setFormData(prev => ({ ...prev, price: String(val) }))}
-                  />
+                  {formData.item_name.trim().length >= 3 && (
+                    <LiveMarketPriceEstimator
+                      itemId={formData.item_name}
+                      userPrice={formData.price}
+                      server={formData.server}
+                      onSelectPrice={(val) => setFormData(prev => ({ ...prev, price: String(val) }))}
+                    />
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -490,18 +489,18 @@ export default function Rynek() {
 
         </div>
 
-        {/* KURS ZŁOTA + INTEL RYNKOWY — POD OFERTAMI */}
-        <GoldExchangeWidget />
-        <MarketIntelligence />
+        <DeferredMarketTools />
       </div>
 
-      <ContactSellerModal
-        key={selectedOfferForContact?.id || 'closed'}
-        isOpen={!!selectedOfferForContact}
-        onClose={() => setSelectedOfferForContact(null)}
-        offer={selectedOfferForContact}
-        currentUser={user}
-      />
+      {selectedOfferForContact && (
+        <ContactSellerModal
+          key={selectedOfferForContact.id}
+          isOpen
+          onClose={() => setSelectedOfferForContact(null)}
+          offer={selectedOfferForContact}
+          currentUser={user}
+        />
+      )}
     </div>
   )
 }

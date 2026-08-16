@@ -32,6 +32,7 @@ test.describe('publiczna bramka portalu', () => {
     const eventCalendar = await request.get('/api/events')
     const followedEntities = await request.get('/api/follows')
     const priceAlerts = await request.get('/api/price-alerts')
+    const portalOverview = await request.get('/api/portal-overview')
     const profileVerification = await request.post('/api/profile/verify', {
       data: { playerId: 'anonymous-test', region: 'europe' },
     })
@@ -46,6 +47,7 @@ test.describe('publiczna bramka portalu', () => {
     expect(eventCalendar.status()).toBe(401)
     expect(followedEntities.status()).toBe(401)
     expect(priceAlerts.status()).toBe(401)
+    expect(portalOverview.status()).toBe(401)
     expect(profileVerification.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
   })

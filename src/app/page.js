@@ -19,7 +19,7 @@ import {
   Swords,
   Users,
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 
 const ChatBox = dynamic(() => import('@/components/ChatBox'), {
@@ -44,23 +44,36 @@ export default function Home() {
   const { user, isAdmin, loginWithDiscord: startDiscordLogin } = usePortalSession()
   const [loginBusy, setLoginBusy] = useState(false)
   const [authError, setAuthError] = useState('')
-  const [globalStats, setGlobalStats] = useState({ guildsCount: 0, marketOffersCount: 0 })
+  const [overview, setOverview] = useState({
+    verifiedPlayers: 0,
+    totalPvpFame: 0,
+    activeBuilds: 0,
+    activeMarketOffers: 0,
+    guildsCount: 0,
+  })
+  const [overviewLoading, setOverviewLoading] = useState(true)
 
-  const fetchGlobalStats = useCallback(async () => {
-    const [{ count: guildsCount }, { count: marketOffersCount }] = await Promise.all([
-      supabase.from('guilds').select('*', { count: 'exact', head: true }),
-      supabase.from('market_items').select('id', { count: 'exact', head: true }),
-    ])
-    setGlobalStats({ guildsCount: guildsCount || 0, marketOffersCount: marketOffersCount || 0 })
+  const fetchPortalOverview = useCallback(async () => {
+    try {
+      const response = await authenticatedFetch('/api/portal-overview')
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body?.error || 'Nie udało się pobrać podsumowania.')
+      setOverview((current) => ({ ...current, ...body.stats }))
+    } catch {
+      // Statystyki są dodatkiem; główna Tawerna pozostaje dostępna.
+    } finally {
+      setOverviewLoading(false)
+    }
   }, [])
 
   useEffect(() => {
-    const statsTimer = window.setTimeout(fetchGlobalStats, 0)
+    if (!user) return undefined
+    const statsTimer = window.setTimeout(fetchPortalOverview, 0)
 
     return () => {
       window.clearTimeout(statsTimer)
     }
-  }, [fetchGlobalStats])
+  }, [fetchPortalOverview, user])
 
   const loginWithDiscord = async () => {
     if (loginBusy) return
@@ -126,8 +139,8 @@ export default function Home() {
           </div>
         </div>
         <div className="flex items-center gap-3 text-xs font-mono">
-          <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8"><span className="text-gray-400">Gildie:</span> <strong className="text-amber-300">{globalStats.guildsCount}</strong></div>
-          <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8"><span className="text-gray-400">Oferty:</span> <strong className="text-emerald-300">{globalStats.marketOffersCount}</strong></div>
+          <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8"><span className="text-gray-400">Gildie:</span> <strong className="text-amber-300">{overviewLoading ? '…' : overview.guildsCount}</strong></div>
+          <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8"><span className="text-gray-400">Oferty:</span> <strong className="text-emerald-300">{overviewLoading ? '…' : overview.activeMarketOffers}</strong></div>
           <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/8 flex items-center gap-1.5"><span className="status-dot online" /><span className="text-gray-300">Wszystkie Serwery</span></div>
         </div>
       </div>
@@ -138,7 +151,7 @@ export default function Home() {
           <ChatBox user={user} isAdmin={isAdmin} />
         </div>
         <div className="lg:col-span-5 space-y-4">
-          <PortalAnalyticsWidget />
+          <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />
 
           {/* SZYBKIE AKCJE SPOŁECZNOŚCI */}
           <div className="panel p-4 space-y-2.5">
