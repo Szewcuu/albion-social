@@ -452,6 +452,14 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
   - [x] Aktywne pliki otrzymały timestampy zgodne z `supabase_migrations.schema_migrations`, a migrację Priority B rozdzielono zgodnie z dwoma wpisami produkcyjnymi.
   - [x] Dodano snapshot historii i walidator CI blokujący brakujące, zdublowane oraz błędnie nazwane migracje.
 
+### Etap P23 — Utwardzenie Auth i prywatnego limitera
+
+- [x] Przenieść techniczne buckety limitera z eksponowanego schematu `public` do `private` oraz usunąć bezpośrednie granty klienta.
+- [x] Ograniczyć `SECURITY DEFINER` limitera pustym `search_path` i zweryfikować działanie RPC po migracji.
+- [x] Wyłączyć nieużywany provider Email, pozostawiając Discord OAuth jako jedyną metodę logowania.
+- [x] Ponownie uruchomić Supabase Security Advisor i pełną bramkę CI.
+  - Pozostaje jedno zaakceptowane ostrzeżenie `auth_leaked_password_protection`: ochrona haseł nie dotyczy portalu, ponieważ provider Email i logowanie hasłem są wyłączone, a plan projektu nie udostępnia tej funkcji.
+
 ### Etap P19 — Statystyki Portalu & Analityka Aktywności Graczy
 
 - [x] Widżet analityki żywej aktywności na stronie głównej Tawerny (`/`): liczba zweryfikowanych graczy, łączny rozegrany PvP/PvE Fame, aktywne oferty P2P oraz zbiórki na wyprawy.
