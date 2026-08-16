@@ -21,8 +21,7 @@ import BuildSocialActions from '@/components/builds/BuildSocialActions'
 import { EmptyState } from '@/components/ui/FeedbackState'
 import { buildFromDbRow } from '@/lib/buildSlots'
 import { getPublicBuild } from '@/lib/server/builds'
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://albion-social.vercel.app'
+import { createPageMetadata } from '@/lib/seo'
 
 const TAG_GROUPS = [
   ['activities', 'Aktywność'],
@@ -66,31 +65,20 @@ export async function generateMetadata({ params }) {
   const row = await getPublicBuild(id)
 
   if (!row) {
-    return { title: 'Nie znaleziono buildu | Albion Online Polska' }
+    return createPageMetadata({
+      title: 'Nie znaleziono buildu',
+      description: 'Wskazany build nie istnieje lub nie jest już dostępny.',
+      path: `/buildy/${encodeURIComponent(id)}`,
+    })
   }
 
   const description = (row.description || `Build ${row.title} przygotowany przez społeczność Albion Online Polska.`).slice(0, 155)
-  const canonical = `${APP_URL}/buildy/${row.id}`
-
-  return {
+  return createPageMetadata({
     title: `${row.title} | Build Albion Online`,
     description,
-    alternates: { canonical },
-    openGraph: {
-      title: row.title,
-      description,
-      url: canonical,
-      type: 'article',
-      locale: 'pl_PL',
-      images: [{ url: `${APP_URL}/albion-social-hero.webp`, width: 1536, height: 1024, alt: row.title }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: row.title,
-      description,
-      images: [`${APP_URL}/albion-social-hero.webp`],
-    },
-  }
+    path: `/buildy/${row.id}`,
+    type: 'article',
+  })
 }
 
 export default async function BuildDetailPage({ params }) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import {
   CornerUpLeft,
@@ -49,10 +49,29 @@ export default function ChatBox({ user, isAdmin }) {
   const [connectionStatus, setConnectionStatus] = useState('CONNECTING')
   const [supportsReplies, setSupportsReplies] = useState(true)
   const composerRef = useRef(null)
+  const postsRef = useRef(null)
   const oldestCursorRef = useRef(null)
+  const scrollModeRef = useRef('bottom')
+  const preservedScrollRef = useRef({ height: 0, top: 0 })
+
+  useLayoutEffect(() => {
+    const posts = postsRef.current
+    if (!posts) return
+
+    if (scrollModeRef.current === 'preserve') {
+      const { height, top } = preservedScrollRef.current
+      posts.scrollTop = top + Math.max(0, posts.scrollHeight - height)
+    } else if (scrollModeRef.current === 'bottom') {
+      posts.scrollTop = posts.scrollHeight
+    }
+    scrollModeRef.current = 'none'
+  }, [chatMessages, loading])
 
   const addOrReplaceMessage = useCallback((incoming) => {
     const normalized = normalizeMessage(incoming)
+    const posts = postsRef.current
+    const isNearBottom = !posts || posts.scrollHeight - posts.scrollTop - posts.clientHeight < 80
+    if (isNearBottom) scrollModeRef.current = 'bottom'
     setChatMessages((current) => {
       const exists = current.some((message) => message.id === normalized.id)
       return exists
@@ -62,8 +81,15 @@ export default function ChatBox({ user, isAdmin }) {
   }, [])
 
   const fetchMessages = useCallback(async ({ older = false } = {}) => {
-    if (older) setLoadingOlder(true)
-    else setLoading(true)
+    if (older) {
+      const posts = postsRef.current
+      preservedScrollRef.current = { height: posts?.scrollHeight || 0, top: posts?.scrollTop || 0 }
+      scrollModeRef.current = 'preserve'
+      setLoadingOlder(true)
+    } else {
+      scrollModeRef.current = 'bottom'
+      setLoading(true)
+    }
     setLoadError('')
 
     let query = supabase
@@ -177,6 +203,7 @@ export default function ChatBox({ user, isAdmin }) {
     if (error) {
       setSendError('Wiadomość nie została zapisana. Sprawdź sesję i spróbuj ponownie.')
     } else {
+      scrollModeRef.current = 'bottom'
       addOrReplaceMessage(data)
       setNewMessage('')
       setReplyingTo(null)
@@ -228,7 +255,7 @@ export default function ChatBox({ user, isAdmin }) {
             </button>
           </div>
 
-          <div className="community-posts !max-h-[260px] overflow-y-auto" aria-live="polite">
+          <div ref={postsRef} className="community-posts !max-h-[260px] overflow-y-auto" aria-live="polite">
             {loading ? (
               <div className="community-empty"><RefreshCw className="spin" aria-hidden="true" /><strong>Otwieramy kronikę rozmów…</strong></div>
             ) : loadError ? (

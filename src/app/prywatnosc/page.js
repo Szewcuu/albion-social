@@ -10,11 +10,14 @@ import {
   UserRoundCheck,
 } from 'lucide-react'
 import LegalDocument from '@/components/LegalDocument'
+import { createPageMetadata } from '@/lib/seo'
 
-export const metadata = {
+export const metadata = createPageMetadata({
   title: 'Polityka prywatności | Albion Online Polska Portal',
   description: 'Informacje o przetwarzaniu danych i prywatności użytkowników AOPP.',
-}
+  path: '/prywatnosc',
+  index: true,
+})
 
 export default function PrivacyPage() {
   const sections = [

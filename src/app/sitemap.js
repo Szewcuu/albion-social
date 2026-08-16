@@ -1,26 +1,16 @@
+import { absoluteUrl } from '@/lib/seo'
+
 export default async function sitemap() {
-  const baseUrl = 'https://albion-social.vercel.app'
-  
+  // Moduły społecznościowe wymagają logowania, więc nie obiecujemy crawlerom
+  // adresów, których anonimowy użytkownik nie może faktycznie otworzyć.
   const routes = [
-    '',
-    '/buildy',
-    '/gildie',
-    '/rynek',
-    '/killboard',
-    '/kalkulator-craftingu',
-    '/loot-split',
-    '/timery',
-    '/wyprawy',
-    '/kalendarz',
-    '/profil',
-    '/obserwowane',
-    '/prywatnosc',
-    '/regulamin'
-  ].map(route => ({
-    url: `${baseUrl}${route}`,
-    lastModified: new Date().toISOString().split('T')[0],
-    changeFrequency: route === '' || route === '/rynek' || route === '/killboard' ? 'hourly' : 'daily',
-    priority: route === '' ? 1.0 : 0.8,
+    { path: '/', changeFrequency: 'weekly', priority: 1 },
+    { path: '/regulamin', changeFrequency: 'monthly', priority: 0.3 },
+    { path: '/prywatnosc', changeFrequency: 'monthly', priority: 0.3 },
+  ].map((route) => ({
+    url: absoluteUrl(route.path),
+    changeFrequency: route.changeFrequency,
+    priority: route.priority,
   }))
 
   return routes

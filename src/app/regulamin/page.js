@@ -10,11 +10,14 @@ import {
   Store,
 } from 'lucide-react'
 import LegalDocument from '@/components/LegalDocument'
+import { createPageMetadata } from '@/lib/seo'
 
-export const metadata = {
+export const metadata = createPageMetadata({
   title: 'Regulamin | Albion Online Polska Portal',
   description: 'Zasady korzystania z funkcji społecznościowych AOPP.',
-}
+  path: '/regulamin',
+  index: true,
+})
 
 export default function TermsPage() {
   const sections = [
