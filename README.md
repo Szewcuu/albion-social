@@ -447,7 +447,10 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 - [x] Dodanie idempotentnej migracji P5 synchronizującej istniejący schemat przez `ALTER TABLE`.
 - [x] Utworzenie indeksów B-Tree pokrywających wszystkie produkcyjne klucze obce wskazane przez Supabase Advisor.
-- [ ] Uporządkowanie historycznych migracji `001`–`008` względem rejestru migracji produkcyjnych.
+- [x] Uporządkowanie historycznych migracji `001`–`008` względem rejestru migracji produkcyjnych.
+  - [x] Skrypty sprzed uruchomienia rejestru przeniesiono do `supabase/legacy-migrations`, aby CLI nie próbował wykonywać ich na produkcji.
+  - [x] Aktywne pliki otrzymały timestampy zgodne z `supabase_migrations.schema_migrations`, a migrację Priority B rozdzielono zgodnie z dwoma wpisami produkcyjnymi.
+  - [x] Dodano snapshot historii i walidator CI blokujący brakujące, zdublowane oraz błędnie nazwane migracje.
 
 ### Etap P19 — Statystyki Portalu & Analityka Aktywności Graczy
 
