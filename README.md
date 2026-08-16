@@ -405,8 +405,11 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P11 — System Obserwowania & Centrum Powiadomień Portalu
 
-- [ ] Przycisk "Obserwuj" działa lokalnie w przeglądarce; synchronizacja subskrypcji z profilem użytkownika pozostaje do wdrożenia.
-- [x] Komponent Centrum Powiadomień (`NotificationCenterModal.jsx`) z powiadomieniami o nowych wyprawach, ofertach rynkowych i aktualizacjach obserwowanych gildii.
+- [x] Przycisk „Obserwuj” zapisuje subskrypcje na koncie w `entity_follows`, dzięki czemu wracają po odświeżeniu, ponownym logowaniu i zmianie urządzenia.
+  - [x] Obserwacje są odseparowane per użytkownik przez RLS i udostępnione zalogowanym wyłącznie do odczytu; walidowany zapis i usuwanie wykonuje chronione API.
+  - [x] Buildy, gildie, oferty, profile portalu i postacie Albionu korzystają z jednego mechanizmu oraz wspólnej Wartowni `/obserwowane`.
+  - [x] Usunięto nieużywany lokalny magazyn obserwacji i dawną atrapę centrum powiadomień.
+- [x] Centrum Powiadomień w górnym pasku korzysta z rzeczywistych rekordów Supabase oraz Realtime dla nowych wypraw, ofert, komentarzy i zmian obserwowanych elementów.
 
 ### Etap P12 — PWA Offline Service Worker, Manifest & Wydajność Web Vitals
 
