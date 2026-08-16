@@ -2,6 +2,12 @@ name: Quality
 
 on:
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: URL wdrożenia do audytu Lighthouse
+        required: false
+        default: https://albion-social.vercel.app
+        type: string
   pull_request:
     branches: [main]
   push:
@@ -68,4 +74,38 @@ jobs:
         with:
           name: performance-budget
           path: .next/performance-budget-report.json
+          retention-days: 14
+
+  lighthouse:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      LIGHTHOUSE_BASE_URL: ${{ inputs.base_url || 'https://albion-social.vercel.app' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.21.1
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Install isolated Lighthouse tooling
+        run: npm install --no-save --package-lock=false --ignore-scripts lighthouse@13.4.1 puppeteer-core@25.7.0
+      - name: Run guest and authenticated Lighthouse audit
+        run: node scripts/run-lighthouse-audits.mjs
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: lighthouse-results
+          path: lighthouse-results
           retention-days: 14

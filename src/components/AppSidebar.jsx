@@ -75,7 +75,7 @@ export default function AppSidebar({ isOpen, isAdmin = false, onClose }) {
       <aside className={`sidebar ${isOpen ? 'open' : ''}`} aria-label="Główna nawigacja">
         {/* Brand */}
         <div className="sidebar-brand">
-          <Link href="/" className="sidebar-brand-link" onClick={onClose}>
+          <Link href="/" prefetch={false} className="sidebar-brand-link" onClick={onClose}>
             <span className="sidebar-brand-icon"><Image src="/logo-256.webp" alt="" width={42} height={42} priority /></span>
             <span className="sidebar-brand-text">
               <strong>Albion Polska</strong>
@@ -108,6 +108,7 @@ export default function AppSidebar({ isOpen, isAdmin = false, onClose }) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     className={`sidebar-link ${isActive ? 'active' : ''}`}
                     onClick={onClose}
                     title={item.desc}
@@ -124,11 +125,11 @@ export default function AppSidebar({ isOpen, isAdmin = false, onClose }) {
         {/* Footer */}
         <div className="sidebar-footer">
           <div className="sidebar-realm"><span className="status-dot online" /> Portal aktywny</div>
-          <Link href="/regulamin" className="hover:text-[var(--gold)] transition">
+          <Link href="/regulamin" prefetch={false} className="hover:text-[var(--gold)] transition">
             Regulamin
           </Link>
           {' · '}
-          <Link href="/prywatnosc" className="hover:text-[var(--gold)] transition">
+          <Link href="/prywatnosc" prefetch={false} className="hover:text-[var(--gold)] transition">
             Prywatność
           </Link>
           <div className="mt-1">
