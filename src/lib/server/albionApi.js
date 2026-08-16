@@ -1,6 +1,7 @@
 import 'server-only'
 import { supabase } from '@/lib/supabase'
 import { valuateEquipment } from '@/lib/marketValuation'
+import { ExternalApiError, fetchExternalJson } from '@/lib/externalApiClient'
 import { getEquipmentMarketPrices } from '@/lib/server/albionMarketApi'
 
 export const ALBION_REGIONS = {
@@ -24,7 +25,6 @@ export const ALBION_REGIONS = {
   },
 }
 
-const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504])
 const EQUIPMENT_KEYS = ['MainHand', 'OffHand', 'Head', 'Armor', 'Shoes', 'Bag', 'Cape', 'Mount', 'Potion', 'Food']
 
 export class AlbionApiError extends Error {
@@ -41,10 +41,6 @@ export function getAlbionRegion(region) {
   return ALBION_REGIONS[region] || null
 }
 
-function wait(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 async function fetchAlbionJson(path, { region, revalidate = 60, timeoutMs = 8000, retry = true } = {}) {
   const regionConfig = getAlbionRegion(region)
   if (!regionConfig) {
@@ -52,53 +48,43 @@ async function fetchAlbionJson(path, { region, revalidate = 60, timeoutMs = 8000
   }
 
   const url = `${regionConfig.baseUrl}${path}`
-  const attempts = retry ? 2 : 1
-
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    try {
-      const response = await fetch(url, {
+  try {
+    return await fetchExternalJson(url, {
+      retries: retry ? 1 : 0,
+      retryDelayMs: 180,
+      timeoutMs,
+      requestInit: {
         headers: {
           Accept: 'application/json',
           'User-Agent': 'Albion-Social/1.0 (+https://albion-social.vercel.app)',
         },
         next: { revalidate },
-        signal: AbortSignal.timeout(timeoutMs),
+      },
+    })
+  } catch (error) {
+    if (!(error instanceof ExternalApiError)) throw error
+
+    if (error.upstreamStatus === 404) {
+      throw new AlbionApiError('Nie znaleziono danych w wybranym regionie.', {
+        code: 'NOT_FOUND',
+        status: 404,
+        upstreamStatus: 404,
       })
-
-      if (response.ok) return await response.json()
-
-      if (attempt + 1 < attempts && RETRYABLE_STATUS.has(response.status)) {
-        await wait(180)
-        continue
-      }
-
-      if (response.status === 404) {
-        throw new AlbionApiError('Nie znaleziono danych w wybranym regionie.', {
-          code: 'NOT_FOUND',
-          status: 404,
-          upstreamStatus: response.status,
-        })
-      }
-
-      throw new AlbionApiError('Serwery Albionu chwilowo nie odpowiadają poprawnie.', {
-        code: 'UPSTREAM_ERROR',
-        status: response.status === 429 ? 503 : 502,
-        upstreamStatus: response.status,
-      })
-    } catch (error) {
-      if (error instanceof AlbionApiError) throw error
-
-      if (attempt + 1 < attempts) {
-        await wait(180)
-        continue
-      }
-
-      const timedOut = error?.name === 'TimeoutError' || error?.name === 'AbortError'
-      throw new AlbionApiError(
-        timedOut ? 'Serwer Albionu przekroczył limit czasu odpowiedzi.' : 'Nie udało się połączyć z serwerem Albionu.',
-        { code: timedOut ? 'UPSTREAM_TIMEOUT' : 'UPSTREAM_UNAVAILABLE', status: 503 },
-      )
     }
+
+    const unavailable = ['UPSTREAM_TIMEOUT', 'UPSTREAM_UNAVAILABLE'].includes(error.code)
+    throw new AlbionApiError(
+      error.code === 'UPSTREAM_TIMEOUT'
+        ? 'Serwer Albionu przekroczył limit czasu odpowiedzi.'
+        : unavailable
+          ? 'Nie udało się połączyć z serwerem Albionu.'
+          : 'Serwery Albionu chwilowo nie odpowiadają poprawnie.',
+      {
+        code: unavailable ? error.code : 'UPSTREAM_ERROR',
+        status: error.upstreamStatus === 429 || unavailable ? 503 : 502,
+        upstreamStatus: error.upstreamStatus,
+      },
+    )
   }
 }
 

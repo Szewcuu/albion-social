@@ -1,5 +1,7 @@
 import 'server-only'
 
+import { fetchExternalJson } from '@/lib/externalApiClient'
+
 export const MARKET_REGIONS = {
   europe: 'https://europe.albion-online-data.com',
   america: 'https://west.albion-online-data.com',
@@ -42,28 +44,23 @@ function toDateParameter(date) {
 }
 
 async function fetchMarketJson(url, { revalidate = 60 } = {}) {
-  let attempt = 0
-  while (attempt < 2) {
-    attempt++
-    try {
-      const response = await fetch(url, {
+  try {
+    return await fetchExternalJson(url, {
+      retries: 1,
+      retryDelayMs: 500,
+      timeoutMs: 12_000,
+      requestInit: {
         headers: {
           Accept: 'application/json',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Albion-Social/1.0',
         },
         next: { revalidate },
-        signal: AbortSignal.timeout(12_000),
-      })
-
-      if (!response.ok) throw new Error(`UPSTREAM_${response.status}`)
-      return await response.json()
-    } catch (error) {
-      if (attempt >= 2) {
-        if (error?.name === 'TimeoutError' || error?.name === 'AbortError') throw new Error('UPSTREAM_TIMEOUT')
-        throw error
-      }
-      await new Promise((r) => setTimeout(r, 500))
-    }
+      },
+    })
+  } catch (error) {
+    if (error?.code === 'UPSTREAM_TIMEOUT') throw new Error('UPSTREAM_TIMEOUT')
+    if (error?.upstreamStatus) throw new Error(`UPSTREAM_${error.upstreamStatus}`)
+    throw error
   }
 }
 
