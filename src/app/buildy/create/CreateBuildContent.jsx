@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -11,6 +11,7 @@ import EquipmentGrid from '@/components/builds/EquipmentGrid'
 import BuildStatsCalculator from '@/components/builds/BuildStatsCalculator'
 import TagSelector from '@/components/builds/TagSelector'
 import ItemPicker from '@/components/builds/ItemPicker'
+import { usePortalSession } from '@/contexts/PortalSessionContext'
 import {
   createEmptyBuild, buildToDbPayload, decodeBuildFromUrl, encodeBuildToUrl, EQUIPMENT_SLOTS,
 } from '@/lib/buildSlots'
@@ -72,7 +73,7 @@ function ValidationPanel({ errors }) {
 export default function CreateBuildPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [user, setUser] = useState(null)
+  const { user } = usePortalSession()
   const [build, setBuild] = useState(() => {
     const emptyBuild = createEmptyBuild()
     const encoded = searchParams.get('build')
@@ -83,12 +84,6 @@ export default function CreateBuildPage() {
   const [saved, setSaved] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [errors, setErrors] = useState([])
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-    })
-  }, [])
 
   const updateBuild = useCallback((patch) => {
     setBuild(prev => ({ ...prev, ...patch }))

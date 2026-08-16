@@ -9,6 +9,7 @@ import BuildComparator from '@/components/builds/BuildComparator'
 import FavoriteButton from '@/components/ui/FavoriteButton'
 import SquadCompBuilder from '@/components/builds/SquadCompBuilder'
 import Meta1v1Tierlist from '@/components/builds/Meta1v1Tierlist'
+import { usePortalSession } from '@/contexts/PortalSessionContext'
 
 const ALBION_CATEGORIES = [
   { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
@@ -24,7 +25,7 @@ function applyOlderThan(query, cursor) {
 }
 
 export default function BuildyPage() {
-  const [user, setUser] = useState(null)
+  const { user } = usePortalSession()
   const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -68,10 +69,7 @@ export default function BuildyPage() {
   }, [activeCategory])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      fetchBuilds()
-    })
+    void Promise.resolve().then(fetchBuilds)
   }, [fetchBuilds])
 
   const handleDeleteBuild = async (id) => {
