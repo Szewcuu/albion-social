@@ -16,6 +16,7 @@
 /test-results/
 /playwright/.auth/
 /lighthouse-results/
+/.tmp-e5/
 
 # next.js
 /.next/

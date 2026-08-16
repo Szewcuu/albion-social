@@ -159,16 +159,16 @@ export default function Home() {
               <Flame className="w-3.5 h-3.5 text-amber-400" /> Szybkie Akcje Gracza
             </h3>
             <div className="grid grid-cols-2 gap-2 font-mono text-xs">
-              <Link href="/buildy/create" className="p-2.5 rounded-xl bg-white/5 hover:bg-amber-500/10 border border-white/8 hover:border-amber-400/40 text-gray-200 hover:text-amber-300 transition flex items-center justify-between">
+              <Link href="/buildy/create" prefetch={false} className="p-2.5 rounded-xl bg-white/5 hover:bg-amber-500/10 border border-white/8 hover:border-amber-400/40 text-gray-200 hover:text-amber-300 transition flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[11px]"><Swords className="w-3.5 h-3.5 text-amber-400" /> Stwórz Build</span>
               </Link>
-              <Link href="/rynek" className="p-2.5 rounded-xl bg-white/5 hover:bg-sky-500/10 border border-white/8 hover:border-sky-400/40 text-gray-200 hover:text-sky-300 transition flex items-center justify-between">
+              <Link href="/rynek" prefetch={false} className="p-2.5 rounded-xl bg-white/5 hover:bg-sky-500/10 border border-white/8 hover:border-sky-400/40 text-gray-200 hover:text-sky-300 transition flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[11px]"><ShoppingBag className="w-3.5 h-3.5 text-sky-400" /> Wystaw Ofertę</span>
               </Link>
-              <Link href="/wyprawy" className="p-2.5 rounded-xl bg-white/5 hover:bg-purple-500/10 border border-white/8 hover:border-purple-400/40 text-gray-200 hover:text-purple-300 transition flex items-center justify-between">
+              <Link href="/wyprawy" prefetch={false} className="p-2.5 rounded-xl bg-white/5 hover:bg-purple-500/10 border border-white/8 hover:border-purple-400/40 text-gray-200 hover:text-purple-300 transition flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[11px]"><Users className="w-3.5 h-3.5 text-purple-400" /> Wyprawa</span>
               </Link>
-              <Link href="/loot-split" className="p-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/10 border border-white/8 hover:border-emerald-400/40 text-gray-200 hover:text-emerald-300 transition flex items-center justify-between">
+              <Link href="/loot-split" prefetch={false} className="p-2.5 rounded-xl bg-white/5 hover:bg-emerald-500/10 border border-white/8 hover:border-emerald-400/40 text-gray-200 hover:text-emerald-300 transition flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[11px]"><Coins className="w-3.5 h-3.5 text-emerald-400" /> Loot Split</span>
               </Link>
             </div>

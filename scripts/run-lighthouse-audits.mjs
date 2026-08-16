@@ -85,7 +85,7 @@ function markdownSummary(rows) {
     `- Data UTC: ${new Date().toISOString()}`,
     `- Tryb: ${guestOnly ? 'tylko gość' : 'pełny audyt 14 widoków'}`,
     '',
-    '| Widok | Profil | Performance | Accessibility | Best Practices | SEO | LCP | TBT | CLS |',
+    '| Widok | Profil | Performance | Accessibility | Best Practices | SEO* | LCP | TBT | CLS |',
     '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
   ]
   const body = rows.map((row) => [
@@ -99,11 +99,17 @@ function markdownSummary(rows) {
     row.metrics.tbt.displayValue || '—',
     row.metrics.cls.displayValue || '—',
   ].join(' | '))
-  return `${[...header, ...body.map((line) => `| ${line} |`)].join('\n')}\n`
+  return `${[...header, ...body.map((line) => `| ${line} |`)].join('\n')}\n\n* SEO jest progiem blokującym tylko dla publicznego ekranu logowania. Chronione podstrony są celowo oznaczone jako noindex.\n`
 }
 
 function belowThreshold(row) {
-  return Object.values(row.scores).some((value) => value < 90)
+  const requiredScores = [
+    row.scores.performance,
+    row.scores.accessibility,
+    row.scores.bestPractices,
+  ]
+  if (row.route === 'guest-landing') requiredScores.push(row.scores.seo)
+  return requiredScores.some((value) => value < 90)
 }
 
 async function authenticateChrome(chromePort) {
@@ -195,7 +201,13 @@ async function main() {
     baseUrl: baseUrl.origin,
     generatedAt: new Date().toISOString(),
     guestOnly,
-    thresholds: { performance: 90, accessibility: 90, bestPractices: 90, seo: 90 },
+    thresholds: {
+      performance: 90,
+      accessibility: 90,
+      bestPractices: 90,
+      publicSeo: 90,
+      protectedSeo: 'report-only (intentional noindex)',
+    },
     passed: rows.every((row) => !belowThreshold(row)),
     results: rows,
   }
@@ -204,7 +216,7 @@ async function main() {
   console.log(markdownSummary(rows))
 
   if (!summary.passed) {
-    throw new Error('At least one Lighthouse category is below the required score of 90.')
+    throw new Error('At least one required Lighthouse category is below the score of 90.')
   }
 }
 
