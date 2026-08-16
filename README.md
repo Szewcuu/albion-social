@@ -42,9 +42,9 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **Priorytet E: wydajność, SEO i jakość UI**
+> **Priorytet F: niezawodność integracji API**
 
-Zakres P5, Priorytety C i D oraz etapy E.1–E.5 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie, SEO oraz automatyczny audyt 14 widoków. Następnym etapem jest E.6: testy wizualne na sześciu szerokościach ekranu.
+Zakres P5, Priorytety C i D oraz etapy E.1–E.6 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie, SEO, automatyczny audyt Lighthouse oraz macierz 96 inspekcji responsywności. Następnym etapem jest Priorytet F: testy adapterów z mockami odpowiedzi zewnętrznych API i monitoring jakości integracji.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -282,7 +282,9 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] publikować raport budżetu jako artefakt każdego workflow Quality
 - [x] przeprowadzić ponowny Lighthouse dla mobile i desktop po wdrożeniu obecnej gałęzi
 - [x] zautomatyzować 14 pomiarów w GitHub Actions, zachować raporty prób kontrolnych i blokować przekroczenia budżetu stabilności
-- [ ] uzupełnić testy wizualne dla 360, 390, 430, 768, 1280 i 1920 px
+- [x] uzupełnić testy wizualne dla 360, 390, 430, 768, 1280 i 1920 px
+  - [x] objąć macierzą 3 strony publiczne i 13 najważniejszych ekranów po zalogowaniu
+  - [x] wykrywać poziomy overflow i dołączać pełny zrzut strony do raportu Playwright
 
 ## Roadmapa / TODO
 
