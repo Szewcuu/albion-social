@@ -315,7 +315,10 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [ ] wyceniać utracony ekwipunek na podstawie Albion Online Data Project
 - [x] dodać filtrowanie historii po typie zdarzenia i regionie
 - [x] dodać profil gildii: podstawowe statystyki i lista członków
-- [ ] umożliwić przypięcie postaci Albionu do profilu portalu
+- [x] umożliwić przypięcie postaci Albionu do profilu portalu
+  - [x] zagwarantować jedno przypięcie postaci w obrębie regionu i blokować bezpośrednie fałszowanie statusu
+  - [x] umożliwić zmianę oraz odłączenie postaci z poziomu profilu
+  - [x] odróżnić przypięcie rekordu API od potwierdzenia własności konta w grze
 - [x] przygotować czytelne stany: ładowanie, brak danych, timeout i awaria źródła
 
 ### P2 — Market Intelligence

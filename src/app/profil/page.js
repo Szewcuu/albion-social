@@ -87,6 +87,7 @@ export default function ProfilePage() {
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [verifiedState, setVerifiedState] = useState(null)
+  const [unlinkingCharacter, setUnlinkingCharacter] = useState(false)
 
   const fetchProfileData = useCallback(async (userId) => {
     setLoading(true)
@@ -109,12 +110,14 @@ export default function ProfilePage() {
       if (profileResult.data.is_verified && profileResult.data.verified_player_id) {
         const pId = profileResult.data.verified_player_id
         const pServer = profileResult.data.verified_server || profileResult.data.main_server || 'Europa'
-        const region = pServer.toLowerCase().includes('ameryka') ? 'america' : pServer.toLowerCase().includes('azja') ? 'asia' : 'europe'
+        const region = profileResult.data.verified_region
+          || (pServer.toLowerCase().includes('ameryka') ? 'america' : pServer.toLowerCase().includes('azja') ? 'asia' : 'europe')
 
         setVerifiedState({
           is_verified: true,
           verified_player_id: pId,
           verified_server: pServer,
+          verified_region: region,
           pvp_fame: profileResult.data.pvp_fame || 0,
           pve_fame: profileResult.data.pve_fame || 0,
         })
@@ -231,12 +234,39 @@ export default function ProfilePage() {
       setVerifiedState(verifiedPayload)
       setNotice({
         type: 'success',
-        text: `Postać „${verifiedPayload.ingame_nick}” została zweryfikowana w API Albion Online!`,
+        text: `Postać „${verifiedPayload.ingame_nick}” została przypięta do profilu.`,
       })
       return true
     } catch (error) {
       setNotice({ type: 'error', text: error.message || 'Nie udało się zapisać profilu.' })
       return false
+    }
+  }
+
+  async function handleUnlinkCharacter() {
+    if (!user || unlinkingCharacter) return
+    if (!window.confirm('Odłączyć postać Albion Online od profilu? Zachowasz pozostałe dane profilu.')) return
+
+    setUnlinkingCharacter(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Sesja wygasła. Zaloguj się ponownie.')
+
+      const response = await fetch('/api/profile/verify', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const result = await response.json().catch(() => null)
+      if (!response.ok || !result?.profile) {
+        throw new Error(result?.error || 'Nie udało się odłączyć postaci.')
+      }
+
+      setVerifiedState(null)
+      setNotice({ type: 'success', text: 'Postać została odłączona od profilu.' })
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message || 'Nie udało się odłączyć postaci.' })
+    } finally {
+      setUnlinkingCharacter(false)
     }
   }
 
@@ -283,7 +313,7 @@ export default function ProfilePage() {
                 </div>
                 {verifiedState?.is_verified && (
                   <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[9px] font-mono font-bold uppercase text-amber-300 bg-amber-950/40 border border-amber-500/40 px-2.5 py-1 rounded-full">
-                    <ShieldCheck className="h-3.5 w-3.5 text-amber-400" /> Postać Zweryfikowana w API
+                    <ShieldCheck className="h-3.5 w-3.5 text-amber-400" /> Postać przypięta przez API
                   </div>
                 )}
                 <h2 className="font-display mt-2 truncate text-2xl font-black text-[#fff]">{displayName}</h2>
@@ -302,7 +332,7 @@ export default function ProfilePage() {
 
                 {verifiedState?.is_verified && (
                   <div className="mt-3 bg-[var(--bg-elevated)] border border-amber-500/20 p-3 rounded-xl text-left font-mono text-[10px] space-y-1">
-                    <div className="text-gray-400 uppercase text-[8px]">Statystyki Oficjalne:</div>
+                    <div className="text-gray-400 uppercase text-[8px]">Dane z publicznego API:</div>
                     <div className="flex justify-between text-rose-300 font-bold">
                       <span>PvP Fame:</span>
                       <span>{Number(verifiedState.pvp_fame || 0).toLocaleString('pl-PL')}</span>
@@ -353,7 +383,7 @@ export default function ProfilePage() {
                   <p className="text-[9px] font-black uppercase tracking-[.22em] text-[var(--amber)]">Tożsamość w Albionie</p>
                   <h2 className="font-display mt-1 text-2xl font-black text-[#fff]">Karta postaci</h2>
                   <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
-                    Weryfikacja pobiera oficjalne statystyki postaci z serwerów Albion Online.
+                    Przypięcie pobiera publiczne statystyki postaci z API Albion Online. Nie potwierdza własności konta w grze.
                   </p>
                 </div>
 
@@ -364,8 +394,19 @@ export default function ProfilePage() {
                     className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-mono font-bold text-xs rounded-xl uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-amber-950/50 transition cursor-pointer"
                   >
                     <ShieldCheck className="w-4 h-4" />
-                    {verifiedState?.is_verified ? 'Zaktualizuj Weryfikację' : 'Zweryfikuj w API'}
+                    {verifiedState?.is_verified ? 'Zmień przypiętą postać' : 'Przypnij postać'}
                   </button>
+                  {verifiedState?.is_verified && (
+                    <button
+                      type="button"
+                      onClick={handleUnlinkCharacter}
+                      disabled={unlinkingCharacter}
+                      className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-50"
+                    >
+                      {unlinkingCharacter ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      {unlinkingCharacter ? 'Odłączanie…' : 'Odłącz postać'}
+                    </button>
+                  )}
                   <span className={`rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.14em] ${ROLE_STYLES[formData.main_role] || ROLE_STYLES.DPS}`}>
                     {formData.main_role}
                   </span>
@@ -379,7 +420,7 @@ export default function ProfilePage() {
                       <span>Nick w grze</span>
                       {verifiedState?.is_verified && (
                         <span className="text-[8px] text-amber-400/90 font-mono font-normal normal-case flex items-center gap-1">
-                          <Lock className="w-3 h-3 text-amber-400" /> Zablokowano (Zweryfikowano w API)
+                          <Lock className="w-3 h-3 text-amber-400" /> Dane przypiętej postaci
                         </span>
                       )}
                     </span>
@@ -391,7 +432,7 @@ export default function ProfilePage() {
                       disabled={Boolean(verifiedState?.is_verified)}
                       onChange={(event) => setFormData({ ...formData, ingame_nick: event.target.value })}
                       placeholder="np. SirLancelot"
-                      title={verifiedState?.is_verified ? "Nick został Oficjalnie Zweryfikowany z API. Użyj przycisku 'Zaktualizuj Weryfikację', aby zmienić postać." : "Nick w grze"}
+                      title={verifiedState?.is_verified ? "Nick pochodzi z przypiętej postaci. Użyj przycisku „Zmień przypiętą postać”, aby go zmienić." : "Nick w grze"}
                       className={`mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal outline-none ${
                         verifiedState?.is_verified
                           ? 'bg-[#080406] border-amber-500/30 text-amber-200/80 cursor-not-allowed select-none'
@@ -405,10 +446,11 @@ export default function ProfilePage() {
                       value={formData.main_server}
                       onChange={(val) => setFormData({ ...formData, main_server: val })}
                       options={['Europa', 'Ameryka', 'Azja']}
+                      disabled={Boolean(verifiedState?.is_verified)}
                     />
                   </div>
                   <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Nazwa gildii
-                    <input type="text" maxLength={100} value={formData.guild_name} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none font-mono" />
+                    <input type="text" maxLength={100} value={formData.guild_name} disabled={Boolean(verifiedState?.is_verified)} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none font-mono disabled:cursor-not-allowed disabled:opacity-50" />
                   </label>
                   <div>
                     <CustomSelect

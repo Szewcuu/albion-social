@@ -23,6 +23,15 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
   const [overview, setOverview] = useState(null)
   const [verifying, setVerifying] = useState(false)
 
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && !verifying) onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose, verifying])
+
   if (!isOpen) return null
 
   const handleSearch = async (e) => {
@@ -117,13 +126,13 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-[#d8ad4a]/30 bg-[#0a0508] p-6 shadow-2xl space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onMouseDown={(event) => event.target === event.currentTarget && !verifying && onClose()}>
+      <div role="dialog" aria-modal="true" aria-labelledby="character-link-title" className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-[#d8ad4a]/30 bg-[#0a0508] p-6 shadow-2xl space-y-5">
         {/* NAGŁÓWEK */}
         <div className="flex items-center justify-between border-b border-[#240e15] pb-4">
-          <div className="flex items-center gap-2 text-[#f3ba2f] font-mono text-sm font-bold uppercase">
+          <div id="character-link-title" className="flex items-center gap-2 text-[#f3ba2f] font-mono text-sm font-bold uppercase">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            Weryfikacja Konta Albion Online
+            Przypnij postać Albion Online
           </div>
           <button
             onClick={onClose}
@@ -136,7 +145,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
 
         {/* WSKAZÓWKA */}
         <p className="text-xs text-gray-300 leading-relaxed">
-          Wyszukaj swoją postać w oficjalnym rejestrze Albion Online API. Po potwierdzeniu Twój profil otrzyma status <strong className="text-emerald-400 font-bold">Oficjalnie Zweryfikowany</strong> ze statystykami PvP/PvE.
+          Wyszukaj postać w publicznym rejestrze Albion Online API i przypnij ją do profilu portalu. To potwierdza zgodność danych w API, ale nie własność konta w grze.
         </p>
 
         {/* CZAS OCZEKIWANIA INFO */}
@@ -235,7 +244,7 @@ export default function CharacterVerificationModal({ isOpen, onClose, defaultNic
           <div className="bg-[#050204] border border-emerald-500/30 p-4 rounded-2xl space-y-4 animate-fadeIn">
             <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase">
               <CheckCircle2 className="w-4 h-4" />
-              Znaleziono zweryfikowany profil Albionu
+              Znaleziono postać w API Albionu
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-left font-mono">
