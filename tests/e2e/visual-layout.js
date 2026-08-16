@@ -57,11 +57,11 @@ export async function captureResponsiveView(page, testInfo, route, viewport) {
     return { viewportWidth, rootWidth, bodyWidth, overflow, offenders }
   })
 
-  expect(layout.overflow, `Poziomy overflow na ${route.path} przy ${viewport.width}px:\n${JSON.stringify(layout.offenders, null, 2)}`).toBeLessThanOrEqual(1)
-
   const screenshot = await page.screenshot({ animations: 'disabled', fullPage: true })
   await testInfo.attach(`${route.slug}-${viewport.width}px`, {
     body: screenshot,
     contentType: 'image/png',
   })
+
+  expect(layout.overflow, `Poziomy overflow na ${route.path} przy ${viewport.width}px:\n${JSON.stringify(layout.offenders, null, 2)}`).toBeLessThanOrEqual(1)
 }
