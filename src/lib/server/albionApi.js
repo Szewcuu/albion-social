@@ -475,3 +475,15 @@ export async function getAlbionGuildOverview(guildId, region, limit = 10) {
 
   return { guild, membersCount: members.length, battles }
 }
+
+export async function getAlbionRecentEvents(region, { limit = 51, offset = 0 } = {}) {
+  const safeLimit = Math.max(1, Math.min(51, Number(limit) || 51))
+  const safeOffset = Math.max(0, Math.min(500, Number(offset) || 0))
+  const result = await fetchAlbionJson(`/events?limit=${safeLimit}&offset=${safeOffset}`, {
+    region,
+    revalidate: 300,
+    timeoutMs: 12_000,
+    retry: false,
+  })
+  return Array.isArray(result) ? result : []
+}
