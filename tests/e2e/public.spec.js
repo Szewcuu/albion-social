@@ -51,6 +51,7 @@ test.describe('publiczna bramka portalu', () => {
     const profileVerification = await request.post('/api/profile/verify', {
       data: { playerId: 'anonymous-test', region: 'europe' },
     })
+    const profileUnlink = await request.delete('/api/profile/verify')
     const accountDelete = await request.delete('/api/profile/account', {
       data: { confirmation: 'USUŃ KONTO' },
     })
@@ -64,6 +65,7 @@ test.describe('publiczna bramka portalu', () => {
     expect(priceAlerts.status()).toBe(401)
     expect(portalOverview.status()).toBe(401)
     expect(profileVerification.status()).toBe(401)
+    expect(profileUnlink.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
   })
 
