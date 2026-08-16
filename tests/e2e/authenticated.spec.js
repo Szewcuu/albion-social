@@ -62,6 +62,47 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     expect(polishResponse.headers()['x-item-catalog-version']).toBe(polish.meta.version.slice(0, 16))
   })
 
+  test('zapisuje, odczytuje i usuwa serwerowy alert cenowy', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
+      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
+    })
+    expect(accessToken).toBeTruthy()
+    const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+    let alertId = null
+
+    try {
+      const saveResponse = await request.put('/api/price-alerts', {
+        headers,
+        data: {
+          itemId: 'T4_BAG',
+          itemName: 'Torba Adepta',
+          region: 'europe',
+          city: 'Caerleon',
+          quality: 1,
+          direction: 'below',
+          targetPrice: 1,
+        },
+      })
+      expect(saveResponse.status()).toBe(200)
+      const saved = await saveResponse.json()
+      alertId = saved.alert?.id
+      expect(alertId).toMatch(/^[0-9a-f-]{36}$/)
+
+      const readResponse = await request.get('/api/price-alerts?item=T4_BAG&region=europe&city=Caerleon&quality=1&days=30', { headers })
+      expect(readResponse.status()).toBe(200)
+      const payload = await readResponse.json()
+      expect(payload.alerts.some((alert) => alert.id === alertId && Number(alert.target_price) === 1)).toBe(true)
+      expect(Array.isArray(payload.history)).toBe(true)
+    } finally {
+      if (alertId) {
+        const deleteResponse = await request.delete(`/api/price-alerts?id=${encodeURIComponent(alertId)}`, { headers })
+        expect(deleteResponse.status()).toBe(200)
+      }
+    }
+  })
+
   test('porównuje dwa buildy z regionalną wyceną rynku', async ({ page }) => {
     await page.route('**/api/prices?**', async (route) => {
       const url = new URL(route.request().url())

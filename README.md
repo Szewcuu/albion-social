@@ -42,9 +42,9 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **Priorytet D: dane Albionu i narzędzia**
+> **Priorytet E: wydajność, SEO i jakość UI**
 
-Zakres P5 oraz Priorytet C są ukończone. Etapy D.1–D.4 dostarczyły regionalną wycenę utraconego ekwipunku, porównanie buildów z cenami rynku, Wartownię śledzącą nowe walki oraz szybki, polski katalog przedmiotów aktualizowany automatycznie. Następnym etapem jest D.5: historia zmian cen i alerty cenowe po stronie serwera.
+Zakres P5 oraz Priorytety C i D są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów oraz serwerową historię rynku z alertami cenowymi. Następnym etapem jest E.1: podział najcięższych komponentów klienckich i ograniczenie równoległych zapytań przy wejściu na stronę.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -250,7 +250,15 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] zatrzymać aktualizację przy uszkodzonym źródle, zbyt małym katalogu, niespójnym hashu lub błędnym rekordzie oraz bezpiecznie deduplikować identyfikatory
   - [x] wyszukiwać po polskiej nazwie, angielskiej nazwie oraz identyfikatorze przedmiotu
   - [x] walidować snapshot w CI oraz testować normalizację, kategorie i kontrakt API
-- [ ] dodać historię zmian cen i alerty cenowe przechowywane po stronie serwera
+- [x] dodać historię zmian cen i alerty cenowe przechowywane po stronie serwera
+  - [x] zapisywać godzinowe próbki zleceń sprzedaży i kupna dla analizowanych oraz obserwowanych przedmiotów
+  - [x] utrzymywać alert osobno dla przedmiotu, regionu, miasta, jakości i strony rynku
+  - [x] wysyłać idempotentne powiadomienie dopiero przy wejściu ceny w warunek alertu
+  - [x] sprawdzać aktywne alerty w istniejącym zadaniu cron i umożliwić bezpieczne odświeżenie po analizie
+  - [x] usuwać próbki starsze niż 90 dni i deduplikować wiele skanów w tej samej godzinie
+  - [x] chronić alerty właścicielskim RLS, a historię udostępniać wyłącznie przez uwierzytelnione API serwera
+  - [x] wyświetlać zapisany trend portalu obok historii transakcji Albion Data Project
+  - [x] objąć progi testami jednostkowymi oraz pełny cykl alertu testem E2E
 
 ### Priorytet E — wydajność, SEO i jakość UI
 

@@ -2,7 +2,7 @@
 
 import CustomSelect from '@/components/ui/CustomSelect'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import {
   AlertTriangle,
@@ -24,6 +24,8 @@ import {
   X,
 } from 'lucide-react'
 import { itemImageUrl } from '@/lib/buildSlots'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { alertConditionMet, marketPriceKey } from '@/lib/marketPriceAlerts'
 
 const CITIES = ['Caerleon', 'Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford', 'Brecilien']
 const QUALITY_OPTIONS = [
@@ -39,7 +41,6 @@ const REGION_OPTIONS = [
   { value: 'asia', label: 'Azja' },
 ]
 const FAVORITES_KEY = 'aopp-market-favorites'
-const WATCHES_KEY = 'aopp-market-price-watches'
 const DEFAULT_ITEM = { id: 'T4_BAG', name: "Adept's Bag", category: 'bags' }
 
 function formatSilver(value, compact = false) {
@@ -171,7 +172,10 @@ export default function MarketIntelligence() {
   const [error, setError] = useState('')
   const [hasAnalyzed, setHasAnalyzed] = useState(false)
   const [favorites, setFavorites] = useState([])
-  const [priceWatches, setPriceWatches] = useState({})
+  const [priceAlerts, setPriceAlerts] = useState([])
+  const [serverHistory, setServerHistory] = useState([])
+  const [watchSaving, setWatchSaving] = useState(false)
+  const [watchMessage, setWatchMessage] = useState('')
   const [watchDirection, setWatchDirection] = useState('below')
   const [watchTarget, setWatchTarget] = useState('')
   const [buyCost, setBuyCost] = useState('')
@@ -185,23 +189,29 @@ export default function MarketIntelligence() {
       try {
         const stored = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]')
         if (Array.isArray(stored)) setFavorites(stored.slice(0, 12))
-        const storedWatches = JSON.parse(localStorage.getItem(WATCHES_KEY) || '{}')
-        if (storedWatches && typeof storedWatches === 'object' && !Array.isArray(storedWatches)) {
-          setPriceWatches(storedWatches)
-          const defaultWatch = storedWatches[DEFAULT_ITEM.id]
-          if (defaultWatch) {
-            setWatchDirection(defaultWatch.direction === 'above' ? 'above' : 'below')
-            setWatchTarget(String(defaultWatch.target || ''))
-          }
-        }
       } catch {
         localStorage.removeItem(FAVORITES_KEY)
-        localStorage.removeItem(WATCHES_KEY)
       }
     }, 0)
 
     return () => clearTimeout(hydrationTimer)
   }, [])
+
+  const loadPriceAlerts = useCallback(async () => {
+    try {
+      const response = await authenticatedFetch('/api/price-alerts')
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body?.error || 'Nie udało się pobrać alertów.')
+      setPriceAlerts(body.alerts || [])
+    } catch (alertError) {
+      setWatchMessage(alertError.message)
+    }
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(loadPriceAlerts, 0)
+    return () => clearTimeout(timer)
+  }, [loadPriceAlerts])
 
   useEffect(() => {
     if (query.trim().length < 2) {
@@ -245,6 +255,13 @@ export default function MarketIntelligence() {
     return (series?.data || []).map((point) => ({ value: point.avg_price, label: point.timestamp }))
   }, [historyData, historyCity, quality])
 
+  const serverHistoryPoints = useMemo(() => {
+    const field = watchDirection === 'above' ? 'buy_price_max' : 'sell_price_min'
+    return serverHistory
+      .filter((point) => Number(point[field]) > 0)
+      .map((point) => ({ value: point[field], label: point.sampled_at }))
+  }, [serverHistory, watchDirection])
+
   const goldPoints = useMemo(() => [...goldData]
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
     .map((point) => ({ value: point.price, label: point.timestamp })), [goldData])
@@ -273,9 +290,6 @@ export default function MarketIntelligence() {
     setMarketData([])
     setHistoryData([])
     setError('')
-    const itemWatch = priceWatches[item.id]
-    setWatchDirection(itemWatch?.direction === 'above' ? 'above' : 'below')
-    setWatchTarget(itemWatch?.target ? String(itemWatch.target) : '')
   }
 
   function toggleCity(city) {
@@ -293,16 +307,56 @@ export default function MarketIntelligence() {
     localStorage.setItem(FAVORITES_KEY, JSON.stringify(next))
   }
 
-  function savePriceWatch() {
+  async function savePriceWatch() {
     const target = Number(watchTarget)
-    const next = { ...priceWatches }
-    if (target > 0) {
-      next[selectedItem.id] = { target, direction: watchDirection, name: selectedItem.name }
-    } else {
-      delete next[selectedItem.id]
+    if (!Number.isSafeInteger(target) || target <= 0) {
+      setWatchMessage('Podaj prawidłowy próg ceny w Silver.')
+      return
     }
-    setPriceWatches(next)
-    localStorage.setItem(WATCHES_KEY, JSON.stringify(next))
+    setWatchSaving(true)
+    setWatchMessage('')
+    try {
+      const response = await authenticatedFetch('/api/price-alerts', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          itemId: selectedItem.id,
+          itemName: selectedItem.name,
+          region,
+          city: historyCity,
+          quality,
+          direction: watchDirection,
+          targetPrice: target,
+        }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body?.error || 'Nie udało się zapisać alertu.')
+      if (body.sync) await loadPriceAlerts()
+      else setPriceAlerts((current) => [body.alert, ...current.filter((alert) => alert.id !== body.alert.id)])
+      setWatchMessage(body.sync ? 'Alert zapisany i sprawdzony na serwerze.' : 'Alert zapisany. Pierwszy skan wykona automat.')
+    } catch (watchError) {
+      setWatchMessage(watchError.message)
+    } finally {
+      setWatchSaving(false)
+    }
+  }
+
+  async function deletePriceWatch() {
+    if (!activeWatch) return
+    setWatchSaving(true)
+    setWatchMessage('')
+    try {
+      const response = await authenticatedFetch(`/api/price-alerts?id=${encodeURIComponent(activeWatch.id)}`, { method: 'DELETE' })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body?.error || 'Nie udało się usunąć alertu.')
+      setPriceAlerts((current) => current.filter((alert) => alert.id !== activeWatch.id))
+      setWatchTarget('')
+      setWatchMessage('Alert został usunięty.')
+    } catch (watchError) {
+      setWatchMessage(watchError.message)
+    } finally {
+      setWatchSaving(false)
+    }
   }
 
   async function analyzeMarket() {
@@ -345,6 +399,23 @@ export default function MarketIntelligence() {
       setMeta(current.meta || null)
       setHasAnalyzed(true)
 
+      try {
+        await authenticatedFetch('/api/price-alerts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sample', itemId: selectedItem.id, region, cities: activeCities, quality }),
+        })
+        const storedParams = new URLSearchParams({ item: selectedItem.id, region, city: historyCity, quality: String(quality), days: range === '24h' ? '1' : range === '7d' ? '7' : '30' })
+        const storedResponse = await authenticatedFetch(`/api/price-alerts?${storedParams}`)
+        const stored = await storedResponse.json().catch(() => ({}))
+        if (storedResponse.ok) {
+          setServerHistory(stored.history || [])
+          setPriceAlerts(stored.alerts || [])
+        }
+      } catch (storageError) {
+        console.error('Nie udało się zaktualizować serwerowej historii rynku:', storageError)
+      }
+
       const firstSell = (current.data || []).filter((row) => row.sell_price_min > 0).sort((a, b) => a.sell_price_min - b.sell_price_min)[0]
       const firstBuy = (current.data || []).filter((row) => row.buy_price_max > 0).sort((a, b) => b.buy_price_max - a.buy_price_max)[0]
       if (firstSell) setBuyCost(String(firstSell.sell_price_min))
@@ -360,11 +431,22 @@ export default function MarketIntelligence() {
   const currentGold = goldPoints.at(-1)?.value
   const previousGold = goldPoints.at(-2)?.value
   const goldDelta = currentGold && previousGold ? ((currentGold - previousGold) / previousGold) * 100 : 0
-  const activeWatch = priceWatches[selectedItem.id]
-  const watchedPrice = activeWatch?.direction === 'above' ? highestBuy?.buy_price_max : cheapestSell?.sell_price_min
-  const watchTriggered = activeWatch && watchedPrice > 0 && (
-    activeWatch.direction === 'above' ? watchedPrice >= activeWatch.target : watchedPrice <= activeWatch.target
-  )
+  const activeWatch = priceAlerts.find((alert) => marketPriceKey(alert) === marketPriceKey({ itemId: selectedItem.id, region, city: historyCity, quality, priceType: watchDirection === 'above' ? 'buy' : 'sell' }))
+  const activeWatchKey = marketPriceKey({ itemId: selectedItem.id, region, city: historyCity, quality, priceType: watchDirection === 'above' ? 'buy' : 'sell' })
+  const watchedPrice = activeWatch?.price_type === 'buy' ? highestBuy?.buy_price_max : cheapestSell?.sell_price_min
+  const watchTriggered = activeWatch && (activeWatch.condition_met || alertConditionMet(activeWatch, watchedPrice))
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (activeWatch) {
+        setWatchDirection(activeWatch.direction)
+        setWatchTarget(String(activeWatch.target_price))
+      } else {
+        setWatchTarget('')
+      }
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [activeWatch, activeWatchKey])
 
   return (
     <section className="aopp-panel overflow-visible border-[#d8ad4a]/20" aria-labelledby="market-intelligence-title">
@@ -452,10 +534,10 @@ export default function MarketIntelligence() {
 
           <div className="rounded-2xl border border-white/8 bg-black/15 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.16em] text-[#8f8a81]"><BellRing className="h-3.5 w-3.5 text-[#e5bb55]" /> Obserwowana cena</p>
+              <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.16em] text-[#8f8a81]"><BellRing className="h-3.5 w-3.5 text-[#e5bb55]" /> Obserwowana cena · {historyCity}</p>
               {activeWatch && <span className="text-[8px] font-bold uppercase text-emerald-300">Zapisana</span>}
             </div>
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[130px_1fr_auto] items-center">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-[130px_150px_1fr_auto] items-center">
               <div>
                 <CustomSelect
                   value={watchDirection}
@@ -466,10 +548,21 @@ export default function MarketIntelligence() {
                   ]}
                 />
               </div>
+              <div>
+                <CustomSelect
+                  value={historyCity}
+                  onChange={(val) => setHistoryCity(val)}
+                  options={CITIES.map((city) => ({ value: city, label: city }))}
+                />
+              </div>
               <label><span className="sr-only">Próg ceny w silver</span><input type="number" min="0" value={watchTarget} onChange={(event) => setWatchTarget(event.target.value)} placeholder="Cena" className="min-h-11 w-full min-w-0 rounded-lg border border-white/10 bg-[#080605] px-2 py-2 font-mono text-[10px] text-[#eee7d9] outline-none focus:border-[#e5bb55]/40" /></label>
-              <button type="button" onClick={savePriceWatch} className="min-h-11 rounded-lg border border-[#e5bb55]/20 bg-[#e5bb55]/8 px-3 text-[9px] font-black uppercase text-[#e5bb55] hover:bg-[#e5bb55]/12">Zapisz</button>
+              <div className="flex gap-1.5">
+                <button type="button" onClick={savePriceWatch} disabled={watchSaving} className="min-h-11 rounded-lg border border-[#e5bb55]/20 bg-[#e5bb55]/8 px-3 text-[9px] font-black uppercase text-[#e5bb55] hover:bg-[#e5bb55]/12 disabled:opacity-50">{watchSaving ? 'Zapisuję' : 'Zapisz'}</button>
+                {activeWatch && <button type="button" onClick={deletePriceWatch} disabled={watchSaving} className="min-h-11 rounded-lg border border-rose-400/20 bg-rose-400/8 px-3 text-[9px] font-black uppercase text-rose-300 hover:bg-rose-400/12 disabled:opacity-50">Usuń</button>}
+              </div>
             </div>
-            <p className="mt-2 text-[9px] leading-4 text-[#9b958b]">Próg jest zapisany lokalnie. Ponowne uruchomienie analizy sprawdza, czy został osiągnięty.</p>
+            <p className="mt-2 text-[9px] leading-4 text-[#9b958b]">Alert jest zapisany na koncie dla wybranego miasta i jakości. Portal sprawdza go w tle i wysyła powiadomienie po przekroczeniu progu.</p>
+            {watchMessage && <p className="mt-2 text-[9px] font-bold text-sky-300" role="status">{watchMessage}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -557,7 +650,7 @@ export default function MarketIntelligence() {
               {watchTriggered && (
                 <div className="flex items-center gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-400/8 p-4 text-emerald-200">
                   <div className="rounded-xl bg-emerald-400/10 p-2"><BellRing className="h-5 w-5" /></div>
-                  <div><p className="text-xs font-black">Próg obserwowanej ceny został osiągnięty</p><p className="mt-1 text-[10px] text-emerald-200/70">Aktualny skan: {formatSilver(watchedPrice)} · próg: {activeWatch.direction === 'above' ? 'co najmniej' : 'nie więcej niż'} {formatSilver(activeWatch.target)}</p></div>
+                  <div><p className="text-xs font-black">Próg obserwowanej ceny został osiągnięty</p><p className="mt-1 text-[10px] text-emerald-200/70">Aktualny skan: {formatSilver(watchedPrice || activeWatch.last_observed_price)} · próg: {activeWatch.direction === 'above' ? 'co najmniej' : 'nie więcej niż'} {formatSilver(activeWatch.target_price)}</p></div>
                 </div>
               )}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -595,7 +688,7 @@ export default function MarketIntelligence() {
                 )}
               </div>
 
-              <div className="grid gap-5 lg:grid-cols-2">
+              <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
                 <div className="rounded-2xl border border-white/8 bg-black/10 p-4 sm:p-5">
                   <div className="mb-4 flex items-end justify-between gap-3">
                     <div>
@@ -618,6 +711,14 @@ export default function MarketIntelligence() {
                     <h3 className="font-display mt-1 text-lg font-black text-[#fff8e8]">Kurs złota — {range}</h3>
                   </div>
                   <LineChart points={goldPoints} tone="sky" emptyText="Brak danych o kursie złota dla tego regionu." />
+                </div>
+                <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[.025] p-4 sm:p-5 lg:col-span-2 2xl:col-span-1">
+                  <div className="mb-4">
+                    <p className="text-[9px] font-black uppercase tracking-[.18em] text-emerald-300">Historia portalu</p>
+                    <h3 className="font-display mt-1 text-lg font-black text-[#fff8e8]">{watchDirection === 'above' ? 'Najwyższe kupno' : 'Najniższa sprzedaż'} — {historyCity}</h3>
+                    <p className="mt-1 text-[9px] text-[#918b82]">Próbki zapisywane podczas analiz i kontroli alertów · retencja 90 dni</p>
+                  </div>
+                  <LineChart points={serverHistoryPoints} tone="sky" emptyText="Pierwsza próbka została zapisana. Trend pojawi się po kolejnym odczycie w innej godzinie." />
                 </div>
               </div>
 
