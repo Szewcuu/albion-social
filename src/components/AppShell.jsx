@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { syncPortalPreferences } from '@/lib/preferenceSync'
@@ -18,6 +18,7 @@ export default function AppShell({ children }) {
   const [notificationState, setNotificationState] = useState({ loading: false, error: '' })
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authReady, setAuthReady] = useState(false)
+  const hydratedUserIdRef = useRef(null)
   const pathname = usePathname()
   const router = useRouter()
 
@@ -62,6 +63,21 @@ export default function AppShell({ children }) {
     setNotificationState({ loading: false, error: '' })
   }, [])
 
+  const hydrateUserServices = useCallback((currentUser) => {
+    if (!currentUser) {
+      hydratedUserIdRef.current = null
+      setNotifications([])
+      setIsAdmin(false)
+      return
+    }
+    if (hydratedUserIdRef.current === currentUser.id) return
+
+    hydratedUserIdRef.current = currentUser.id
+    fetchNotifications(currentUser.id)
+    readAdminStatus(currentUser.id)
+    void syncPortalPreferences(currentUser.id)
+  }, [fetchNotifications, readAdminStatus])
+
   const markAllAsRead = useCallback(async () => {
     if (!user) return
     const { error } = await supabase
@@ -100,13 +116,7 @@ export default function AppShell({ children }) {
       const currentUser = session?.user ?? null
       setUser(currentUser)
       setAuthReady(true)
-      if (currentUser) {
-        fetchNotifications(currentUser.id)
-        readAdminStatus(currentUser.id)
-        void syncPortalPreferences(currentUser.id)
-      } else {
-        setIsAdmin(false)
-      }
+      hydrateUserServices(currentUser)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -114,21 +124,14 @@ export default function AppShell({ children }) {
       const currentUser = session?.user ?? null
       setUser(currentUser)
       setAuthReady(true)
-      if (currentUser) {
-        fetchNotifications(currentUser.id)
-        readAdminStatus(currentUser.id)
-        void syncPortalPreferences(currentUser.id)
-      } else {
-        setNotifications([])
-        setIsAdmin(false)
-      }
+      hydrateUserServices(currentUser)
     })
 
     return () => {
       active = false
       subscription.unsubscribe()
     }
-  }, [fetchNotifications, readAdminStatus])
+  }, [hydrateUserServices])
 
   useEffect(() => {
     if (!user?.id) return undefined

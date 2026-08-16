@@ -48,7 +48,7 @@ export async function GET(request) {
     return fallbackImage()
   }
 
-  const externalUrl = `https://render.albiononline.com/v1/item/${encodeURIComponent(sanitizedId)}.png`
+  const externalUrl = `https://render.albiononline.com/v1/item/${encodeURIComponent(sanitizedId)}.png?size=128`
 
   try {
     const res = await fetch(externalUrl, {

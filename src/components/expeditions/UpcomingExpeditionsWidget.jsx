@@ -2,10 +2,22 @@
 
 import { Compass, Users, Shield, Clock, ArrowRight, Sparkles } from 'lucide-react'
 
-export default function UpcomingExpeditionsWidget({ expeditions = [] }) {
+export default function UpcomingExpeditionsWidget({ expeditions = [], loading = false }) {
+  if (loading) {
+    return (
+      <div className="panel mb-6 min-h-[200px] animate-pulse rounded-3xl border-purple-500/20 bg-purple-950/10 p-5" aria-label="Ładowanie nadchodzących wypraw" aria-busy="true">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-2xl bg-white/8" />
+          <div className="flex-1"><div className="h-3 w-28 rounded bg-white/8" /><div className="mt-3 h-5 w-56 max-w-full rounded bg-white/8" /></div>
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-3"><div className="h-16 rounded-2xl bg-white/5" /><div className="h-16 rounded-2xl bg-white/5" /></div>
+      </div>
+    )
+  }
+
   if (!expeditions || expeditions.length === 0) {
     return (
-      <div className="panel p-5 rounded-3xl mb-6 bg-purple-950/10 border-purple-500/20">
+      <div className="panel min-h-[200px] p-5 rounded-3xl mb-6 bg-purple-950/10 border-purple-500/20 flex items-center">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-purple-500/10 border border-purple-400/30 text-purple-300">
             <Compass className="w-5 h-5" />
@@ -23,7 +35,7 @@ export default function UpcomingExpeditionsWidget({ expeditions = [] }) {
   const upcoming = expeditions.slice(0, 4)
 
   return (
-    <div className="panel p-5 sm:p-6 rounded-3xl mb-6 border-purple-500/30 bg-purple-950/10 space-y-4">
+    <div className="panel min-h-[200px] p-5 sm:p-6 rounded-3xl mb-6 border-purple-500/30 bg-purple-950/10 space-y-4">
       <div className="flex items-center justify-between border-b border-white/8 pb-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-2xl bg-purple-500/10 border border-purple-400/30 text-purple-300">
