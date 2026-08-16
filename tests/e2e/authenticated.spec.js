@@ -246,6 +246,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.route('**/api/prices?mode=gold**', async (route) => {
       await route.fulfill({
         status: 503,
+        headers: { 'x-e2e-expected-error': 'true' },
         contentType: 'application/json',
         body: JSON.stringify({ error: { code: 'UPSTREAM_EMPTY', message: 'Brak prawidłowych notowań złota.' } }),
       })
