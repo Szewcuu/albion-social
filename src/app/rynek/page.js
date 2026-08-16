@@ -1,7 +1,7 @@
 'use client'
 
 import { supabase } from '@/lib/supabase'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { ShoppingBag, Plus, Search, MapPin, Trash2, Globe, Store, HandCoins, User, ExternalLink, RefreshCw, Clock } from 'lucide-react'
@@ -17,6 +17,12 @@ const ContactSellerModal = dynamic(() => import('@/components/market/ContactSell
 const DeferredMarketTools = dynamic(() => import('@/components/market/DeferredMarketTools'), {
   loading: () => <div className="panel min-h-40 animate-pulse" aria-label="Ładowanie narzędzi rynku" />,
 })
+const MARKET_PAGE_SIZE = 12
+
+function applyOlderThan(query, cursor) {
+  if (!cursor) return query
+  return query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`)
+}
 
 export default function Rynek() {
   const [offers, setOffers] = useState([])
@@ -28,7 +34,9 @@ export default function Rynek() {
   const [filterCity, setFilterCity] = useState('ALL')
   const [filterCategory, setFilterCategory] = useState('ALL')
   const [sortBy, setSortBy] = useState('newest')
-  const [showAllOffers, setShowAllOffers] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const cursorRef = useRef(null)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -40,15 +48,27 @@ export default function Rynek() {
   })
   const [formMessage, setFormMessage] = useState('')
 
-  const fetchOffers = useCallback(async () => {
-    setLoading(true)
-    const { data, error } = await supabase
+  const fetchOffers = useCallback(async ({ append = false } = {}) => {
+    if (append) setLoadingMore(true)
+    else setLoading(true)
+    let query = supabase
       .from('market_items')
       .select('id, created_at, user_id, title, price, city, category, description, status, item_name, server, profiles!market_items_user_id_fkey(username)')
       .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(MARKET_PAGE_SIZE + 1)
+    const { data, error } = await applyOlderThan(query, append ? cursorRef.current : null)
 
-    if (!error && data) setOffers(data)
-    setLoading(false)
+    if (!error && data) {
+      const hasNextPage = data.length > MARKET_PAGE_SIZE
+      const page = data.slice(0, MARKET_PAGE_SIZE)
+      const oldest = page.at(-1)
+      cursorRef.current = oldest ? { created_at: oldest.created_at, id: oldest.id } : null
+      setHasMore(hasNextPage)
+      setOffers((current) => append ? [...current, ...page.filter((row) => !current.some((item) => item.id === row.id))] : page)
+    }
+    if (append) setLoadingMore(false)
+    else setLoading(false)
   }, [])
 
   const handleRenewOffer = async (offerId) => {
@@ -138,7 +158,7 @@ export default function Rynek() {
       if (sortBy === 'price_desc') return Number(b.price) - Number(a.price)
       return new Date(b.created_at) - new Date(a.created_at)
     })
-  const visibleOffers = showAllOffers ? filteredOffers : filteredOffers.slice(0, 8)
+  const visibleOffers = filteredOffers
 
   const numericPrice = Number(formData.price) || 0
   const formattedPricePreview = numericPrice > 0
@@ -475,13 +495,14 @@ export default function Rynek() {
                   )
                 })
               )}
-              {!loading && filteredOffers.length > visibleOffers.length && (
+              {!loading && hasMore && (
                 <button
                   type="button"
-                  onClick={() => setShowAllOffers(true)}
+                  disabled={loadingMore}
+                  onClick={() => fetchOffers({ append: true })}
                   className="btn btn-secondary mx-auto flex items-center"
                 >
-                  Pokaż pozostałe oferty ({filteredOffers.length - visibleOffers.length})
+                  {loadingMore ? 'Wczytywanie…' : 'Wczytaj kolejne oferty'}
                 </button>
               )}
             </div>

@@ -295,6 +295,8 @@ export default function BuildComments({ buildId }) {
   const [count, setCount] = useState(0)
   const [content, setContent] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [nextCursor, setNextCursor] = useState(null)
   const [busy, setBusy] = useState(null)
   const [notice, setNotice] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
@@ -306,14 +308,35 @@ export default function BuildComments({ buildId }) {
   const [replyingTo, setReplyingTo] = useState(null)
   const textareaRef = useRef(null)
 
-  const loadComments = useCallback(async (session) => {
+  const loadComments = useCallback(async (session, { append = false, cursor = null } = {}) => {
+    if (append) setLoadingMore(true)
     const headers = session?.access_token
       ? { Authorization: `Bearer ${session.access_token}` }
       : undefined
-    const payload = await readJson(await fetch(`/api/builds/${buildId}/comments`, { headers }))
-    setComments(payload.comments || [])
-    setCount(payload.count || 0)
+    const cursorQuery = append && cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''
+    try {
+      const payload = await readJson(await fetch(`/api/builds/${buildId}/comments${cursorQuery}`, { headers }))
+      setComments((current) => {
+        if (!append) return payload.comments || []
+        const known = new Set(current.map((comment) => comment.id))
+        return [...current, ...(payload.comments || []).filter((comment) => !known.has(comment.id))]
+      })
+      if (typeof payload.count === 'number') setCount(payload.count)
+      setNextCursor(payload.pagination?.hasMore ? payload.pagination.nextCursor : null)
+    } finally {
+      if (append) setLoadingMore(false)
+    }
   }, [buildId])
+
+  const loadMoreComments = async () => {
+    if (!nextCursor || loadingMore) return
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      await loadComments(session, { append: true, cursor: nextCursor })
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -518,6 +541,13 @@ export default function BuildComments({ buildId }) {
                 />
               ))}
             </ol>
+          )}
+          {!loading && nextCursor && (
+            <div className="flex justify-center pt-2">
+              <button type="button" className="btn btn-ghost btn-sm" disabled={loadingMore} onClick={loadMoreComments}>
+                {loadingMore ? 'Wczytywanie…' : 'Wczytaj starsze komentarze'}
+              </button>
+            </div>
           )}
         </div>
 

@@ -15,8 +15,14 @@ import {
 } from '@/lib/server/supabaseAdmin'
 import { cleanText } from '@/lib/server/validation'
 import { createNotification } from '@/lib/server/notifications'
+import {
+  applyCreatedAtCursor,
+  decodeCreatedAtCursor,
+  pageFromRows,
+} from '@/lib/server/pagination'
 
 const jsonError = (message, status, headers) => NextResponse.json({ error: message }, { status, headers })
+const COMMENTS_PAGE_SIZE = 30
 
 async function readBuildId(params) {
   const { id } = await params
@@ -41,19 +47,26 @@ export async function GET(request, { params }) {
 
     if (!(await ensureBuildExists(supabase, buildId))) return jsonError('Nie znaleziono buildu.', 404)
 
-    const { data, error, count } = await supabase
+    const cursor = decodeCreatedAtCursor(new URL(request.url).searchParams.get('cursor'), isBuildId)
+    if (cursor === undefined) return jsonError('Nieprawidłowy kursor komentarzy.', 400)
+
+    let query = supabase
       .from('build_comments')
-      .select('id, parent_id, content, created_at, updated_at, user_id, profiles!build_comments_user_id_fkey(username)', { count: 'exact' })
+      .select('id, parent_id, content, created_at, updated_at, user_id, profiles!build_comments_user_id_fkey(username)', { count: cursor ? undefined : 'exact' })
       .eq('build_id', buildId)
       .eq('status', 'visible')
       .order('created_at', { ascending: false })
-      .limit(100)
+      .order('id', { ascending: false })
+      .limit(COMMENTS_PAGE_SIZE + 1)
+    query = applyCreatedAtCursor(query, cursor)
+    const { data, error, count } = await query
 
     if (error) throw new Error('Nie udało się pobrać komentarzy.')
+    const pagination = pageFromRows(data || [], COMMENTS_PAGE_SIZE)
 
-    // Najnowsza setka może zawierać odpowiedź do starszego wpisu. Dociągamy
+    // Najnowsza strona może zawierać odpowiedź do starszego wpisu. Dociągamy
     // maksymalnie trzy poziomy przodków, aby podgląd odpowiedzi nigdy nie osierociał.
-    let comments = data || []
+    let comments = pagination.page
     for (let depth = 0; depth < 3; depth += 1) {
       const knownIds = new Set(comments.map((comment) => comment.id))
       const missingParentIds = [...new Set(comments
@@ -73,7 +86,11 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({
       comments: comments.map((row) => toCommentDto(row, viewer?.id)),
-      count: count || 0,
+      count: typeof count === 'number' ? count : null,
+      pagination: {
+        hasMore: pagination.hasMore,
+        nextCursor: pagination.nextCursor,
+      },
     })
   } catch (error) {
     console.error('Błąd odczytu komentarzy buildu:', error)

@@ -83,6 +83,8 @@ export default function AdminPage() {
   const [contentItems, setContentItems] = useState([])
   const [selectedIds, setSelectedIds] = useState([])
   const [selectedReportIds, setSelectedReportIds] = useState([])
+  const [reportsLoading, setReportsLoading] = useState(false)
+  const [reportsPagination, setReportsPagination] = useState({ hasMore: false, nextCursor: null })
   const [auditEntries, setAuditEntries] = useState([])
   const [roleUsers, setRoleUsers] = useState([])
   const [health, setHealth] = useState({ checks: [], events: [], generatedAt: null })
@@ -123,6 +125,28 @@ export default function AdminPage() {
       setBusy(false)
     }
   }, [contentStatus, contentType])
+
+  const loadReports = useCallback(async ({ append = false, cursor = null } = {}) => {
+    setReportsLoading(true)
+    try {
+      const cursorQuery = append && cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''
+      const response = await authenticatedFetch(`/api/admin/reports?status=${reportFilter}${cursorQuery}`, { cache: 'no-store' })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się pobrać zgłoszeń.')
+      setDashboard((current) => ({
+        ...current,
+        reports: append
+          ? [...current.reports, ...(payload.reports || []).filter((report) => !current.reports.some((item) => item.id === report.id))]
+          : payload.reports || [],
+      }))
+      setReportsPagination(payload.pagination || { hasMore: false, nextCursor: null })
+      setNotice(null)
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    } finally {
+      setReportsLoading(false)
+    }
+  }, [reportFilter])
 
   const loadAudit = useCallback(async () => {
     setBusy(true)
@@ -182,13 +206,14 @@ export default function AdminPage() {
   useEffect(() => {
     if (state.loading || state.forbidden) return undefined
     const timer = window.setTimeout(() => {
+      if (activeTab === 'reports') loadReports()
       if (activeTab === 'content') loadContent()
       if (activeTab === 'audit') loadAudit()
       if (activeTab === 'health') loadHealth()
       if (activeTab === 'roles' && dashboard.role === 'admin') loadRoles()
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [activeTab, dashboard.role, loadAudit, loadContent, loadHealth, loadRoles, state.forbidden, state.loading])
+  }, [activeTab, dashboard.role, loadAudit, loadContent, loadHealth, loadReports, loadRoles, state.forbidden, state.loading])
 
   const visibleReports = useMemo(() => (
     reportFilter === 'all' ? dashboard.reports : dashboard.reports.filter((report) => report.status === reportFilter)
@@ -338,7 +363,7 @@ export default function AdminPage() {
         {tabs.map(([value, label, Icon]) => <button key={value} type="button" role="tab" aria-selected={activeTab === value} onClick={() => { setActiveTab(value); setNotice(null) }} className={`chip ${activeTab === value ? 'active' : ''}`}><Icon className="h-3.5 w-3.5" /> {label}</button>)}
       </div>
 
-      {activeTab === 'reports' && <ReportsPanel reports={visibleReports} filter={reportFilter} setFilter={(value) => { setReportFilter(value); setSelectedReportIds([]) }} selectedIds={selectedReportIds} reason={reason} busy={busy} onSelect={setSelectedReportIds} onReason={setReason} onModerate={moderateReport} onModerateBatch={moderateReportsBatch} />}
+      {activeTab === 'reports' && <ReportsPanel reports={visibleReports} filter={reportFilter} setFilter={(value) => { setReportFilter(value); setSelectedReportIds([]) }} selectedIds={selectedReportIds} reason={reason} busy={busy} loading={reportsLoading} hasMore={reportsPagination.hasMore} onLoadMore={() => loadReports({ append: true, cursor: reportsPagination.nextCursor })} onSelect={setSelectedReportIds} onReason={setReason} onModerate={moderateReport} onModerateBatch={moderateReportsBatch} />}
       {activeTab === 'content' && <ContentPanel items={contentItems} type={contentType} status={contentStatus} selectedIds={selectedIds} reason={reason} busy={busy} onType={setContentType} onStatus={setContentStatus} onSelect={setSelectedIds} onReason={setReason} onModerate={moderateContent} onRefresh={loadContent} />}
       {activeTab === 'health' && <HealthPanel health={health} busy={busy} onRefresh={() => loadHealth(false)} onRun={() => loadHealth(true)} />}
       {activeTab === 'audit' && <AuditPanel entries={auditEntries} busy={busy} onRefresh={loadAudit} />}
@@ -381,7 +406,7 @@ function HealthPanel({ health, busy, onRefresh, onRun }) {
   )
 }
 
-function ReportsPanel({ reports, filter, setFilter, selectedIds, reason, busy, onSelect, onReason, onModerate, onModerateBatch }) {
+function ReportsPanel({ reports, filter, setFilter, selectedIds, reason, busy, loading, hasMore, onLoadMore, onSelect, onReason, onModerate, onModerateBatch }) {
   const pendingReports = reports.filter((report) => report.status === 'pending')
   const allSelected = pendingReports.length > 0 && pendingReports.every((report) => selectedIds.includes(report.id))
 
@@ -405,7 +430,7 @@ function ReportsPanel({ reports, filter, setFilter, selectedIds, reason, busy, o
         </div>
       )}
       <div className="space-y-3 p-4 sm:p-5">
-        {reports.length === 0 ? <EmptyState icon={CheckCircle2} title="Kolejka jest pusta" description="Brak zgłoszeń w wybranym widoku." /> : reports.map((report) => (
+        {loading && reports.length === 0 ? <SkeletonBlock className="h-32" /> : reports.length === 0 ? <EmptyState icon={CheckCircle2} title="Kolejka jest pusta" description="Brak zgłoszeń w wybranym widoku." /> : reports.map((report) => (
           <article key={report.id} className="rounded-2xl border border-[var(--border)] bg-black/20 p-4">
             <div className="flex flex-col justify-between gap-4 lg:flex-row">
               <div className="flex min-w-0 gap-3">
@@ -416,6 +441,7 @@ function ReportsPanel({ reports, filter, setFilter, selectedIds, reason, busy, o
             </div>
           </article>
         ))}
+        {hasMore && <div className="flex justify-center pt-2"><button type="button" className="btn btn-ghost btn-sm" disabled={loading} onClick={onLoadMore}>{loading ? 'Wczytywanie…' : 'Wczytaj kolejne zgłoszenia'}</button></div>}
       </div>
     </section>
   )

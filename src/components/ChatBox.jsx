@@ -16,6 +16,12 @@ import { supabase } from '@/lib/supabase'
 
 const BASE_FIELDS = 'id, user_id, channel, username, text, created_at'
 const REPLY_FIELDS = `${BASE_FIELDS}, reply_to`
+const CHAT_PAGE_SIZE = 40
+
+function applyOlderThan(query, cursor) {
+  if (!cursor) return query
+  return query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`)
+}
 
 function normalizeMessage(message) {
   return { ...message, username: message.username || 'Gracz', reply_to: message.reply_to || null }
@@ -35,12 +41,15 @@ export default function ChatBox({ user, isAdmin }) {
   const [highlightedId, setHighlightedId] = useState(null)
   const [pendingDeleteId, setPendingDeleteId] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const [hasOlder, setHasOlder] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [sendError, setSendError] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState('CONNECTING')
   const [supportsReplies, setSupportsReplies] = useState(true)
   const composerRef = useRef(null)
+  const oldestCursorRef = useRef(null)
 
   const addOrReplaceMessage = useCallback((incoming) => {
     const normalized = normalizeMessage(incoming)
@@ -52,24 +61,29 @@ export default function ChatBox({ user, isAdmin }) {
     })
   }, [])
 
-  const fetchMessages = useCallback(async () => {
-    setLoading(true)
+  const fetchMessages = useCallback(async ({ older = false } = {}) => {
+    if (older) setLoadingOlder(true)
+    else setLoading(true)
     setLoadError('')
 
-    let result = await supabase
+    let query = supabase
       .from('chat_messages')
       .select(REPLY_FIELDS)
       .eq('channel', 'GLOBALNY')
       .order('created_at', { ascending: false })
-      .limit(100)
+      .order('id', { ascending: false })
+      .limit(CHAT_PAGE_SIZE + 1)
+    let result = await applyOlderThan(query, older ? oldestCursorRef.current : null)
 
     if (result.error) {
-      const fallback = await supabase
+      let fallbackQuery = supabase
         .from('chat_messages')
         .select(BASE_FIELDS)
         .eq('channel', 'GLOBALNY')
         .order('created_at', { ascending: false })
-        .limit(100)
+        .order('id', { ascending: false })
+        .limit(CHAT_PAGE_SIZE + 1)
+      const fallback = await applyOlderThan(fallbackQuery, older ? oldestCursorRef.current : null)
 
       if (!fallback.error) {
         result = fallback
@@ -80,9 +94,20 @@ export default function ChatBox({ user, isAdmin }) {
     if (result.error) {
       setLoadError('Nie udało się otworzyć kroniki rozmów. Odśwież widok lub spróbuj ponownie później.')
     } else {
-      setChatMessages((result.data || []).reverse().map(normalizeMessage))
+      const hasMore = (result.data || []).length > CHAT_PAGE_SIZE
+      const descendingPage = (result.data || []).slice(0, CHAT_PAGE_SIZE)
+      const oldest = descendingPage.at(-1)
+      oldestCursorRef.current = oldest ? { created_at: oldest.created_at, id: oldest.id } : null
+      const chronologicalPage = descendingPage.reverse().map(normalizeMessage)
+      setHasOlder(hasMore)
+      setChatMessages((current) => {
+        if (!older) return chronologicalPage
+        const known = new Set(current.map((message) => message.id))
+        return [...chronologicalPage.filter((message) => !known.has(message.id)), ...current]
+      })
     }
-    setLoading(false)
+    if (older) setLoadingOlder(false)
+    else setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -198,7 +223,7 @@ export default function ChatBox({ user, isAdmin }) {
         <div className="community-thread">
           <div className="community-thread-heading !py-2 !px-4 text-xs">
             <div><Sparkles aria-hidden="true" /><span className="text-xs"><strong>Główna sala tawerny</strong> <small className="text-[10px]">({chatMessages.length} wiadomości)</small></span></div>
-            <button type="button" onClick={fetchMessages} aria-label="Odśwież rozmowę" disabled={loading}>
+            <button type="button" onClick={() => fetchMessages()} aria-label="Odśwież rozmowę" disabled={loading}>
               <RefreshCw aria-hidden="true" className={loading ? 'spin' : ''} />
             </button>
           </div>
@@ -210,7 +235,15 @@ export default function ChatBox({ user, isAdmin }) {
               <div className="community-empty error"><strong>Brama komunikacyjna nie odpowiada</strong><p>{loadError}</p><button type="button" className="btn btn-ghost btn-sm" onClick={fetchMessages}>Spróbuj ponownie</button></div>
             ) : chatMessages.length === 0 ? (
               <div className="community-empty"><MessageSquareReply aria-hidden="true" /><strong>Rozpal pierwszą rozmowę</strong><p>Tawerna jest jeszcze pusta. Napisz pierwszą wiadomość do kompanii.</p></div>
-            ) : chatMessages.map((message) => {
+            ) : <>
+              {hasOlder && (
+                <div className="flex justify-center border-b border-white/5 p-2">
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={loadingOlder} onClick={() => fetchMessages({ older: true })}>
+                    <RefreshCw className={`h-3.5 w-3.5 ${loadingOlder ? 'spin' : ''}`} /> {loadingOlder ? 'Wczytywanie…' : 'Wczytaj starsze wiadomości'}
+                  </button>
+                </div>
+              )}
+              {chatMessages.map((message) => {
               const ownMessage = message.user_id === user?.id
               const displayName = (message.username || 'System').replace(/#0$/, '')
               const avatarUrl = ownMessage ? user?.user_metadata?.avatar_url : null
@@ -248,7 +281,8 @@ export default function ChatBox({ user, isAdmin }) {
                   </div>
                 </article>
               )
-            })}
+              })}
+            </>}
           </div>
 
           <form className="community-composer !p-3" onSubmit={handleSendChatMessage}>

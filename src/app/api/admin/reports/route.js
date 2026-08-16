@@ -9,9 +9,74 @@ import {
   requireApiUser,
 } from '@/lib/server/supabaseAdmin'
 import { cleanText } from '@/lib/server/validation'
+import {
+  applyCreatedAtCursor,
+  decodeCreatedAtCursor,
+  pageFromRows,
+} from '@/lib/server/pagination'
 
 const ACTIONS = ['review', 'dismiss']
+const REPORT_STATUSES = ['pending', 'actioned', 'reviewed', 'dismissed', 'all']
+const REPORTS_PAGE_SIZE = 20
 const jsonError = (message, status, headers) => NextResponse.json({ error: message }, { status, headers })
+
+export async function GET(request) {
+  try {
+    const auth = await requireApiUser(request)
+    if (auth.error) return jsonError(auth.error, auth.status)
+
+    const supabase = createSupabaseRequestClient(request)
+    if (!(await isPortalStaff(supabase, auth.user.id))) {
+      return jsonError('Nie masz uprawnień personelu moderacyjnego.', 403)
+    }
+
+    const searchParams = new URL(request.url).searchParams
+    const status = REPORT_STATUSES.includes(searchParams.get('status')) ? searchParams.get('status') : 'pending'
+    const cursor = decodeCreatedAtCursor(searchParams.get('cursor'), isModerationId)
+    if (cursor === undefined) return jsonError('Nieprawidłowy kursor zgłoszeń.', 400)
+
+    let query = supabase
+      .from('build_reports')
+      .select('id, build_id, comment_id, reason, details, status, created_at')
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(REPORTS_PAGE_SIZE + 1)
+    if (status !== 'all') query = query.eq('status', status)
+    query = applyCreatedAtCursor(query, cursor)
+
+    const { data, error } = await query
+    if (error) throw error
+    const pagination = pageFromRows(data || [], REPORTS_PAGE_SIZE)
+    const reports = pagination.page
+    const buildIds = [...new Set(reports.map((report) => report.build_id).filter(Boolean))]
+    const commentIds = [...new Set(reports.map((report) => report.comment_id).filter(Boolean))]
+    const [buildsLookup, commentsLookup] = await Promise.all([
+      buildIds.length ? supabase.from('builds').select('id, title').in('id', buildIds) : Promise.resolve({ data: [], error: null }),
+      commentIds.length ? supabase.from('build_comments').select('id, content, status').in('id', commentIds) : Promise.resolve({ data: [], error: null }),
+    ])
+    if (buildsLookup.error || commentsLookup.error) throw buildsLookup.error || commentsLookup.error
+
+    const buildsById = new Map((buildsLookup.data || []).map((build) => [build.id, build]))
+    const commentsById = new Map((commentsLookup.data || []).map((comment) => [comment.id, comment]))
+    return NextResponse.json({
+      reports: reports.map((report) => ({
+        id: report.id,
+        buildId: report.build_id,
+        buildTitle: buildsById.get(report.build_id)?.title || 'Usunięty lub niedostępny build',
+        commentId: report.comment_id,
+        comment: report.comment_id ? commentsById.get(report.comment_id) || null : null,
+        reason: report.reason,
+        details: report.details,
+        status: report.status,
+        createdAt: report.created_at,
+      })),
+      pagination: { hasMore: pagination.hasMore, nextCursor: pagination.nextCursor },
+    }, { headers: { 'Cache-Control': 'no-store' } })
+  } catch (error) {
+    console.error('Błąd pobierania zgłoszeń administratora:', error)
+    return jsonError('Nie udało się pobrać zgłoszeń.', 500)
+  }
+}
 
 export async function PATCH(request) {
   try {
