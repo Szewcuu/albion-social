@@ -307,9 +307,12 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.getByRole('button', { name: /PricingKnight/ }).click()
 
     await expect(page.getByText('Wartość utraconego zestawu')).toBeVisible()
-    await expect(page.getByText('125 000 Silver')).toBeVisible()
+    await expect(page.getByText('125 000 Silver').first()).toBeVisible()
     await expect(page.getByText(/Świeże · 2 h/)).toBeVisible()
     await expect(page.getByText(/Straty przeciwników:\s*125\s*tys\.\s*Silver/)).toBeVisible()
+    await expect(page.getByText(/Pokrycie 1\/1 slotów \(100%\)/)).toBeVisible()
+    await page.getByText('Skład wyceny (1/1)').click()
+    await expect(page.getByText(/Martlock · oferta sprzedaży/)).toBeVisible()
 
     const followPlayer = page.getByRole('button', { name: 'Obserwuj: PricingKnight' })
     await expect(followPlayer).toBeEnabled()

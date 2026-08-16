@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import CombatEventCard from '@/components/killboard/CombatEventCard'
 import FollowButton from '@/components/ui/FollowButton'
+import { summarizeLossValuations } from '@/lib/marketValuation'
 
 const REGIONS = [
   { id: 'europe', label: 'Europa', short: 'EU' },
@@ -157,8 +158,7 @@ function KillboardContent() {
   const player = overview?.player
   const currentRegion = REGIONS.find(item => item.id === region)
   const history = activeHistory === 'kills' ? overview?.kills || [] : overview?.deaths || []
-  const historyLossValue = history.reduce((sum, event) => sum + (Number(event.lossValuation?.estimatedValue) || 0), 0)
-  const valuedHistoryCount = history.filter((event) => event.lossValuation?.pricedItems > 0).length
+  const lossSummary = summarizeLossValuations(history)
   const calculatedRatio = player ? player.killFame / Math.max(1, player.deathFame) : 0
 
   return (
@@ -327,12 +327,12 @@ function KillboardContent() {
                     <button type="button" onClick={() => setActiveHistory('deaths')} className={`rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-[.14em] transition ${activeHistory === 'deaths' ? 'border border-rose-300/30 bg-rose-300/10 text-rose-200' : 'border border-white/8 bg-black/20 text-[var(--text-secondary)]'}`}>Zgony ({overview.deaths.length})</button>
                   </div>
                   <div className="flex flex-wrap items-center justify-end gap-2 text-[9px]">
-                    {historyLossValue > 0 && (
+                    {lossSummary.estimatedValue > 0 && (
                       <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300/20 bg-amber-300/[.06] px-2.5 py-1.5 font-black uppercase tracking-[.08em] text-amber-200">
-                        <Coins className="h-3.5 w-3.5" /> {activeHistory === 'kills' ? 'Straty przeciwników' : 'Własne straty'}: {formatNumber(historyLossValue)} Silver
+                        <Coins className="h-3.5 w-3.5" /> {lossSummary.hasPartialCoverage ? 'Minimum strat' : activeHistory === 'kills' ? 'Straty przeciwników' : 'Własne straty'}: {lossSummary.hasPartialCoverage ? '≥ ' : ''}{formatNumber(lossSummary.estimatedValue)} Silver
                       </span>
                     )}
-                    <span className="text-[#625e57]">Wyceniono {valuedHistoryCount}/{history.length} · {currentRegion?.short}</span>
+                    <span className="text-[#625e57]">Pokrycie {lossSummary.pricedItems}/{lossSummary.totalItems} slotów ({lossSummary.coveragePercent}%) · {currentRegion?.short}</span>
                   </div>
                 </div>
 

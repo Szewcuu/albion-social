@@ -11,6 +11,19 @@ export const VALUATION_EQUIPMENT_ORDER = [
   'Food',
 ]
 
+export const VALUATION_SLOT_LABELS = {
+  MainHand: 'Broń główna',
+  OffHand: 'Broń pomocnicza',
+  Head: 'Hełm',
+  Armor: 'Zbroja',
+  Shoes: 'Buty',
+  Bag: 'Torba',
+  Cape: 'Peleryna',
+  Mount: 'Wierzchowiec',
+  Potion: 'Mikstura',
+  Food: 'Jedzenie',
+}
+
 const FRESHNESS_RANK = {
   fresh: 0,
   aging: 1,
@@ -114,6 +127,31 @@ export function valuateEquipment(equipment, rows, now = Date.now()) {
     oldestObservedAt,
     fallbackItems: pricedItems.filter((item) => item.quote.source === 'buy').length,
     missingSlots: items.filter((item) => !item.quote).map((item) => item.slot),
+    isComplete: items.length > 0 && pricedItems.length === items.length,
+    valueKind: pricedItems.length === 0 ? 'missing' : pricedItems.length === items.length ? 'estimate' : 'minimum',
     items,
+  }
+}
+
+export function summarizeLossValuations(events = []) {
+  const valuations = events.map((event) => event?.lossValuation).filter(Boolean)
+  const pricedItems = valuations.reduce((sum, valuation) => sum + (Number(valuation.pricedItems) || 0), 0)
+  const totalItems = valuations.reduce((sum, valuation) => sum + (Number(valuation.totalItems) || 0), 0)
+  const pricedValuations = valuations.filter((valuation) => Number(valuation.pricedItems) > 0)
+  const freshness = pricedValuations.reduce((worst, valuation) => {
+    const status = FRESHNESS_RANK[valuation.freshness] == null ? 'missing' : valuation.freshness
+    return FRESHNESS_RANK[status] > FRESHNESS_RANK[worst] ? status : worst
+  }, 'fresh')
+
+  return {
+    estimatedValue: valuations.reduce((sum, valuation) => sum + (Number(valuation.estimatedValue) || 0), 0),
+    pricedItems,
+    totalItems,
+    coveragePercent: totalItems ? Math.round((pricedItems / totalItems) * 100) : 0,
+    valuedEvents: pricedValuations.length,
+    fullyValuedEvents: valuations.filter((valuation) => valuation.isComplete || (valuation.totalItems > 0 && valuation.pricedItems === valuation.totalItems)).length,
+    fallbackItems: valuations.reduce((sum, valuation) => sum + (Number(valuation.fallbackItems) || 0), 0),
+    freshness: pricedValuations.length ? freshness : 'missing',
+    hasPartialCoverage: pricedItems > 0 && pricedItems < totalItems,
   }
 }
