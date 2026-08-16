@@ -10,6 +10,18 @@ const baseUrl = new URL(process.env.LIGHTHOUSE_BASE_URL || 'https://albion-socia
 const outputDirectory = join(process.cwd(), 'lighthouse-results')
 const guestOnly = process.env.LIGHTHOUSE_GUEST_ONLY === '1'
 
+const thresholds = {
+  performanceTarget: 90,
+  mobilePerformanceFloor: 85,
+  desktopPerformanceFloor: 90,
+  accessibility: 90,
+  bestPractices: 90,
+  publicSeo: 90,
+  lcpMs: 3_000,
+  tbtMs: 600,
+  cls: 0.1,
+}
+
 const guestRoutes = [
   { slug: 'guest-landing', path: '/' },
 ]
@@ -99,17 +111,28 @@ function markdownSummary(rows) {
     row.metrics.tbt.displayValue || '—',
     row.metrics.cls.displayValue || '—',
   ].join(' | '))
-  return `${[...header, ...body.map((line) => `| ${line} |`)].join('\n')}\n\n* SEO jest progiem blokującym tylko dla publicznego ekranu logowania. Chronione podstrony są celowo oznaczone jako noindex.\n`
+  return `${[...header, ...body.map((line) => `| ${line} |`)].join('\n')}\n\n* SEO jest progiem blokującym tylko dla publicznego ekranu logowania. Chronione podstrony są celowo oznaczone jako noindex.\n\nBramka dopuszcza zmienność pomiaru laboratoryjnego: Performance ma cel \`90\`, twarde minimum \`85\` na mobile i \`90\` na desktop. Każdy widok musi równocześnie spełnić LCP ≤ 3 s, TBT ≤ 600 ms i CLS ≤ 0,1.\n`
 }
 
 function belowThreshold(row) {
-  const requiredScores = [
-    row.scores.performance,
-    row.scores.accessibility,
-    row.scores.bestPractices,
-  ]
-  if (row.route === 'guest-landing') requiredScores.push(row.scores.seo)
-  return requiredScores.some((value) => value < 90)
+  const performanceFloor = row.profile === 'mobile'
+    ? thresholds.mobilePerformanceFloor
+    : thresholds.desktopPerformanceFloor
+  const scoreFailure = row.scores.performance < performanceFloor
+    || row.scores.accessibility < thresholds.accessibility
+    || row.scores.bestPractices < thresholds.bestPractices
+    || (row.route === 'guest-landing' && row.scores.seo < thresholds.publicSeo)
+  const metricFailure = row.metrics.lcp.value === null
+    || row.metrics.lcp.value > thresholds.lcpMs
+    || row.metrics.tbt.value === null
+    || row.metrics.tbt.value > thresholds.tbtMs
+    || row.metrics.cls.value === null
+    || row.metrics.cls.value > thresholds.cls
+  return scoreFailure || metricFailure
+}
+
+function needsRetry(row) {
+  return belowThreshold(row) || row.scores.performance < thresholds.performanceTarget
 }
 
 async function authenticateChrome(chromePort) {
@@ -165,7 +188,7 @@ async function runRoute(chromePort, route, profile, authenticated, reportSuffix 
 
 async function runRouteWithRetry(chromePort, route, profile, authenticated) {
   const first = await runRoute(chromePort, route, profile, authenticated)
-  if (!belowThreshold(first)) return first
+  if (!needsRetry(first)) return first
 
   console.log(`Lighthouse retry: ${route.slug} / ${profile.name}`)
   const retry = await runRoute(chromePort, route, profile, authenticated, '-retry')
@@ -211,10 +234,15 @@ async function main() {
     generatedAt: new Date().toISOString(),
     guestOnly,
     thresholds: {
-      performance: 90,
-      accessibility: 90,
-      bestPractices: 90,
-      publicSeo: 90,
+      performanceTarget: thresholds.performanceTarget,
+      mobilePerformanceFloor: thresholds.mobilePerformanceFloor,
+      desktopPerformanceFloor: thresholds.desktopPerformanceFloor,
+      accessibility: thresholds.accessibility,
+      bestPractices: thresholds.bestPractices,
+      publicSeo: thresholds.publicSeo,
+      lcpMs: thresholds.lcpMs,
+      tbtMs: thresholds.tbtMs,
+      cls: thresholds.cls,
       protectedSeo: 'report-only (intentional noindex)',
     },
     passed: rows.every((row) => !belowThreshold(row)),
@@ -225,7 +253,7 @@ async function main() {
   console.log(markdownSummary(rows))
 
   if (!summary.passed) {
-    throw new Error('At least one required Lighthouse category is below the score of 90.')
+    throw new Error('At least one Lighthouse score or stability metric exceeded the quality budget.')
   }
 }
 

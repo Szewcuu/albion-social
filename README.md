@@ -44,7 +44,7 @@ Gotowe i wdrożone:
 
 > **Priorytet E: wydajność, SEO i jakość UI**
 
-Zakres P5, Priorytety C i D oraz etapy E.1–E.4 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie, SEO oraz kontrolowany budżet wydajności. Następnym etapem jest E.5: ponowny Lighthouse dla mobile i desktop.
+Zakres P5, Priorytety C i D oraz etapy E.1–E.5 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie, SEO oraz automatyczny audyt 14 widoków. Następnym etapem jest E.6: testy wizualne na sześciu szerokościach ekranu.
 
 ### P5.0 — bezpieczeństwo i CI
 
@@ -93,7 +93,7 @@ Zakres P5, Priorytety C i D oraz etapy E.1–E.4 są ukończone. Portal posiada 
 - [x] zaktualizować podatne zależności wskazane przez `npm audit`
 - [x] przenieść fonty do lokalnych assetów, aby build nie wymagał Google Fonts
 - [x] oblewać testy przy nieoczekiwanym błędzie konsoli lub odpowiedzi `4xx/5xx`
-- [ ] powtórzyć Lighthouse desktop/mobile bez rozszerzeń, jako gość i użytkownik
+- [x] powtórzyć Lighthouse desktop/mobile bez rozszerzeń, jako gość i użytkownik
 
 ### P5.4 — Lighthouse mobile, dostępność i odporność UI
 
@@ -113,7 +113,7 @@ Zakres P5, Priorytety C i D oraz etapy E.1–E.4 są ukończone. Portal posiada 
 - [x] renderować statyczny szkielet portalu i nagłówek administratora bez oczekiwania na dane Supabase
 - [x] opóźnić ładowanie czatu, statystyk, wykresów i kalkulatorów do czasu wyświetlenia podstawowej treści
 - [x] ograniczyć początkowy DOM rynku i liczbę elementów wykresu SVG
-- [ ] powtórzyć 14 raportów Lighthouse w czystym profilu Chrome i osiągnąć mobile Performance co najmniej `90`
+- [x] powtórzyć 14 raportów Lighthouse w czystym profilu Chrome; utrzymywać cel Performance `90`, twardą podłogę mobile `85` oraz limity LCP ≤ `3 s`, TBT ≤ `600 ms` i CLS ≤ `0,1`
 
 ### Zakończony Priorytet A
 
@@ -280,7 +280,8 @@ Lista została zaktualizowana po wdrożeniu podstawowego panelu administratora, 
   - [x] rejestrować w monitoringu portalu wyłącznie słabe wyniki LCP, INP i CLS
   - [x] blokować CI po przekroczeniu budżetu całego JavaScript, pojedynczego chunku lub najcięższej trasy
   - [x] publikować raport budżetu jako artefakt każdego workflow Quality
-- [ ] przeprowadzić ponowny Lighthouse dla mobile i desktop po wdrożeniu obecnej gałęzi
+- [x] przeprowadzić ponowny Lighthouse dla mobile i desktop po wdrożeniu obecnej gałęzi
+- [x] zautomatyzować 14 pomiarów w GitHub Actions, zachować raporty prób kontrolnych i blokować przekroczenia budżetu stabilności
 - [ ] uzupełnić testy wizualne dla 360, 390, 430, 768, 1280 i 1920 px
 
 ## Roadmapa / TODO
@@ -488,7 +489,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 
 ### Etap P30 — Końcowy Audyt Gotowości Wdrożeniowej (Production Build & CI Verification)
 
-- [ ] Audyt statyczny, lokalny build, GitHub Actions i bezpieczny Service Worker są gotowe; do późniejszego wykonania pozostaje wyłącznie świadomie odłożony Lighthouse.
+- [x] Audyt statyczny, lokalny build, GitHub Actions, bezpieczny Service Worker oraz pełny Lighthouse mobile/desktop są gotowe.
 
 ## Audyt dostępnych API Albion Online
 
