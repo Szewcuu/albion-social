@@ -167,6 +167,8 @@ export default function MarketIntelligence() {
   const [marketData, setMarketData] = useState([])
   const [historyData, setHistoryData] = useState([])
   const [goldData, setGoldData] = useState([])
+  const [goldMeta, setGoldMeta] = useState(null)
+  const [goldError, setGoldError] = useState('')
   const [meta, setMeta] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -387,15 +389,29 @@ export default function MarketIntelligence() {
       })
       const goldParams = new URLSearchParams({ mode: 'gold', range, region })
 
-      const [current, history, gold] = await Promise.all([
+      const [currentResult, historyResult, goldResult] = await Promise.allSettled([
         fetchJson(`/api/prices?${currentParams}`, controller.signal),
         fetchJson(`/api/prices?${historyParams}`, controller.signal),
         fetchJson(`/api/prices?${goldParams}`, controller.signal),
       ])
 
+      if (currentResult.status === 'rejected') throw currentResult.reason
+      if (historyResult.status === 'rejected') throw historyResult.reason
+
+      const current = currentResult.value
+      const history = historyResult.value
+
       setMarketData(current.data || [])
       setHistoryData(history.data || [])
-      setGoldData(gold.data || [])
+      if (goldResult.status === 'fulfilled') {
+        setGoldData(goldResult.value.data || [])
+        setGoldMeta(goldResult.value.meta || null)
+        setGoldError('')
+      } else {
+        setGoldData([])
+        setGoldMeta(null)
+        setGoldError(goldResult.reason?.message || 'Kurs złota jest chwilowo niedostępny.')
+      }
       setMeta(current.meta || null)
       setHasAnalyzed(true)
 
@@ -430,7 +446,7 @@ export default function MarketIntelligence() {
   const isFavorite = favorites.some((item) => item.id === selectedItem.id)
   const currentGold = goldPoints.at(-1)?.value
   const previousGold = goldPoints.at(-2)?.value
-  const goldDelta = currentGold && previousGold ? ((currentGold - previousGold) / previousGold) * 100 : 0
+  const goldDelta = currentGold && previousGold ? ((currentGold - previousGold) / previousGold) * 100 : null
   const activeWatch = priceAlerts.find((alert) => marketPriceKey(alert) === marketPriceKey({ itemId: selectedItem.id, region, city: historyCity, quality, priceType: watchDirection === 'above' ? 'buy' : 'sell' }))
   const activeWatchKey = marketPriceKey({ itemId: selectedItem.id, region, city: historyCity, quality, priceType: watchDirection === 'above' ? 'buy' : 'sell' })
   const watchedPrice = activeWatch?.price_type === 'buy' ? highestBuy?.buy_price_max : cheapestSell?.sell_price_min
@@ -657,7 +673,13 @@ export default function MarketIntelligence() {
                 <Metric label="Najtańsza sprzedaż" value={formatSilver(cheapestSell?.sell_price_min)} detail={cheapestSell?.city || 'Brak aktywnego zlecenia'} />
                 <Metric label="Najwyższe kupno" value={formatSilver(highestBuy?.buy_price_max)} detail={highestBuy?.city || 'Brak aktywnego zlecenia'} tone="sky" />
                 <Metric label="Spread brutto" value={cheapestSell && highestBuy ? formatSignedSilver(highestBuy.buy_price_max - cheapestSell.sell_price_min) : '—'} detail="Przed opłatami i transportem" tone={cheapestSell && highestBuy && highestBuy.buy_price_max >= cheapestSell.sell_price_min ? 'emerald' : 'rose'} />
-                <Metric label="Kurs złota" value={formatSilver(currentGold)} detail={`${goldDelta >= 0 ? '+' : ''}${goldDelta.toFixed(2)}% od poprzedniego odczytu`} />
+                <Metric
+                  label="Kurs złota"
+                  value={formatSilver(currentGold)}
+                  detail={goldDelta == null
+                    ? (goldError || 'Brak dwóch notowań do obliczenia zmiany')
+                    : `${goldDelta >= 0 ? '+' : ''}${goldDelta.toFixed(2)}% od poprzedniego odczytu`}
+                />
               </div>
 
               <div>
@@ -709,8 +731,15 @@ export default function MarketIntelligence() {
                   <div className="mb-4">
                     <p className="text-[9px] font-black uppercase tracking-[.18em] text-sky-300">Srebro za 1 złoto</p>
                     <h3 className="font-display mt-1 text-lg font-black text-[#fff8e8]">Kurs złota — {range}</h3>
+                    <p className={`mt-1 text-[9px] ${goldMeta?.freshness === 'stale' ? 'text-amber-300' : 'text-[#918b82]'}`}>
+                      {goldError
+                        ? `Niedostępne: ${goldError}`
+                        : goldMeta?.latestAt
+                          ? `Ostatnie notowanie: ${new Date(goldMeta.latestAt).toLocaleString('pl-PL')}${goldMeta.freshness === 'stale' ? ` · stare dane (${goldMeta.ageHours} h)` : ''}`
+                          : 'Oczekiwanie na dane źródłowe'}
+                    </p>
                   </div>
-                  <LineChart points={goldPoints} tone="sky" emptyText="Brak danych o kursie złota dla tego regionu." />
+                  <LineChart points={goldPoints} tone="sky" emptyText={goldError || 'Brak danych o kursie złota dla tego regionu.'} />
                 </div>
                 <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[.025] p-4 sm:p-5 lg:col-span-2 2xl:col-span-1">
                   <div className="mb-4">

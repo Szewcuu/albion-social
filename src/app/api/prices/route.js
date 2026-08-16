@@ -11,6 +11,7 @@ import {
 } from '@/lib/server/albionMarketApi'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { cleanEnum } from '@/lib/server/validation'
+import { GOLD_STALE_AFTER_HOURS, normalizeGoldHistory } from '@/lib/goldMarket'
 
 function getClientKey(request) {
   return request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
@@ -62,8 +63,23 @@ export async function GET(request) {
       const range = cleanEnum(searchParams.get('range') || '24h', Object.keys(MARKET_RANGES))
       if (!range) return errorResponse('Nieobsługiwany zakres czasu.', 'INVALID_RANGE', 400)
 
-      const data = await getGoldHistory({ region, range })
-      return NextResponse.json({ data, meta: { ...commonMeta({ mode, region, cacheSeconds: 300 }), range } })
+      const rawData = await getGoldHistory({ region, range })
+      const gold = normalizeGoldHistory(rawData, { range })
+      if (!gold.data.length) {
+        return errorResponse('Źródło nie zwróciło prawidłowych notowań złota dla wybranego okresu.', 'UPSTREAM_EMPTY', 503)
+      }
+      return NextResponse.json({
+        data: gold.data,
+        meta: {
+          ...commonMeta({ mode, region, cacheSeconds: 300 }),
+          range,
+          latestAt: gold.latestAt,
+          ageHours: gold.ageHours,
+          freshness: gold.freshness,
+          staleAfterHours: GOLD_STALE_AFTER_HOURS,
+          pointCount: gold.data.length,
+        },
+      })
     }
 
     if (mode === 'history') {

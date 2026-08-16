@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Coins, ArrowRightLeft, TrendingUp, TrendingDown, RefreshCw, BarChart2, ShieldCheck, Zap } from 'lucide-react'
+import { Coins, ArrowRightLeft, TrendingUp, TrendingDown, RefreshCw, ShieldCheck } from 'lucide-react'
 
 const RANGES = [
   { id: '24h', label: '24h' },
@@ -13,6 +13,7 @@ export default function GoldExchangeWidget() {
   const [region, setRegion] = useState('europe')
   const [range, setRange] = useState('7d')
   const [goldData, setGoldData] = useState([])
+  const [meta, setMeta] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [goldInput, setGoldInput] = useState(100)
@@ -22,9 +23,8 @@ export default function GoldExchangeWidget() {
     try {
       setError('')
       const res = await fetch(`/api/prices?mode=gold&region=${region}&range=${range}`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-
       const result = await res.json()
+      if (!res.ok) throw new Error(result?.error?.message || `HTTP ${res.status}`)
       const rawPoints = Array.isArray(result.data) ? result.data : []
       const formattedPoints = rawPoints
         .filter(p => p && p.price > 0)
@@ -36,9 +36,11 @@ export default function GoldExchangeWidget() {
       if (!formattedPoints.length) throw new Error('Brak punktów kursu')
 
       setGoldData(formattedPoints)
-    } catch {
+      setMeta(result.meta || null)
+    } catch (requestError) {
       setGoldData([])
-      setError('Aktualny kurs złota jest chwilowo niedostępny. Kalkulator został wyłączony, aby nie pokazywać zmyślonej ceny.')
+      setMeta(null)
+      setError(`${requestError.message || 'Aktualny kurs złota jest chwilowo niedostępny.'} Kalkulator został wyłączony, aby nie pokazywać zmyślonej ceny.`)
     } finally {
       setLoading(false)
     }
@@ -197,6 +199,12 @@ export default function GoldExchangeWidget() {
         </div>
       )}
 
+      {!error && meta?.freshness === 'stale' && (
+        <div className="rounded-xl border border-amber-400/25 bg-amber-400/8 px-4 py-3 text-xs leading-5 text-amber-100" role="status">
+          Ostatnie prawdziwe notowanie ma {meta.ageHours} h. Wynik może być nieaktualny — sprawdź kurs w grze przed transakcją.
+        </div>
+      )}
+
       {/* HISTORICAL CHART CANVAS */}
       <div className="relative w-full overflow-hidden rounded-2xl bg-black/50 border border-white/8 p-3">
         {loading ? (
@@ -257,6 +265,7 @@ export default function GoldExchangeWidget() {
           <div className="flex items-center gap-2">
             <input
               type="number"
+              aria-label="Ilość złota do przeliczenia"
               min={1}
               max={1000000}
               value={goldInput}
@@ -271,18 +280,21 @@ export default function GoldExchangeWidget() {
         </div>
 
         <div className="p-3.5 rounded-2xl bg-black/40 border border-white/8 space-y-1.5 flex flex-col justify-between">
-          <div className="flex items-center justify-between text-[10px]">
+          <div className="flex items-center justify-between gap-3 text-[10px]">
             <span className="text-amber-400 font-bold uppercase flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> Koszt Premium (30 Dni)
+              <ShieldCheck className="w-3.5 h-3.5" /> Wartość wybranej ilości
             </span>
-            <span className="text-gray-400">3 750 Gold</span>
+            <span className="text-gray-400">{goldInput.toLocaleString('pl-PL')} Gold</span>
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-xs text-gray-300">Wymagane Srebro:</span>
             <span className="text-base font-black text-amber-300 font-mono">
-              {latestPrice ? `${(3750 * latestPrice).toLocaleString()} Silver` : 'Brak kursu'}
+              {silverResult ? `${silverResult.toLocaleString('pl-PL')} Silver` : 'Brak kursu'}
             </span>
           </div>
+          <p className="text-[9px] text-gray-500">
+            {meta?.latestAt ? `Ostatnie notowanie: ${new Date(meta.latestAt).toLocaleString('pl-PL')}` : 'Źródło: Albion Online Data Project'}
+          </p>
         </div>
       </div>
     </div>
