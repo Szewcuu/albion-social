@@ -57,6 +57,55 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
   })
 
+  test('pokazuje obserwacyjną tierlistę 1v1 bez danych demonstracyjnych', async ({ page }) => {
+    await page.route('**/api/albion/meta', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: [{
+            id: 't8-main-sword',
+            name: 'Miecz Broadsword',
+            weaponId: 'T8_MAIN_SWORD',
+            tier: 'A',
+            winrate: 58.3,
+            score: 54.5,
+            popularity: 12,
+            matches: 12,
+            wins: 7,
+            losses: 5,
+            avgIp: 1412,
+            confidence: 'średnia',
+            role: '12 wystąpień · pewność średnia',
+            playstyle: 'Wynik oparty na 12 wystąpieniach w publicznych zdarzeniach solo.',
+            bestBuild: null,
+            strongAgainst: ['Topór Bitewny'],
+            weakAgainst: ['Łuk Wojenny'],
+          }],
+          meta: {
+            source: 'Albion Online Gameinfo API',
+            methodology: 'Ranking obserwacyjny z 30 pojedynków, ważony do bazowego wyniku 50%.',
+            availableRegions: ['Europa', 'Ameryka'],
+            unavailableRegions: ['Azja'],
+            fetchedEvents: 120,
+            validDuels: 30,
+            failedRequests: 2,
+            requestedPages: 6,
+            isDemo: false,
+          },
+        }),
+      })
+    })
+
+    await page.goto('/buildy')
+    await page.getByRole('button', { name: 'Meta 1v1 & Tierlisty' }).click()
+
+    await expect(page.getByText('Dane obserwacyjne')).toBeVisible()
+    await expect(page.getByText('Miecz Broadsword')).toBeVisible()
+    await expect(page.getByText('54.5% wynik ważony')).toBeVisible()
+    await expect(page.getByText(/Ranking jest częściowy/)).toBeVisible()
+    await expect(page.getByText(/Model demonstracyjny/)).toHaveCount(0)
+  })
+
   test('wyszukuje polskie i angielskie nazwy w wersjonowanym katalogu przedmiotów', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await page.evaluate(() => {

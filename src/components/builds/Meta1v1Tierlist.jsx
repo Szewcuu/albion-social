@@ -26,7 +26,11 @@ export default function Meta1v1Tierlist() {
     let isMounted = true
 
     fetch('/api/albion/meta')
-      .then(res => res.json())
+      .then(async res => {
+        const payload = await res.json()
+        if (!res.ok) throw new Error(payload.error || 'Nie udało się pobrać danych 1v1 Meta.')
+        return payload
+      })
       .then(resData => {
         if (!isMounted) return
         if (resData.data) {
@@ -36,8 +40,8 @@ export default function Meta1v1Tierlist() {
           setError('Nie udało się pobrać danych 1v1 Meta.')
         }
       })
-      .catch(() => {
-        if (isMounted) setError('Błąd połączenia z API 1v1 Meta.')
+      .catch((requestError) => {
+        if (isMounted) setError(requestError.message || 'Błąd połączenia z API 1v1 Meta.')
       })
       .finally(() => {
         if (isMounted) setLoading(false)
@@ -78,8 +82,8 @@ export default function Meta1v1Tierlist() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="badge badge-amber font-mono text-[9px] uppercase font-bold">Model demonstracyjny</span>
-                <span className="text-[10px] text-gray-400 font-mono">Solo Mists & Corrupted 1v1</span>
+                <span className="badge badge-amber font-mono text-[9px] uppercase font-bold">Dane obserwacyjne</span>
+                <span className="text-[10px] text-gray-400 font-mono">Publiczne pojedynki solo · wszystkie serwery</span>
               </div>
               <h2 className="font-display text-2xl font-black text-white mt-1">Tierlista Uzbrojenia 1v1</h2>
             </div>
@@ -87,12 +91,15 @@ export default function Meta1v1Tierlist() {
 
           <div className="flex items-center gap-2 font-mono text-xs text-amber-300 bg-black/40 border border-white/10 px-3.5 py-2 rounded-xl">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Kuratorski podgląd — <strong>bez danych live</strong></span>
+            <span>Gameinfo API — <strong>odświeżanie co 5 min</strong></span>
           </div>
         </div>
 
         <div className="rounded-xl border border-amber-400/25 bg-amber-400/8 px-4 py-3 text-[11px] leading-5 text-amber-100">
-          {metadata?.methodology || 'Te wartości służą wyłącznie jako demonstracja modułu i nie są bieżącą tierlistą Albion Online.'}
+          {metadata?.methodology || 'Ranking jest obliczany z najnowszych publicznych zdarzeń solo zwracanych przez regionalne Gameinfo API.'}
+          {metadata?.availableRegions?.length > 0 && <span className="mt-2 block text-amber-200/70">Źródła: {metadata.availableRegions.join(', ')} · {metadata.fetchedEvents || 0} zdarzeń · {metadata.validDuels || 0} poprawnych pojedynków.</span>}
+          {metadata?.unavailableRegions?.length > 0 && <span className="mt-1 block text-rose-300">Chwilowo niedostępne regiony: {metadata.unavailableRegions.join(', ')}.</span>}
+          {metadata?.failedRequests > 0 && <span className="mt-1 block text-rose-300">Ranking jest częściowy: nie pobrano {metadata.failedRequests} z {metadata.requestedPages} porcji danych.</span>}
         </div>
 
         {/* WYSZUKIWARKA I FILTRY TIERÓW */}
@@ -109,7 +116,7 @@ export default function Meta1v1Tierlist() {
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-            {['ALL', 'S+', 'S', 'A', 'B'].map(tierKey => (
+            {['ALL', 'S+', 'S', 'A', 'B', 'C'].map(tierKey => (
               <button
                 key={tierKey}
                 onClick={() => setSelectedTier(tierKey)}
@@ -119,7 +126,7 @@ export default function Meta1v1Tierlist() {
                     : 'bg-black/40 border border-white/8 text-gray-400 hover:text-white'
                 }`}
               >
-                {tierKey === 'ALL' ? 'Wszystkie Tierty' : `Tier ${tierKey}`}
+                {tierKey === 'ALL' ? 'Wszystkie tiery' : `Tier ${tierKey}`}
               </button>
             ))}
           </div>
@@ -130,16 +137,22 @@ export default function Meta1v1Tierlist() {
       {loading ? (
         <div className="panel p-16 text-center text-xs font-mono text-gray-400 space-y-3">
           <RefreshCw className="w-6 h-6 animate-spin mx-auto text-amber-400" />
-          <p>Wczytywanie demonstracyjnego zestawienia 1v1...</p>
+          <p>Analizowanie najnowszych pojedynków z regionalnego Gameinfo API...</p>
         </div>
       ) : error ? (
         <div className="panel p-8 text-center text-xs font-mono text-rose-300 space-y-2 border-rose-500/30">
           <AlertCircle className="w-6 h-6 mx-auto text-rose-400" />
           <p>{error}</p>
         </div>
+      ) : metaWeapons.length === 0 ? (
+        <div className="panel p-10 text-center text-xs font-mono text-gray-300 space-y-2 border-amber-500/20">
+          <AlertCircle className="w-6 h-6 mx-auto text-amber-400" />
+          <p>Próbka nie zawiera jeszcze wystarczającej liczby pojedynków dla wiarygodnego rankingu.</p>
+          <p className="text-[10px] text-gray-500">Nie pokazujemy danych zastępczych ani ręcznie wpisanych wyników.</p>
+        </div>
       ) : (
         <div className="space-y-6">
-          {['S+', 'S', 'A', 'B'].map(tierName => {
+          {['S+', 'S', 'A', 'B', 'C'].map(tierName => {
             const list = groupedByTier[tierName] || []
             if (!list.length && selectedTier !== 'ALL' && selectedTier !== tierName) return null
             if (!list.length) return null
@@ -185,8 +198,8 @@ export default function Meta1v1Tierlist() {
                         </div>
 
                         <div className="text-right font-mono shrink-0">
-                          <div className="text-xs font-black text-emerald-400">{weapon.winrate}% Winrate</div>
-                          <div className="text-[10px] text-gray-400">{weapon.popularity}% Wyborów</div>
+                          <div className="text-xs font-black text-emerald-400">{weapon.score}% wynik ważony</div>
+                          <div className="text-[10px] text-gray-400">{weapon.matches} wystąpień · {weapon.popularity}% próby</div>
                         </div>
                       </div>
 
@@ -199,7 +212,7 @@ export default function Meta1v1Tierlist() {
                       {weapon.bestBuild && (
                         <div className="pt-3 border-t border-white/8 flex items-center justify-between font-mono text-[10px]">
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-400 uppercase text-[9px]">Rekomendowany Zestaw:</span>
+                            <span className="text-gray-400 uppercase text-[9px]">Najczęstszy zwycięski zestaw:</span>
                             <div className="flex items-center gap-1">
                               {[weapon.bestBuild.head, weapon.bestBuild.armor, weapon.bestBuild.shoes, weapon.bestBuild.cape]
                                 .filter(Boolean)
@@ -268,16 +281,16 @@ export default function Meta1v1Tierlist() {
             {/* STATS BAR */}
             <div className="grid grid-cols-3 gap-3 font-mono text-xs text-center">
               <div className="p-3 rounded-2xl bg-black/40 border border-white/8">
-                <span className="text-[9px] text-gray-400 uppercase block">Winrate 1v1</span>
+                <span className="text-[9px] text-gray-400 uppercase block">Skuteczność surowa</span>
                 <span className="text-lg font-bold text-emerald-400">{activeDetailWeapon.winrate}%</span>
               </div>
               <div className="p-3 rounded-2xl bg-black/40 border border-white/8">
-                <span className="text-[9px] text-gray-400 uppercase block">Popularność</span>
-                <span className="text-lg font-bold text-sky-300">{activeDetailWeapon.popularity}%</span>
+                <span className="text-[9px] text-gray-400 uppercase block">Wielkość próby</span>
+                <span className="text-lg font-bold text-sky-300">{activeDetailWeapon.matches}</span>
               </div>
               <div className="p-3 rounded-2xl bg-black/40 border border-white/8">
                 <span className="text-[9px] text-gray-400 uppercase block">Średnie IP</span>
-                <span className="text-lg font-bold text-amber-300">{activeDetailWeapon.avgIp}</span>
+                <span className="text-lg font-bold text-amber-300">{activeDetailWeapon.avgIp || '—'}</span>
               </div>
             </div>
 
@@ -292,7 +305,7 @@ export default function Meta1v1Tierlist() {
             {/* PEŁNY ZESTAW EKWIPUNKU */}
             {activeDetailWeapon.bestBuild && (
               <div className="space-y-2 font-mono">
-                <h4 className="text-xs font-bold text-amber-400 uppercase">Optymalny Zestaw 1v1:</h4>
+                <h4 className="text-xs font-bold text-amber-400 uppercase">Najczęstszy zwycięski zestaw:</h4>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="p-2.5 rounded-xl bg-black/40 border border-white/8 flex items-center gap-2.5">
                     <Image src={`https://render.albiononline.com/v1/item/${encodeURIComponent(activeDetailWeapon.bestBuild.head)}.png?quality=1&size=40`} alt="Head" width={32} height={32} unoptimized />
@@ -317,12 +330,12 @@ export default function Meta1v1Tierlist() {
             {/* COUNTER MATCHUPS */}
             <div className="grid grid-cols-2 gap-3 font-mono text-xs">
               <div className="p-3 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-1">
-                <span className="text-emerald-400 font-bold uppercase text-[9px] block">🟢 Kontruje:</span>
-                <p className="text-emerald-200 text-[11px]">{activeDetailWeapon.strongAgainst.join(', ')}</p>
+                <span className="text-emerald-400 font-bold uppercase text-[9px] block">Najczęściej pokonuje:</span>
+                <p className="text-emerald-200 text-[11px]">{activeDetailWeapon.strongAgainst.join(', ') || 'Brak wystarczającej próbki'}</p>
               </div>
               <div className="p-3 rounded-2xl bg-rose-950/20 border border-rose-500/30 space-y-1">
-                <span className="text-rose-400 font-bold uppercase text-[9px] block">🔴 Przegrywa z:</span>
-                <p className="text-rose-200 text-[11px]">{activeDetailWeapon.weakAgainst.join(', ')}</p>
+                <span className="text-rose-400 font-bold uppercase text-[9px] block">Najczęściej przegrywa z:</span>
+                <p className="text-rose-200 text-[11px]">{activeDetailWeapon.weakAgainst.join(', ') || 'Brak wystarczającej próbki'}</p>
               </div>
             </div>
 

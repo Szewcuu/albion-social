@@ -20,7 +20,7 @@ Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 ### Faza II — Nowe Moduły i Funkcje
 
 - [x] **P31: 📈 Wykresy Historii Cen (Albion Data History API)** — interaktywny wykres cen z ostatnich 24h, 7d i 30d z trendami w kalkulatorze craftingu i na rynku.
-- [ ] **P32: 🗡️ Tierlista Meta & Stats 1v1** — interfejs istnieje, ale obecne rankingi są danymi demonstracyjnymi; przed oznaczeniem etapu jako gotowy trzeba podłączyć wiarygodne źródło albo jawnie opisać metodologię.
+- [x] **P32: 🗡️ Tierlista Meta & Stats 1v1** — ranking obserwacyjny z najnowszych publicznych pojedynków solo Gameinfo API, z ważeniem małych prób, jawną metodologią i stanem niedostępności bez danych zastępczych.
 - [ ] **P33: 📊 Rozszerzone Wykresy Kursu Złota (Gold API)** — interfejs i pobieranie danych istnieją, ale moduł wymaga usunięcia ukrytego kursu zastępczego i czytelnej obsługi niedostępnego API.
 - [x] **P34: 🔔 Centrum Powiadomień na Żywo (Header Bell)** — dzwonek powiadomień w nagłówku z licznikiem nieprzeczytanych wiadomości, dedykowanymi ikonami kategorii, oznaczaniem pojedynczych i zbiorczych powiadomień oraz subskrypcją Supabase Realtime.
 
@@ -42,9 +42,9 @@ Gotowe i wdrożone:
 
 ## Najbliższy etap
 
-> **Priorytet F: niezawodność integracji API**
+> **P33: rozszerzone wykresy kursu złota**
 
-Zakres P5, Priorytety C i D oraz etapy E.1–E.6 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, stabilne stronicowanie, SEO, automatyczny audyt Lighthouse oraz macierz 96 inspekcji responsywności. Następnym etapem jest Priorytet F: testy adapterów z mockami odpowiedzi zewnętrznych API i monitoring jakości integracji.
+Zakres P5, Priorytety C–F, etapy E.1–E.6 oraz P32 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, monitoring jakości integracji, automatyczny audyt Lighthouse, macierz 96 inspekcji responsywności oraz opartą na rzeczywistych zdarzeniach tierlistę solo. Następnym etapem jest weryfikacja i domknięcie P33.
 
 ### P5.0 — bezpieczeństwo i CI
 

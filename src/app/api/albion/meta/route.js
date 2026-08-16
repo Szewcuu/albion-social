@@ -1,214 +1,68 @@
 import { NextResponse } from 'next/server'
 
-const META_1V1_DATA = [
-  {
-    id: 'battleaxe',
-    name: 'Topór Bojowy (Battleaxe)',
-    weaponId: 'T8_MAIN_AXE',
-    tier: 'S+',
-    winrate: 59.2,
-    popularity: 16.4,
-    avgIp: 1450,
-    role: 'Sustained Damage & Self-Heal',
-    bestBuild: {
-      head: 'T8_HEAD_CLOTH_ROYAL',
-      headName: 'Kaptur Królewski (Royal Cowl)',
-      armor: 'T8_ARMOR_LEATHER_SET3',
-      armorName: 'Kurtka Najemnika (Mercenary Jacket)',
-      shoes: 'T8_SHOES_PLATE_SET1',
-      shoesName: 'Buty Żołnierza (Soldier Boots)',
-      offhand: 'T8_OFF_TORCH',
-      offhandName: 'Pochodnia (Torch)',
-      cape: 'T8_CAPEITEM_FW_BRIDGEWATCH',
-      capeName: 'Peleryna Bridgewatch',
-    },
-    strongAgainst: ['Dual Swords', '1H Dagger', 'Broadsword'],
-    weakAgainst: ['1H Curse', 'Frost Staff', 'Warbow'],
-    playstyle: 'Niezwykle silny sustain dzięki leczeniu z E (Rzut Toporem). Idealny do mgieł 1v1 (Mists) i Corrupted Dungeons.',
-  },
-  {
-    id: 'dualswords',
-    name: 'Miecze Bliźniacze (Dual Swords)',
-    weaponId: 'T8_2H_DUALSORD',
-    tier: 'S+',
-    winrate: 57.8,
-    popularity: 18.1,
-    avgIp: 1420,
-    role: 'Mobility & Burst Mobility',
-    bestBuild: {
-      head: 'T8_HEAD_CLOTH_SET2',
-      headName: 'Kaptur Maga (Mage Cowl)',
-      armor: 'T8_ARMOR_LEATHER_SET3',
-      armorName: 'Kurtka Najemnika (Mercenary Jacket)',
-      shoes: 'T8_SHOES_LEATHER_SET3',
-      shoesName: 'Buty Zabójcy (Assassin Shoes)',
-      offhand: null,
-      cape: 'T8_CAPEITEM_FW_THETFORD',
-      capeName: 'Peleryna Thetford',
-    },
-    strongAgainst: ['Warbow', '1H Fire', 'Light Crossbow'],
-    weakAgainst: ['Battleaxe', 'Nature Staff', 'Parrying Stave'],
-    playstyle: 'Ogromna mobilność i zadawanie obrażeń hybrydowych. Umiejętność E pozwala doskoczyć z niewrażliwością na kontrolę tłumu.',
-  },
-  {
-    id: 'curse1h',
-    name: 'Przeklęty Kostur (1H Curse)',
-    weaponId: 'T8_MAIN_CURSEDSTAFF',
-    tier: 'S',
-    winrate: 56.5,
-    popularity: 11.3,
-    avgIp: 1390,
-    role: 'DoT & Execute Burst',
-    bestBuild: {
-      head: 'T8_HEAD_CLOTH_SET1',
-      headName: 'Kaptur Uczonego (Scholar Cowl)',
-      armor: 'T8_ARMOR_CLOTH_SET3',
-      armorName: 'Szata Kleryka (Cleric Robe)',
-      shoes: 'T8_SHOES_PLATE_SET1',
-      shoesName: 'Buty Żołnierza (Soldier Boots)',
-      offhand: 'T8_OFF_SHIELD_HELL',
-      offhandName: 'Tarcza Twarzy (Facebreaker)',
-      cape: 'T8_CAPEITEM_HERETICS',
-      capeName: 'Peleryna Heretyka',
-    },
-    strongAgainst: ['Battleaxe', 'Nature Staff', 'Plate Tanks'],
-    weakAgainst: ['Guardian Helmet', 'Gigantify Potion', 'Holy Staff'],
-    playstyle: 'Nakładanie 4 ładunków Klątwy Q i detonacja E zadająca ogromne obrażenia. Zmusza przeciwnika do natychmiastowej defensywy.',
-  },
-  {
-    id: 'deathgivers',
-    name: 'Ostrza Śmierci (Deathgivers)',
-    weaponId: 'T8_2H_DAGGER_KATAR',
-    tier: 'S',
-    winrate: 55.9,
-    popularity: 13.7,
-    avgIp: 1510,
-    role: 'Stealth Burst & Reset',
-    bestBuild: {
-      head: 'T8_HEAD_LEATHER_SET3',
-      headName: 'Kaptur Zabójcy (Assassin Hood)',
-      armor: 'T8_ARMOR_LEATHER_SET1',
-      armorName: 'Kurtka Stalkera (Stalker Jacket)',
-      shoes: 'T8_SHOES_LEATHER_SET2',
-      shoesName: 'Buty Łowcy (Hunter Shoes)',
-      offhand: null,
-      cape: 'T8_CAPEITEM_UNDEAD',
-      capeName: 'Peleryna Nieumarłych',
-    },
-    strongAgainst: ['Frost Staff', '1H Fire', 'Warbow'],
-    weakAgainst: ['Guardian Helmet', 'Fiend Cowl', 'Purge Helmets'],
-    playstyle: 'Niewidzialność z W i wielokrotne resety E po użyciu z cienia. Wymaga wysokiego IP i precyzji w dyktowaniu tempa starcia.',
-  },
-  {
-    id: 'warbow',
-    name: 'Łuk Wojenny (Warbow)',
-    weaponId: 'T8_2H_WARBOW',
-    tier: 'A',
-    winrate: 53.4,
-    popularity: 9.8,
-    avgIp: 1400,
-    role: 'Kiting & Long-Range Snipe',
-    bestBuild: {
-      head: 'T8_HEAD_CLOTH_SET2',
-      headName: 'Kaptur Maga (Mage Cowl)',
-      armor: 'T8_ARMOR_LEATHER_SET2',
-      armorName: 'Kurtka Łowcy (Hunter Jacket)',
-      shoes: 'T8_SHOES_LEATHER_SET3',
-      shoesName: 'Buty Zabójcy (Assassin Shoes)',
-      offhand: null,
-      cape: 'T8_CAPEITEM_FW_BRIDZEWATCH',
-      capeName: 'Peleryna Bridgewatch',
-    },
-    strongAgainst: ['Battleaxe', '1H Fire', 'Maces'],
-    weakAgainst: ['Deathgivers', 'Dual Swords', 'Double Bladed Staff'],
-    playstyle: 'Mistrz kite\'owania na dystans. Spowalnianie z Q/W i strzał E z maksymalnej odległości zadający krytyczne obrażenia.',
-  },
-  {
-    id: 'dagger1h',
-    name: 'Sztylet 1H (1H Dagger)',
-    weaponId: 'T8_MAIN_DAGGER',
-    tier: 'A',
-    winrate: 52.8,
-    popularity: 8.5,
-    avgIp: 1380,
-    role: 'Attack Speed Lifesteal',
-    bestBuild: {
-      head: 'T8_HEAD_LEATHER_SET2',
-      headName: 'Kaptur Łowcy (Hunter Hood)',
-      armor: 'T8_ARMOR_LEATHER_SET2',
-      armorName: 'Kurtka Łowcy (Hunter Jacket)',
-      shoes: 'T8_SHOES_PLATE_SET1',
-      shoesName: 'Buty Żołnierza (Soldier Boots)',
-      offhand: 'T8_OFF_TORCH',
-      offhandName: 'Pochodnia (Torch)',
-      cape: 'T8_CAPEITEM_FW_THETFORD',
-      capeName: 'Peleryna Thetford',
-    },
-    strongAgainst: ['PvE Bosses', 'Open World Mobs', 'Low CC Builds'],
-    weakAgainst: ['Fiend Cowl (Purge)', 'Mage Robe', 'Corrupted Wall Trap'],
-    playstyle: 'Błyskawiczne uderzenia i potężny lifesteal z E. Słaby na purgowanie (rozproszenie efektów), lecz niepowstrzymany bez kontry.',
-  },
-  {
-    id: 'fire1h',
-    name: 'Ognisty Kostur (1H Fire)',
-    weaponId: 'T8_MAIN_FIRESTAFF',
-    tier: 'B',
-    winrate: 50.1,
-    popularity: 7.2,
-    avgIp: 1360,
-    role: 'Area Burst & Knockback',
-    bestBuild: {
-      head: 'T8_HEAD_CLOTH_SET1',
-      headName: 'Kaptur Uczonego (Scholar Cowl)',
-      armor: 'T8_ARMOR_CLOTH_SET3',
-      armorName: 'Szata Kleryka (Cleric Robe)',
-      shoes: 'T8_SHOES_PLATE_SET1',
-      shoesName: 'Buty Żołnierza (Soldier Boots)',
-      offhand: 'T8_OFF_BOOK',
-      offhandName: 'Tome of Spells',
-      cape: 'T8_CAPEITEM_FW_THETFORD',
-      capeName: 'Peleryna Thetford',
-    },
-    strongAgainst: ['Melee Rush', 'Brawlers'],
-    weakAgainst: ['Kiting Bows', 'Deathgivers', 'Silence Helmets'],
-    playstyle: 'Kule ognia Q, Ognista Ściana W odpychająca wojowników walczących w zwarciu oraz wybuchowe E.',
-  },
-  {
-    id: 'broadsword',
-    name: 'Szeroki Miecz (Broadsword)',
-    weaponId: 'T8_MAIN_SWORD',
-    tier: 'B',
-    winrate: 49.5,
-    popularity: 6.1,
-    avgIp: 1370,
-    role: 'Single Target Brawler',
-    bestBuild: {
-      head: 'T8_HEAD_LEATHER_SET2',
-      headName: 'Kaptur Łowcy (Hunter Hood)',
-      armor: 'T8_ARMOR_LEATHER_SET3',
-      armorName: 'Kurtka Najemnika (Mercenary Jacket)',
-      shoes: 'T8_SHOES_PLATE_SET1',
-      shoesName: 'Buty Żołnierza (Soldier Boots)',
-      offhand: 'T8_OFF_TAPERE',
-      offhandName: 'Tapere',
-      cape: 'T8_CAPEITEM_FW_THETFORD',
-      capeName: 'Peleryna Thetford',
-    },
-    strongAgainst: ['Daggers', 'Spears'],
-    weakAgainst: ['Battleaxe', '1H Curse'],
-    playstyle: 'Niezawodny miecz z odpornościami z E i stałym zadawaniem obrażeń w zwarciu.',
-  },
+import { buildObservedSoloMeta } from '@/lib/meta1v1'
+import { getAlbionRecentEvents } from '@/lib/server/albionApi'
+import { getAlbionItemCatalog } from '@/lib/server/albionItemCatalog'
+
+const REGIONS = [
+  { id: 'europe', label: 'Europa' },
+  { id: 'america', label: 'Ameryka' },
+  { id: 'asia', label: 'Azja' },
 ]
+const OFFSETS = [0, 51]
+
+export const revalidate = 300
 
 export async function GET() {
+  const requestDescriptors = REGIONS.flatMap((region) => OFFSETS.map((offset) => ({ region, offset })))
+  const results = await Promise.allSettled(requestDescriptors.map(async ({ region, offset }) => ({
+    region,
+    offset,
+    events: await getAlbionRecentEvents(region.id, { limit: 51, offset }),
+  })))
+  const fulfilled = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
+  const failedRequests = results.filter((result) => result.status === 'rejected').length
+
+  if (!fulfilled.length) {
+    return NextResponse.json({
+      error: 'Regionalne Gameinfo API nie zwróciło danych potrzebnych do analizy 1v1. Spróbuj ponownie później.',
+      data: [],
+      meta: {
+        source: 'Albion Online Gameinfo API',
+        isDemo: false,
+        unavailableRegions: REGIONS.map((region) => region.label),
+        updatedAt: new Date().toISOString(),
+      },
+    }, { status: 503, headers: { 'Cache-Control': 'no-store' } })
+  }
+
+  const eventsByRegion = REGIONS.flatMap((region) => {
+    const events = fulfilled
+      .filter((page) => page.region.id === region.id)
+      .flatMap((page) => page.events)
+    return events.length ? [{ region: region.id, events }] : []
+  })
+  const availableRegionIds = new Set(eventsByRegion.map((source) => source.region))
+  const analysis = buildObservedSoloMeta(eventsByRegion, getAlbionItemCatalog())
+  const availableRegions = REGIONS.filter((region) => availableRegionIds.has(region.id)).map((region) => region.label)
+  const unavailableRegions = REGIONS.filter((region) => !availableRegionIds.has(region.id)).map((region) => region.label)
+
   return NextResponse.json({
-    data: META_1V1_DATA,
+    data: analysis.data,
     meta: {
-      source: 'Ręcznie przygotowany zestaw demonstracyjny',
-      mode: 'Solo Mists & Corrupted 1v1',
-      methodology: 'Przykładowa prezentacja interfejsu — nie jest aktualnym rankingiem ani wynikiem analizy API.',
-      isDemo: true,
-      updatedAt: '2026-08-14T00:00:00.000Z',
+      source: 'Albion Online Gameinfo API',
+      mode: 'Najnowsze publiczne zdarzenia z jednym uczestnikiem i jednoosobową grupą po stronie zabójcy',
+      methodology: `Ranking obserwacyjny z ${analysis.stats.validDuels} pojedynków. Wynik tieru to skuteczność ważona do 50% próbą bazową ${analysis.stats.priorMatches} walk; broń wymaga co najmniej ${analysis.stats.minimumMatches} wystąpień. API nie udostępnia typu lokacji, więc próbka obejmuje wszystkie publiczne zdarzenia solo — nie tylko Mists i Corrupted Dungeons.`,
+      isDemo: false,
+      updatedAt: new Date().toISOString(),
+      cacheSeconds: 300,
+      availableRegions,
+      unavailableRegions,
+      failedRequests,
+      requestedPages: requestDescriptors.length,
+      ...analysis.stats,
     },
+  }, {
+    headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=900' },
   })
 }
