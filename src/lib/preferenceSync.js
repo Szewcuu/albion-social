@@ -4,7 +4,6 @@ export const PREFERENCES_SYNCED_EVENT = 'aopp-preferences-synced'
 
 const CONFIG = {
   favorites: { key: 'aopp-favorites-v1', column: 'favorites', timestamp: 'favorites_updated_at', empty: [] },
-  follows: { key: 'aopp-followed-items-v1', column: 'follows', timestamp: 'follows_updated_at', empty: [] },
   timers: { key: 'aopp-custom-timers-v2', column: 'timers', timestamp: 'timers_updated_at', empty: [] },
   reminders: { key: 'aopp-event-reminders-v1', column: 'reminders', timestamp: 'reminders_updated_at', empty: {} },
 }
@@ -16,7 +15,7 @@ function sanitizeArray(value, maxItems) {
 }
 
 function sanitize(category, value) {
-  if (category === 'favorites' || category === 'follows') return sanitizeArray(value, 200)
+  if (category === 'favorites') return sanitizeArray(value, 200)
   if (category === 'timers') return sanitizeArray(value, 20)
   if (category === 'reminders' && value && typeof value === 'object' && !Array.isArray(value)) {
     return Object.fromEntries(

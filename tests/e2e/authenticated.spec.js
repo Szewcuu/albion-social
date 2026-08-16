@@ -263,13 +263,15 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   })
 
   test('pokazuje regionalną wycenę utraconego zestawu w Killboardzie', async ({ page }) => {
+    let persistedFollows = []
     await page.route('**/api/follows', async (route) => {
       if (route.request().method() === 'GET') {
-        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ follows: [] }) })
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ follows: persistedFollows }) })
         return
       }
       const body = route.request().postDataJSON()
       expect(body).toMatchObject({ type: 'albion_player', id: 'pricing-player', region: 'europe', following: true })
+      persistedFollows = [{ entity_type: 'albion_player', entity_id: 'pricing-player', label: 'PricingKnight', region: 'europe' }]
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ following: true, label: 'PricingKnight' }) })
     })
     await page.route('**/api/albion/player?mode=search**', async (route) => {
@@ -317,6 +319,12 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     const followPlayer = page.getByRole('button', { name: 'Obserwuj: PricingKnight' })
     await expect(followPlayer).toBeEnabled()
     await followPlayer.click()
+    await expect(page.getByRole('button', { name: 'Obserwujesz: PricingKnight' })).toHaveAttribute('aria-pressed', 'true')
+
+    await page.reload()
+    await page.getByLabel('Nick gracza').fill('PricingKnight')
+    await page.getByRole('button', { name: 'Szukaj', exact: true }).click()
+    await page.getByRole('button', { name: /PricingKnight/ }).click()
     await expect(page.getByRole('button', { name: 'Obserwujesz: PricingKnight' })).toHaveAttribute('aria-pressed', 'true')
   })
 
