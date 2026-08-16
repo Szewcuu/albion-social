@@ -24,13 +24,14 @@ test.describe('publiczna bramka portalu', () => {
     await expect(page.getByRole('heading', { name: /Twoje dane mają służyć Tobie/i })).toBeVisible()
   })
 
-  test('odrzuca anonimowe wywołania endpointów personelu i usuwania konta', async ({ request }) => {
+  test('odrzuca anonimowe wywołania chronionych endpointów', async ({ request }) => {
     const healthRead = await request.get('/api/admin/health')
     const healthRun = await request.post('/api/admin/health')
     const moderationQueue = await request.get('/api/admin/content')
     const roleManagement = await request.get('/api/admin/roles')
     const eventCalendar = await request.get('/api/events')
     const followedEntities = await request.get('/api/follows')
+    const priceAlerts = await request.get('/api/price-alerts')
     const profileVerification = await request.post('/api/profile/verify', {
       data: { playerId: 'anonymous-test', region: 'europe' },
     })
@@ -44,6 +45,7 @@ test.describe('publiczna bramka portalu', () => {
     expect(roleManagement.status()).toBe(401)
     expect(eventCalendar.status()).toBe(401)
     expect(followedEntities.status()).toBe(401)
+    expect(priceAlerts.status()).toBe(401)
     expect(profileVerification.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
   })
