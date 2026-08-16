@@ -3,6 +3,7 @@ import "./globals.css";
 
 import PwaRegister from "@/components/PwaRegister";
 import AppShell from "@/components/AppShell";
+import WebVitalsReporter from "@/components/WebVitalsReporter";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 export const metadata = {
@@ -63,6 +64,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
         <PwaRegister />
+        <WebVitalsReporter />
         <SpeedInsights />
       </body>
     </html>
