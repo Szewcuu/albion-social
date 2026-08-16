@@ -3,6 +3,7 @@ import 'server-only'
 import { createHash } from 'node:crypto'
 
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin'
+import { probeExternalEndpoints } from '@/lib/externalApiClient'
 import { isSafeDiscordWebhook } from '@/lib/server/validation'
 
 const CHECK_TIMEOUT_MS = 8_000
@@ -81,21 +82,28 @@ async function fetchOk(url, options = {}) {
 }
 
 async function checkRegions(endpoints) {
-  const results = await Promise.allSettled(endpoints.map(async ([region, url]) => {
-    await fetchOk(url)
-    return region
-  }))
-  const available = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : [])
-  const unavailable = endpoints
-    .map(([region]) => region)
-    .filter((region) => !available.includes(region))
+  const regions = await probeExternalEndpoints(
+    endpoints.map(([region, url]) => ({ region, url })),
+    { timeoutMs: CHECK_TIMEOUT_MS },
+  )
+  const available = regions.filter((region) => region.status !== 'down').map((region) => region.region)
+  const unavailable = regions.filter((region) => region.status === 'down').map((region) => region.region)
+  const slow = regions.filter((region) => region.status === 'degraded').map((region) => region.region)
 
-  if (!available.length) throw new Error('Żaden region nie odpowiada.')
   return {
-    status: unavailable.length ? 'degraded' : 'operational',
+    status: !available.length ? 'down' : unavailable.length || slow.length ? 'degraded' : 'operational',
     available,
     unavailable,
+    slow,
+    regions,
   }
+}
+
+function integrationMessage(source, regions) {
+  const issues = []
+  if (regions.unavailable.length) issues.push(`nie odpowiada dla: ${regions.unavailable.join(', ')}`)
+  if (regions.slow.length) issues.push(`odpowiada wolno dla: ${regions.slow.join(', ')}`)
+  return issues.length ? `${source} ${issues.join('; ')}.` : `${source} odpowiada dla wszystkich regionów.`
 }
 
 async function notifyStaffOfOutage(supabase, check, previousStatus) {
@@ -137,9 +145,7 @@ export async function runIntegrationChecks() {
       const regions = await checkRegions(ALBION_GAMEINFO_CHECKS)
       return {
         status: regions.status,
-        message: regions.unavailable.length
-          ? `Gameinfo API nie odpowiada dla: ${regions.unavailable.join(', ')}.`
-          : 'Gameinfo API odpowiada dla wszystkich regionów.',
+        message: integrationMessage('Gameinfo API', regions),
         metadata: regions,
       }
     }),
@@ -147,9 +153,7 @@ export async function runIntegrationChecks() {
       const regions = await checkRegions(ALBION_MARKET_CHECKS)
       return {
         status: regions.status,
-        message: regions.unavailable.length
-          ? `Albion Data Project nie odpowiada dla: ${regions.unavailable.join(', ')}.`
-          : 'Albion Data Project odpowiada dla wszystkich regionów.',
+        message: integrationMessage('Albion Data Project', regions),
         metadata: regions,
       }
     }),
@@ -168,12 +172,18 @@ export async function runIntegrationChecks() {
     if (error) throw error
     await notifyStaffOfOutage(supabase, check, previous?.status)
 
-    if (check.status === 'down') {
+    if (previous?.status !== check.status) {
       await recordSystemEvent({
         source: check.service,
-        eventType: 'integration_check_failed',
+        level: check.status === 'down' ? 'error' : check.status === 'degraded' ? 'warning' : 'info',
+        eventType: 'integration_status_changed',
         message: check.message,
-        context: { latencyMs: check.latency_ms },
+        context: {
+          latencyMs: check.latency_ms,
+          previousStatus: previous?.status || null,
+          status: check.status,
+          regions: check.metadata?.regions || null,
+        },
       })
     }
   }

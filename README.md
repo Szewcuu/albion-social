@@ -298,8 +298,12 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] dodać rate limiting do publicznych tras `/api/albion/*` i `/api/prices`
 - [x] walidować identyfikatory przedmiotów, miast, regionów i parametrów paginacji
 - [x] zwracać informację o źródle danych i czasie ostatniej aktualizacji
-- [ ] dodać testy adapterów z mockami odpowiedzi zewnętrznych API
-- [ ] przygotować monitoring błędów integracji i czasu odpowiedzi
+- [x] dodać testy adapterów z mockami odpowiedzi zewnętrznych API
+  - [x] objąć testami sukces, retry po `429`, brak retry po `404`, timeout i nieprawidłowy JSON
+- [x] przygotować monitoring błędów integracji i czasu odpowiedzi
+  - [x] zapisywać osobny status, kod HTTP i opóźnienie dla każdego regionu Gameinfo oraz Albion Data
+  - [x] pokazywać diagnostykę regionów bezpośrednio w panelu administratora
+  - [x] rejestrować zmianę stanu integracji wraz z poprzednim statusem i diagnostyką regionów
 
 ### P1 — Killboard 2.0
 
