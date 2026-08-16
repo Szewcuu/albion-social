@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
 import UpcomingExpeditionsWidget from '@/components/expeditions/UpcomingExpeditionsWidget'
+import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { 
   Swords, Shield, Heart, UserCheck, Plus, Search,
   Clock, Users, Trash2, AlertTriangle, MapPin, Compass, Sparkles, Calendar 
@@ -13,7 +14,7 @@ import {
 const EXPEDITION_TTL_MS = 72 * 60 * 60 * 1000
 
 export default function Wyprawy() {
-  const [user, setUser] = useState(null)
+  const { user } = usePortalSession()
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expeditions, setExpeditions] = useState([])
@@ -59,24 +60,19 @@ export default function Wyprawy() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (profile) setUserProfile(profile)
+        })
+    }
 
-      if (currentUser) {
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', currentUser.id)
-          .single()
-          .then(({ data: profile }) => {
-            if (profile) setUserProfile(profile)
-          })
-      }
-
-      fetchExpeditions()
-    })
-  }, [fetchExpeditions])
+    void Promise.resolve().then(fetchExpeditions)
+  }, [fetchExpeditions, user])
 
   const openSignupModal = (exp) => {
     const signups = exp.expedition_signups || []
