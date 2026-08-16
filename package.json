@@ -14,7 +14,8 @@
     "performance:budget": "node scripts/check-performance-budget.mjs",
     "test:e2e": "playwright test",
     "test:e2e:public": "playwright test --project=public",
-    "test:e2e:auth": "cross-env E2E_REQUIRE_AUTH=1 playwright test --project=authenticated"
+    "test:e2e:auth": "cross-env E2E_REQUIRE_AUTH=1 playwright test --project=authenticated",
+    "test:e2e:visual": "cross-env E2E_REQUIRE_AUTH=1 playwright test visual-public.spec.js visual-authenticated.spec.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.7",

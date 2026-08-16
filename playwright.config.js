@@ -22,7 +22,7 @@ const authenticatedProjects = hasAuthCredentials ? [
   },
   {
     name: 'authenticated',
-    testMatch: /authenticated\.spec\.js/,
+    testMatch: /(?:authenticated|visual-authenticated)\.spec\.js/,
     dependencies: ['auth-setup'],
     use: {
       ...devices['Desktop Chrome'],
@@ -48,7 +48,7 @@ export default defineConfig({
   projects: [
     {
       name: 'public',
-      testMatch: /public\.spec\.js/,
+      testMatch: /(?:public|visual-public)\.spec\.js/,
       use: { ...devices['Desktop Chrome'] },
     },
     ...authenticatedProjects,
