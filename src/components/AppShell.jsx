@@ -11,6 +11,45 @@ import { PortalSessionProvider } from '@/contexts/PortalSessionContext'
 
 const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc'])
 
+function ProtectedRouteLoadingShell() {
+  return (
+    <div className="app-shell auth-pending" role="status" aria-live="polite" aria-label="Sprawdzanie sesji">
+      <div className="world-backdrop" aria-hidden="true" />
+      <aside className="sidebar" aria-hidden="true">
+        <div className="border-b border-white/[.06] p-5">
+          <div className="h-11 w-40 animate-pulse rounded bg-white/[.04]" />
+        </div>
+      </aside>
+
+      <div className="app-main">
+        <header className="topbar" aria-hidden="true">
+          <div className="h-4 w-36 animate-pulse rounded bg-white/[.04]" />
+          <div className="h-10 w-28 animate-pulse rounded bg-white/[.04]" />
+        </header>
+
+        <main id="main-content" className="app-content" aria-hidden="true">
+          <div className="page-content">
+            <div className="subpage-header">
+              <div className="h-10 w-64 max-w-[70%] animate-pulse rounded bg-white/[.05]" />
+              <div className="mt-2 h-[22px] w-[520px] max-w-[85%] animate-pulse rounded bg-white/[.035]" />
+            </div>
+            <div className="relative z-10 mx-auto mt-2 w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8">
+              <div className="panel min-h-[200px] animate-pulse rounded-3xl p-5">
+                <div className="flex items-center gap-3">
+                  <span className="loading-crest" />
+                  <div className="h-4 w-44 rounded bg-white/[.04]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <span className="sr-only">Sprawdzanie sesji…</span>
+    </div>
+  )
+}
+
 export default function AppShell({ children }) {
   const [user, setUser] = useState(null)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -174,6 +213,10 @@ export default function AppShell({ children }) {
     loginWithDiscord,
     logout,
   }), [authReady, isAdmin, loginWithDiscord, logout, user])
+
+  if (!authReady && !GUEST_PUBLIC_PATHS.has(pathname)) {
+    return <ProtectedRouteLoadingShell />
+  }
 
   if (!authReady || guestBlocked) {
     return (
