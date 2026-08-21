@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { syncPortalPreferences } from '@/lib/preferenceSync'
@@ -10,6 +10,14 @@ import MobileBottomNav from './MobileBottomNav'
 import { PortalSessionProvider } from '@/contexts/PortalSessionContext'
 
 const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc'])
+
+function hasPersistedSupabaseSession() {
+  try {
+    return Object.keys(window.localStorage).some((key) => /^sb-.+-auth-token$/.test(key))
+  } catch {
+    return false
+  }
+}
 
 function ProtectedRouteLoadingShell() {
   return (
@@ -57,9 +65,16 @@ export default function AppShell({ children }) {
   const [notificationState, setNotificationState] = useState({ loading: false, error: '' })
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authReady, setAuthReady] = useState(false)
+  const [hasAuthHint, setHasAuthHint] = useState(false)
   const hydratedUserIdRef = useRef(null)
   const pathname = usePathname()
   const router = useRouter()
+
+  useLayoutEffect(() => {
+    // Celowo przed pierwszym paintem: istniejąca sesja nie może odsłonić bramki gościa ani wywołać CLS.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setHasAuthHint(hasPersistedSupabaseSession())
+  }, [])
 
   const readAdminStatus = useCallback(async (userId) => {
     const { data, error } = await supabase
@@ -214,7 +229,7 @@ export default function AppShell({ children }) {
     logout,
   }), [authReady, isAdmin, loginWithDiscord, logout, user])
 
-  if (!authReady && !GUEST_PUBLIC_PATHS.has(pathname)) {
+  if (!authReady && (!GUEST_PUBLIC_PATHS.has(pathname) || hasAuthHint)) {
     return <ProtectedRouteLoadingShell />
   }
 
