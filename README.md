@@ -49,7 +49,7 @@ Gotowe i wdrożone:
 - [x] zdiagnozować przekroczenie budżetu CLS na desktopowej stronie Wypraw
 - [x] zastąpić pełnoekranowy stan sprawdzania sesji stabilnym szkieletem chronionego shellu bez ujawniania prywatnej treści
 - [x] blokować pomiar strony logowania Vercel i obsłużyć opcjonalny sekret Automation Bypass dla chronionych Preview
-- [ ] powtórzyć pełny audyt po publikacji produkcyjnej
+- [x] powtórzyć pełny audyt po publikacji produkcyjnej — 14/14 widoków przeszło bramkę; Wyprawy: CLS `0,0005` mobile i `0` desktop (21 sierpnia 2026)
 
 Zakres P5, Priorytety C–F, etapy E.1–E.6 oraz P31–P34 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, wiarygodny kurs złota, monitoring jakości integracji, automatyczny audyt Lighthouse, macierz 96 inspekcji responsywności oraz opartą na rzeczywistych zdarzeniach tierlistę solo. P25 domyka pomiar chronionych ekranów po przejściu portalu na wyłącznie Discord OAuth.
 
