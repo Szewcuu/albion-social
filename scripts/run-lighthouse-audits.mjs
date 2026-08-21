@@ -9,6 +9,7 @@ import { createE2EUserSession } from './lib/create-e2e-user-session.mjs'
 const baseUrl = new URL(process.env.LIGHTHOUSE_BASE_URL || 'https://albion-social.vercel.app')
 const outputDirectory = join(process.cwd(), 'lighthouse-results')
 const guestOnly = process.env.LIGHTHOUSE_GUEST_ONLY === '1'
+const vercelBypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET?.trim()
 
 const thresholds = {
   performanceTarget: 90,
@@ -150,6 +151,26 @@ async function authenticateChrome(chromePort) {
   }
 }
 
+async function prepareVercelBypass(chromePort) {
+  if (!vercelBypassSecret) return
+
+  const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chromePort}` })
+  const page = await browser.newPage()
+  try {
+    await page.setExtraHTTPHeaders({
+      'x-vercel-protection-bypass': vercelBypassSecret,
+      'x-vercel-set-bypass-cookie': 'true',
+    })
+    await page.goto(baseUrl.origin, { waitUntil: 'networkidle2', timeout: 45_000 })
+    if (new URL(page.url()).origin !== baseUrl.origin) {
+      throw new Error('Vercel Automation Bypass did not grant access to the requested deployment.')
+    }
+  } finally {
+    await page.close()
+    await browser.disconnect()
+  }
+}
+
 async function runRoute(chromePort, route, profile, authenticated, reportSuffix = '') {
   const url = new URL(route.path, baseUrl).href
   const result = await lighthouse(url, {
@@ -163,6 +184,12 @@ async function runRoute(chromePort, route, profile, authenticated, reportSuffix 
 
   if (!result) throw new Error(`Lighthouse returned no result for ${route.slug} (${profile.name})`)
   await writeFile(join(outputDirectory, `${route.slug}-${profile.name}${reportSuffix}.json`), result.report)
+  if (new URL(result.lhr.finalUrl).origin !== baseUrl.origin) {
+    throw new Error(
+      `Lighthouse was redirected to ${new URL(result.lhr.finalUrl).origin}. `
+      + 'For a protected Vercel Preview configure VERCEL_AUTOMATION_BYPASS_SECRET in GitHub Actions.',
+    )
+  }
   return reportRow({ lhr: result.lhr, route: route.slug, profile: profile.name })
 }
 
@@ -189,6 +216,7 @@ async function main() {
   const rows = []
 
   try {
+    await prepareVercelBypass(chrome.port)
     for (const route of guestRoutes) {
       for (const profile of profiles) {
         console.log(`Lighthouse: ${route.slug} / ${profile.name}`)
