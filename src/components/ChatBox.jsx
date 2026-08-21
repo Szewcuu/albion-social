@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { scheduleIdleTask } from '@/lib/clientIdle'
 
 const BASE_FIELDS = 'id, user_id, channel, username, text, created_at'
 const REPLY_FIELDS = `${BASE_FIELDS}, reply_to`
@@ -137,24 +138,27 @@ export default function ChatBox({ user, isAdmin }) {
   }, [])
 
   useEffect(() => {
-    const loadTimer = window.setTimeout(fetchMessages, 0)
-    const chatChannel = supabase
-      .channel('community-tavern')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
-        if ((payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') && payload.new.channel === 'GLOBALNY') {
-          addOrReplaceMessage(payload.new)
-        }
-        if (payload.eventType === 'DELETE') {
-          setChatMessages((current) => current.filter((message) => message.id !== payload.old.id))
-        }
-      })
-      .subscribe((status) => {
-        setConnectionStatus(status === 'SUBSCRIBED' ? 'LIVE' : status === 'CHANNEL_ERROR' ? 'ERROR' : 'CONNECTING')
-      })
+    let chatChannel = null
+    const cancelStartup = scheduleIdleTask(() => {
+      void fetchMessages()
+      chatChannel = supabase
+        .channel('community-tavern')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
+          if ((payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') && payload.new.channel === 'GLOBALNY') {
+            addOrReplaceMessage(payload.new)
+          }
+          if (payload.eventType === 'DELETE') {
+            setChatMessages((current) => current.filter((message) => message.id !== payload.old.id))
+          }
+        })
+        .subscribe((status) => {
+          setConnectionStatus(status === 'SUBSCRIBED' ? 'LIVE' : status === 'CHANNEL_ERROR' ? 'ERROR' : 'CONNECTING')
+        })
+    })
 
     return () => {
-      window.clearTimeout(loadTimer)
-      supabase.removeChannel(chatChannel)
+      cancelStartup()
+      if (chatChannel) supabase.removeChannel(chatChannel)
     }
   }, [addOrReplaceMessage, fetchMessages])
 

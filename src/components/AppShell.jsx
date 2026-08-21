@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { scheduleIdleTask } from '@/lib/clientIdle'
 import { syncPortalPreferences } from '@/lib/preferenceSync'
 import AppSidebar from './AppSidebar'
 import TopBar from './TopBar'
@@ -164,25 +165,33 @@ export default function AppShell({ children }) {
 
   useEffect(() => {
     let active = true
+    let cancelServices = () => {}
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const applySession = (session) => {
       if (!active) return
       const currentUser = session?.user ?? null
       setUser(currentUser)
       setAuthReady(true)
-      hydrateUserServices(currentUser)
+      cancelServices()
+      if (currentUser) {
+        cancelServices = scheduleIdleTask(() => hydrateUserServices(currentUser))
+      } else {
+        cancelServices = () => {}
+        hydrateUserServices(null)
+      }
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      applySession(session)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      setAuthReady(true)
-      hydrateUserServices(currentUser)
+      applySession(session)
     })
 
     return () => {
       active = false
+      cancelServices()
       subscription.unsubscribe()
     }
   }, [hydrateUserServices])
@@ -190,27 +199,31 @@ export default function AppShell({ children }) {
   useEffect(() => {
     if (!user?.id) return undefined
 
-    const notificationChannel = supabase
-      .channel(`notifications-${user.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setNotifications((current) => [payload.new, ...current.filter((item) => item.id !== payload.new.id)].slice(0, 20))
-          }
-          if (payload.eventType === 'UPDATE') {
-            setNotifications((current) => current.map((item) => item.id === payload.new.id ? payload.new : item))
-          }
-          if (payload.eventType === 'DELETE') {
-            setNotifications((current) => current.filter((item) => item.id !== payload.old.id))
-          }
-        },
-      )
-      .subscribe()
+    let notificationChannel = null
+    const cancelSubscription = scheduleIdleTask(() => {
+      notificationChannel = supabase
+        .channel(`notifications-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setNotifications((current) => [payload.new, ...current.filter((item) => item.id !== payload.new.id)].slice(0, 20))
+            }
+            if (payload.eventType === 'UPDATE') {
+              setNotifications((current) => current.map((item) => item.id === payload.new.id ? payload.new : item))
+            }
+            if (payload.eventType === 'DELETE') {
+              setNotifications((current) => current.filter((item) => item.id !== payload.old.id))
+            }
+          },
+        )
+        .subscribe()
+    })
 
     return () => {
-      supabase.removeChannel(notificationChannel)
+      cancelSubscription()
+      if (notificationChannel) supabase.removeChannel(notificationChannel)
     }
   }, [user?.id])
 
