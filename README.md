@@ -40,11 +40,18 @@ Gotowe i wdrożone:
 - [x] Market Intelligence z pełnym katalogiem, porównaniem miast, trendami i kalkulatorami
 - [x] nowe ekrany Profilu, Timerów, Loot Splitu, Regulaminu i Prywatności
 
-## Najbliższy etap
+## Bieżący etap
 
-> **P1: przypięcie postaci Albionu do profilu portalu**
+> **P25: pełny Lighthouse zalogowanego portalu i stabilny shell uwierzytelnienia**
 
-Zakres P5, Priorytety C–F, etapy E.1–E.6 oraz P31–P34 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, wiarygodny kurs złota, monitoring jakości integracji, automatyczny audyt Lighthouse, macierz 96 inspekcji responsywności oraz opartą na rzeczywistych zdarzeniach tierlistę solo. Następnym etapem jest domknięcie zaległej synchronizacji postaci Albionu z profilem użytkownika.
+- [x] uruchomić na produkcji 14 audytów Lighthouse: ekran publiczny oraz sześć chronionych tras w profilach mobile i desktop
+- [x] potwierdzić, że jednorazowa sesja Supabase działa również w audycie Lighthouse bez włączania logowania Email
+- [x] zdiagnozować przekroczenie budżetu CLS na desktopowej stronie Wypraw
+- [x] zastąpić pełnoekranowy stan sprawdzania sesji stabilnym szkieletem chronionego shellu bez ujawniania prywatnej treści
+- [x] blokować pomiar strony logowania Vercel i obsłużyć opcjonalny sekret Automation Bypass dla chronionych Preview
+- [ ] powtórzyć pełny audyt po publikacji produkcyjnej
+
+Zakres P5, Priorytety C–F, etapy E.1–E.6 oraz P31–P34 są ukończone. Portal posiada regionalne wyceny, porównanie buildów, Wartownię walk, automatyczny katalog przedmiotów, serwerową historię rynku z alertami cenowymi, wiarygodny kurs złota, monitoring jakości integracji, automatyczny audyt Lighthouse, macierz 96 inspekcji responsywności oraz opartą na rzeczywistych zdarzeniach tierlistę solo. P25 domyka pomiar chronionych ekranów po przejściu portalu na wyłącznie Discord OAuth.
 
 ### P5.0 — bezpieczeństwo i CI
 
