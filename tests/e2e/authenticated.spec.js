@@ -242,6 +242,14 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('otwiera tablicę rynku natychmiast dla bezpośredniego linku do oferty', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/rynek?offer=e2e-market-offer')
+
+    await expect(page.getByPlaceholder('Szukaj przedmiotów na rynku...')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Znajdź właściwy towar' })).toBeVisible()
+  })
+
   test('wyłącza przelicznik zamiast pokazywać zastępczy kurs złota', async ({ page }) => {
     await page.route('**/api/prices?mode=gold**', async (route) => {
       await route.fulfill({

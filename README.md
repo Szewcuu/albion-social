@@ -42,7 +42,16 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P35: mobilna Tawerna i koszt startu zalogowanej aplikacji**
+> **P36: mobilny Rynek i progresywna tablica ofert**
+
+- [x] przeanalizować produkcyjny raport Lighthouse Rynku i wskazać koszt hydracji poniżej pierwszego ekranu
+- [x] wydzielić formularz, filtry i karty ofert do osobnych pakietów ładowanych progresywnie
+- [ ] zachować natychmiastowe otwieranie bezpośrednich linków do ofert oraz wszystkie akcje właściciela, ulubionych i obserwowania
+- [x] rozłożyć aktualizację ofert na pracę współbieżną i ograniczyć koszt układu kart poza ekranem
+- [ ] potwierdzić lint, testy jednostkowe, build, budżet JavaScript i publiczne oraz zalogowane E2E
+- [ ] opublikować P36 i powtórzyć produkcyjny Lighthouse; cel dla Rynku mobile: Performance `>= 90`, TBT `<= 400 ms`, CLS `0`
+
+### P35 — mobilna Tawerna i koszt startu zalogowanej aplikacji
 
 - [x] przeanalizować produkcyjny raport Lighthouse Tawerny i wskazać główne zadania blokujące wątek UI
 - [x] odroczyć niekrytyczne statystyki, pobieranie wiadomości oraz subskrypcje Realtime do czasu po pierwszym renderze
