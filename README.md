@@ -42,7 +42,16 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P25: pełny Lighthouse zalogowanego portalu i stabilny shell uwierzytelnienia**
+> **P26: mobilna wydajność Rynku i Zbrojowni**
+
+- [x] przeanalizować produkcyjne raporty Lighthouse dla `/rynek` i `/buildy`
+- [x] rozdzielić ciężkie moduły Meta 1v1, planera składu i porównywarki buildów od początkowego pakietu Zbrojowni
+- [x] uruchamiać analitykę rynku oraz porównywarkę buildów dopiero na wyraźne żądanie użytkownika
+- [x] opóźnić obrazy przedmiotów spoza pierwszego ekranu Rynku
+- [x] potwierdzić lint, 48 testów jednostkowych, build i budżet JavaScript; początkowy pakiet `/buildy` zmalał z `806,8 KB` do `768,1 KB`
+- [ ] opublikować P26 i powtórzyć produkcyjny Lighthouse dla Rynku oraz Zbrojowni
+
+### P25 — pełny Lighthouse zalogowanego portalu i stabilny shell uwierzytelnienia
 
 - [x] uruchomić na produkcji 14 audytów Lighthouse: ekran publiczny oraz sześć chronionych tras w profilach mobile i desktop
 - [x] potwierdzić, że jednorazowa sesja Supabase działa również w audycie Lighthouse bez włączania logowania Email

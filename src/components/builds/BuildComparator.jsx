@@ -106,8 +106,8 @@ function BuildSide({ label, buildRow, build, stats, valuations, cities, accent, 
   )
 }
 
-export default function BuildComparator({ builds = [] }) {
-  const [isOpen, setIsOpen] = useState(false)
+export default function BuildComparator({ builds = [], initialOpen = false }) {
+  const [isOpen, setIsOpen] = useState(initialOpen)
   const [buildAId, setBuildAId] = useState('')
   const [buildBId, setBuildBId] = useState('')
   const [region, setRegion] = useState('europe')

@@ -409,6 +409,8 @@ export default function Rynek() {
                               alt={offer.title}
                               width="48"
                               height="48"
+                              loading="lazy"
+                              decoding="async"
                               className="h-12 w-12 object-contain"
                               onError={(e) => {
                                 e.currentTarget.style.display = 'none'
