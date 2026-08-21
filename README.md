@@ -46,10 +46,10 @@ Gotowe i wdrożone:
 
 - [x] przeanalizować produkcyjny raport Lighthouse Rynku i wskazać koszt hydracji poniżej pierwszego ekranu
 - [x] wydzielić formularz, filtry i karty ofert do osobnych pakietów ładowanych progresywnie
-- [ ] zachować natychmiastowe otwieranie bezpośrednich linków do ofert oraz wszystkie akcje właściciela, ulubionych i obserwowania
+- [x] zachować natychmiastowe otwieranie bezpośrednich linków do ofert oraz wszystkie akcje właściciela, ulubionych i obserwowania
 - [x] rozłożyć aktualizację ofert na pracę współbieżną i ograniczyć koszt układu kart poza ekranem
-- [ ] potwierdzić lint, testy jednostkowe, build, budżet JavaScript i publiczne oraz zalogowane E2E
-- [ ] opublikować P36 i powtórzyć produkcyjny Lighthouse; cel dla Rynku mobile: Performance `>= 90`, TBT `<= 400 ms`, CLS `0`
+- [x] potwierdzić lint, 51 testów jednostkowych, build, budżet JavaScript i publiczne oraz zalogowane E2E; początkowy pakiet `/rynek` zmalał z `783,8 KB` do `744,5 KB`
+- [x] opublikować P36 i powtórzyć produkcyjny Lighthouse — pełna bramka `14/14` przeszła; oficjalna próba kontrolna Rynku mobile osiągnęła Performance `97`, TBT `190 ms`, LCP `1,3 s` i CLS `0`, a DOM pierwszego widoku zmalał z `506` do `293` elementów; pierwsza zimna próba miała wariancję `86` / `555 ms` ([audyt produkcyjny](https://github.com/Szewcuu/albion-social/actions/runs/32525024052), 21 sierpnia 2026)
 
 ### P35 — mobilna Tawerna i koszt startu zalogowanej aplikacji
 
