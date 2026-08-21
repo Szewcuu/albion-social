@@ -49,7 +49,7 @@ Gotowe i wdrożone:
 - [x] uruchamiać analitykę rynku oraz porównywarkę buildów dopiero na wyraźne żądanie użytkownika
 - [x] opóźnić obrazy przedmiotów spoza pierwszego ekranu Rynku
 - [x] potwierdzić lint, 48 testów jednostkowych, build i budżet JavaScript; początkowy pakiet `/buildy` zmalał z `806,8 KB` do `768,1 KB`
-- [ ] opublikować P26 i powtórzyć produkcyjny Lighthouse dla Rynku oraz Zbrojowni
+- [x] opublikować P26 i powtórzyć produkcyjny Lighthouse — pełna bramka `14/14` przeszła; mobile: ekran gościa `95` (LCP `2,8 s`, CLS `0`), Rynek `91` (LCP `1,1 s`, TBT `390 ms`), Zbrojownia `91` (LCP `1,7 s`, TBT `370 ms`); wszystkie widoki desktopowe `100` (21 sierpnia 2026)
 
 ### P25 — pełny Lighthouse zalogowanego portalu i stabilny shell uwierzytelnienia
 
