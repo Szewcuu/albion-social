@@ -46,10 +46,10 @@ Gotowe i wdrożone:
 
 - [x] przeanalizować produkcyjny raport Lighthouse Tawerny i wskazać główne zadania blokujące wątek UI
 - [x] odroczyć niekrytyczne statystyki, pobieranie wiadomości oraz subskrypcje Realtime do czasu po pierwszym renderze
-- [ ] zachować natychmiastową obsługę sesji, działanie czatu, powiadomień i automatycznego przewijania
+- [x] zachować natychmiastową obsługę sesji, działanie czatu, powiadomień i automatycznego przewijania
 - [x] dodać współdzielony, testowalny harmonogram pracy wykonywanej w czasie bezczynności przeglądarki
-- [ ] potwierdzić lint, testy jednostkowe, build, budżet JavaScript i publiczne oraz zalogowane E2E
-- [ ] opublikować P35 i powtórzyć produkcyjny Lighthouse; cel dla Tawerny mobile: Performance `>= 90`, TBT `<= 400 ms`, CLS `0`
+- [x] potwierdzić lint, 51 testów jednostkowych, build, budżet JavaScript i publiczne oraz zalogowane E2E
+- [x] opublikować P35 i powtórzyć produkcyjny Lighthouse — pełna bramka `14/14` przeszła; mobilna Tawerna wzrosła z `87` do `93`, TBT spadł z `510 ms` do `330 ms`, LCP wynosi `1,3 s`, a CLS `0` ([audyt produkcyjny](https://github.com/Szewcuu/albion-social/actions/runs/32502037434), 21 sierpnia 2026)
 
 ### P26 — mobilna wydajność Rynku i Zbrojowni
 
