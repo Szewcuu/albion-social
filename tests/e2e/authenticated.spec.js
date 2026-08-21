@@ -336,6 +336,24 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Obserwujesz: PricingKnight' })).toHaveAttribute('aria-pressed', 'true')
   })
 
+  test('otwiera wyniki Killboardu z bezpośredniego linku do nicku', async ({ page }) => {
+    await page.route('**/api/albion/player?mode=search**', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: { players: [{ id: 'direct-player', name: 'DirectKnight', guildName: 'Codex', allianceName: '', killFame: 8748, region: 'asia' }] },
+          meta: { source: 'E2E', region: 'asia', fetchedAt: '2026-08-21T20:00:00Z', cacheSeconds: 45 },
+        }),
+      })
+    })
+
+    await page.goto('/killboard?nick=DirectKnight&region=asia')
+
+    await expect(page.getByRole('heading', { name: 'Wybierz właściwego wojownika' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /DirectKnight/ })).toBeVisible()
+    await expect(page.getByText('Azja').last()).toBeVisible()
+  })
+
   test('nie zgłasza braku gracza, gdy wybrany region Gameinfo jest niedostępny', async ({ page }) => {
     await page.route('**/api/albion/player?mode=search**', async (route) => {
       await route.fulfill({
