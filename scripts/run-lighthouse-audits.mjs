@@ -1,10 +1,10 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { createClient } from '@supabase/supabase-js'
 import { chromium } from '@playwright/test'
 import lighthouse, { desktopConfig } from 'lighthouse'
 import { launch } from 'chrome-launcher'
 import puppeteer from 'puppeteer-core'
+import { createE2EDiscordSession } from './lib/create-e2e-discord-session.mjs'
 
 const baseUrl = new URL(process.env.LIGHTHOUSE_BASE_URL || 'https://albion-social.vercel.app')
 const outputDirectory = join(process.cwd(), 'lighthouse-results')
@@ -39,12 +39,6 @@ const profiles = [
   { name: 'mobile', config: undefined },
   { name: 'desktop', config: desktopConfig },
 ]
-
-function requiredEnvironment(name) {
-  const value = process.env[name]
-  if (!value) throw new Error(`Missing required environment variable: ${name}`)
-  return value
-}
 
 function score(category) {
   return Math.round((category?.score || 0) * 100)
@@ -136,28 +130,14 @@ function needsRetry(row) {
 }
 
 async function authenticateChrome(chromePort) {
-  const supabaseUrl = requiredEnvironment('NEXT_PUBLIC_SUPABASE_URL')
-  const supabaseAnonKey = requiredEnvironment('NEXT_PUBLIC_SUPABASE_ANON_KEY')
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  })
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: requiredEnvironment('E2E_USER_EMAIL'),
-    password: requiredEnvironment('E2E_USER_PASSWORD'),
-  })
-
-  if (error || !data.session) {
-    throw new Error(`Lighthouse login failed: ${error?.message || 'missing session'}`)
-  }
-
-  const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
+  const { session, projectRef } = await createE2EDiscordSession()
   const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chromePort}` })
   const page = await browser.newPage()
   try {
     await page.goto(baseUrl.origin, { waitUntil: 'domcontentloaded', timeout: 45_000 })
     await page.evaluate(
       ({ storageKey, session }) => window.localStorage.setItem(storageKey, JSON.stringify(session)),
-      { storageKey: `sb-${projectRef}-auth-token`, session: data.session },
+      { storageKey: `sb-${projectRef}-auth-token`, session },
     )
     await page.reload({ waitUntil: 'networkidle2', timeout: 45_000 })
     await page.waitForFunction(

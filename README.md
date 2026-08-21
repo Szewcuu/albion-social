@@ -459,7 +459,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Wyłączyć nieużywany provider Email, pozostawiając Discord OAuth jako jedyną metodę logowania.
 - [x] Ponownie uruchomić Supabase Security Advisor i obowiązkową bramkę CI.
   - Pozostaje jedno zaakceptowane ostrzeżenie `auth_leaked_password_protection`: ochrona haseł nie dotyczy portalu, ponieważ provider Email i logowanie hasłem są wyłączone, a plan projektu nie udostępnia tej funkcji.
-- [ ] Zastąpić historyczny fixture authenticated E2E oparty o Email i hasło rozwiązaniem zgodnym z Discord OAuth; do tego czasu obowiązkowe pozostają publiczne E2E, a test hasłowy wymaga jawnego `E2E_AUTH_MODE=password`.
+- [x] Zastąpić historyczny fixture authenticated E2E oparty o Email i hasło jednorazową sesją istniejącego użytkownika Discord, generowaną wyłącznie po stronie CI przez `service_role`.
 
 ### Etap P19 — Statystyki Portalu & Analityka Aktywności Graczy
 
@@ -601,12 +601,11 @@ DISCORD_EXPEDITIONS_WEBHOOK_URL
 CRON_SECRET
 NEXT_PUBLIC_APP_URL
 E2E_USER_EMAIL
-E2E_USER_PASSWORD
 ```
 
 `SUPABASE_SERVICE_ROLE_KEY` i webhook Discorda są sekretami serwerowymi — nie wolno nadawać im prefiksu `NEXT_PUBLIC_` ani umieszczać ich w repozytorium.
 
-Zmienne `E2E_USER_EMAIL` i `E2E_USER_PASSWORD` są historycznym, opcjonalnym fixture lokalnym. Po wyłączeniu providera Email uruchamia się go wyłącznie świadomie z `E2E_AUTH_MODE=password`; domyślny pipeline nie otwiera ponownie logowania hasłem na produkcji.
+`E2E_USER_EMAIL` wskazuje istniejące konto członkowskie połączone z Discord OAuth. Setup CI używa `SUPABASE_SERVICE_ROLE_KEY` tylko w procesie Node do utworzenia i natychmiastowej wymiany jednorazowego tokenu; klucz serwisowy ani token jednorazowy nie trafiają do przeglądarki, artefaktów ani logów.
 
 ## Kontrola jakości
 
@@ -618,6 +617,6 @@ npm run build
 npm run test:e2e:public
 ```
 
-Historyczny pakiet zalogowanego użytkownika uruchamia `npx cross-env E2E_AUTH_MODE=password npm run test:e2e:auth` po skonfigurowaniu konta `E2E_USER_*`. Docelowo zastąpi go fixture zgodny z Discord OAuth.
+Pakiet zalogowanego użytkownika uruchamia `npm run test:e2e:auth` po skonfigurowaniu `E2E_USER_EMAIL`, publicznych zmiennych Supabase oraz serwerowego `SUPABASE_SERVICE_ROLE_KEY`.
 
 Zmiany wdrażamy przez osobną gałąź, pull request i automatyczny deployment Vercel. Produkcja jest scalana dopiero po poprawnym buildzie i sprawdzeniu najważniejszych widoków.
