@@ -1,12 +1,12 @@
 import { mkdir } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { expect, test as setup } from '@playwright/test'
-import { createE2EDiscordSession } from '../../scripts/lib/create-e2e-discord-session.mjs'
+import { createE2EUserSession } from '../../scripts/lib/create-e2e-user-session.mjs'
 
 const authFile = 'playwright/.auth/user.json'
 
 setup('authenticate test user', async ({ page }) => {
-  const { session, projectRef } = await createE2EDiscordSession()
+  const { session, projectRef } = await createE2EUserSession()
   await page.goto('/')
   await page.evaluate(
     ({ storageKey, session }) => window.localStorage.setItem(storageKey, JSON.stringify(session)),

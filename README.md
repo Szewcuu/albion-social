@@ -459,7 +459,7 @@ Kolejność poniżej jest proponowaną kolejnością realizacji. Kończymy i odh
 - [x] Wyłączyć nieużywany provider Email, pozostawiając Discord OAuth jako jedyną metodę logowania.
 - [x] Ponownie uruchomić Supabase Security Advisor i obowiązkową bramkę CI.
   - Pozostaje jedno zaakceptowane ostrzeżenie `auth_leaked_password_protection`: ochrona haseł nie dotyczy portalu, ponieważ provider Email i logowanie hasłem są wyłączone, a plan projektu nie udostępnia tej funkcji.
-- [x] Zastąpić historyczny fixture authenticated E2E oparty o Email i hasło jednorazową sesją istniejącego użytkownika Discord, generowaną wyłącznie po stronie CI przez `service_role`.
+- [x] Zastąpić historyczny fixture authenticated E2E oparty o Email i hasło jednorazową sesją dedykowanego konta członkowskiego, generowaną wyłącznie po stronie CI przez `service_role`; produkcyjnym wejściem użytkownika pozostaje Discord OAuth.
 
 ### Etap P19 — Statystyki Portalu & Analityka Aktywności Graczy
 
@@ -605,7 +605,7 @@ E2E_USER_EMAIL
 
 `SUPABASE_SERVICE_ROLE_KEY` i webhook Discorda są sekretami serwerowymi — nie wolno nadawać im prefiksu `NEXT_PUBLIC_` ani umieszczać ich w repozytorium.
 
-`E2E_USER_EMAIL` wskazuje istniejące konto członkowskie połączone z Discord OAuth. Setup CI używa `SUPABASE_SERVICE_ROLE_KEY` tylko w procesie Node do utworzenia i natychmiastowej wymiany jednorazowego tokenu; klucz serwisowy ani token jednorazowy nie trafiają do przeglądarki, artefaktów ani logów.
+`E2E_USER_EMAIL` wskazuje dedykowane konto członkowskie bez roli personelu. Setup CI używa `SUPABASE_SERVICE_ROLE_KEY` tylko w procesie Node do utworzenia i natychmiastowej wymiany jednorazowego tokenu; odrzuca profile moderatorów i administratorów, a klucz serwisowy ani token jednorazowy nie trafiają do przeglądarki, artefaktów ani logów. Fixture nie zmienia produkcyjnej metody logowania — użytkownicy nadal wchodzą wyłącznie przez Discord OAuth.
 
 ## Kontrola jakości
 

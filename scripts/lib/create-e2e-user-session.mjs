@@ -6,15 +6,7 @@ function requiredEnvironment(name) {
   return value
 }
 
-function userProviders(user) {
-  return new Set([
-    user?.app_metadata?.provider,
-    ...(Array.isArray(user?.app_metadata?.providers) ? user.app_metadata.providers : []),
-    ...(Array.isArray(user?.identities) ? user.identities.map((identity) => identity.provider) : []),
-  ].filter(Boolean))
-}
-
-export async function createE2EDiscordSession() {
+export async function createE2EUserSession() {
   const supabaseUrl = requiredEnvironment('NEXT_PUBLIC_SUPABASE_URL')
   const supabaseAnonKey = requiredEnvironment('NEXT_PUBLIC_SUPABASE_ANON_KEY')
   const serviceRoleKey = requiredEnvironment('SUPABASE_SERVICE_ROLE_KEY')
@@ -29,11 +21,20 @@ export async function createE2EDiscordSession() {
   })
 
   if (linkError || !link?.properties?.hashed_token || !link.user) {
-    throw new Error(`E2E Discord session link failed: ${linkError?.message || 'missing one-time token'}`)
+    throw new Error(`E2E session link failed: ${linkError?.message || 'missing one-time token'}`)
   }
 
-  if (!userProviders(link.user).has('discord')) {
-    throw new Error('E2E user must be an existing account linked through Discord OAuth.')
+  const { data: profile, error: profileError } = await admin
+    .from('profiles')
+    .select('role, is_admin')
+    .eq('id', link.user.id)
+    .maybeSingle()
+
+  if (profileError || !profile) {
+    throw new Error(`E2E member verification failed: ${profileError?.message || 'missing profile'}`)
+  }
+  if (profile.is_admin === true || ['moderator', 'admin'].includes(profile.role)) {
+    throw new Error('E2E account must be a dedicated non-staff member.')
   }
 
   const client = createClient(supabaseUrl, supabaseAnonKey, {
@@ -45,7 +46,7 @@ export async function createE2EDiscordSession() {
   })
 
   if (error || !data.session) {
-    throw new Error(`E2E Discord session exchange failed: ${error?.message || 'missing session'}`)
+    throw new Error(`E2E session exchange failed: ${error?.message || 'missing session'}`)
   }
 
   return {

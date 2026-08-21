@@ -4,7 +4,7 @@ import { chromium } from '@playwright/test'
 import lighthouse, { desktopConfig } from 'lighthouse'
 import { launch } from 'chrome-launcher'
 import puppeteer from 'puppeteer-core'
-import { createE2EDiscordSession } from './lib/create-e2e-discord-session.mjs'
+import { createE2EUserSession } from './lib/create-e2e-user-session.mjs'
 
 const baseUrl = new URL(process.env.LIGHTHOUSE_BASE_URL || 'https://albion-social.vercel.app')
 const outputDirectory = join(process.cwd(), 'lighthouse-results')
@@ -130,7 +130,7 @@ function needsRetry(row) {
 }
 
 async function authenticateChrome(chromePort) {
-  const { session, projectRef } = await createE2EDiscordSession()
+  const { session, projectRef } = await createE2EUserSession()
   const browser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${chromePort}` })
   const page = await browser.newPage()
   try {
