@@ -218,11 +218,11 @@ export default function AppShell({ children }) {
     return <ProtectedRouteLoadingShell />
   }
 
-  if (!authReady || guestBlocked) {
+  if (guestBlocked) {
     return (
       <div className="auth-loading-screen" role="status" aria-live="polite">
         <span className="loading-crest" aria-hidden="true" />
-        {guestBlocked ? 'Powrót do bramy logowania…' : 'Sprawdzanie sesji…'}
+        Powrót do bramy logowania…
       </div>
     )
   }
