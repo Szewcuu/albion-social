@@ -25,9 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      E2E_AUTH_MODE: ${{ vars.E2E_AUTH_MODE || 'discord' }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'http://127.0.0.1:54321' }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'ci-anon-key' }}
     steps:
@@ -59,7 +57,7 @@ jobs:
         env:
           E2E_SKIP_BUILD: '1'
       - name: Authenticated E2E
-        if: ${{ env.E2E_AUTH_MODE == 'password' && env.E2E_USER_EMAIL != '' && env.E2E_USER_PASSWORD != '' }}
+        if: ${{ env.E2E_USER_EMAIL != '' }}
         run: npm run test:e2e:auth
         env:
           E2E_SKIP_BUILD: '1'
@@ -84,9 +82,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      LIGHTHOUSE_GUEST_ONLY: ${{ vars.E2E_AUTH_MODE == 'password' && '0' || '1' }}
+      LIGHTHOUSE_GUEST_ONLY: ${{ secrets.E2E_USER_EMAIL == '' && '1' || '0' }}
       E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
       LIGHTHOUSE_BASE_URL: ${{ inputs.base_url || 'https://albion-social.vercel.app' }}
@@ -106,6 +103,8 @@ jobs:
         run: npm install --no-save --package-lock=false --ignore-scripts lighthouse@13.4.1 puppeteer-core@25.7.0
       - name: Run guest and authenticated Lighthouse audit
         run: node scripts/run-lighthouse-audits.mjs
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       - name: Upload Lighthouse reports
         uses: actions/upload-artifact@v7
         if: always()

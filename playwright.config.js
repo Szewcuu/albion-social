@@ -7,12 +7,12 @@ const baseURL = process.env.E2E_BASE_URL || 'http://127.0.0.1:4173'
 const hasAuthCredentials = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL
   && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  && process.env.SUPABASE_SERVICE_ROLE_KEY
   && process.env.E2E_USER_EMAIL
-  && process.env.E2E_USER_PASSWORD,
 )
 
 if (process.env.E2E_REQUIRE_AUTH === '1' && !hasAuthCredentials) {
-  throw new Error('Authenticated E2E requires E2E_USER_EMAIL, E2E_USER_PASSWORD and Supabase public variables.')
+  throw new Error('Authenticated E2E requires E2E_USER_EMAIL, SUPABASE_SERVICE_ROLE_KEY and Supabase public variables.')
 }
 
 const authenticatedProjects = hasAuthCredentials ? [
