@@ -1,15 +1,23 @@
 'use client'
 import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, Star } from 'lucide-react'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, ArrowRightLeft } from 'lucide-react'
 import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
 import { buildFromDbRow } from '@/lib/buildSlots'
-import BuildComparator from '@/components/builds/BuildComparator'
 import FavoriteButton from '@/components/ui/FavoriteButton'
-import SquadCompBuilder from '@/components/builds/SquadCompBuilder'
-import Meta1v1Tierlist from '@/components/builds/Meta1v1Tierlist'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
+
+const BuildComparator = dynamic(() => import('@/components/builds/BuildComparator'), {
+  loading: () => <div className="panel mb-6 min-h-32 animate-pulse" aria-label="Ładowanie porównywarki buildów" />,
+})
+const SquadCompBuilder = dynamic(() => import('@/components/builds/SquadCompBuilder'), {
+  loading: () => <div className="panel min-h-72 animate-pulse" aria-label="Ładowanie planera składu" />,
+})
+const Meta1v1Tierlist = dynamic(() => import('@/components/builds/Meta1v1Tierlist'), {
+  loading: () => <div className="panel min-h-72 animate-pulse" aria-label="Ładowanie tierlisty Meta 1v1" />,
+})
 
 const ALBION_CATEGORIES = [
   { id: 'all', name: 'Wszystkie Buildy', icon: Swords },
@@ -33,6 +41,7 @@ export default function BuildyPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [totalBuilds, setTotalBuilds] = useState(0)
+  const [comparatorReady, setComparatorReady] = useState(false)
   const cursorRef = useRef(null)
 
   const fetchBuilds = useCallback(async ({ append = false } = {}) => {
@@ -178,7 +187,29 @@ export default function BuildyPage() {
             </div>
           </div>
 
-          <BuildComparator builds={builds} />
+          {builds.length >= 2 && (
+            comparatorReady ? (
+              <BuildComparator builds={builds} initialOpen />
+            ) : (
+              <section className="panel mb-6" aria-labelledby="build-comparator-launcher-title">
+                <div className="panel-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-amber-300">
+                      <ArrowRightLeft className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-[.2em] text-amber-300">Analityka na żądanie</p>
+                      <h2 id="build-comparator-launcher-title" className="font-display text-xl font-black text-white">Porównaj dwa buildy</h2>
+                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">Moduł cen i statystyk uruchomi się dopiero, gdy będzie potrzebny.</p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => setComparatorReady(true)} className="btn btn-secondary btn-sm shrink-0">
+                    <ArrowRightLeft className="h-4 w-4" /> Rozpocznij porównanie
+                  </button>
+                </div>
+              </section>
+            )
+          )}
 
           {/* Builds Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

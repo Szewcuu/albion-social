@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { BarChart3, Coins, Gauge, Sparkles } from 'lucide-react'
 
 const MarketIntelligence = dynamic(() => import('./MarketIntelligence'), {
@@ -16,42 +16,18 @@ function ToolSkeleton({ label }) {
 }
 
 export default function DeferredMarketTools() {
-  const containerRef = useRef(null)
   const [ready, setReady] = useState(false)
   const [activeTool, setActiveTool] = useState('intelligence')
   const [loadedTools, setLoadedTools] = useState(() => new Set())
 
-  useEffect(() => {
-    const node = containerRef.current
-    if (!node) return undefined
-
-    if (!('IntersectionObserver' in window)) {
-      const timer = window.setTimeout(() => {
-        setReady(true)
-        setLoadedTools(new Set(['intelligence']))
-      }, 0)
-      return () => window.clearTimeout(timer)
-    }
-
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return
-      setReady(true)
-      setLoadedTools(new Set(['intelligence']))
-      observer.disconnect()
-    }, { rootMargin: '500px 0px' })
-
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [])
-
   const activateTool = (tool) => {
     setActiveTool(tool)
-    if (!ready) return
+    setReady(true)
     setLoadedTools((current) => current.has(tool) ? current : new Set([...current, tool]))
   }
 
   return (
-    <section ref={containerRef} className="space-y-4" aria-labelledby="market-tools-title">
+    <section className="space-y-4" aria-labelledby="market-tools-title">
       <div className="panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[9px] font-black uppercase tracking-[.22em] text-amber-300">Narzędzia kupca</p>
@@ -81,8 +57,13 @@ export default function DeferredMarketTools() {
       </div>
 
       {!ready ? (
-        <div className="panel flex min-h-40 items-center justify-center gap-3 border-dashed p-6 text-center text-xs text-[var(--text-secondary)]">
-          <Gauge className="h-5 w-5 text-amber-300" /> Narzędzia zostaną przygotowane, gdy przewiniesz do tej sekcji.
+        <div className="panel flex min-h-40 flex-col items-center justify-center gap-4 border-dashed p-6 text-center text-xs text-[var(--text-secondary)]">
+          <div className="flex items-center gap-3">
+            <Gauge className="h-5 w-5 text-amber-300" /> Wybierz narzędzie, aby uruchomić aktualne skany rynku.
+          </div>
+          <button type="button" onClick={() => activateTool('intelligence')} className="btn btn-primary btn-sm">
+            <BarChart3 className="h-4 w-4" /> Uruchom wywiad rynkowy
+          </button>
         </div>
       ) : (
         <>
