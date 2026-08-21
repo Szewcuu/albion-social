@@ -42,7 +42,16 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P37: mobilny Killboard i koszt pustego startu**
+> **P38: stabilny zimny start wspólnego shellu**
+
+- [x] porównać zimne i kontrolne próby Lighthouse ekranu gościa, Tawerny oraz kreatora buildu
+- [x] sprawdzić wydzielenie nawigacji gościa i odrzucić wariant powielający zależności w chunkach Turbopacka
+- [x] odroczyć PWA, telemetrię i usługi konta poza krytyczną ścieżkę pierwszego renderu
+- [x] zachować natychmiastowe sprawdzanie sesji, ochronę tras, powiadomienia, rolę administratora i Realtime
+- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
+- [ ] opublikować P38 i powtórzyć pełny produkcyjny Lighthouse; cel dla ekranu gościa, Tawerny i kreatora buildu: mobile Performance co najmniej `90`, TBT najwyżej `400 ms`, CLS `0`
+
+### P37 — mobilny Killboard i koszt pustego startu
 
 - [x] przeanalizować obie produkcyjne próby Lighthouse Killboardu oraz koszt początkowego pakietu i głównego wątku
 - [x] oddzielić wyszukiwarkę od wyników, pełnego profilu, wycen ekwipunku i historii walk

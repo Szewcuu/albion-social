@@ -1,8 +1,7 @@
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
-import PwaRegister from "@/components/PwaRegister";
 import AppShell from "@/components/AppShell";
+import DeferredRuntimeServices from "@/components/DeferredRuntimeServices";
 import WebVitalsReporter from "@/components/WebVitalsReporter";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
@@ -63,9 +62,8 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
-        <PwaRegister />
         <WebVitalsReporter />
-        <SpeedInsights />
+        <DeferredRuntimeServices />
       </body>
     </html>
   );
