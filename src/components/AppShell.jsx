@@ -224,10 +224,9 @@ export default function AppShell({ children }) {
   const sessionValue = useMemo(() => ({
     user,
     isAdmin,
-    authReady,
     loginWithDiscord,
     logout,
-  }), [authReady, isAdmin, loginWithDiscord, logout, user])
+  }), [isAdmin, loginWithDiscord, logout, user])
 
   if (!authReady && (!GUEST_PUBLIC_PATHS.has(pathname) || hasAuthHint)) {
     return <ProtectedRouteLoadingShell />
@@ -247,7 +246,7 @@ export default function AppShell({ children }) {
 
   return (
     <PortalSessionProvider value={sessionValue}>
-    <div className={`app-shell ${guestLanding ? 'guest-landing' : ''} ${guestLegalPage ? 'guest-public' : ''} ${authReady ? 'auth-ready' : 'auth-pending'}`}>
+    <div className={`app-shell ${guestLanding ? 'guest-landing' : ''} ${guestLegalPage ? 'guest-public' : ''}`}>
       <a href="#main-content" className="skip-link">Przejdź do treści</a>
       <div className="world-backdrop" aria-hidden="true" />
       {user && (
