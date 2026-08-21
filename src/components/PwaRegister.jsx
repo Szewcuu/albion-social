@@ -8,7 +8,6 @@ export default function PwaRegister() {
 
     navigator.serviceWorker
       .register('/sw.js', { scope: '/', updateViaCache: 'none' })
-      .then((registration) => registration.update())
       .catch(() => {
         console.warn('Service Worker PWA nie został zarejestrowany.')
       })

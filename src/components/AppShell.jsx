@@ -174,7 +174,10 @@ export default function AppShell({ children }) {
       setAuthReady(true)
       cancelServices()
       if (currentUser) {
-        cancelServices = scheduleIdleTask(() => hydrateUserServices(currentUser))
+        cancelServices = scheduleIdleTask(
+          () => hydrateUserServices(currentUser),
+          { minimumDelay: 1_000, timeout: 1_800 },
+        )
       } else {
         cancelServices = () => {}
         hydrateUserServices(null)
@@ -219,7 +222,7 @@ export default function AppShell({ children }) {
           },
         )
         .subscribe()
-    })
+    }, { minimumDelay: 2_500, timeout: 2_500 })
 
     return () => {
       cancelSubscription()
