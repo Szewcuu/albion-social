@@ -42,7 +42,16 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P36: mobilny Rynek i progresywna tablica ofert**
+> **P37: mobilny Killboard i koszt pustego startu**
+
+- [x] przeanalizować obie produkcyjne próby Lighthouse Killboardu oraz koszt początkowego pakietu i głównego wątku
+- [x] oddzielić wyszukiwarkę od wyników, pełnego profilu, wycen ekwipunku i historii walk
+- [x] ładować ciężkie moduły dopiero po znalezieniu lub wybraniu gracza, zachowując linki `?nick=` i wszystkie akcje
+- [x] rozłożyć aktualizacje wyników i profilu na pracę współbieżną bez pogorszenia obsługi błędów API
+- [ ] potwierdzić lint, testy jednostkowe, build, budżet JavaScript i publiczne oraz zalogowane E2E
+- [ ] opublikować P37 i powtórzyć produkcyjny Lighthouse; cel dla Killboardu mobile: Performance `>= 90`, TBT `<= 400 ms`, CLS `0`
+
+### P36 — mobilny Rynek i progresywna tablica ofert
 
 - [x] przeanalizować produkcyjny raport Lighthouse Rynku i wskazać koszt hydracji poniżej pierwszego ekranu
 - [x] wydzielić formularz, filtry i karty ofert do osobnych pakietów ładowanych progresywnie
