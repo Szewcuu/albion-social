@@ -48,8 +48,8 @@ Gotowe i wdrożone:
 - [x] sprawdzić wydzielenie nawigacji gościa i odrzucić wariant powielający zależności w chunkach Turbopacka
 - [x] odroczyć PWA, telemetrię i usługi konta poza krytyczną ścieżkę pierwszego renderu
 - [x] zachować natychmiastowe sprawdzanie sesji, ochronę tras, powiadomienia, rolę administratora i Realtime
-- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
-- [ ] opublikować P38 i powtórzyć pełny produkcyjny Lighthouse; cel dla ekranu gościa, Tawerny i kreatora buildu: mobile Performance co najmniej `90`, TBT najwyżej `400 ms`, CLS `0`
+- [x] potwierdzić lint, 53 testy jednostkowe, build, budżet JavaScript (`1696,0 KB / 1800 KB`) oraz publiczne i zalogowane E2E
+- [x] opublikować P38 i powtórzyć pełny produkcyjny Lighthouse — bramka `14/14` przeszła, wszystkie widoki desktopowe osiągnęły Performance `100`, a pierwsza próba mobile dała: brama logowania `98` / TBT `100 ms` / LCP `2,0 s`, Tawerna `93` / `320 ms` / `1,1 s`, kreator buildu `93` / `310 ms` / `1,3 s`; CLS wszystkich trzech wynosi `0` ([audyt produkcyjny](https://github.com/Szewcuu/albion-social/actions/runs/32529368353), 21 sierpnia 2026)
 
 ### P37 — mobilny Killboard i koszt pustego startu
 
