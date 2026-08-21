@@ -20,6 +20,7 @@ import {
   Users,
 } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { scheduleIdleTask } from '@/lib/clientIdle'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 
 const ChatBox = dynamic(() => import('@/components/ChatBox'), {
@@ -68,11 +69,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return undefined
-    const statsTimer = window.setTimeout(fetchPortalOverview, 0)
-
-    return () => {
-      window.clearTimeout(statsTimer)
-    }
+    return scheduleIdleTask(fetchPortalOverview)
   }, [fetchPortalOverview, user])
 
   const loginWithDiscord = async () => {

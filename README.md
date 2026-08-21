@@ -42,7 +42,16 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P26: mobilna wydajność Rynku i Zbrojowni**
+> **P35: mobilna Tawerna i koszt startu zalogowanej aplikacji**
+
+- [x] przeanalizować produkcyjny raport Lighthouse Tawerny i wskazać główne zadania blokujące wątek UI
+- [x] odroczyć niekrytyczne statystyki, pobieranie wiadomości oraz subskrypcje Realtime do czasu po pierwszym renderze
+- [ ] zachować natychmiastową obsługę sesji, działanie czatu, powiadomień i automatycznego przewijania
+- [x] dodać współdzielony, testowalny harmonogram pracy wykonywanej w czasie bezczynności przeglądarki
+- [ ] potwierdzić lint, testy jednostkowe, build, budżet JavaScript i publiczne oraz zalogowane E2E
+- [ ] opublikować P35 i powtórzyć produkcyjny Lighthouse; cel dla Tawerny mobile: Performance `>= 90`, TBT `<= 400 ms`, CLS `0`
+
+### P26 — mobilna wydajność Rynku i Zbrojowni
 
 - [x] przeanalizować produkcyjne raporty Lighthouse dla `/rynek` i `/buildy`
 - [x] rozdzielić ciężkie moduły Meta 1v1, planera składu i porównywarki buildów od początkowego pakietu Zbrojowni
