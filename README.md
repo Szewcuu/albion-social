@@ -42,7 +42,18 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P39: lekka sesja portalu oraz mobilne Wyprawy i Killboard**
+> **P40: lekka Tawerna i odroczony Realtime**
+
+- [x] porównać pierwszą i kontrolną próbę Lighthouse strony głównej oraz wskazać koszt pełnego klienta Supabase dołączanego przez czat
+- [x] przenieść odczyt, publikację i usuwanie wiadomości za chroniony Route Handler z zachowaniem RLS
+- [x] wymuszać autora i właściciela wiadomości po stronie serwera oraz objąć zapis limitem żądań
+- [x] naprawić usuwanie wiadomości przez personel przez istniejące RPC moderacji i dziennik audytowy
+- [x] zachować wątki odpowiedzi, automatyczne przewijanie, odświeżanie, Enter/Shift+Enter i paginację
+- [x] odroczyć klienta Realtime poza krytyczne pierwsze sekundy, zachowując późniejszą synchronizację na żywo
+- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
+- [ ] opublikować P40 i powtórzyć pełny produkcyjny Lighthouse
+
+### P39 — lekka sesja portalu oraz mobilne Wyprawy i Killboard
 
 - [x] porównać pierwsze i ponowione próby Lighthouse obu tras oraz wskazać koszt pełnego klienta `supabase-js`
 - [x] oddzielić lekką obsługę Auth od klienta PostgREST, Realtime, Storage i Functions; ciężki klient nie występuje już w początkowym HTML Wypraw ani Killboardu
