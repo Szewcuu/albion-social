@@ -242,6 +242,23 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('pobiera wyprawy i profil przez chronione API', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
+      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
+    })
+    expect(accessToken).toBeTruthy()
+
+    const response = await request.get('/api/expeditions', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    expect(response.status()).toBe(200)
+    const payload = await response.json()
+    expect(Array.isArray(payload.expeditions)).toBe(true)
+    expect(payload.profile === null || typeof payload.profile === 'object').toBe(true)
+  })
+
   test('otwiera tablicę rynku natychmiast dla bezpośredniego linku do oferty', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/rynek?offer=e2e-market-offer')

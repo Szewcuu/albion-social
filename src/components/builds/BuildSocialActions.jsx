@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Bookmark, Check, Share2, ThumbsUp } from 'lucide-react'
 
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
-import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 import FollowButton from '@/components/ui/FollowButton'
 
 async function readJson(response) {
@@ -26,7 +26,7 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
     let active = true
 
     const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await portalAuth.getSession()
       if (!active) return
       setUser(session?.user || null)
 
@@ -45,7 +45,7 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
       if (active) setMessage('Nie udało się odświeżyć interakcji społecznościowych.')
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = portalAuth.onAuthStateChange((_event, session) => {
       if (active) setUser(session?.user || null)
     })
 

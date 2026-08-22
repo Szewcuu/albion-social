@@ -1,5 +1,4 @@
 'use client'
-import { supabase } from '@/lib/supabase'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
@@ -10,8 +9,6 @@ import {
   Swords, Shield, Heart, UserCheck, Plus, Search,
   Clock, Users, Trash2, AlertTriangle, MapPin, Compass, Sparkles, Calendar 
 } from 'lucide-react'
-
-const EXPEDITION_TTL_MS = 72 * 60 * 60 * 1000
 
 export default function Wyprawy() {
   const { user } = usePortalSession()
@@ -47,31 +44,22 @@ export default function Wyprawy() {
   // POBIERANIE WYPRAW Z BAZY
   const fetchExpeditions = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('expeditions')
-      .select('*, profiles!expeditions_user_id_fkey(username), expedition_signups(*)')
-      .gte('created_at', new Date(Date.now() - EXPEDITION_TTL_MS).toISOString())
-      .order('created_at', { ascending: false })
+    try {
+      const response = await authenticatedFetch('/api/expeditions', { cache: 'no-store' })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się pobrać wypraw.')
 
-    if (data) {
-      setExpeditions(data)
+      setExpeditions(result.expeditions || [])
+      setUserProfile(result.profile || null)
+    } catch (error) {
+      setFormMessage(error.message || 'Nie udało się pobrać wypraw.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   useEffect(() => {
-    if (user) {
-      supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-        .then(({ data: profile }) => {
-          if (profile) setUserProfile(profile)
-        })
-    }
-
-    void Promise.resolve().then(fetchExpeditions)
+    if (user) void Promise.resolve().then(fetchExpeditions)
   }, [fetchExpeditions, user])
 
   const openSignupModal = (exp) => {
@@ -115,31 +103,33 @@ export default function Wyprawy() {
       ? (formData.custom_activity.trim() || 'Inna Aktywność')
       : formData.activity_type
 
-    // 2. Wyciągamy custom_activity, aby NIE wysyłać go jako nieistniejącą kolumnę do Supabase
-    const { custom_activity, ...expeditionPayload } = formData
+    try {
+      const createResponse = await authenticatedFetch('/api/expeditions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          title: formData.title,
+          activity_type: finalActivityType,
+          min_ip: Number(formData.min_ip),
+          start_time: formData.start_time,
+          server: formData.server,
+          description: formData.description,
+          max_tanks: Number(formData.max_tanks),
+          max_healers: Number(formData.max_healers),
+          max_dps: Number(formData.max_dps),
+          max_supports: Number(formData.max_supports),
+        }),
+      })
+      const createdExpedition = await createResponse.json().catch(() => ({}))
+      if (!createResponse.ok) throw new Error(createdExpedition.error || 'Nie udało się utworzyć wyprawy.')
 
-    const { data: createdExpedition, error } = await supabase.from('expeditions').insert([
-      {
-        ...expeditionPayload,
-        activity_type: finalActivityType, // Zapisujemy ustaloną nazwę w activity_type
-        min_ip: parseInt(formData.min_ip),
-        max_tanks: parseInt(formData.max_tanks),
-        max_healers: parseInt(formData.max_healers),
-        max_dps: parseInt(formData.max_dps),
-        max_supports: parseInt(formData.max_supports),
-        user_id: user.id
-      }
-    ]).select('id').single()
-
-    if (error) {
-      setFormMessage(`Błąd: ${error.message}`)
-    } else {
       let discordPublished = false
       try {
         const response = await authenticatedFetch('/api/webhooks/expedition', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ expeditionId: createdExpedition.id }),
+          body: JSON.stringify({ expeditionId: createdExpedition.expeditionId }),
         })
         const discordResult = await response.json().catch(() => ({}))
         discordPublished = response.ok && !discordResult.skipped
@@ -163,7 +153,9 @@ export default function Wyprawy() {
         max_dps: 3,
         max_supports: 1
       })
-      fetchExpeditions()
+      await fetchExpeditions()
+    } catch (error) {
+      setFormMessage(`Błąd: ${error.message || 'Nie udało się utworzyć wyprawy.'}`)
     }
   }
 
@@ -187,17 +179,21 @@ export default function Wyprawy() {
       return
     }
 
-    const { error } = await supabase.from('expedition_signups').insert([
-      {
-        expedition_id: activeExpeditionForSignup.id,
-        user_id: user.id,
-        role_type: role,
-        ingame_nick: signupData.ingame_nick.trim(),
-        player_ip: parseInt(signupData.player_ip)
-      }
-    ])
+    try {
+      const joinResponse = await authenticatedFetch('/api/expeditions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'join',
+          expeditionId: activeExpeditionForSignup.id,
+          role_type: role,
+          ingame_nick: signupData.ingame_nick,
+          player_ip: Number(signupData.player_ip),
+        }),
+      })
+      const joinResult = await joinResponse.json().catch(() => ({}))
+      if (!joinResponse.ok) throw new Error(joinResult.error || 'Nie udało się dołączyć do wyprawy.')
 
-    if (!error) {
       const totalMax = activeExpeditionForSignup.max_tanks + activeExpeditionForSignup.max_healers + activeExpeditionForSignup.max_dps + activeExpeditionForSignup.max_supports
       const totalJoined = signups.length + 1
       let partyFull = totalJoined >= totalMax && totalMax > 0
@@ -245,13 +241,25 @@ export default function Wyprawy() {
 
       setActiveExpeditionForSignup(null)
       await fetchExpeditions()
+    } catch (error) {
+      alert(error.message || 'Nie udało się dołączyć do wyprawy.')
     }
   }
 
   const handleLeaveExpedition = async (signupId) => {
     if (confirm('Czy na pewno chcesz opuścić tę drużynę?')) {
-      const { error } = await supabase.from('expedition_signups').delete().eq('id', signupId)
-      if (!error) fetchExpeditions()
+      try {
+        const response = await authenticatedFetch('/api/expeditions', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ signupId }),
+        })
+        const result = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(result.error || 'Nie udało się opuścić wyprawy.')
+        await fetchExpeditions()
+      } catch (error) {
+        alert(error.message || 'Nie udało się opuścić wyprawy.')
+      }
     }
   }
 

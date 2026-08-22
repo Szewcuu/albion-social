@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 
 export async function GET(request) {
   const requestUrl = new URL(request.url)
@@ -8,7 +8,7 @@ export async function GET(request) {
 
   if (code) {
     try {
-      await supabase.auth.exchangeCodeForSession(code)
+      await portalAuth.exchangeCodeForSession(code)
     } catch (err) {
       console.error('Błąd wymiany kodu OAuth w /auth/callback:', err)
     }

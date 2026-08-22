@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Bell, BellRing, LoaderCircle } from 'lucide-react'
 
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
-import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 
 export const FOLLOWS_CHANGED_EVENT = 'aopp-entity-follows-changed'
 let cachedFollows = null
@@ -18,7 +18,7 @@ async function readJson(response) {
 }
 
 async function loadFollows() {
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await portalAuth.getSession()
   const userId = session?.user?.id || null
   if (cachedUserId !== userId) {
     cachedFollows = null

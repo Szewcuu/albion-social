@@ -1,5 +1,6 @@
 'use client'
 import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Swords, Shield, Globe, MapPin, Search, ExternalLink, HelpCircle } from 'lucide-react'
@@ -46,7 +47,7 @@ export default function Gildie() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    portalAuth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       fetchGuilds()
     })

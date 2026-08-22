@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
-import { syncPortalPreferences } from '@/lib/preferenceSync'
 import AppSidebar from './AppSidebar'
 import TopBar from './TopBar'
 import MobileBottomNav from './MobileBottomNav'
@@ -77,18 +77,8 @@ export default function AppShell({ children }) {
     setHasAuthHint(hasPersistedSupabaseSession())
   }, [])
 
-  const readAdminStatus = useCallback(async (userId) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('role, is_admin')
-      .eq('id', userId)
-      .maybeSingle()
-
-    setIsAdmin(!error && (data?.is_admin === true || ['moderator', 'admin'].includes(data?.role)))
-  }, [])
-
   const loginWithDiscord = useCallback(async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await portalAuth.signInWithOAuth({
       provider: 'discord',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
@@ -96,26 +86,24 @@ export default function AppShell({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut()
+    await portalAuth.signOut()
     setUser(null)
     setIsAdmin(false)
   }, [])
 
-  const fetchNotifications = useCallback(async (userId) => {
+  const fetchNotifications = useCallback(async () => {
     setNotificationState({ loading: true, error: '' })
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(20)
+    try {
+      const response = await authenticatedFetch('/api/notifications', { cache: 'no-store' })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error)
 
-    if (error) {
+      setNotifications(result.notifications || [])
+      setIsAdmin(['moderator', 'admin'].includes(result.role))
+      setNotificationState({ loading: false, error: '' })
+    } catch {
       setNotificationState({ loading: false, error: 'Nie udało się pobrać powiadomień.' })
-      return
     }
-    setNotifications(data || [])
-    setNotificationState({ loading: false, error: '' })
   }, [])
 
   const hydrateUserServices = useCallback((currentUser) => {
@@ -128,20 +116,19 @@ export default function AppShell({ children }) {
     if (hydratedUserIdRef.current === currentUser.id) return
 
     hydratedUserIdRef.current = currentUser.id
-    fetchNotifications(currentUser.id)
-    readAdminStatus(currentUser.id)
-    void syncPortalPreferences(currentUser.id)
-  }, [fetchNotifications, readAdminStatus])
+    void fetchNotifications()
+  }, [fetchNotifications])
 
   const markAllAsRead = useCallback(async () => {
     if (!user) return
-    const { error } = await supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', user.id)
-      .eq('is_read', false)
-
-    if (error) {
+    try {
+      const response = await authenticatedFetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      })
+      if (!response.ok) throw new Error('notification-update-failed')
+    } catch {
       setNotificationState((current) => ({ ...current, error: 'Nie udało się oznaczyć powiadomień jako przeczytane.' }))
       return false
     }
@@ -153,11 +140,12 @@ export default function AppShell({ children }) {
     if (!user || !notificationId) return
     setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n)))
     try {
-      await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId)
-        .eq('user_id', user.id)
+      const response = await authenticatedFetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId }),
+      })
+      if (!response.ok) throw new Error('notification-update-failed')
     } catch {
       // Ignore error
     }
@@ -184,11 +172,11 @@ export default function AppShell({ children }) {
       }
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    portalAuth.getSession().then(({ data: { session } }) => {
       applySession(session)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = portalAuth.onAuthStateChange((_event, session) => {
       applySession(session)
     })
 
@@ -202,31 +190,48 @@ export default function AppShell({ children }) {
   useEffect(() => {
     if (!user?.id) return undefined
 
+    return scheduleIdleTask(() => {
+      void import('@/lib/preferenceSync').then(({ syncPortalPreferences }) => (
+        syncPortalPreferences(user.id)
+      ))
+    }, { minimumDelay: 7_000, timeout: 8_000 })
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id) return undefined
+
     let notificationChannel = null
+    let supabaseClient = null
+    let active = true
     const cancelSubscription = scheduleIdleTask(() => {
-      notificationChannel = supabase
-        .channel(`notifications-${user.id}`)
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-          (payload) => {
-            if (payload.eventType === 'INSERT') {
-              setNotifications((current) => [payload.new, ...current.filter((item) => item.id !== payload.new.id)].slice(0, 20))
-            }
-            if (payload.eventType === 'UPDATE') {
-              setNotifications((current) => current.map((item) => item.id === payload.new.id ? payload.new : item))
-            }
-            if (payload.eventType === 'DELETE') {
-              setNotifications((current) => current.filter((item) => item.id !== payload.old.id))
-            }
-          },
-        )
-        .subscribe()
-    }, { minimumDelay: 2_500, timeout: 2_500 })
+      void import('@/lib/supabase').then(({ supabase }) => {
+        if (!active) return
+        supabaseClient = supabase
+        notificationChannel = supabase
+          .channel(`notifications-${user.id}`)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+            (payload) => {
+              if (payload.eventType === 'INSERT') {
+                setNotifications((current) => [payload.new, ...current.filter((item) => item.id !== payload.new.id)].slice(0, 20))
+              }
+              if (payload.eventType === 'UPDATE') {
+                setNotifications((current) => current.map((item) => item.id === payload.new.id ? payload.new : item))
+              }
+              if (payload.eventType === 'DELETE') {
+                setNotifications((current) => current.filter((item) => item.id !== payload.old.id))
+              }
+            },
+          )
+          .subscribe()
+      })
+    }, { minimumDelay: 7_000, timeout: 8_000 })
 
     return () => {
+      active = false
       cancelSubscription()
-      if (notificationChannel) supabase.removeChannel(notificationChannel)
+      if (notificationChannel) supabaseClient.removeChannel(notificationChannel)
     }
   }, [user?.id])
 
@@ -282,7 +287,7 @@ export default function AppShell({ children }) {
             notificationState={notificationState}
             markAllAsRead={markAllAsRead}
             markSingleAsRead={markSingleAsRead}
-            refreshNotifications={() => user?.id && fetchNotifications(user.id)}
+            refreshNotifications={() => user?.id && fetchNotifications()}
             loginWithDiscord={loginWithDiscord}
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           />
