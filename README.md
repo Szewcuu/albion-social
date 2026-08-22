@@ -42,13 +42,21 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P44: serwerowa sesja i lżejszy start chronionego portalu**
+> **P45: stabilne mobilne Wyprawy i Kreator buildu**
+
+- [ ] porównać długie zadania głównego wątku i koszt startowy mobilnych Wypraw oraz Kreatora w trzech produkcyjnych próbach P44
+- [ ] rozdzielić ciężkie formularze, selektory i obliczenia od pierwszego renderu, zachowując pełną funkcjonalność po interakcji
+- [ ] ograniczyć zmienność TBT obu tras bez pogorszenia LCP, CLS, dostępności i obsługi klawiatury
+- [ ] objąć krytyczne fragmenty testami E2E oraz utrzymać budżet JavaScript, historię migracji i katalog przedmiotów
+- [ ] wdrożyć P45 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`
+
+### P44 — serwerowa sesja i lżejszy start chronionego portalu
 
 - [x] opisać obecny przepływ sesji `localStorage` i wybrać zgodną z Next.js 16 oraz Supabase strategię sesji odczytywanej na serwerze — cookies, PKCE, `getClaims()` i Proxy z jednorazową migracją istniejących sesji
 - [x] usunąć podwójny render brama → shell → Tawerna dla zalogowanego użytkownika, bez ujawnienia chronionej treści gościom
 - [x] przenieść blokadę prywatnych tras na serwer, pozostawiając publiczne wyłącznie `/`, `/regulamin` i `/prywatnosc`
 - [x] ograniczyć koszt klienta Auth w krytycznej ścieżce, zachowując Discord OAuth, odświeżanie sesji, wylogowanie i uwierzytelnione API — lekki `auth-js` współdzieli format cookies z `@supabase/ssr`, bez startowego PostgREST, Realtime, Storage i Functions
-- [ ] potwierdzić pełne CI, wdrożyć P44 i porównać co najmniej dwie produkcyjne próby mobilnej Tawerny w bramce `14/14`
+- [x] potwierdzić pełne CI, wdrożyć P44 i porównać co najmniej dwie produkcyjne próby mobilnej Tawerny w bramce `14/14` — dwie pełne bramki przeszły, a Tawerna mobile osiągnęła Performance `99` i `94`, LCP `1,1 s` i `1,5 s`, TBT `110 ms` i `290 ms` oraz CLS `0`; próba diagnostyczna również potwierdziła Tawernę (`93`, `1,5 s`, `310 ms`, `0`), lecz ujawniła zmienność TBT Wypraw i Kreatora zaplanowaną do P45 ([pierwszy zielony audyt](https://github.com/Szewcuu/albion-social/actions/runs/32590147553), [próba diagnostyczna](https://github.com/Szewcuu/albion-social/actions/runs/32590410947), [drugi zielony audyt](https://github.com/Szewcuu/albion-social/actions/runs/32590893998), 22 sierpnia 2026)
 
 ### P43 — stabilna Tawerna mobile i rozdzielony runtime strony głównej
 
