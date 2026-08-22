@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { scheduleIdleTask } from '@/lib/clientIdle'
 
 const PwaRegister = dynamic(() => import('./PwaRegister'), { ssr: false })
+const WebVitalsReporter = dynamic(() => import('./WebVitalsReporter'), { ssr: false })
 const SpeedInsights = dynamic(
   () => import('@vercel/speed-insights/next').then((module) => module.SpeedInsights),
   { ssr: false },
@@ -22,6 +23,7 @@ export default function DeferredRuntimeServices() {
 
   return (
     <>
+      <WebVitalsReporter />
       <PwaRegister />
       <SpeedInsights />
     </>
