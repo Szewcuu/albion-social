@@ -42,15 +42,23 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P41: lekki Rynek i serwerowy cykl życia ofert**
+> **P42: stabilny i szybszy publiczny ekran wejścia**
+
+- [ ] wskazać element LCP oraz porównać obie produkcyjne próby ekranu logowania
+- [ ] skrócić krytyczną ścieżkę obrazu, fontów lub stylów bez utraty obecnej oprawy Albionu
+- [ ] dodać odporny na zmienność pomiar kontrolny dla publicznego ekranu
+- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
+- [ ] opublikować P42 i przejść pełną produkcyjną bramkę Lighthouse `14/14`
+
+### P41 — lekki Rynek i serwerowy cykl życia ofert
 
 - [x] przeanalizować produkcyjny Lighthouse Rynku i wskazać pełnego klienta Supabase w krytycznej ścieżce strony
 - [x] przenieść odczyt oraz paginację ofert za chroniony Route Handler z zachowaniem RLS i indeksu kursorowego
 - [x] przenieść publikację, odnawianie i usuwanie ofert do walidowanego API z limitami operacji i serwerowym właścicielem
 - [x] naprawić odnawianie ofert po wcześniejszym odebraniu klientom uprawnienia `UPDATE`; uprzywilejowana zmiana następuje dopiero po sprawdzeniu właściciela
 - [x] zachować filtry, bezpośrednie linki, formularz, prywatny kontakt, polubienia i obserwowanie ofert
-- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
-- [ ] opublikować P41 i powtórzyć pełny produkcyjny Lighthouse
+- [x] potwierdzić lint, 53 testy jednostkowe, build, 30 migracji, budżet JavaScript (`1700,8 KB / 1800 KB`) oraz publiczne i zalogowane E2E; test zalogowany rzeczywiście tworzy, odczytuje, odnawia i usuwa ofertę
+- [x] opublikować P41 i dwukrotnie powtórzyć pełny produkcyjny Lighthouse — Rynek mobile osiągnął kontrolnie Performance `92`, TBT `340 ms`, LCP `1,0 s` i CLS `0`, a desktop `100`, `40 ms`, `0,4 s` i `0`; boot-up JavaScript spadł z `683 ms` do `606 ms`, LCP w pierwszej próbie z `1,6 s` do `1,1 s`, a pakiet startowy trasy zmalał o około `120,5 KB`. Globalną bramkę w obu próbach zatrzymał wyłącznie publiczny ekran logowania z LCP `3,2 s` oraz `3,1 s` przy limicie `3,0 s`, co przechodzi do P42 ([pierwszy audyt](https://github.com/Szewcuu/albion-social/actions/runs/32583665749), [próba kontrolna](https://github.com/Szewcuu/albion-social/actions/runs/32583950266), 22 sierpnia 2026)
 
 ### P40 — lekka Tawerna i odroczony Realtime
 
