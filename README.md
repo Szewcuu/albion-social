@@ -42,13 +42,21 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P43: stabilna Tawerna mobile i rozdzielony runtime strony głównej**
+> **P44: serwerowa sesja i lżejszy start chronionego portalu**
+
+- [ ] opisać obecny przepływ sesji `localStorage` i wybrać zgodną z Next.js 16 oraz Supabase strategię sesji odczytywanej na serwerze
+- [ ] usunąć podwójny render brama → shell → Tawerna dla zalogowanego użytkownika, bez ujawnienia chronionej treści gościom
+- [ ] przenieść blokadę prywatnych tras na serwer, pozostawiając publiczne wyłącznie `/`, `/regulamin` i `/prywatnosc`
+- [ ] ograniczyć koszt klienta Auth w krytycznej ścieżce, zachowując Discord OAuth, odświeżanie sesji, wylogowanie i uwierzytelnione API
+- [ ] potwierdzić pełne CI, wdrożyć P44 i porównać co najmniej dwie produkcyjne próby mobilnej Tawerny w bramce `14/14`
+
+### P43 — stabilna Tawerna mobile i rozdzielony runtime strony głównej
 
 - [x] porównać zmienność zalogowanej Tawerny mobile między P40 i P42 — TBT zmieniało się od `190 ms` do `580 ms`, mimo małego chunku strony (`9,3 KB`), a koszt pochodził głównie ze wspólnego uruchamiania sesji i usług runtime
 - [x] rozdzielić kod bramy publicznej od właściwej Tawerny, zachowując natychmiastowy i bezpieczny wybór widoku po sesji
 - [x] ograniczyć pracę głównego wątku po zalogowaniu bez utraty czatu, statystyk i szybkich akcji — usunięto martwy katalog modułów, a Web Vitals, PWA i Speed Insights są uruchamiane dopiero w czasie bezczynności
-- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
-- [ ] opublikować P43 i powtórzyć pełną produkcyjną bramkę Lighthouse `14/14`
+- [x] potwierdzić lint, 53 testy jednostkowe, build, 30 migracji, katalog `3663`, budżet JavaScript (`1702,6 KB / 1800 KB`) oraz publiczne i zalogowane E2E
+- [x] opublikować P43 i powtórzyć pełną produkcyjną bramkę Lighthouse `14/14` — próba kontrolna Tawerny mobile osiągnęła Performance `90`, LCP `1,0 s`, TBT `420 ms` i CLS `0`, a ekran wejścia `99`, `1,7 s`, `90 ms` i `0`; wcześniejsza próba Tawerny (`84`, TBT `620 ms`) potwierdziła zmienność wspólnego bootstrapu React/Next/Auth i wyznaczyła zakres P44 ([zielony audyt](https://github.com/Szewcuu/albion-social/actions/runs/32587692355), [próba diagnostyczna](https://github.com/Szewcuu/albion-social/actions/runs/32587301049), 22 sierpnia 2026)
 
 ### P42 — stabilny i szybszy publiczny ekran wejścia
 
