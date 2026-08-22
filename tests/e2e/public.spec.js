@@ -9,6 +9,24 @@ test.describe('publiczna bramka portalu', () => {
     await expect(page.getByRole('link', { name: 'Prywatność', exact: true })).toBeVisible()
   })
 
+  test('na telefonie pobiera lekki wariant tła bramy', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const requestedImages = []
+    page.on('request', (request) => {
+      if (request.resourceType() === 'image') requestedImages.push(new URL(request.url()).pathname)
+    })
+
+    const mobileHero = page.waitForResponse((response) => (
+      new URL(response.url()).pathname === '/albion-social-hero-mobile.webp'
+    ))
+    await page.goto('/')
+    await mobileHero
+
+    await expect(page.getByRole('heading', { name: /Twoja historia/i })).toBeVisible()
+    expect(requestedImages).toContain('/albion-social-hero-mobile.webp')
+    expect(requestedImages).not.toContain('/albion-social-hero.webp')
+  })
+
   test('udostępnia regulamin bez logowania', async ({ page }) => {
     await page.goto('/regulamin')
 

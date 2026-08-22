@@ -91,7 +91,7 @@ export default function Home() {
           <div className="welcome-hero-art" aria-hidden="true" />
           <div className="welcome-hero-vignette" aria-hidden="true" />
           <div className="guest-welcome-copy">
-            <Image className="welcome-crest" src="/logo-256.webp" alt="Herb Albion Polska" width={88} height={88} priority />
+            <Image className="welcome-crest" src="/logo-256.webp" alt="Herb Albion Polska" width={88} height={88} loading="eager" />
             <div className="welcome-kicker"><Flame aria-hidden="true" /> Polska społeczność · wszystkie serwery Albionu</div>
             <h1 id="welcome-title">Twoja historia<br /><em>zaczyna się tutaj.</em></h1>
             <p>Polskie forum i baza wypadowa dla graczy Albion Online. Jedno konto łączy rozmowy społeczności, gildie, buildy, handel i wspólne wyprawy.</p>

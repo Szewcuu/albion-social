@@ -44,9 +44,9 @@ Gotowe i wdrożone:
 
 > **P42: stabilny i szybszy publiczny ekran wejścia**
 
-- [ ] wskazać element LCP oraz porównać obie produkcyjne próby ekranu logowania
-- [ ] skrócić krytyczną ścieżkę obrazu, fontów lub stylów bez utraty obecnej oprawy Albionu
-- [ ] dodać odporny na zmienność pomiar kontrolny dla publicznego ekranu
+- [x] wskazać element LCP oraz porównać obie produkcyjne próby ekranu logowania — nagłówek hero był ponownie malowany po późnym odkryciu tła; dwie próby zakończyły się LCP `3,2 s` i `3,1 s`
+- [x] skrócić krytyczną ścieżkę bez utraty obecnej oprawy — mobilny wariant tego samego tła waży `24,6 KB` zamiast `163 KB`, a dekoracyjne `albion-bg.webp` i logo nie konkurują już w kolejce globalnych preloadów
+- [x] dodać test E2E potwierdzający, że telefon pobiera wyłącznie lekki wariant hero, a dwie pełne próby produkcyjne pozostają kontrolą zmienności pomiaru
 - [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
 - [ ] opublikować P42 i przejść pełną produkcyjną bramkę Lighthouse `14/14`
 

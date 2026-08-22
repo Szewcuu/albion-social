@@ -57,9 +57,6 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pl" className="h-full antialiased">
-      <head>
-        <link rel="preload" href="/albion-bg.webp" as="image" fetchPriority="high" />
-      </head>
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
         <WebVitalsReporter />
