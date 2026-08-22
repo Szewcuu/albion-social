@@ -50,8 +50,8 @@ Gotowe i wdrożone:
 - [x] naprawić usuwanie wiadomości przez personel przez istniejące RPC moderacji i dziennik audytowy
 - [x] zachować wątki odpowiedzi, automatyczne przewijanie, odświeżanie, Enter/Shift+Enter i paginację
 - [x] odroczyć klienta Realtime poza krytyczne pierwsze sekundy, zachowując późniejszą synchronizację na żywo
-- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
-- [ ] opublikować P40 i powtórzyć pełny produkcyjny Lighthouse
+- [x] potwierdzić lint, 53 testy jednostkowe, build, budżet JavaScript (`1700,0 KB / 1800 KB`), 30 migracji oraz publiczne i zalogowane E2E
+- [x] opublikować P40 i powtórzyć pełny produkcyjny Lighthouse — bramka `14/14` przeszła; Tawerna mobile osiągnęła Performance `97`, TBT `190 ms`, LCP `1,4 s` i CLS `0` (P39: kontrolnie `88` / `470 ms`, pierwsza próba `82` / `750 ms`), a desktop Performance `100`, TBT `50 ms`, LCP `0,4 s` i CLS `0` ([audyt produkcyjny](https://github.com/Szewcuu/albion-social/actions/runs/32582693522), 22 sierpnia 2026)
 
 ### P39 — lekka sesja portalu oraz mobilne Wyprawy i Killboard
 
