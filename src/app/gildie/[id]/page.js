@@ -93,7 +93,7 @@ export default function GuildDetailPage() {
   }, [guildId])
 
   useEffect(() => {
-    portalAuth.getSession().then(({ data: { session } }) => {
+    portalAuth.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null)
       return loadGuild()
     })

@@ -1,19 +1,10 @@
 import { expect, test } from './browser-health.js'
+import { getCookieAccessToken } from './auth-helpers.js'
 
 test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   test('odrzuca konto bez roli personelu z API moderacji i ról', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage)
-        .find((key) => /^sb-.+-auth-token$/.test(key))
-      if (!storageKey) return null
-
-      try {
-        return JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null
-      } catch {
-        return null
-      }
-    })
+    const accessToken = await getCookieAccessToken(page)
 
     expect(accessToken).toBeTruthy()
     const headers = { Authorization: `Bearer ${accessToken}` }
@@ -32,10 +23,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('pobiera chronioną kronikę Tawerny przez lekkie API', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
-      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
 
     const response = await request.get('/api/chat', {
@@ -52,10 +40,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('pobiera jedno zagregowane podsumowanie Tawerny', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
-      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
 
     const response = await request.get('/api/portal-overview', { headers: { Authorization: `Bearer ${accessToken}` } })
@@ -128,11 +113,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('wyszukuje polskie i angielskie nazwy w wersjonowanym katalogu przedmiotów', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage)
-        .find((key) => /^sb-.+-auth-token$/.test(key))
-      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
 
     const headers = { Authorization: `Bearer ${accessToken}` }
@@ -153,10 +134,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('zapisuje, odczytuje i usuwa serwerowy alert cenowy', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
-      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
     const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
     let alertId = null
@@ -224,12 +202,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('zwraca zalogowanemu wątkowane komentarze buildu', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage)
-        .find((key) => /^sb-.+-auth-token$/.test(key))
-      if (!storageKey) return null
-      return JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -264,10 +237,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('publikuje, odnawia i usuwa ofertę przez chronione API rynku', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
-      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
     const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
     let offerId = null
@@ -310,10 +280,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('pobiera wyprawy i profil przez chronione API', async ({ page, request }) => {
     await page.goto('/')
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
-      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
 
     const response = await request.get('/api/expeditions', {
@@ -466,11 +433,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('heading', { name: 'Skrzynka handlowa' })).toBeVisible()
     await expect(page.getByText(/Tylko uczestnicy rozmowy/)).toBeVisible()
 
-    const accessToken = await page.evaluate(() => {
-      const storageKey = Object.keys(window.localStorage)
-        .find((key) => /^sb-.+-auth-token$/.test(key))
-      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
-    })
+    const accessToken = await getCookieAccessToken(page)
     expect(accessToken).toBeTruthy()
 
     const response = await request.get('/api/market/conversations', {

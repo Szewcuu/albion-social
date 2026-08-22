@@ -1,16 +1,22 @@
 import { NextResponse } from 'next/server'
-import { portalAuth } from '@/lib/supabaseAuth'
+import { createServerSupabaseClient } from '@/lib/server/supabaseSession'
 
 export async function GET(request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') ?? '/'
+  const requestedNext = requestUrl.searchParams.get('next') ?? '/'
+  const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//')
+    ? requestedNext
+    : '/'
 
   if (code) {
     try {
-      await portalAuth.exchangeCodeForSession(code)
+      const supabase = await createServerSupabaseClient()
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (error) throw error
     } catch (err) {
       console.error('Błąd wymiany kodu OAuth w /auth/callback:', err)
+      return NextResponse.redirect(new URL('/?auth_error=callback', requestUrl.origin))
     }
   }
 

@@ -45,7 +45,7 @@ test.describe('publiczna bramka portalu', () => {
   test('indeksuje wyłącznie publiczne strony portalu', async ({ request }) => {
     const robots = await (await request.get('/robots.txt')).text()
     const sitemap = await (await request.get('/sitemap.xml')).text()
-    const protectedPage = await (await request.get('/killboard')).text()
+    const protectedPage = await request.get('/killboard', { maxRedirects: 0 })
 
     expect(robots).toContain('Sitemap: https://albion-social.vercel.app/sitemap.xml')
     expect(robots).toContain('Disallow: /killboard')
@@ -53,8 +53,8 @@ test.describe('publiczna bramka portalu', () => {
     expect(sitemap).toContain('<loc>https://albion-social.vercel.app/regulamin</loc>')
     expect(sitemap).toContain('<loc>https://albion-social.vercel.app/prywatnosc</loc>')
     expect(sitemap).not.toContain('/killboard')
-    expect(protectedPage).toContain('<meta name="robots" content="noindex, nofollow"')
-    expect(protectedPage).toContain('<link rel="canonical" href="https://albion-social.vercel.app/killboard"')
+    expect(protectedPage.status()).toBe(307)
+    expect(protectedPage.headers().location).toBe('/')
   })
 
   test('odrzuca anonimowe wywołania chronionych endpointów', async ({ request }) => {

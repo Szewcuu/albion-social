@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { portalAuth } from '@/lib/supabaseAuth'
+import { migrateLegacyBrowserSession, portalAuth } from '@/lib/supabaseAuth'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
 import AppSidebar from './AppSidebar'
@@ -11,14 +11,6 @@ import MobileBottomNav from './MobileBottomNav'
 import { PortalSessionProvider } from '@/contexts/PortalSessionContext'
 
 const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc'])
-
-function hasPersistedSupabaseSession() {
-  try {
-    return Object.keys(window.localStorage).some((key) => /^sb-.+-auth-token$/.test(key))
-  } catch {
-    return false
-  }
-}
 
 function ProtectedRouteLoadingShell() {
   return (
@@ -59,26 +51,19 @@ function ProtectedRouteLoadingShell() {
   )
 }
 
-export default function AppShell({ children }) {
-  const [user, setUser] = useState(null)
+export default function AppShell({ children, initialUser = null }) {
+  const [user, setUser] = useState(initialUser)
   const [isAdmin, setIsAdmin] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [notificationState, setNotificationState] = useState({ loading: false, error: '' })
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [authReady, setAuthReady] = useState(false)
-  const [hasAuthHint, setHasAuthHint] = useState(false)
+  const [authReady, setAuthReady] = useState(Boolean(initialUser))
   const hydratedUserIdRef = useRef(null)
   const pathname = usePathname()
   const router = useRouter()
 
-  useLayoutEffect(() => {
-    // Celowo przed pierwszym paintem: istniejąca sesja nie może odsłonić bramki gościa ani wywołać CLS.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setHasAuthHint(hasPersistedSupabaseSession())
-  }, [])
-
   const loginWithDiscord = useCallback(async () => {
-    const { error } = await portalAuth.signInWithOAuth({
+    const { error } = await portalAuth.auth.signInWithOAuth({
       provider: 'discord',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     })
@@ -86,7 +71,7 @@ export default function AppShell({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
-    await portalAuth.signOut()
+    await portalAuth.auth.signOut()
     setUser(null)
     setIsAdmin(false)
   }, [])
@@ -172,11 +157,18 @@ export default function AppShell({ children }) {
       }
     }
 
-    portalAuth.getSession().then(({ data: { session } }) => {
-      applySession(session)
+    void migrateLegacyBrowserSession().then((migrated) => {
+      if (migrated) {
+        window.location.reload()
+        return
+      }
+
+      portalAuth.auth.getSession().then(({ data: { session } }) => {
+        applySession(session)
+      })
     })
 
-    const { data: { subscription } } = portalAuth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = portalAuth.auth.onAuthStateChange((_event, session) => {
       applySession(session)
     })
 
@@ -249,7 +241,7 @@ export default function AppShell({ children }) {
     logout,
   }), [isAdmin, loginWithDiscord, logout, user])
 
-  if (!authReady && (!GUEST_PUBLIC_PATHS.has(pathname) || hasAuthHint)) {
+  if (!authReady && !GUEST_PUBLIC_PATHS.has(pathname)) {
     return <ProtectedRouteLoadingShell />
   }
 

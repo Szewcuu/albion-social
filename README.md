@@ -44,10 +44,10 @@ Gotowe i wdrożone:
 
 > **P44: serwerowa sesja i lżejszy start chronionego portalu**
 
-- [ ] opisać obecny przepływ sesji `localStorage` i wybrać zgodną z Next.js 16 oraz Supabase strategię sesji odczytywanej na serwerze
-- [ ] usunąć podwójny render brama → shell → Tawerna dla zalogowanego użytkownika, bez ujawnienia chronionej treści gościom
-- [ ] przenieść blokadę prywatnych tras na serwer, pozostawiając publiczne wyłącznie `/`, `/regulamin` i `/prywatnosc`
-- [ ] ograniczyć koszt klienta Auth w krytycznej ścieżce, zachowując Discord OAuth, odświeżanie sesji, wylogowanie i uwierzytelnione API
+- [x] opisać obecny przepływ sesji `localStorage` i wybrać zgodną z Next.js 16 oraz Supabase strategię sesji odczytywanej na serwerze — cookies, PKCE, `getClaims()` i Proxy z jednorazową migracją istniejących sesji
+- [x] usunąć podwójny render brama → shell → Tawerna dla zalogowanego użytkownika, bez ujawnienia chronionej treści gościom
+- [x] przenieść blokadę prywatnych tras na serwer, pozostawiając publiczne wyłącznie `/`, `/regulamin` i `/prywatnosc`
+- [x] ograniczyć koszt klienta Auth w krytycznej ścieżce, zachowując Discord OAuth, odświeżanie sesji, wylogowanie i uwierzytelnione API — lekki `auth-js` współdzieli format cookies z `@supabase/ssr`, bez startowego PostgREST, Realtime, Storage i Functions
 - [ ] potwierdzić pełne CI, wdrożyć P44 i porównać co najmniej dwie produkcyjne próby mobilnej Tawerny w bramce `14/14`
 
 ### P43 — stabilna Tawerna mobile i rozdzielony runtime strony głównej

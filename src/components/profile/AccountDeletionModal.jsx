@@ -41,7 +41,7 @@ export default function AccountDeletionModal({ isOpen, onClose }) {
         throw new Error(payload.error || 'Nie udało się trwale usunąć konta.')
       }
 
-      await portalAuth.signOut({ scope: 'local' })
+      await portalAuth.auth.signOut({ scope: 'local' })
       window.localStorage.clear()
       window.location.replace('/')
     } catch (err) {

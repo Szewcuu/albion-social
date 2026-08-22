@@ -19,8 +19,9 @@
     "test:e2e:visual": "cross-env E2E_REQUIRE_AUTH=1 playwright test visual-public.spec.js visual-authenticated.spec.js"
   },
   "dependencies": {
-    "@supabase/auth-js": "2.110.7",
-    "@supabase/supabase-js": "2.110.7",
+    "@supabase/auth-js": "2.112.3",
+    "@supabase/ssr": "0.12.4",
+    "@supabase/supabase-js": "2.112.3",
     "@vercel/speed-insights": "^2.0.0",
     "framer-motion": "^12.42.2",
     "lucide-react": "^1.26.0",

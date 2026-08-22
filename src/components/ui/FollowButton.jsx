@@ -18,7 +18,7 @@ async function readJson(response) {
 }
 
 async function loadFollows() {
-  const { data: { session } } = await portalAuth.getSession()
+  const { data: { session } } = await portalAuth.auth.getSession()
   const userId = session?.user?.id || null
   if (cachedUserId !== userId) {
     cachedFollows = null

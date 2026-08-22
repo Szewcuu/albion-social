@@ -332,7 +332,7 @@ export default function BuildComments({ buildId }) {
   const loadMoreComments = async () => {
     if (!nextCursor || loadingMore) return
     try {
-      const { data: { session } } = await portalAuth.getSession()
+      const { data: { session } } = await portalAuth.auth.getSession()
       await loadComments(session, { append: true, cursor: nextCursor })
     } catch (error) {
       setNotice({ type: 'error', text: error.message })
@@ -342,7 +342,7 @@ export default function BuildComments({ buildId }) {
   useEffect(() => {
     let active = true
     const start = async () => {
-      const { data: { session } } = await portalAuth.getSession()
+      const { data: { session } } = await portalAuth.auth.getSession()
       if (!active) return
       setUser(session?.user || null)
       await loadComments(session)
@@ -356,7 +356,7 @@ export default function BuildComments({ buildId }) {
       }
     })
 
-    const { data: { subscription } } = portalAuth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = portalAuth.auth.onAuthStateChange((_event, session) => {
       if (!active) return
       setUser(session?.user || null)
       loadComments(session).catch(() => setNotice({ type: 'error', text: 'Nie udało się odświeżyć komentarzy.' }))

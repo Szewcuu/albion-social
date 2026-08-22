@@ -3,6 +3,7 @@ import "./globals.css";
 import AppShell from "@/components/AppShell";
 import DeferredRuntimeServices from "@/components/DeferredRuntimeServices";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { getServerPortalUser } from "@/lib/server/supabaseSession";
 
 export const metadata = {
   metadataBase: new URL(SITE_URL),
@@ -53,11 +54,13 @@ export const viewport = {
   themeColor: "#120d09",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const initialUser = await getServerPortalUser();
+
   return (
     <html lang="pl" className="h-full antialiased">
       <body className="min-h-full">
-        <AppShell>{children}</AppShell>
+        <AppShell initialUser={initialUser}>{children}</AppShell>
         <DeferredRuntimeServices />
       </body>
     </html>
