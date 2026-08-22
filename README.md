@@ -48,8 +48,8 @@ Gotowe i wdrożone:
 - [x] oddzielić lekką obsługę Auth od klienta PostgREST, Realtime, Storage i Functions; ciężki klient nie występuje już w początkowym HTML Wypraw ani Killboardu
 - [x] przenieść początkowe dane konta i Wypraw za chronione Route Handlers bez osłabienia RLS ani autoryzacji
 - [x] zachować logowanie Discord, role administratora, powiadomienia, zapisy, opuszczanie i tworzenie wypraw
-- [ ] potwierdzić lint, 53 testy jednostkowe, build, budżet JavaScript (`1699,8 KB / 1800 KB`), publiczne E2E oraz zalogowane E2E w CI
-- [ ] opublikować P39 i powtórzyć pełny produkcyjny Lighthouse; cel dla Wypraw i Killboardu: mobile Performance co najmniej `90`, TBT najwyżej `400 ms`, CLS `0`
+- [x] potwierdzić lint, 53 testy jednostkowe, build, budżet JavaScript (`1699,8 KB / 1800 KB`), publiczne E2E oraz zalogowane E2E w CI
+- [x] opublikować P39 i powtórzyć pełny produkcyjny Lighthouse — bramka `14/14` przeszła; Wyprawy mobile osiągnęły Performance `90`, TBT `390 ms`, LCP `1,1 s` i CLS `0`, a Killboard mobile `98`, `160 ms`, `1,2 s` i `0`; oba widoki desktopowe uzyskały Performance `100` i TBT `0 ms` ([audyt produkcyjny](https://github.com/Szewcuu/albion-social/actions/runs/32579248545), 22 sierpnia 2026)
 
 ### P38 — stabilny zimny start wspólnego shellu
 
