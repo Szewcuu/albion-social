@@ -812,6 +812,7 @@ input:autofill, textarea:autofill, select:autofill { background: #171009; color:
 
 @media (max-width: 680px) {
   :root { --topbar-h: 60px; }
+  .welcome-hero-art { background-image: url('/albion-social-hero-mobile.webp'); }
   .topbar { padding: 0 14px; }
   .topbar-realm { display: none; }
   .topbar-breadcrumb { font-size: 10px; }
