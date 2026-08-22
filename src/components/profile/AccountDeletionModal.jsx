@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { AlertTriangle, Trash2, X, LoaderCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const CONFIRMATION = 'USUŃ KONTO'
@@ -41,7 +41,7 @@ export default function AccountDeletionModal({ isOpen, onClose }) {
         throw new Error(payload.error || 'Nie udało się trwale usunąć konta.')
       }
 
-      await supabase.auth.signOut({ scope: 'local' })
+      await portalAuth.signOut({ scope: 'local' })
       window.localStorage.clear()
       window.location.replace('/')
     } catch (err) {

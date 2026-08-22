@@ -5,6 +5,8 @@ import { createNotification } from '@/lib/server/notifications'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import {
   createSupabaseAdminClient,
+  createSupabaseRequestClient,
+  getPortalRole,
   requireApiUser,
 } from '@/lib/server/supabaseAdmin'
 import { cleanInteger, cleanText } from '@/lib/server/validation'
@@ -22,6 +24,62 @@ function displayNameFor(user, profile) {
       || 'Gracz',
     { min: 1, max: 80 },
   ) || 'Gracz'
+}
+
+export async function GET(request) {
+  try {
+    const auth = await requireApiUser(request)
+    if (auth.error) return jsonError(auth.error, auth.status)
+
+    const supabase = createSupabaseRequestClient(request)
+    const [{ data, error }, role] = await Promise.all([
+      supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', auth.user.id)
+        .order('created_at', { ascending: false })
+        .limit(20),
+      getPortalRole(supabase, auth.user.id),
+    ])
+    if (error) throw error
+
+    return NextResponse.json(
+      { notifications: data || [], role },
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
+  } catch (error) {
+    console.error('Błąd pobierania danych konta:', error)
+    return jsonError('Nie udało się pobrać danych konta.', 500)
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const auth = await requireApiUser(request)
+    if (auth.error) return jsonError(auth.error, auth.status)
+
+    const body = await request.json().catch(() => ({}))
+    const notificationId = body?.notificationId == null
+      ? null
+      : (isModerationId(body.notificationId) ? body.notificationId : undefined)
+    if (notificationId === undefined) return jsonError('Nieprawidłowy identyfikator powiadomienia.', 400)
+
+    const supabase = createSupabaseRequestClient(request)
+    let query = supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('user_id', auth.user.id)
+      .eq('is_read', false)
+    if (notificationId) query = query.eq('id', notificationId)
+
+    const { error } = await query
+    if (error) throw error
+
+    return NextResponse.json({ success: true }, { headers: { 'Cache-Control': 'no-store' } })
+  } catch (error) {
+    console.error('Błąd aktualizacji powiadomień:', error)
+    return jsonError('Nie udało się zaktualizować powiadomień.', 500)
+  }
 }
 
 async function createMarketOfferNotification({ auth, supabase, body }) {

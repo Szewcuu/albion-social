@@ -29,6 +29,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 import CharacterVerificationModal from '@/components/CharacterVerificationModal'
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
 
@@ -153,7 +154,7 @@ export default function ProfilePage() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    portalAuth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null
       setUser(currentUser)
       if (currentUser) fetchProfileData(currentUser.id)
@@ -204,7 +205,7 @@ export default function ProfilePage() {
   async function handleVerifySuccess(data) {
     if (!user) return false
 
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await portalAuth.getSession()
     if (!session?.access_token) {
       setNotice({ type: 'error', text: 'Sesja wygasła. Zaloguj się ponownie.' })
       return false
@@ -249,7 +250,7 @@ export default function ProfilePage() {
 
     setUnlinkingCharacter(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await portalAuth.getSession()
       if (!session?.access_token) throw new Error('Sesja wygasła. Zaloguj się ponownie.')
 
       const response = await fetch('/api/profile/verify', {

@@ -12,6 +12,7 @@ import GuildZvZInspectorModal from '@/components/guilds/GuildZvZInspectorModal'
 import { EmptyState, SkeletonBlock } from '@/components/ui/FeedbackState'
 import FollowButton from '@/components/ui/FollowButton'
 import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 
 const ROLE_LABELS = { leader: 'Lider', officer: 'Oficer', member: 'Członek', recruit: 'Rekrut' }
 const ROLE_STYLES = {
@@ -92,7 +93,7 @@ export default function GuildDetailPage() {
   }, [guildId])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    portalAuth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null)
       return loadGuild()
     })

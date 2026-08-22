@@ -42,7 +42,16 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P38: stabilny zimny start wspólnego shellu**
+> **P39: lekka sesja portalu oraz mobilne Wyprawy i Killboard**
+
+- [x] porównać pierwsze i ponowione próby Lighthouse obu tras oraz wskazać koszt pełnego klienta `supabase-js`
+- [x] oddzielić lekką obsługę Auth od klienta PostgREST, Realtime, Storage i Functions; ciężki klient nie występuje już w początkowym HTML Wypraw ani Killboardu
+- [x] przenieść początkowe dane konta i Wypraw za chronione Route Handlers bez osłabienia RLS ani autoryzacji
+- [x] zachować logowanie Discord, role administratora, powiadomienia, zapisy, opuszczanie i tworzenie wypraw
+- [ ] potwierdzić lint, 53 testy jednostkowe, build, budżet JavaScript (`1699,8 KB / 1800 KB`), publiczne E2E oraz zalogowane E2E w CI
+- [ ] opublikować P39 i powtórzyć pełny produkcyjny Lighthouse; cel dla Wypraw i Killboardu: mobile Performance co najmniej `90`, TBT najwyżej `400 ms`, CLS `0`
+
+### P38 — stabilny zimny start wspólnego shellu
 
 - [x] porównać zimne i kontrolne próby Lighthouse ekranu gościa, Tawerny oraz kreatora buildu
 - [x] sprawdzić wydzielenie nawigacji gościa i odrzucić wariant powielający zależności w chunkach Turbopacka

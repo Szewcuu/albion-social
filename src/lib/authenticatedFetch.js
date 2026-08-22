@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 
 export async function authenticatedFetch(input, init = {}) {
-  const { data: { session }, error } = await supabase.auth.getSession()
+  const { data: { session }, error } = await portalAuth.getSession()
 
   if (error || !session?.access_token) {
     throw new Error('Musisz być zalogowany, aby wykonać tę operację.')

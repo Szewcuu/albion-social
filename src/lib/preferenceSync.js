@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { portalAuth } from '@/lib/supabaseAuth'
 
 export const PREFERENCES_SYNCED_EVENT = 'aopp-preferences-synced'
 
@@ -65,7 +66,7 @@ export async function savePortalPreference(category, value) {
   const updatedAt = new Date().toISOString()
   writeEnvelope(category, cleanValue, updatedAt)
 
-  const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await portalAuth.getSession()
   if (!session?.user?.id) return false
 
   const { error } = await supabase.from('user_preferences').upsert({

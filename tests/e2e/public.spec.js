@@ -48,6 +48,11 @@ test.describe('publiczna bramka portalu', () => {
     const followedEntities = await request.get('/api/follows')
     const priceAlerts = await request.get('/api/price-alerts')
     const portalOverview = await request.get('/api/portal-overview')
+    const expeditionsRead = await request.get('/api/expeditions')
+    const expeditionsWrite = await request.post('/api/expeditions', { data: { action: 'create' } })
+    const expeditionsDelete = await request.delete('/api/expeditions', { data: { signupId: 'anonymous-test' } })
+    const notificationsRead = await request.get('/api/notifications')
+    const notificationsUpdate = await request.patch('/api/notifications', { data: {} })
     const profileVerification = await request.post('/api/profile/verify', {
       data: { playerId: 'anonymous-test', region: 'europe' },
     })
@@ -64,6 +69,11 @@ test.describe('publiczna bramka portalu', () => {
     expect(followedEntities.status()).toBe(401)
     expect(priceAlerts.status()).toBe(401)
     expect(portalOverview.status()).toBe(401)
+    expect(expeditionsRead.status()).toBe(401)
+    expect(expeditionsWrite.status()).toBe(401)
+    expect(expeditionsDelete.status()).toBe(401)
+    expect(notificationsRead.status()).toBe(401)
+    expect(notificationsUpdate.status()).toBe(401)
     expect(profileVerification.status()).toBe(401)
     expect(profileUnlink.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
