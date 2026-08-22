@@ -2,7 +2,6 @@ import "./globals.css";
 
 import AppShell from "@/components/AppShell";
 import DeferredRuntimeServices from "@/components/DeferredRuntimeServices";
-import WebVitalsReporter from "@/components/WebVitalsReporter";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 export const metadata = {
@@ -59,7 +58,6 @@ export default function RootLayout({ children }) {
     <html lang="pl" className="h-full antialiased">
       <body className="min-h-full">
         <AppShell>{children}</AppShell>
-        <WebVitalsReporter />
         <DeferredRuntimeServices />
       </body>
     </html>

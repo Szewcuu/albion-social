@@ -44,9 +44,9 @@ Gotowe i wdrożone:
 
 > **P43: stabilna Tawerna mobile i rozdzielony runtime strony głównej**
 
-- [ ] porównać zmienność zalogowanej Tawerny mobile między P40 i P42 oraz wskazać koszt wspólnego modułu strony głównej
-- [ ] rozdzielić kod bramy publicznej od właściwej Tawerny, zachowując natychmiastowy i bezpieczny wybór widoku po sesji
-- [ ] ograniczyć pracę głównego wątku po zalogowaniu bez utraty czatu, statystyk i szybkich akcji
+- [x] porównać zmienność zalogowanej Tawerny mobile między P40 i P42 — TBT zmieniało się od `190 ms` do `580 ms`, mimo małego chunku strony (`9,3 KB`), a koszt pochodził głównie ze wspólnego uruchamiania sesji i usług runtime
+- [x] rozdzielić kod bramy publicznej od właściwej Tawerny, zachowując natychmiastowy i bezpieczny wybór widoku po sesji
+- [x] ograniczyć pracę głównego wątku po zalogowaniu bez utraty czatu, statystyk i szybkich akcji — usunięto martwy katalog modułów, a Web Vitals, PWA i Speed Insights są uruchamiane dopiero w czasie bezczynności
 - [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
 - [ ] opublikować P43 i powtórzyć pełną produkcyjną bramkę Lighthouse `14/14`
 
