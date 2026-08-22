@@ -42,13 +42,21 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P42: stabilny i szybszy publiczny ekran wejścia**
+> **P43: stabilna Tawerna mobile i rozdzielony runtime strony głównej**
+
+- [ ] porównać zmienność zalogowanej Tawerny mobile między P40 i P42 oraz wskazać koszt wspólnego modułu strony głównej
+- [ ] rozdzielić kod bramy publicznej od właściwej Tawerny, zachowując natychmiastowy i bezpieczny wybór widoku po sesji
+- [ ] ograniczyć pracę głównego wątku po zalogowaniu bez utraty czatu, statystyk i szybkich akcji
+- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
+- [ ] opublikować P43 i powtórzyć pełną produkcyjną bramkę Lighthouse `14/14`
+
+### P42 — stabilny i szybszy publiczny ekran wejścia
 
 - [x] wskazać element LCP oraz porównać obie produkcyjne próby ekranu logowania — nagłówek hero był ponownie malowany po późnym odkryciu tła; dwie próby zakończyły się LCP `3,2 s` i `3,1 s`
 - [x] skrócić krytyczną ścieżkę bez utraty obecnej oprawy — mobilny wariant tego samego tła waży `24,6 KB` zamiast `163 KB`, a dekoracyjne `albion-bg.webp` i logo nie konkurują już w kolejce globalnych preloadów
 - [x] dodać test E2E potwierdzający, że telefon pobiera wyłącznie lekki wariant hero, a dwie pełne próby produkcyjne pozostają kontrolą zmienności pomiaru
-- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
-- [ ] opublikować P42 i przejść pełną produkcyjną bramkę Lighthouse `14/14`
+- [x] potwierdzić lint, 53 testy jednostkowe, build, 30 migracji, katalog, budżet JavaScript (`1700,8 KB / 1800 KB`) oraz publiczne i zalogowane E2E
+- [x] opublikować P42 i przejść pełną produkcyjną bramkę Lighthouse `14/14` — ekran wejścia mobile osiągnął Performance `98`, LCP `2,0 s`, TBT `130 ms` i CLS `0` zamiast wcześniejszych LCP `3,2 s` oraz `3,1 s`; desktop osiągnął Performance `100`, LCP `0,5 s`, TBT `0 ms` i CLS `0,029` ([audyt produkcyjny](https://github.com/Szewcuu/albion-social/actions/runs/32585146872), 22 sierpnia 2026)
 
 ### P41 — lekki Rynek i serwerowy cykl życia ofert
 
