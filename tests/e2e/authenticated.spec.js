@@ -262,6 +262,52 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('publikuje, odnawia i usuwa ofertę przez chronione API rynku', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
+      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
+    })
+    expect(accessToken).toBeTruthy()
+    const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+    let offerId = null
+
+    try {
+      const createResponse = await request.post('/api/market/offers', {
+        headers,
+        data: {
+          title: `E2E oferta ${Date.now()}`,
+          item_name: 'T4_BAG',
+          price: 12345,
+          city: 'Caerleon',
+          category: 'Ekwipunek',
+          server: 'Europa',
+        },
+      })
+      expect(createResponse.status()).toBe(201)
+      offerId = (await createResponse.json()).offerId
+      expect(offerId).toMatch(/^[0-9a-f-]{36}$/)
+
+      const readResponse = await request.get('/api/market/offers', { headers })
+      expect(readResponse.status()).toBe(200)
+      expect(readResponse.headers()['cache-control']).toContain('no-store')
+      const payload = await readResponse.json()
+      expect(Array.isArray(payload.offers)).toBe(true)
+      expect(typeof payload.hasMore).toBe('boolean')
+
+      const renewResponse = await request.patch('/api/market/offers', {
+        headers,
+        data: { action: 'renew', id: offerId },
+      })
+      expect(renewResponse.status()).toBe(200)
+    } finally {
+      if (offerId) {
+        const deleteResponse = await request.delete('/api/market/offers', { headers, data: { id: offerId } })
+        expect(deleteResponse.status()).toBe(200)
+      }
+    }
+  })
+
   test('pobiera wyprawy i profil przez chronione API', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await page.evaluate(() => {

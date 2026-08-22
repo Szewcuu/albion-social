@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
 
 import { usePortalSession } from '@/contexts/PortalSessionContext'
-import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const MarketOfferForm = dynamic(() => import('@/components/market/MarketOfferForm'), {
   ssr: false,
@@ -19,7 +19,6 @@ const DeferredMarketTools = dynamic(() => import('@/components/market/DeferredMa
   loading: () => <div className="panel min-h-40 animate-pulse" aria-label="Ładowanie narzędzi rynku" />,
 })
 
-const MARKET_PAGE_SIZE = 12
 const EMPTY_FORM = {
   title: '',
   item_name: '',
@@ -29,17 +28,13 @@ const EMPTY_FORM = {
   server: 'Europa',
 }
 
-function applyOlderThan(query, cursor) {
-  if (!cursor) return query
-  return query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`)
-}
-
 export default function Rynek() {
   const { user } = usePortalSession()
   const [offers, setOffers] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
+  const [loadError, setLoadError] = useState('')
   const [marketBoardReady, setMarketBoardReady] = useState(false)
   const [focusOfferId, setFocusOfferId] = useState('')
   const [selectedOfferForContact, setSelectedOfferForContact] = useState(null)
@@ -51,34 +46,29 @@ export default function Rynek() {
   const fetchOffers = useCallback(async ({ append = false } = {}) => {
     if (append) setLoadingMore(true)
     else setLoading(true)
+    setLoadError('')
 
-    let query = supabase
-      .from('market_items')
-      .select('id, created_at, user_id, title, price, city, category, description, status, item_name, server, profiles!market_items_user_id_fkey(username)')
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(MARKET_PAGE_SIZE + 1)
-    const { data, error } = await applyOlderThan(query, append ? cursorRef.current : null)
-
-    if (!error && data) {
-      const hasNextPage = data.length > MARKET_PAGE_SIZE
-      const page = data.slice(0, MARKET_PAGE_SIZE)
-      const oldest = page.at(-1)
-      cursorRef.current = oldest ? { created_at: oldest.created_at, id: oldest.id } : null
+    try {
+      const cursor = append ? cursorRef.current : null
+      const response = await authenticatedFetch(`/api/market/offers${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się pobrać ofert.')
+      cursorRef.current = result.nextCursor || null
 
       startTransition(() => {
-        setHasMore(hasNextPage)
+        setHasMore(result.hasMore === true)
         setOffers((current) => append
-          ? [...current, ...page.filter((row) => !current.some((item) => item.id === row.id))]
-          : page)
+          ? [...current, ...(result.offers || []).filter((row) => !current.some((item) => item.id === row.id))]
+          : (result.offers || []))
         if (append) setLoadingMore(false)
         else setLoading(false)
       })
-      return
+    } catch (error) {
+      console.error('Błąd pobierania ofert rynku:', error)
+      setLoadError('Nie udało się pobrać ofert. Odśwież tablicę i spróbuj ponownie.')
+      if (append) setLoadingMore(false)
+      else setLoading(false)
     }
-
-    if (append) setLoadingMore(false)
-    else setLoading(false)
   }, [])
 
   useEffect(() => {
@@ -124,40 +114,53 @@ export default function Rynek() {
       return
     }
 
-    const { error } = await supabase.from('market_items').insert([{
-      title: formData.title.trim(),
-      item_name: formData.item_name ? formData.item_name.trim().toUpperCase() : '',
-      price: Number.parseInt(formData.price, 10),
-      city: formData.city,
-      category: formData.category,
-      server: formData.server,
-      contact: 'Kontakt przez portal',
-      contact_info: null,
-      user_id: user.id,
-    }])
-
-    if (error) {
+    try {
+      const response = await authenticatedFetch('/api/market/offers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się wystawić oferty.')
+      setFormMessage('Oferta została wystawiona na rynku!')
+      setFormData(EMPTY_FORM)
+      fetchOffers()
+    } catch (error) {
       setFormMessage(`Błąd: ${error.message}`)
-      return
     }
-
-    setFormMessage('Oferta została wystawiona na rynku!')
-    setFormData(EMPTY_FORM)
-    fetchOffers()
   }
 
   const handleRenewOffer = async (offerId) => {
-    const { error } = await supabase
-      .from('market_items')
-      .update({ created_at: new Date().toISOString() })
-      .eq('id', offerId)
-    if (!error) fetchOffers()
+    try {
+      const response = await authenticatedFetch('/api/market/offers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'renew', id: offerId }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się odnowić oferty.')
+      setFormMessage('Ważność oferty została odnowiona na 7 dni.')
+      fetchOffers()
+    } catch (error) {
+      setFormMessage(`Błąd: ${error.message}`)
+    }
   }
 
   const handleDeleteOffer = async (offerId) => {
     if (!window.confirm('Czy na pewno chcesz usunąć tę ofertę z rynku?')) return
-    const { error } = await supabase.from('market_items').delete().eq('id', offerId)
-    if (!error) fetchOffers()
+    try {
+      const response = await authenticatedFetch('/api/market/offers', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: offerId }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się usunąć oferty.')
+      setFormMessage('Oferta została usunięta.')
+      fetchOffers()
+    } catch (error) {
+      setFormMessage(`Błąd: ${error.message}`)
+    }
   }
 
   return (
@@ -191,6 +194,7 @@ export default function Rynek() {
               offers={offers}
               user={user}
               loading={loading}
+              loadError={loadError}
               loadingMore={loadingMore}
               hasMore={hasMore}
               focusOfferId={focusOfferId}

@@ -42,7 +42,17 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P40: lekka Tawerna i odroczony Realtime**
+> **P41: lekki Rynek i serwerowy cykl życia ofert**
+
+- [x] przeanalizować produkcyjny Lighthouse Rynku i wskazać pełnego klienta Supabase w krytycznej ścieżce strony
+- [x] przenieść odczyt oraz paginację ofert za chroniony Route Handler z zachowaniem RLS i indeksu kursorowego
+- [x] przenieść publikację, odnawianie i usuwanie ofert do walidowanego API z limitami operacji i serwerowym właścicielem
+- [x] naprawić odnawianie ofert po wcześniejszym odebraniu klientom uprawnienia `UPDATE`; uprzywilejowana zmiana następuje dopiero po sprawdzeniu właściciela
+- [x] zachować filtry, bezpośrednie linki, formularz, prywatny kontakt, polubienia i obserwowanie ofert
+- [ ] potwierdzić lint, testy, build, budżet JavaScript oraz publiczne i zalogowane E2E
+- [ ] opublikować P41 i powtórzyć pełny produkcyjny Lighthouse
+
+### P40 — lekka Tawerna i odroczony Realtime
 
 - [x] porównać pierwszą i kontrolną próbę Lighthouse strony głównej oraz wskazać koszt pełnego klienta Supabase dołączanego przez czat
 - [x] przenieść odczyt, publikację i usuwanie wiadomości za chroniony Route Handler z zachowaniem RLS

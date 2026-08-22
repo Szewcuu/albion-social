@@ -25,6 +25,7 @@ export default function MarketOfferBoard({
   offers,
   user,
   loading,
+  loadError,
   loadingMore,
   hasMore,
   focusOfferId,
@@ -133,6 +134,12 @@ export default function MarketOfferBoard({
       <div className="space-y-3">
         {loading ? (
           <p className="text-center py-12 text-gray-500 font-mono animate-pulse">Pobieranie ofert z rynku...</p>
+        ) : loadError ? (
+          <div className="panel border-rose-500/25 py-12 text-center">
+            <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-rose-300/70" />
+            <p className="font-display text-lg font-bold text-[var(--text-primary)]">Tablica rynku chwilowo nie odpowiada.</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">{loadError}</p>
+          </div>
         ) : filteredOffers.length === 0 ? (
           <div className="panel py-14 text-center">
             <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-sky-300/70" />
