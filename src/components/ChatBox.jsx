@@ -12,17 +12,8 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
-
-const BASE_FIELDS = 'id, user_id, channel, username, text, created_at'
-const REPLY_FIELDS = `${BASE_FIELDS}, reply_to`
-const CHAT_PAGE_SIZE = 40
-
-function applyOlderThan(query, cursor) {
-  if (!cursor) return query
-  return query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`)
-}
 
 function normalizeMessage(message) {
   return { ...message, username: message.username || 'Gracz', reply_to: message.reply_to || null }
@@ -93,58 +84,48 @@ export default function ChatBox({ user, isAdmin }) {
     }
     setLoadError('')
 
-    let query = supabase
-      .from('chat_messages')
-      .select(REPLY_FIELDS)
-      .eq('channel', 'GLOBALNY')
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false })
-      .limit(CHAT_PAGE_SIZE + 1)
-    let result = await applyOlderThan(query, older ? oldestCursorRef.current : null)
-
-    if (result.error) {
-      let fallbackQuery = supabase
-        .from('chat_messages')
-        .select(BASE_FIELDS)
-        .eq('channel', 'GLOBALNY')
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(CHAT_PAGE_SIZE + 1)
-      const fallback = await applyOlderThan(fallbackQuery, older ? oldestCursorRef.current : null)
-
-      if (!fallback.error) {
-        result = fallback
-        setSupportsReplies(false)
+    try {
+      const cursor = older ? oldestCursorRef.current : null
+      const params = new URLSearchParams()
+      if (cursor) {
+        params.set('beforeCreatedAt', cursor.created_at)
+        params.set('beforeId', cursor.id)
       }
-    }
+      const response = await authenticatedFetch(`/api/chat${params.size ? `?${params}` : ''}`)
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się pobrać rozmowy.')
 
-    if (result.error) {
-      setLoadError('Nie udało się otworzyć kroniki rozmów. Odśwież widok lub spróbuj ponownie później.')
-    } else {
-      const hasMore = (result.data || []).length > CHAT_PAGE_SIZE
-      const descendingPage = (result.data || []).slice(0, CHAT_PAGE_SIZE)
-      const oldest = descendingPage.at(-1)
-      oldestCursorRef.current = oldest ? { created_at: oldest.created_at, id: oldest.id } : null
-      const chronologicalPage = descendingPage.reverse().map(normalizeMessage)
-      setHasOlder(hasMore)
+      oldestCursorRef.current = result.cursor || null
+      const chronologicalPage = (result.messages || []).map(normalizeMessage)
+      setSupportsReplies(result.supportsReplies !== false)
+      setHasOlder(result.hasOlder === true)
       setChatMessages((current) => {
         if (!older) return chronologicalPage
         const known = new Set(current.map((message) => message.id))
         return [...chronologicalPage.filter((message) => !known.has(message.id)), ...current]
       })
+    } catch {
+      setLoadError('Nie udało się otworzyć kroniki rozmów. Odśwież widok lub spróbuj ponownie później.')
     }
     if (older) setLoadingOlder(false)
     else setLoading(false)
   }, [])
 
   useEffect(() => {
+    let active = true
     let chatChannel = null
-    const cancelStartup = scheduleIdleTask(() => {
-      void fetchMessages()
-      chatChannel = supabase
+    let realtimeClient = null
+    const cancelFetch = scheduleIdleTask(() => void fetchMessages())
+    const cancelRealtime = scheduleIdleTask(async () => {
+      const { supabase } = await import('@/lib/supabase')
+      if (!active) return
+      realtimeClient = supabase
+      chatChannel = realtimeClient
         .channel('community-tavern')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
-          if ((payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') && payload.new.channel === 'GLOBALNY') {
+          if (payload.eventType === 'UPDATE' && payload.new.status !== 'visible') {
+            setChatMessages((current) => current.filter((message) => message.id !== payload.new.id))
+          } else if ((payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') && payload.new.channel === 'GLOBALNY' && payload.new.status === 'visible') {
             addOrReplaceMessage(payload.new)
           }
           if (payload.eventType === 'DELETE') {
@@ -154,11 +135,13 @@ export default function ChatBox({ user, isAdmin }) {
         .subscribe((status) => {
           setConnectionStatus(status === 'SUBSCRIBED' ? 'LIVE' : status === 'CHANNEL_ERROR' ? 'ERROR' : 'CONNECTING')
         })
-    })
+    }, { minimumDelay: 7_000, timeout: 8_000 })
 
     return () => {
-      cancelStartup()
-      if (chatChannel) supabase.removeChannel(chatChannel)
+      active = false
+      cancelFetch()
+      cancelRealtime()
+      if (chatChannel && realtimeClient) void realtimeClient.removeChannel(chatChannel)
     }
   }, [addOrReplaceMessage, fetchMessages])
 
@@ -189,28 +172,27 @@ export default function ChatBox({ user, isAdmin }) {
 
     setIsSending(true)
     setSendError('')
-    const rawName = user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz'
     const payload = {
-      user_id: user.id,
-      channel: 'GLOBALNY',
-      username: rawName.replace(/#0$/, ''),
       text,
-      ...(supportsReplies && replyingTo ? { reply_to: replyingTo.id } : {}),
+      ...(supportsReplies && replyingTo ? { replyTo: replyingTo.id } : {}),
     }
 
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .insert(payload)
-      .select(supportsReplies ? REPLY_FIELDS : BASE_FIELDS)
-      .single()
-
-    if (error) {
-      setSendError('Wiadomość nie została zapisana. Sprawdź sesję i spróbuj ponownie.')
-    } else {
+    try {
+      const response = await authenticatedFetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się wysłać wiadomości.')
       scrollModeRef.current = 'bottom'
-      addOrReplaceMessage(data)
+      addOrReplaceMessage(result.message)
+      setSupportsReplies(result.supportsReplies !== false)
       setNewMessage('')
       setReplyingTo(null)
+    } catch (error) {
+      console.error('Błąd wysyłania wiadomości Tawerny:', error)
+      setSendError('Wiadomość nie została zapisana. Sprawdź sesję i spróbuj ponownie.')
     }
     setIsSending(false)
   }
@@ -228,13 +210,20 @@ export default function ChatBox({ user, isAdmin }) {
       return
     }
 
-    const { error } = await supabase.from('chat_messages').delete().eq('id', message.id)
-    if (error) {
+    try {
+      const response = await authenticatedFetch('/api/chat', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: message.id }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się usunąć wiadomości.')
+      setChatMessages((current) => current.filter((item) => item.id !== message.id))
+      setPendingDeleteId(null)
+    } catch (error) {
+      console.error('Błąd usuwania wiadomości Tawerny:', error)
       setSendError('Nie udało się usunąć wiadomości.')
-      return
     }
-    setChatMessages((current) => current.filter((item) => item.id !== message.id))
-    setPendingDeleteId(null)
   }
 
   return (

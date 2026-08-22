@@ -30,6 +30,26 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByLabel('Napisz wiadomość w tawernie')).toBeVisible()
   })
 
+  test('pobiera chronioną kronikę Tawerny przez lekkie API', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await page.evaluate(() => {
+      const storageKey = Object.keys(window.localStorage).find((key) => /^sb-.+-auth-token$/.test(key))
+      return storageKey ? JSON.parse(window.localStorage.getItem(storageKey))?.access_token || null : null
+    })
+    expect(accessToken).toBeTruthy()
+
+    const response = await request.get('/api/chat', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    expect(response.status()).toBe(200)
+    expect(response.headers()['cache-control']).toContain('no-store')
+    const payload = await response.json()
+    expect(Array.isArray(payload.messages)).toBe(true)
+    expect(typeof payload.hasOlder).toBe('boolean')
+    expect(typeof payload.supportsReplies).toBe('boolean')
+    expect(payload.cursor === null || typeof payload.cursor === 'object').toBe(true)
+  })
+
   test('pobiera jedno zagregowane podsumowanie Tawerny', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await page.evaluate(() => {
