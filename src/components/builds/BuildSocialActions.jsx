@@ -26,7 +26,7 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
     let active = true
 
     const load = async () => {
-      const { data: { session } } = await portalAuth.getSession()
+      const { data: { session } } = await portalAuth.auth.getSession()
       if (!active) return
       setUser(session?.user || null)
 
@@ -45,7 +45,7 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
       if (active) setMessage('Nie udało się odświeżyć interakcji społecznościowych.')
     })
 
-    const { data: { subscription } } = portalAuth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = portalAuth.auth.onAuthStateChange((_event, session) => {
       if (active) setUser(session?.user || null)
     })
 

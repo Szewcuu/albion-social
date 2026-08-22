@@ -6,7 +6,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 const client = createClient(supabaseUrl, supabaseAnonKey, {
   accessToken: async () => {
-    const { data } = await portalAuth.getSession()
+    const { data } = await portalAuth.auth.getSession()
     return data.session?.access_token || null
   },
 })

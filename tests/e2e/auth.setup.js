@@ -15,6 +15,13 @@ setup('authenticate test user', async ({ page }) => {
   await page.reload()
   await expect(page.getByRole('button', { name: /Wejdź przez Discord/i })).toBeHidden()
 
+  const cookies = await page.context().cookies()
+  expect(cookies.some(({ name }) => name.startsWith(`sb-${projectRef}-auth-token`))).toBe(true)
+  await expect.poll(() => page.evaluate(
+    (storageKey) => window.localStorage.getItem(storageKey),
+    `sb-${projectRef}-auth-token`,
+  )).toBeNull()
+
   await mkdir(dirname(authFile), { recursive: true })
   await page.context().storageState({ path: authFile })
 })

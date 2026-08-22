@@ -66,7 +66,7 @@ export async function savePortalPreference(category, value) {
   const updatedAt = new Date().toISOString()
   writeEnvelope(category, cleanValue, updatedAt)
 
-  const { data: { session } } = await portalAuth.getSession()
+  const { data: { session } } = await portalAuth.auth.getSession()
   if (!session?.user?.id) return false
 
   const { error } = await supabase.from('user_preferences').upsert({

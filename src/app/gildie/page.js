@@ -47,7 +47,7 @@ export default function Gildie() {
   }, [])
 
   useEffect(() => {
-    portalAuth.getSession().then(({ data: { session } }) => {
+    portalAuth.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       fetchGuilds()
     })
