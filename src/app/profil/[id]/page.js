@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Activity, ArrowLeft, Bookmark, CalendarDays, ChevronRight, CircleUserRound, Compass, Crown, Flame, Heart, MessageSquare, Shield, ShieldCheck, ShoppingBag, Sparkles, Swords, Trophy } from 'lucide-react'
 
-import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
+import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import { EmptyState, SkeletonBlock } from '@/components/ui/FeedbackState'
 import FollowButton from '@/components/ui/FollowButton'
 import { usePortalSession } from '@/contexts/PortalSessionContext'

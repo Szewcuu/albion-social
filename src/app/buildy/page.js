@@ -1,13 +1,13 @@
 'use client'
-import { supabase } from '@/lib/supabase'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, ArrowRightLeft } from 'lucide-react'
-import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
+import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import { buildFromDbRow } from '@/lib/buildSlots'
 import FavoriteButton from '@/components/ui/FavoriteButton'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const BuildComparator = dynamic(() => import('@/components/builds/BuildComparator'), {
   loading: () => <div className="panel mb-6 min-h-32 animate-pulse" aria-label="Ładowanie porównywarki buildów" />,
@@ -25,12 +25,7 @@ const ALBION_CATEGORIES = [
   { id: 'pve', name: 'PvE & Statyki', icon: Swords },
   { id: 'ganking', name: 'Ganking & Mists', icon: Plus },
 ]
-const BUILDS_PAGE_SIZE = 12
-
-function applyOlderThan(query, cursor) {
-  if (!cursor) return query
-  return query.or(`created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`)
-}
+const BUILDS_PAGE_SIZE = 6
 
 export default function BuildyPage() {
   const { user } = usePortalSession()
@@ -49,23 +44,16 @@ export default function BuildyPage() {
     else setLoading(true)
     setLoadError('')
     try {
-      let query = supabase
-        .from('builds')
-        .select('*, profiles!builds_user_id_fkey(username, avatar_url), build_votes(id, vote_type)', { count: append ? undefined : 'exact' })
-        .order('created_at', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(BUILDS_PAGE_SIZE + 1)
+      const params = new URLSearchParams({ category: activeCategory, limit: String(BUILDS_PAGE_SIZE) })
+      if (append && cursorRef.current) params.set('cursor', cursorRef.current)
+      const response = await authenticatedFetch(`/api/builds?${params}`, { cache: 'no-store' })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się pobrać buildów.')
 
-      if (activeCategory !== 'all') query = query.ilike('activity_type', `%${activeCategory}%`)
-      const { data, error, count } = await applyOlderThan(query, append ? cursorRef.current : null)
-
-      if (error) throw error
-      const hasNextPage = (data || []).length > BUILDS_PAGE_SIZE
-      const page = (data || []).slice(0, BUILDS_PAGE_SIZE)
-      const oldest = page.at(-1)
-      cursorRef.current = oldest ? { created_at: oldest.created_at, id: oldest.id } : null
-      setHasMore(hasNextPage)
-      if (!append) setTotalBuilds(count || 0)
+      const page = result.builds || []
+      cursorRef.current = result.nextCursor || null
+      setHasMore(result.hasMore === true)
+      if (!append) setTotalBuilds(result.total || 0)
       setBuilds((current) => append ? [...current, ...page.filter((row) => !current.some((item) => item.id === row.id))] : page)
     } catch (err) {
       console.error('Błąd pobierania buildów:', err)
@@ -83,8 +71,18 @@ export default function BuildyPage() {
 
   const handleDeleteBuild = async (id) => {
     if (!confirm('Czy na pewno chcesz usunąć ten zestaw?')) return
-    const { error } = await supabase.from('builds').delete().eq('id', id)
-    if (!error) fetchBuilds()
+    try {
+      const response = await authenticatedFetch('/api/builds', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się usunąć buildu.')
+      await fetchBuilds()
+    } catch (error) {
+      setLoadError(error.message || 'Nie udało się usunąć buildu.')
+    }
   }
 
   const filteredBuilds = builds

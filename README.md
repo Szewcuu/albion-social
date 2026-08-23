@@ -44,8 +44,8 @@ Gotowe i wdrożone:
 
 > **P46: stabilna mobilna Zbrojownia buildów i Rynek**
 
-- [ ] rozłożyć koszt startowy mobilnej Zbrojowni i Rynku na skrypty własne, współdzielone zależności, obrazy oraz pracę po hydratacji
-- [ ] odroczyć elementy poniżej pierwszego ekranu i niekrytyczne obliczenia bez pogorszenia interakcji, dostępności ani widoku desktopowego
+- [x] rozłożyć koszt startowy mobilnej Zbrojowni i Rynku na skrypty własne, współdzielone zależności, obrazy oraz pracę po hydratacji — Zbrojownia ładowała klienta PostgREST i interaktywny picker przedmiotów do samego podglądu kart, a Rynek montował formularz oraz narzędzia analityczne przed użyciem
+- [x] odroczyć elementy poniżej pierwszego ekranu i niekrytyczne obliczenia bez pogorszenia interakcji, dostępności ani widoku desktopowego — podgląd ekwipunku ma osobny lekki komponent, Zbrojownia pobiera sześć kart przez API, a mobilny Rynek pokazuje najpierw oferty i uruchamia formularz oraz wybrane narzędzie na żądanie
 - [ ] ograniczyć zmienność mobilnej Zbrojowni (Performance `87–100`, TBT `80–530 ms`) i utrzymać Rynek co najmniej na obecnym poziomie (Performance `90–92`, TBT `350–420 ms`)
 - [ ] objąć zmienione ścieżki testami E2E i utrzymać budżet JavaScript, historię migracji oraz katalog przedmiotów
 - [ ] wdrożyć P46 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`

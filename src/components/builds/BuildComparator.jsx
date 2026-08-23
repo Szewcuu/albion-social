@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, ArrowRightLeft, BarChart3, CheckCircle2, Coins, ExternalLink, LoaderCircle, Scale, Sparkles, Zap } from 'lucide-react'
 
-import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
+import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import CustomSelect from '@/components/ui/CustomSelect'
 import { chunkBuildItemIds, compareBuildCosts, getUniqueBuildItemIds, valuateBuildInCity } from '@/lib/buildComparison'
 import { buildFromDbRow, EQUIPMENT_SLOTS } from '@/lib/buildSlots'
