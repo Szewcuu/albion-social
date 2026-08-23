@@ -452,7 +452,7 @@ export async function searchAlbionGuilds(query, region) {
     name: g.Name,
     allianceId: g.AllianceId || '',
     allianceTag: g.AllianceTag || '',
-    killFame: g.KillFame || 0,
+    killFame: Number.isFinite(Number(g.KillFame)) ? Number(g.KillFame) : null,
     region,
   }))
 }

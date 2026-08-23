@@ -173,7 +173,7 @@ export default function Wyprawy() {
         : 'Wyprawa została zapisana, ale publikacja na Discordzie nie powiodła się.')
       setFormData({
         title: '',
-        activity_type: 'Statyk T8',
+        activity_type: 'Statyk',
         custom_activity: '',
         min_ip: 1400,
         starts_at: getDefaultExpeditionDate(),
@@ -400,7 +400,7 @@ export default function Wyprawy() {
                         value={formData.activity_type}
                         onChange={(val) => setFormData((prev) => ({ ...prev, activity_type: val }))}
                         options={[
-                          { value: 'Statyk T8', label: 'Statyk / Group Dungeon' },
+                          { value: 'Statyk', label: 'Statyk / Group Dungeon' },
                           { value: 'Ava Dungeon', label: 'Avalonian Dungeon' },
                           { value: 'Tropienie (Tracking)', label: 'Tropienie w Grupie' },
                           { value: 'Lochy Spaczenia (Corrupted)', label: 'Corrupted Dungeons' },
@@ -556,7 +556,7 @@ export default function Wyprawy() {
                     <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[.07] pb-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-mono font-bold uppercase">{exp.activity_type}</span>
+                          <span className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-mono font-bold uppercase">{exp.activity_type === 'Statyk T8' ? 'Statyk' : exp.activity_type}</span>
                           <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono font-bold uppercase">[{exp.server}]</span>
                         </div>
                         <h3 className="font-display text-2xl font-black tracking-wide text-white">{exp.title}</h3>

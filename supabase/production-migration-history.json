@@ -1,6 +1,6 @@
 {
   "projectRef": "sjsqfztyjsgiipwwxybt",
-  "verifiedAt": "2026-08-16",
+  "verifiedAt": "2026-08-23",
   "migrations": [
     { "version": "20260808191640", "name": "priority_b_stability" },
     { "version": "20260808191815", "name": "priority_b_rpc_privileges" },
@@ -34,6 +34,7 @@
     { "version": "20260816205651", "name": "private_rate_limit_storage" },
     { "version": "20260823134456", "name": "guild_webhook_column_privacy" },
     { "version": "20260823193000", "name": "review_04_expedition_schedule" },
-    { "version": "20260823193500", "name": "review_04_expedition_schedule_compat" }
+    { "version": "20260823193500", "name": "review_04_expedition_schedule_compat" },
+    { "version": "20260823220000", "name": "normalize_expedition_static_activity" }
   ]
 }

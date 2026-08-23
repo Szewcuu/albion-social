@@ -430,6 +430,19 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
         }),
       })
     })
+    await page.route('**/api/albion/guild?mode=search**', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: {
+            guilds: [
+              { id: 'guild-one', name: 'Strażnicy Avalonu', allianceTag: 'AVA', killFame: null, region: 'asia' },
+              { id: 'guild-two', name: 'Strażnicy Avalonu II', allianceTag: '', killFame: null, region: 'asia' },
+            ],
+          },
+        }),
+      })
+    })
 
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/gildie')
@@ -441,8 +454,16 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('dialog')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Opublikuj manifest gildii' })).toBeVisible()
     await expect(page.getByPlaceholder('https://discord.com/api/webhooks/...')).toBeVisible()
+    await page.getByText('Jak utworzyć webhook na Discordzie?').click()
+    await expect(page.getByText(/Integracje.*Webhooki.*Nowy webhook/)).toBeVisible()
+    await expect(page.getByText(/Kopiuj adres URL webhooka/)).toBeVisible()
     await page.getByRole('button', { name: 'Zamknij formularz' }).click()
     await expect(page.getByRole('dialog')).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Statystyki' }).click()
+    await expect(page.getByText('Strażnicy Avalonu II')).toBeVisible()
+    await expect(page.getByText('PvP Fame: 0')).toHaveCount(0)
+    await page.getByRole('button', { name: 'Zamknij podgląd gildii' }).click()
 
     await page.getByPlaceholder('Nazwa gildii lub słowo z opisu…').fill('nieistniejąca')
     await expect(page.getByRole('heading', { name: 'Brak pasujących chorągwi' })).toBeVisible()

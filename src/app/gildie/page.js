@@ -73,7 +73,16 @@ function ManifestModal({ open, onClose, onCreated }) {
           </div>
           <label className="block text-[10px] font-black uppercase tracking-wider text-[var(--text-secondary)]">Zaproszenie Discord *<input required type="url" value={form.discordLink} onChange={(e) => update('discordLink', e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-sm normal-case text-white outline-none focus:border-[var(--gold)]" placeholder="https://discord.gg/..." /></label>
           <label className="block text-[10px] font-black uppercase tracking-wider text-[var(--text-secondary)]">Webhook rekrutacji <span className="normal-case font-normal">(opcjonalnie)</span><input type="url" value={form.webhookUrl} onChange={(e) => update('webhookUrl', e.target.value)} className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-sm normal-case text-white outline-none focus:border-[var(--gold)]" placeholder="https://discord.com/api/webhooks/..." /></label>
-          <details className="rounded-xl border border-sky-300/15 bg-sky-300/[.04] p-3 text-xs leading-5 text-[var(--text-secondary)]"><summary className="cursor-pointer font-bold text-sky-200">Po co jest webhook?</summary><p className="mt-2">Przekazuje podania rekrutacyjne na wskazany kanał Discord. Adres nie jest pokazywany w publicznym katalogu.</p></details>
+          <details className="rounded-xl border border-sky-300/15 bg-sky-300/[.04] p-3 text-xs leading-5 text-[var(--text-secondary)]">
+            <summary className="cursor-pointer font-bold text-sky-200">Jak utworzyć webhook na Discordzie?</summary>
+            <p className="mt-2">Webhook przekazuje podania rekrutacyjne na wybrany kanał. Jego adres pozostaje prywatny i nie jest pokazywany w katalogu.</p>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>Otwórz ustawienia kanału rekrutacyjnego na swoim serwerze Discord.</li>
+              <li>Wejdź w <b className="text-gray-200">Integracje → Webhooki → Nowy webhook</b>.</li>
+              <li>Wybierz kanał i kliknij <b className="text-gray-200">Kopiuj adres URL webhooka</b>.</li>
+              <li>Wklej skopiowany adres w polu powyżej. Nie udostępniaj go innym osobom.</li>
+            </ol>
+          </details>
           <label className="block text-[10px] font-black uppercase tracking-wider text-[var(--text-secondary)]"><span className="flex justify-between"><span>Opis i wymagania *</span><span>{form.description.length}/600</span></span><textarea required minLength={10} maxLength={600} rows={5} value={form.description} onChange={(e) => update('description', e.target.value)} className="mt-1.5 w-full resize-none rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-sm normal-case leading-6 text-white outline-none focus:border-[var(--gold)]" placeholder="Opisz godziny aktywności, wymagania i styl gry..." /></label>
           {message && <p role="alert" className="rounded-xl border border-rose-300/25 bg-rose-300/[.07] p-3 text-xs font-bold text-rose-200">{message}</p>}
           <div className="flex flex-col-reverse gap-2 border-t border-white/[.07] pt-4 sm:flex-row sm:justify-end"><button type="button" onClick={onClose} className="aopp-ghost-button px-5 py-3 text-xs font-black uppercase">Anuluj</button><button type="submit" disabled={busy} className="btn btn-primary min-h-11 px-6 text-xs font-black uppercase disabled:opacity-50">{busy ? 'Publikowanie…' : 'Opublikuj manifest'}</button></div>

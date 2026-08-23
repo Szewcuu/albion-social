@@ -1,83 +1,74 @@
 'use client'
 
-import { Compass, Users, Clock } from 'lucide-react'
+import { ArrowRight, Clock, Compass, Users } from 'lucide-react'
+
+function formatActivity(activityType) {
+  return activityType === 'Statyk T8' ? 'Statyk' : activityType || 'Wyprawa'
+}
+
+function formatStart(value, fallback) {
+  if (!value) return fallback || 'Termin nieznany'
+  return new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  }).format(new Date(value))
+}
 
 export default function UpcomingExpeditionsWidget({ expeditions = [], loading = false }) {
   const upcoming = expeditions?.slice(0, 4) || []
 
   return (
-    <section
-      className={`panel relative mb-6 overflow-hidden rounded-3xl border-purple-500/20 bg-purple-950/10 ${loading || upcoming.length ? 'h-[220px]' : 'min-h-[96px]'}`}
-      aria-label="Nadchodzące wyprawy graczy"
-      aria-busy={loading}
-    >
-      {loading ? (
-        <div className="absolute inset-0 flex animate-pulse items-center p-5 sm:p-6">
-          <div className="flex w-full items-center gap-3">
-            <div className="h-10 w-10 shrink-0 rounded-2xl bg-white/8" />
-            <div className="min-w-0 flex-1">
-              <div className="h-4 w-52 max-w-[75%] rounded bg-white/8" />
-              <div className="mt-3 h-3 w-96 max-w-full rounded bg-white/5" />
-            </div>
+    <section className="panel mb-6 overflow-hidden rounded-3xl border-purple-500/20 bg-purple-950/10 p-5 sm:p-6" aria-label="Nadchodzące wyprawy graczy" aria-busy={loading}>
+      <div className="flex items-center gap-3 border-b border-white/8 pb-4">
+        <div className="shrink-0 rounded-2xl border border-purple-400/30 bg-purple-500/10 p-2.5 text-purple-300"><Compass className="h-5 w-5" /></div>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-purple-400/30 bg-purple-500/20 px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-purple-300">Zbiórki drużynowe</span>
+            <span className="font-mono text-[10px] text-gray-400">Dołącz przed wymarszem</span>
           </div>
+          <h2 className="font-display mt-0.5 text-base font-black text-white sm:text-lg">Nadchodzące Wyprawy Graczy</h2>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="mt-4 grid animate-pulse gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index} className="min-h-36 rounded-2xl border border-white/8 bg-black/25 p-4">
+              <div className="h-4 w-24 rounded bg-white/8" /><div className="mt-4 h-5 w-2/3 rounded bg-white/8" /><div className="mt-3 h-3 w-20 rounded bg-white/5" />
+            </div>
+          ))}
         </div>
       ) : upcoming.length === 0 ? (
-        <div className="flex min-h-[96px] items-center p-5 sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 rounded-2xl border border-purple-400/30 bg-purple-500/10 p-2.5 text-purple-300">
-              <Compass className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-display text-base font-bold text-white">Nadchodzące Wyprawy Graczy</h2>
-              <p className="text-xs text-gray-400">Brak aktywnych wypraw w najbliższym czasie. Zwołaj pierwszą drużynę poniżej!</p>
-            </div>
-          </div>
+        <div className="py-6 text-center">
+          <p className="font-display text-base font-bold text-white">Brak aktywnych wypraw</p>
+          <p className="mt-1 text-xs text-gray-400">Zwołaj pierwszą drużynę poniżej i rozpocznij mobilizację.</p>
         </div>
       ) : (
-        <div className="absolute inset-0 flex flex-col p-5 sm:p-6">
-          <div className="flex shrink-0 items-center justify-between border-b border-white/8 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="shrink-0 rounded-2xl border border-purple-400/30 bg-purple-500/10 p-2.5 text-purple-300">
-                <Compass className="h-5 w-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full border border-purple-400/30 bg-purple-500/20 px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-purple-300">Zbiórki Drużynowe</span>
-                  <span className="hidden font-mono text-[10px] text-gray-400 sm:inline">Dołącz przed wymarszem</span>
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {upcoming.map((exp) => {
+            const signups = exp.expedition_signups || []
+            const maxPlayers = Number(exp.max_tanks || 1) + Number(exp.max_healers || 1) + Number(exp.max_dps || 3) + Number(exp.max_supports || 1)
+            const isFull = signups.length >= maxPlayers
+
+            return (
+              <a key={exp.id} href={`#expedition-${exp.id}`} aria-label={`Przejdź do wyprawy ${exp.title}`} className="group flex min-h-40 flex-col justify-between rounded-2xl border border-white/8 bg-black/40 p-4 transition hover:-translate-y-0.5 hover:border-purple-400/40 hover:bg-purple-950/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-purple-300">
+                <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-2 font-mono text-[9px]">
+                    <span className="max-w-[55%] truncate rounded-full border border-purple-400/30 bg-purple-500/20 px-2 py-0.5 font-bold uppercase text-purple-300">{formatActivity(exp.activity_type)}</span>
+                    <span className="flex shrink-0 items-center gap-1 font-bold text-amber-300"><Clock className="h-3 w-3" /> {formatStart(exp.starts_at, exp.start_time)}</span>
+                  </div>
+                  <h3 className="mt-3 line-clamp-2 text-base font-bold leading-tight text-white">{exp.title}</h3>
+                  <p className="mt-1 font-mono text-[10px] text-gray-400">Min. IP: <span className="font-bold text-amber-300">{exp.min_ip}+</span></p>
                 </div>
-                <h2 className="font-display mt-0.5 text-base font-black text-white sm:text-lg">Nadchodzące Wyprawy Graczy</h2>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-3 flex min-h-0 flex-1 snap-x gap-3 overflow-x-auto pb-1">
-            {upcoming.map((exp) => {
-              const signups = exp.expedition_signups || []
-              const maxPlayers = (exp.max_tanks || 1) + (exp.max_healers || 1) + (exp.max_dps || 3) + (exp.max_supports || 1)
-              const isFull = signups.length >= maxPlayers
-
-              return (
-                <article key={exp.id} className="flex min-w-[235px] flex-1 snap-start flex-col justify-between rounded-2xl border border-white/8 bg-black/40 p-3 lg:min-w-0">
-                  <div className="min-w-0">
-                    <div className="flex items-center justify-between gap-2 font-mono text-[9px]">
-                      <span className="truncate rounded-full border border-purple-400/30 bg-purple-500/20 px-2 py-0.5 font-bold uppercase text-purple-300">{exp.activity_type || 'Wyprawa'}</span>
-                      <span className="flex shrink-0 items-center gap-1 font-bold text-amber-300">
-                        <Clock className="h-3 w-3" /> {exp.starts_at ? new Intl.DateTimeFormat('pl-PL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(exp.starts_at)) : exp.start_time || 'Termin nieznany'}
-                      </span>
-                    </div>
-                    <h3 className="mt-1 truncate text-sm font-bold text-white">{exp.title}</h3>
-                    <p className="font-mono text-[10px] text-gray-400">Min. IP: <span className="font-bold text-amber-300">{exp.min_ip}+</span></p>
+                <div className="mt-4 border-t border-white/7 pt-3 font-mono">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`flex items-center gap-1 text-[10px] font-bold ${isFull ? 'text-rose-400' : 'text-emerald-400'}`}><Users className="h-3.5 w-3.5" /> {signups.length}/{maxPlayers} {isFull ? 'Pełna' : 'Wolne miejsca'}</span>
+                    <ArrowRight className="h-4 w-4 text-purple-300 transition-transform group-hover:translate-x-0.5" />
                   </div>
-                  <div className="flex items-center justify-between border-t border-white/5 pt-1.5 font-mono">
-                    <span className={`flex items-center gap-1 text-[10px] font-bold ${isFull ? 'text-rose-400' : 'text-emerald-400'}`}>
-                      <Users className="h-3.5 w-3.5" /> {signups.length}/{maxPlayers} {isFull ? '(Pełna)' : '(Wolne)'}
-                    </span>
-                    <span className="text-[9px] text-gray-400">{exp.server || 'Europa'}</span>
-                  </div>
-                </article>
-              )
-            })}
-          </div>
+                  <p className="mt-1.5 text-[9px] text-gray-500">{exp.server || 'Serwer nieznany'}</p>
+                </div>
+              </a>
+            )
+          })}
         </div>
       )}
     </section>

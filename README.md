@@ -81,8 +81,8 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 ### Przegląd 03 — Gildie
 
 - **Zostawić:** filtrowanie po serwerze, mieście i doktrynie, osobny profil gildii, centrum dowodzenia, rekrutację oraz podgląd statystyk bojowych pobierany dopiero na żądanie.
-- **Zmieniono:** katalog jest teraz główną treścią strony i zajmuje pełną szerokość; formularz lidera otwiera się w osobnym, responsywnym oknie; karty są krótsze i układają się w dwie kolumny na desktopie; informacja o Gameinfo została uproszczona i przeniesiona pod wyniki.
-- **Dodano:** jawny stan awarii z ponowieniem, szkielety ładowania, zerowanie filtrów, licznik wyników, walidację adresów Discord i webhooków, blokadę wielokrotnej publikacji oraz kontrolę regresji mobile dla katalogu i formularza.
+- **Zmieniono:** katalog jest teraz główną treścią strony i zajmuje pełną szerokość; formularz lidera otwiera się w osobnym, responsywnym oknie; karty są krótsze i układają się w dwie kolumny na desktopie; informacja o Gameinfo została uproszczona i przeniesiona pod wyniki; wybór podobnie nazwanych gildii nie pokazuje zmyślonego `PvP Fame: 0`.
+- **Dodano:** jawny stan awarii z ponowieniem, szkielety ładowania, zerowanie filtrów, licznik wyników, walidację adresów Discord i webhooków, instrukcję utworzenia webhooka krok po kroku, blokadę wielokrotnej publikacji oraz kontrolę regresji mobile dla katalogu i formularza.
 - **Utwardzono backend:** odczyt i publikacja gildii przechodzą przez uwierzytelnione API, autor jest ustalany po stronie serwera, obowiązuje limit pięciu publikacji na dobę, a klient nie otrzymuje surowych błędów bazy.
 - **Zabezpieczono Supabase:** role `anon` i `authenticated` utraciły możliwość odczytu `guilds.webhook_url`; test uprawnień potwierdził dostęp wyłącznie dla backendowego `service_role`, przy zachowaniu publicznego odczytu nazwy i pozostałych pól profilu.
 - **Potwierdzono:** brak danych nie jest już mylony z awarią, wyszukiwarka ma prawidłowy odstęp dla ikony, statystyki bez sławy pokazują „Brak danych Fame” zamiast fałszywego `+0`, a zamknięta rekrutacja pozostaje jednoznacznie nieaktywna.
@@ -91,9 +91,9 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 ### Przegląd 04 — Wyprawy i Kalendarz
 
 - **Zostawić:** podział składu na role, wymagane IP, integrację Discord, możliwość ponowienia publikacji, zapisy na wydarzenia gildii i przypomnienia w centrum powiadomień.
-- **Zmieniono:** wyprawa ma teraz rzeczywisty termin zamiast tekstowej godziny; Discord wyświetla datę w strefie czasowej odbiorcy; ogłoszenie wygasa 12 godzin po terminie, a nie 72 godziny po utworzeniu; formularz organizatora otwiera się wyłącznie na żądanie również na desktopie.
+- **Zmieniono:** wyprawa ma teraz rzeczywisty termin zamiast tekstowej godziny; Discord wyświetla datę w strefie czasowej odbiorcy; ogłoszenie wygasa 12 godzin po terminie, a nie 72 godziny po utworzeniu; formularz organizatora otwiera się wyłącznie na żądanie również na desktopie; bazowa aktywność to neutralny „Statyk”, bez narzuconego tieru T8.
 - **Dodano:** wyprawy graczy do globalnego Kalendarza, filtr „Wyprawy graczy”, bezpośrednie przejście z wydarzenia do właściwej karty wyprawy oraz indeks aktywnych terminów.
-- **Usunięto:** wysoki pusty baner nadchodzących wypraw i automatyczne montowanie ciężkiego formularza po bezczynności, które powodowało zmianę układu bez działania użytkownika.
+- **Usunięto:** wysoki pusty baner nadchodzących wypraw, przycinanie zawartości kart w panelu nadchodzących zbiórek oraz automatyczne montowanie ciężkiego formularza po bezczynności, które powodowało zmianę układu bez działania użytkownika.
 - **Utwardzono backend:** klient nie otrzymuje identyfikatorów wiadomości Discord; API odrzuca terminy wcześniejsze niż 10 minut i późniejsze niż 30 dni; zapis do wygasłej wyprawy jest blokowany; cron usuwa rekordy według `expires_at`; migracja zgodności chroni już otwarte starsze sesje podczas publikacji nowego klienta.
 - **Potwierdzono:** produkcyjny cron Vercel dla `/api/cron/expeditions` jest zaplanowany codziennie, przypomnienia wydarzeń gildii działają przez aktywny Supabase Cron co pięć minut, a doradca bezpieczeństwa nie wykrył nowego problemu z RLS po migracji.
 

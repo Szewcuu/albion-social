@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Shield, Swords, Skull, Trophy, Users, X, LoaderCircle, AlertCircle, Globe2 } from 'lucide-react'
+import { Shield, Swords, Skull, Trophy, Users, X, LoaderCircle, AlertCircle, Globe2, ChevronRight } from 'lucide-react'
 
 function getRegionFromServer(serverStr = '') {
   const s = (serverStr || '').toLowerCase()
@@ -150,9 +150,9 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
                       {g.allianceTag ? `Sojusz: [${g.allianceTag}]` : 'Brak sojuszu'}
                     </div>
                   </div>
-                  <div className="text-right font-mono text-[10px] text-rose-400 font-bold">
-                    PvP Fame: {Number(g.killFame || 0).toLocaleString('pl-PL')}
-                  </div>
+                  <span className="flex items-center gap-1 font-mono text-[10px] font-bold uppercase text-amber-300">
+                    Wybierz <ChevronRight className="h-3.5 w-3.5" />
+                  </span>
                 </button>
               ))}
             </div>
@@ -175,9 +175,11 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
                   <Swords className="w-3 h-3 text-rose-400" /> Kill Fame (ZvZ)
                 </div>
                 <div className="text-xs font-bold text-rose-300">
-                  {Number(overview.guild.killFame || 0).toLocaleString('pl-PL')}
+                  {Number(overview.guild.killFame) > 0
+                    ? Number(overview.guild.killFame).toLocaleString('pl-PL')
+                    : 'Brak danych Fame'}
                 </div>
-                <div className="text-[9px] text-gray-400">Wynik PvP gildii</div>
+                <div className="text-[9px] text-gray-400">{Number(overview.guild.killFame) > 0 ? 'Wynik PvP gildii' : 'API nie zwróciło wyniku'}</div>
               </div>
 
               <div className="bg-[#0c0609] p-3.5 rounded-2xl border border-[#240e16]">
