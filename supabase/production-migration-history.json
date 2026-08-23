@@ -31,6 +31,7 @@
     { "version": "20260816124639", "name": "priority_e_portal_overview_compat" },
     { "version": "20260816130439", "name": "priority_e_cursor_pagination_indexes" },
     { "version": "20260816183159", "name": "profile_character_linking" },
-    { "version": "20260816205651", "name": "private_rate_limit_storage" }
+    { "version": "20260816205651", "name": "private_rate_limit_storage" },
+    { "version": "20260823134456", "name": "guild_webhook_column_privacy" }
   ]
 }

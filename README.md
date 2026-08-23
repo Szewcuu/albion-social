@@ -49,7 +49,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Wspólny shell: centrum powiadomień** — naprawić kolizje ikon i tekstu, przewijanie, pozycjonowanie mobilne oraz zamykanie klawiszem Escape
 - [x] **Brama wejścia** — ekran powitalny, logowanie Discord, footer oraz Regulamin i Prywatność dostępne dla gościa
 - [x] **Tawerna** — pierwsze wrażenie po zalogowaniu, hierarchia treści, czat i stany Realtime
-- [ ] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
+- [x] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
 - [ ] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
 - [ ] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
 - [ ] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
@@ -77,6 +77,16 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Potwierdzono:** po pierwszym załadowaniu, odświeżeniu i wysłaniu własnej wiadomości kronika przewija się na dół; użytkownik czytający starsze wpisy nie jest wyrywany z miejsca przez nową wiadomość; chronione API ustala autora po stronie serwera i respektuje własność/moderację przy usuwaniu.
 - **Dodano kontrolę regresji:** E2E obejmuje większą historię, start na dole kroniki, odpowiedź z `replyTo`, wysłanie przez `Enter`, nową linię przez `Shift+Enter` oraz brak powielonej sekcji nawigacyjnej.
 - **Do obserwacji przy wzroście ruchu:** obecne `Postgres Changes` jest wystarczające dla jednej małej sali; przy większej liczbie jednoczesnych użytkowników należy przejść na prywatny Supabase Broadcast zgodnie z aktualnym zaleceniem skalowania Realtime.
+
+### Przegląd 03 — Gildie
+
+- **Zostawić:** filtrowanie po serwerze, mieście i doktrynie, osobny profil gildii, centrum dowodzenia, rekrutację oraz podgląd statystyk bojowych pobierany dopiero na żądanie.
+- **Zmieniono:** katalog jest teraz główną treścią strony i zajmuje pełną szerokość; formularz lidera otwiera się w osobnym, responsywnym oknie; karty są krótsze i układają się w dwie kolumny na desktopie; informacja o Gameinfo została uproszczona i przeniesiona pod wyniki.
+- **Dodano:** jawny stan awarii z ponowieniem, szkielety ładowania, zerowanie filtrów, licznik wyników, walidację adresów Discord i webhooków, blokadę wielokrotnej publikacji oraz kontrolę regresji mobile dla katalogu i formularza.
+- **Utwardzono backend:** odczyt i publikacja gildii przechodzą przez uwierzytelnione API, autor jest ustalany po stronie serwera, obowiązuje limit pięciu publikacji na dobę, a klient nie otrzymuje surowych błędów bazy.
+- **Zabezpieczono Supabase:** role `anon` i `authenticated` utraciły możliwość odczytu `guilds.webhook_url`; test uprawnień potwierdził dostęp wyłącznie dla backendowego `service_role`, przy zachowaniu publicznego odczytu nazwy i pozostałych pól profilu.
+- **Potwierdzono:** brak danych nie jest już mylony z awarią, wyszukiwarka ma prawidłowy odstęp dla ikony, statystyki bez sławy pokazują „Brak danych Fame” zamiast fałszywego `+0`, a zamknięta rekrutacja pozostaje jednoznacznie nieaktywna.
+- **Do obserwacji:** ostrzeżenie doradcy Supabase dotyczące ochrony haseł nie dotyczy obecnego logowania wyłącznie przez Discord; niewykorzystanych indeksów nie usuwamy bez dłuższej historii ruchu produkcyjnego.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 

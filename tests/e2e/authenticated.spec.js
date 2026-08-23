@@ -407,6 +407,48 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
 
+  test('pokazuje katalog gildii przed formularzem i otwiera manifest na żądanie', async ({ page }) => {
+    await page.route('**/api/guilds', async (route) => {
+      if (route.request().method() !== 'GET') return route.continue()
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          guilds: [{
+            id: 77,
+            name: 'Strażnicy Avalonu',
+            description: 'Polska gildia prowadząca wyprawy na wszystkich serwerach.',
+            activity_type: 'PvE / HCE',
+            main_city: 'Brecilien',
+            server: 'Azja',
+            discord_link: 'https://discord.gg/test',
+            user_id: 'guild-leader',
+            recruitment_open: true,
+            recruitment_headline: 'Szukamy aktywnych graczy',
+            profiles: { username: 'Dowodca#0' },
+          }],
+        }),
+      })
+    })
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/gildie')
+    await expect(page.getByRole('heading', { name: 'Strażnicy Avalonu' })).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByText('Webhook rekrutacji')).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Dodaj swoją gildię' }).click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Opublikuj manifest gildii' })).toBeVisible()
+    await expect(page.getByPlaceholder('https://discord.com/api/webhooks/...')).toBeVisible()
+    await page.getByRole('button', { name: 'Zamknij formularz' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+
+    await page.getByPlaceholder('Nazwa gildii lub słowo z opisu…').fill('nieistniejąca')
+    await expect(page.getByRole('heading', { name: 'Brak pasujących chorągwi' })).toBeVisible()
+    await page.getByRole('button', { name: 'Pokaż wszystkie gildie' }).click()
+    await expect(page.getByRole('heading', { name: 'Strażnicy Avalonu' })).toBeVisible()
+  })
+
   test('na mobile otwiera formularz wyprawy dopiero na żądanie', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/wyprawy')
