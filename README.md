@@ -50,7 +50,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Brama wejścia** — ekran powitalny, logowanie Discord, footer oraz Regulamin i Prywatność dostępne dla gościa
 - [x] **Tawerna** — pierwsze wrażenie po zalogowaniu, hierarchia treści, czat i stany Realtime
 - [x] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
-- [ ] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
+- [x] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
 - [ ] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
 - [ ] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
 - [ ] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
@@ -87,6 +87,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Zabezpieczono Supabase:** role `anon` i `authenticated` utraciły możliwość odczytu `guilds.webhook_url`; test uprawnień potwierdził dostęp wyłącznie dla backendowego `service_role`, przy zachowaniu publicznego odczytu nazwy i pozostałych pól profilu.
 - **Potwierdzono:** brak danych nie jest już mylony z awarią, wyszukiwarka ma prawidłowy odstęp dla ikony, statystyki bez sławy pokazują „Brak danych Fame” zamiast fałszywego `+0`, a zamknięta rekrutacja pozostaje jednoznacznie nieaktywna.
 - **Do obserwacji:** ostrzeżenie doradcy Supabase dotyczące ochrony haseł nie dotyczy obecnego logowania wyłącznie przez Discord; niewykorzystanych indeksów nie usuwamy bez dłuższej historii ruchu produkcyjnego.
+
+### Przegląd 04 — Wyprawy i Kalendarz
+
+- **Zostawić:** podział składu na role, wymagane IP, integrację Discord, możliwość ponowienia publikacji, zapisy na wydarzenia gildii i przypomnienia w centrum powiadomień.
+- **Zmieniono:** wyprawa ma teraz rzeczywisty termin zamiast tekstowej godziny; Discord wyświetla datę w strefie czasowej odbiorcy; ogłoszenie wygasa 12 godzin po terminie, a nie 72 godziny po utworzeniu; formularz organizatora otwiera się wyłącznie na żądanie również na desktopie.
+- **Dodano:** wyprawy graczy do globalnego Kalendarza, filtr „Wyprawy graczy”, bezpośrednie przejście z wydarzenia do właściwej karty wyprawy oraz indeks aktywnych terminów.
+- **Usunięto:** wysoki pusty baner nadchodzących wypraw i automatyczne montowanie ciężkiego formularza po bezczynności, które powodowało zmianę układu bez działania użytkownika.
+- **Utwardzono backend:** klient nie otrzymuje identyfikatorów wiadomości Discord; API odrzuca terminy wcześniejsze niż 10 minut i późniejsze niż 30 dni; zapis do wygasłej wyprawy jest blokowany; cron usuwa rekordy według `expires_at`; migracja zgodności chroni już otwarte starsze sesje podczas publikacji nowego klienta.
+- **Potwierdzono:** produkcyjny cron Vercel dla `/api/cron/expeditions` jest zaplanowany codziennie, przypomnienia wydarzeń gildii działają przez aktywny Supabase Cron co pięć minut, a doradca bezpieczeństwa nie wykrył nowego problemu z RLS po migracji.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 

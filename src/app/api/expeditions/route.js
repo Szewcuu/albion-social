@@ -4,8 +4,8 @@ import { isModerationId } from '@/lib/server/moderation'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { createSupabaseRequestClient, requireApiUser } from '@/lib/server/supabaseAdmin'
 import { cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
+import { getExpeditionExpiry } from '@/lib/expeditionSchedule'
 
-const EXPEDITION_TTL_MS = 72 * 60 * 60 * 1000
 const EXPEDITION_ROLES = ['Tank', 'Healer', 'DPS', 'Support']
 const EXPEDITION_SERVERS = ['Europa', 'Ameryka', 'Azja']
 
@@ -32,13 +32,14 @@ export async function GET(request) {
     if (context.response) return context.response
     const { auth, supabase } = context
 
-    const cutoff = new Date(Date.now() - EXPEDITION_TTL_MS).toISOString()
+    const now = new Date().toISOString()
     const [{ data: expeditions, error: expeditionsError }, { data: profile, error: profileError }] = await Promise.all([
       supabase
         .from('expeditions')
-        .select('*, profiles!expeditions_user_id_fkey(username), expedition_signups(*)')
-        .gte('created_at', cutoff)
-        .order('created_at', { ascending: false }),
+        .select('id, created_at, user_id, title, activity_type, min_ip, start_time, starts_at, expires_at, server, description, max_tanks, max_healers, max_dps, max_supports, status, discord_message_id, profiles!expeditions_user_id_fkey(username), expedition_signups(id, user_id, role_type, ingame_nick, player_ip, created_at)')
+        .eq('status', 'visible')
+        .gt('expires_at', now)
+        .order('starts_at', { ascending: true }),
       supabase
         .from('profiles')
         .select('ingame_nick, username, avg_ip')
@@ -48,7 +49,13 @@ export async function GET(request) {
     if (expeditionsError || profileError) throw expeditionsError || profileError
 
     return NextResponse.json(
-      { expeditions: expeditions || [], profile: profile || null },
+      {
+        expeditions: (expeditions || []).map(({ discord_message_id: discordMessageId, ...expedition }) => ({
+          ...expedition,
+          discord_published: Boolean(discordMessageId),
+        })),
+        profile: profile || null,
+      },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {
@@ -61,7 +68,7 @@ function readCreatePayload(body) {
   const title = cleanText(body?.title, { min: 3, max: 120 })
   const activityType = cleanText(body?.activity_type, { min: 2, max: 100 })
   const minIp = cleanInteger(body?.min_ip, { min: 0, max: 3_000 })
-  const startTime = cleanText(body?.start_time, { min: 2, max: 50 })
+  const startsAt = new Date(body?.starts_at)
   const server = cleanEnum(body?.server, EXPEDITION_SERVERS)
   const description = cleanText(body?.description || '', { max: 1_000 })
   const maxTanks = cleanInteger(body?.max_tanks, { min: 0, max: 5 })
@@ -70,16 +77,25 @@ function readCreatePayload(body) {
   const maxSupports = cleanInteger(body?.max_supports, { min: 0, max: 5 })
 
   if (
-    !title || !activityType || minIp === null || !startTime || !server || description === null
+    !title || !activityType || minIp === null || Number.isNaN(startsAt.getTime()) || !server || description === null
     || maxTanks === null || maxHealers === null || maxDps === null || maxSupports === null
     || maxTanks + maxHealers + maxDps + maxSupports < 1
   ) return null
+
+  const now = Date.now()
+  if (startsAt.getTime() < now + 10 * 60 * 1000 || startsAt.getTime() > now + 30 * 24 * 60 * 60 * 1000) return null
+
+  const startTime = new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
+  }).format(startsAt)
 
   return {
     title,
     activity_type: activityType,
     min_ip: minIp,
-    start_time: startTime,
+    start_time: `${startTime} UTC`,
+    starts_at: startsAt.toISOString(),
+    expires_at: getExpeditionExpiry(startsAt).toISOString(),
     server,
     description,
     max_tanks: maxTanks,
@@ -114,11 +130,11 @@ async function joinExpedition({ auth, supabase, body }) {
 
   const { data: expedition, error: expeditionError } = await supabase
     .from('expeditions')
-    .select('id, min_ip, max_tanks, max_healers, max_dps, max_supports, status')
+    .select('id, min_ip, max_tanks, max_healers, max_dps, max_supports, status, expires_at')
     .eq('id', expeditionId)
     .maybeSingle()
   if (expeditionError) throw expeditionError
-  if (!expedition || expedition.status === 'removed') return jsonError('Ta wyprawa nie jest już dostępna.', 404)
+  if (!expedition || expedition.status === 'removed' || new Date(expedition.expires_at).getTime() <= Date.now()) return jsonError('Ta wyprawa nie jest już dostępna.', 404)
   if (playerIp < Number(expedition.min_ip || 0)) return jsonError('Twoje IP jest niższe niż wymagane dla tej wyprawy.', 400)
 
   const maxByRole = {

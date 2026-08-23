@@ -5,11 +5,33 @@ import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
 import UpcomingExpeditionsWidget from '@/components/expeditions/UpcomingExpeditionsWidget'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
-import { scheduleIdleTask } from '@/lib/clientIdle'
 import { 
   Swords, Shield, Heart, UserCheck, Plus, Search,
   Clock, Users, Trash2, AlertTriangle, MapPin, Compass, Sparkles, Calendar 
 } from 'lucide-react'
+
+function toLocalInputValue(date) {
+  const offset = date.getTimezoneOffset() * 60_000
+  return new Date(date.getTime() - offset).toISOString().slice(0, 16)
+}
+
+function getDefaultExpeditionDate() {
+  const date = new Date()
+  date.setDate(date.getDate() + 1)
+  date.setHours(19, 0, 0, 0)
+  return toLocalInputValue(date)
+}
+
+function getMinimumExpeditionDate() {
+  return toLocalInputValue(new Date(Date.now() + 10 * 60 * 1000))
+}
+
+function formatExpeditionDate(value) {
+  if (!value) return 'Termin nieznany'
+  return new Intl.DateTimeFormat('pl-PL', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  }).format(new Date(value))
+}
 
 export default function Wyprawy() {
   const { user } = usePortalSession()
@@ -22,7 +44,7 @@ export default function Wyprawy() {
     activity_type: 'Statyk',
     custom_activity: '',
     min_ip: 1400,
-    start_time: '19:00 UTC',
+    starts_at: getDefaultExpeditionDate(),
     server: 'Europa',
     description: '',
     max_tanks: 1,
@@ -65,25 +87,11 @@ export default function Wyprawy() {
   }, [fetchExpeditions, user])
 
   useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 1024px)')
-    let cancelScheduledOpen = null
-
-    const revealOnDesktop = () => {
-      if (!desktop.matches) return
-      cancelScheduledOpen?.()
-      cancelScheduledOpen = scheduleIdleTask(() => setShowOrganizerForm(true), {
-        minimumDelay: 500,
-        timeout: 2_000,
-      })
-    }
-
-    revealOnDesktop()
-    desktop.addEventListener('change', revealOnDesktop)
-    return () => {
-      cancelScheduledOpen?.()
-      desktop.removeEventListener('change', revealOnDesktop)
-    }
-  }, [])
+    if (loading) return
+    const expeditionId = new URLSearchParams(window.location.search).get('expedition')
+    if (!expeditionId) return
+    window.requestAnimationFrame(() => document.getElementById(`expedition-${expeditionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  }, [loading])
 
   const openSignupModal = (exp) => {
     const signups = exp.expedition_signups || []
@@ -135,7 +143,7 @@ export default function Wyprawy() {
           title: formData.title,
           activity_type: finalActivityType,
           min_ip: Number(formData.min_ip),
-          start_time: formData.start_time,
+          starts_at: new Date(formData.starts_at).toISOString(),
           server: formData.server,
           description: formData.description,
           max_tanks: Number(formData.max_tanks),
@@ -168,7 +176,7 @@ export default function Wyprawy() {
         activity_type: 'Statyk T8',
         custom_activity: '',
         min_ip: 1400,
-        start_time: '19:00 UTC',
+        starts_at: getDefaultExpeditionDate(),
         server: 'Europa',
         description: '',
         max_tanks: 1,
@@ -361,7 +369,7 @@ export default function Wyprawy() {
                 <button
                   type="button"
                   onClick={() => setShowOrganizerForm(true)}
-                  className="btn btn-primary min-h-11 w-full text-xs font-extrabold uppercase tracking-wider lg:hidden"
+                  className="btn btn-primary min-h-11 w-full text-xs font-extrabold uppercase tracking-wider"
                   aria-expanded="false"
                 >
                   <Plus className="h-4 w-4" /> Otwórz formularz wyprawy
@@ -436,16 +444,17 @@ export default function Wyprawy() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="expedition-start-time" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Czas (UTC) *</label>
+                      <label htmlFor="expedition-start-time" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Termin (Twój czas) *</label>
                       <input 
                         id="expedition-start-time"
-                        type="text" 
+                        type="datetime-local"
                         required 
-                        value={formData.start_time} 
-                        onChange={(e) => setFormData({ ...formData, start_time: e.target.value })} 
+                        min={getMinimumExpeditionDate()}
+                        value={formData.starts_at}
+                        onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
                         className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-gray-100 focus:border-[var(--amber)] outline-none text-xs font-mono"
-                        placeholder="np. 19:30 UTC" 
                       />
+                      <p className="mt-1 text-[9px] leading-4 text-gray-500">Na Discordzie każdy zobaczy termin we własnej strefie czasowej.</p>
                     </div>
 
                     <div>
@@ -504,7 +513,7 @@ export default function Wyprawy() {
           {/* LISTA WYPRAW */}
           <div className="lg:col-span-8 space-y-4">
             <div className="panel flex flex-wrap items-center justify-between gap-3 rounded-2xl px-5 py-4">
-              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[var(--text-secondary)]">Aktualna mobilizacja · ogłoszenia wygasają po 72h</p><h2 className="font-display text-xl font-bold text-white">Otwarte drużyny</h2></div>
+              <div><p className="text-[9px] font-black uppercase tracking-[.18em] text-[var(--text-secondary)]">Aktualna mobilizacja · ogłoszenia wygasają 12h po terminie</p><h2 className="font-display text-xl font-bold text-white">Otwarte drużyny</h2></div>
               <div className="flex items-center gap-2 text-xs"><span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" /></span><span className="font-bold text-[#bcb6ab]">{expeditions.length} aktywnych ogłoszeń</span></div>
             </div>
             {deleteMessage && (
@@ -542,7 +551,7 @@ export default function Wyprawy() {
                 const fillPercent = totalSlots > 0 ? Math.min(100, Math.round((signups.length / totalSlots) * 100)) : 0
 
                 return (
-                  <div key={exp.id} className="panel panel-interactive group relative space-y-5 overflow-hidden rounded-3xl p-6 [content-visibility:auto] [contain-intrinsic-size:auto_540px]">
+                  <div id={`expedition-${exp.id}`} key={exp.id} className="panel panel-interactive group relative space-y-5 overflow-hidden rounded-3xl p-6 [content-visibility:auto] [contain-intrinsic-size:auto_540px]">
                     
                     <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[.07] pb-4">
                       <div className="space-y-1">
@@ -555,7 +564,7 @@ export default function Wyprawy() {
 
                       <div className="flex items-center gap-3 text-xs font-mono">
                         <span className="flex items-center gap-1.5 text-amber-400 font-bold bg-[var(--bg-elevated)] px-3 py-1.5 rounded-xl border border-[var(--border-hover)]">
-                          <Clock className="w-3 h-3" /> {exp.start_time}
+                          <Clock className="w-3 h-3" /> {formatExpeditionDate(exp.starts_at)}
                         </span>
                         <span className="bg-[var(--bg-elevated)] px-3 py-1.5 rounded-xl border border-[var(--border-hover)] text-gray-300 font-bold">
                           IP: <b className="text-emerald-400">{exp.min_ip}+</b>
@@ -634,7 +643,7 @@ export default function Wyprawy() {
                       </span>
 
                       <div className="flex items-center gap-2">
-                        {isOwner && !exp.discord_message_id && (
+                        {isOwner && !exp.discord_published && (
                           <button disabled={publishingExpeditionId === exp.id} onClick={() => retryDiscordPublication(exp.id)} className="border border-sky-400/30 bg-sky-400/8 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-sky-200 transition hover:bg-sky-400/12 disabled:cursor-wait disabled:opacity-60">
                             {publishingExpeditionId === exp.id ? 'Publikowanie…' : 'Opublikuj na Discordzie'}
                           </button>

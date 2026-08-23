@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
 
-import {
-  deleteExpeditionDiscordMessages,
-  deleteExpeditionRecords,
-  getExpeditionCutoff,
-} from '@/lib/server/expeditionCleanup'
+import { deleteExpeditionDiscordMessages, deleteExpeditionRecords } from '@/lib/server/expeditionCleanup'
 import { createSupabaseAdminClient } from '@/lib/server/supabaseAdmin'
 
 export async function GET(request) {
@@ -15,11 +11,11 @@ export async function GET(request) {
 
   try {
     const supabase = createSupabaseAdminClient()
-    const cutoff = getExpeditionCutoff().toISOString()
+    const cutoff = new Date().toISOString()
     const { data: expired, error } = await supabase
       .from('expeditions')
       .select('id, discord_message_id, full_party_message_id')
-      .lt('created_at', cutoff)
+      .lt('expires_at', cutoff)
       .limit(100)
 
     if (error) throw new Error('Nie udało się pobrać wygasłych wypraw.')

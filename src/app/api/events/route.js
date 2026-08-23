@@ -16,16 +16,26 @@ export async function GET(request) {
     if (auth.error) return jsonError(auth.error, auth.status)
 
     const admin = createSupabaseAdminClient()
-    const { data: events, error: eventsError } = await admin
-      .from('guild_events')
-      .select('id, guild_id, creator_id, title, description, event_type, starts_at, server, status, location, audience, capacity, signup_open, guilds!inner(id, name, status)')
-      .eq('status', 'scheduled')
-      .eq('guilds.status', 'visible')
-      .gt('starts_at', new Date().toISOString())
-      .order('starts_at', { ascending: true })
-      .limit(100)
+    const now = new Date().toISOString()
+    const [{ data: events, error: eventsError }, { data: expeditions, error: expeditionsError }] = await Promise.all([
+      admin
+        .from('guild_events')
+        .select('id, guild_id, creator_id, title, description, event_type, starts_at, server, status, location, audience, capacity, signup_open, guilds!inner(id, name, status)')
+        .eq('status', 'scheduled')
+        .eq('guilds.status', 'visible')
+        .gt('starts_at', now)
+        .order('starts_at', { ascending: true })
+        .limit(100),
+      admin
+        .from('expeditions')
+        .select('id, user_id, title, description, activity_type, starts_at, expires_at, server, max_tanks, max_healers, max_dps, max_supports, profiles!expeditions_user_id_fkey(username), expedition_signups(id, user_id, role_type, ingame_nick)')
+        .eq('status', 'visible')
+        .gt('expires_at', now)
+        .order('starts_at', { ascending: true })
+        .limit(100),
+    ])
 
-    if (eventsError) throw eventsError
+    if (eventsError || expeditionsError) throw eventsError || expeditionsError
     const eventIds = (events || []).map((event) => event.id)
     let signups = []
 
@@ -41,11 +51,36 @@ export async function GET(request) {
     }
 
     return NextResponse.json({
-      events: (events || []).map((event) => ({
+      events: [
+        ...(events || []).map((event) => ({
         ...event,
+        source: 'guild',
         signups: signups.filter((signup) => signup.event_id === event.id),
         mySignup: signups.find((signup) => signup.event_id === event.id && signup.user_id === auth.user.id) || null,
-      })),
+        })),
+        ...(expeditions || []).map((expedition) => ({
+          id: expedition.id,
+          source: 'expedition',
+          title: expedition.title,
+          description: expedition.description,
+          event_type: expedition.activity_type,
+          starts_at: expedition.starts_at,
+          server: expedition.server,
+          location: '',
+          audience: 'public',
+          capacity: Number(expedition.max_tanks || 0) + Number(expedition.max_healers || 0) + Number(expedition.max_dps || 0) + Number(expedition.max_supports || 0),
+          signup_open: true,
+          organizer: expedition.profiles?.username || 'Gracz',
+          signups: (expedition.expedition_signups || []).map((signup) => ({
+            id: signup.id,
+            user_id: signup.user_id,
+            role: String(signup.role_type || 'flex').toLowerCase(),
+            status: 'confirmed',
+            displayName: signup.ingame_nick,
+          })),
+          mySignup: (expedition.expedition_signups || []).some((signup) => signup.user_id === auth.user.id),
+        })),
+      ].sort((left, right) => new Date(left.starts_at) - new Date(right.starts_at)),
     })
   } catch (error) {
     console.error('Błąd kalendarza wydarzeń:', error)

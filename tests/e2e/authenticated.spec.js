@@ -397,6 +397,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('otwiera formularze wyprawy i rynku', async ({ page }) => {
     await page.goto('/wyprawy')
+    await page.getByRole('button', { name: 'Otwórz formularz wyprawy' }).click()
     await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()
     await expect(page.getByLabel('Min. IP *')).toBeVisible()
     await expect(page.getByLabel('Tank')).toBeVisible()
@@ -458,6 +459,17 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toHaveCount(0)
     await openForm.click()
     await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()
+  })
+
+  test('na desktopie nie montuje formularza wyprawy bez decyzji organizatora', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/wyprawy')
+
+    const openForm = page.getByRole('button', { name: 'Otwórz formularz wyprawy' })
+    await expect(openForm).toBeVisible()
+    await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toHaveCount(0)
+    await openForm.click()
+    await expect(page.getByLabel('Termin (Twój czas) *')).toHaveAttribute('type', 'datetime-local')
   })
 
   test('na mobile pokazuje tablicę rynku przed formularzem sprzedaży', async ({ page }) => {
@@ -526,6 +538,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     expect(response.status()).toBe(200)
     const payload = await response.json()
     expect(Array.isArray(payload.expeditions)).toBe(true)
+    expect(payload.expeditions.every((expedition) => !('discord_message_id' in expedition))).toBe(true)
     expect(payload.profile === null || typeof payload.profile === 'object').toBe(true)
   })
 
