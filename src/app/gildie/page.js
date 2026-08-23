@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ExternalLink, Globe, HelpCircle, MapPin, Plus, RotateCcw, Search, Shield, Swords, X } from 'lucide-react'
 
 import GuildApplyModal from '@/components/GuildApplyModal'
@@ -56,7 +57,7 @@ function ManifestModal({ open, onClose, onCreated }) {
     }
   }
 
-  return (
+  return createPortal((
     <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/85 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-labelledby="manifest-title">
       <div className="mx-auto my-3 w-full max-w-2xl rounded-[26px] border border-[var(--gold)]/35 bg-[#120d0a] shadow-[0_24px_90px_rgba(0,0,0,.75)] sm:my-8">
         <header className="flex items-start justify-between gap-4 border-b border-[var(--border-warm)] p-5 sm:p-6">
@@ -79,7 +80,7 @@ function ManifestModal({ open, onClose, onCreated }) {
         </form>
       </div>
     </div>
-  )
+  ), document.body)
 }
 
 function GuildCard({ guild, onInspect, onApply }) {
