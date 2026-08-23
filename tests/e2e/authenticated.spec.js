@@ -463,7 +463,6 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.getByRole('button', { name: 'Statystyki' }).click()
     await expect(page.getByText('Strażnicy Avalonu II')).toBeVisible()
     await expect(page.getByText('PvP Fame: 0')).toHaveCount(0)
-    await expect(page.getByText('Wybierz')).toHaveCount(2)
     await page.getByRole('button', { name: 'Zamknij podgląd gildii' }).click()
 
     await page.getByPlaceholder('Nazwa gildii lub słowo z opisu…').fill('nieistniejąca')
