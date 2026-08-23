@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Compass, Flame, LogIn, Shield } from 'lucide-react'
@@ -10,6 +10,22 @@ export default function GuestGateway() {
   const { loginWithDiscord: startDiscordLogin } = usePortalSession()
   const [loginBusy, setLoginBusy] = useState(false)
   const [authError, setAuthError] = useState('')
+
+  useEffect(() => {
+    const errorCode = new URLSearchParams(window.location.search).get('auth_error')
+    const message = errorCode === 'provider'
+      ? 'Logowanie przez Discord zostało anulowane albo odrzucone. Możesz spróbować ponownie.'
+      : (errorCode === 'callback'
+          ? 'Nie udało się zakończyć logowania przez Discord. Spróbuj ponownie lub wróć za chwilę.'
+          : '')
+    if (message) {
+      const timer = window.setTimeout(() => {
+        setAuthError(message)
+      }, 0)
+      return () => window.clearTimeout(timer)
+    }
+    return undefined
+  }, [])
 
   const loginWithDiscord = async () => {
     if (loginBusy) return

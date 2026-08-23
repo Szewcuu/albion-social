@@ -47,7 +47,7 @@ Gotowe i wdrożone:
 Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, przepływów użytkownika, stanów pustych/błędów, treści, dostępności i wydajności; następnie zapisujemy decyzje `zostawić / zmienić / dodać / usunąć`, wdrażamy zaakceptowany zakres i dopiero przechodzimy dalej.
 
 - [x] **Wspólny shell: centrum powiadomień** — naprawić kolizje ikon i tekstu, przewijanie, pozycjonowanie mobilne oraz zamykanie klawiszem Escape
-- [ ] **Brama wejścia** — ekran powitalny, logowanie Discord, footer oraz Regulamin i Prywatność dostępne dla gościa
+- [x] **Brama wejścia** — ekran powitalny, logowanie Discord, footer oraz Regulamin i Prywatność dostępne dla gościa
 - [ ] **Tawerna** — pierwsze wrażenie po zalogowaniu, hierarchia treści, czat i stany Realtime
 - [ ] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
 - [ ] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
@@ -60,6 +60,14 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [ ] **Panel administratora** — kolejka moderacji, role, stan usług, dziennik i komunikaty błędów
 - [ ] **Wspólne elementy portalu** — nawigacja, dropdowny, formularze, komunikaty, responsywność i spójność języka
 - [ ] **Podsumowanie przeglądu** — lista wykonanych zmian, pozostały dług techniczny, pomysły rozwojowe i decyzja o kolejnej fazie
+
+### Przegląd 01 — Brama wejścia
+
+- **Zostawić:** dwuczęściowy hero z albionowym tłem, pergaminową kartę logowania, jeden główny CTA Discord oraz publiczny dostęp wyłącznie do bramy i dokumentów prawnych.
+- **Zmieniono:** krótki ekran telefonu mieści przycisk logowania bez przewijania; mobilny nagłówek dokumentów ma pełną nazwę akcji; disclaimer pozostaje widoczny w obu stopkach.
+- **Dodano:** czytelne stany anulowania OAuth i błędu wymiany kodu PKCE, aktualną informację w Polityce Prywatności oraz testy najmniejszego ekranu i obu ścieżek błędu.
+- **Usunięto:** wewnętrzną notatkę roboczą z produkcyjnej Polityki Prywatności.
+- **Do decyzji właściciela przed komercjalizacją:** wskazać pełne dane administratora i dedykowany adres kontaktowy zamiast kontaktu wyłącznie przez profil GitHub.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 

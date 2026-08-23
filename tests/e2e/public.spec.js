@@ -9,6 +9,29 @@ test.describe('publiczna bramka portalu', () => {
     await expect(page.getByRole('link', { name: 'Prywatność', exact: true })).toBeVisible()
   })
 
+  test('wyjaśnia nieudane zakończenie logowania Discord', async ({ page }) => {
+    await page.goto('/?auth_error=callback')
+
+    await expect(page.getByText(/Nie udało się zakończyć logowania przez Discord/)).toBeVisible()
+    await expect(page.getByRole('button', { name: /Wejdź przez Discord/i })).toBeEnabled()
+  })
+
+  test('wyjaśnia anulowanie logowania po stronie Discorda', async ({ page }) => {
+    await page.goto('/auth/callback?error=access_denied')
+
+    await expect(page).toHaveURL(/\/\?auth_error=provider$/)
+    await expect(page.getByText(/Logowanie przez Discord zostało anulowane albo odrzucone/)).toBeVisible()
+  })
+
+  test('na niskim ekranie telefonu pokazuje główną akcję bez przewijania', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 640 })
+    await page.goto('/')
+
+    const loginBox = await page.getByRole('button', { name: /Wejdź przez Discord/i }).boundingBox()
+    expect(loginBox).not.toBeNull()
+    expect(loginBox.y + loginBox.height).toBeLessThanOrEqual(640)
+  })
+
   test('na telefonie pobiera lekki wariant tła bramy', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     const requestedImages = []
@@ -40,6 +63,15 @@ test.describe('publiczna bramka portalu', () => {
 
     await expect(page).toHaveURL(/\/prywatnosc$/)
     await expect(page.getByRole('heading', { name: /Twoje dane mają służyć Tobie/i })).toBeVisible()
+    await expect(page.getByText(/Operator powinien przed dalszą komercjalizacją/)).toHaveCount(0)
+  })
+
+  test('zachowuje pełne logowanie i disclaimer w dokumentach prawnych na telefonie', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/prywatnosc')
+
+    await expect(page.getByRole('button', { name: 'Zaloguj przez Discord' })).toBeVisible()
+    await expect(page.getByText(/nieoficjalny projekt społecznościowy/i)).toBeVisible()
   })
 
   test('indeksuje wyłącznie publiczne strony portalu', async ({ request }) => {
