@@ -845,6 +845,7 @@ input:autofill, textarea:autofill, select:autofill { background: #171009; color:
   .guest-login-card { padding: 42px 24px 30px; }
   .guest-login-trust { flex-wrap: wrap; }
   .guest-footer { grid-template-columns: 1fr; justify-items: center; gap: 14px; padding-block: 20px; text-align: center; }
+  .guest-footer > p { display: block; max-width: 330px; }
   .guest-footer nav { justify-content: center; }
   .member-intro { padding: 30px 18px; }
   .member-stats { grid-template-columns: 1fr 1fr; }
@@ -874,6 +875,20 @@ input:autofill, textarea:autofill, select:autofill { background: #171009; color:
   .mobile-nav-item { display: flex; min-width: 58px; min-height: 49px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 4px; color: #a69679; font: 750 8px/1 var(--font-ui); }
   .mobile-nav-item svg { width: 19px; height: 19px; }
   .mobile-nav-item.active { background: var(--gold-glow); color: var(--gold-bright); }
+}
+
+@media (max-width: 680px) and (max-height: 700px) {
+  .guest-welcome { gap: 38px; padding: 28px 20px 54px; }
+  .guest-welcome-copy .welcome-crest { width: 48px; height: 48px; margin-bottom: 12px; }
+  .guest-welcome-copy h1 { margin-top: 12px; font-size: clamp(36px,12vw,46px); }
+  .guest-welcome-copy > p { display: none; }
+  .guest-login-card { padding: 34px 24px 25px; }
+  .login-seal { width: 50px; height: 50px; margin-top: -60px; margin-bottom: 13px; }
+  .login-seal svg { width: 22px; height: 22px; }
+  .guest-login-card h2 { margin-top: 8px; font-size: 23px; }
+  .guest-login-card > p:not(.ledger-overline):not(.welcome-error) { margin: 10px 0 14px; line-height: 1.45; }
+  .guest-login-trust { margin-top: 14px; }
+  .guest-login-card small { margin-top: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

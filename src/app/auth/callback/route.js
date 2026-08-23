@@ -4,10 +4,15 @@ import { createServerSupabaseClient } from '@/lib/server/supabaseSession'
 export async function GET(request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const providerError = requestUrl.searchParams.get('error')
   const requestedNext = requestUrl.searchParams.get('next') ?? '/'
   const next = requestedNext.startsWith('/') && !requestedNext.startsWith('//')
     ? requestedNext
     : '/'
+
+  if (providerError) {
+    return NextResponse.redirect(new URL('/?auth_error=provider', requestUrl.origin))
+  }
 
   if (code) {
     try {

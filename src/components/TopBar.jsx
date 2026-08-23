@@ -182,7 +182,7 @@ export default function TopBar({
             </div>
           </>
         ) : (
-          <button onClick={loginWithDiscord} className="btn btn-discord btn-sm"><LogIn className="w-4 h-4" /><span className="hidden sm:inline">Zaloguj przez Discord</span><span className="sm:hidden">Discord</span></button>
+          <button onClick={loginWithDiscord} className="btn btn-discord btn-sm" aria-label="Zaloguj przez Discord"><LogIn className="w-4 h-4" /><span className="hidden sm:inline">Zaloguj przez Discord</span><span className="sm:hidden">Zaloguj</span></button>
         )}
       </div>
     </header>

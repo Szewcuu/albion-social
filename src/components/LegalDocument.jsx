@@ -58,7 +58,7 @@ export default function LegalDocument({
       </div>
 
       <footer className="legal-footer">
-        <p>© {new Date().getFullYear()} Albion Online Polska Portal · dokument informacyjny AOPP</p>
+        <p>© {new Date().getFullYear()} Albion Online Polska Portal · nieoficjalny projekt społecznościowy. Albion Online jest własnością Sandbox Interactive GmbH.</p>
         <nav aria-label="Dokumenty i kontakt">
           <Link href="/regulamin">Regulamin</Link>
           <Link href="/prywatnosc">Prywatność</Link>
