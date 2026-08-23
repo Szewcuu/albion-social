@@ -115,7 +115,9 @@ export default function ChatBox({ user, isAdmin }) {
     let active = true
     let chatChannel = null
     let realtimeClient = null
-    const cancelFetch = scheduleIdleTask(() => void fetchMessages())
+    // Sama kronika jest podstawową treścią Tawerny — nie czekamy z nią na bezczynność
+    // przeglądarki. Cięższe połączenie Realtime nadal uruchamiamy później.
+    const initialFetchId = window.setTimeout(() => void fetchMessages(), 0)
     const cancelRealtime = scheduleIdleTask(async () => {
       const { supabase } = await import('@/lib/supabase')
       if (!active) return
@@ -139,7 +141,7 @@ export default function ChatBox({ user, isAdmin }) {
 
     return () => {
       active = false
-      cancelFetch()
+      window.clearTimeout(initialFetchId)
       cancelRealtime()
       if (chatChannel && realtimeClient) void realtimeClient.removeChannel(chatChannel)
     }
@@ -149,6 +151,12 @@ export default function ChatBox({ user, isAdmin }) {
     () => new Map(chatMessages.map((message) => [message.id, message])),
     [chatMessages],
   )
+
+  const connectionLabel = connectionStatus === 'LIVE'
+    ? 'Na żywo'
+    : connectionStatus === 'ERROR'
+      ? 'Tryb ręczny'
+      : 'Łączenie'
 
   const startReply = (message) => {
     setReplyingTo(message)
@@ -235,7 +243,7 @@ export default function ChatBox({ user, isAdmin }) {
         </div>
         <div className={`community-connection ${connectionStatus.toLowerCase()} text-xs`}>
           <span className="status-dot" />
-          {connectionStatus === 'LIVE' ? 'Na żywo' : 'Łączenie'}
+          {connectionLabel}
         </div>
       </header>
 
@@ -248,7 +256,7 @@ export default function ChatBox({ user, isAdmin }) {
             </button>
           </div>
 
-          <div ref={postsRef} className="community-posts !max-h-[260px] overflow-y-auto" aria-live="polite">
+          <div ref={postsRef} className="community-posts !max-h-[340px] sm:!max-h-[420px] overflow-y-auto" aria-live="polite">
             {loading ? (
               <div className="community-empty"><RefreshCw className="spin" aria-hidden="true" /><strong>Otwieramy kronikę rozmów…</strong></div>
             ) : loadError ? (
