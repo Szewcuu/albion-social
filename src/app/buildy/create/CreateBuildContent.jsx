@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import {
   ArrowLeft, Save, Share2, Plus, Trash2, Check, AlertCircle,
   Swords, Video, Package, Zap, ThumbsUp, ThumbsDown,
@@ -13,7 +13,7 @@ import TagSelector from '@/components/builds/TagSelector'
 import ItemPicker from '@/components/builds/ItemPicker'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import {
-  createEmptyBuild, buildToDbPayload, decodeBuildFromUrl, encodeBuildToUrl, EQUIPMENT_SLOTS,
+  createEmptyBuild, decodeBuildFromUrl, encodeBuildToUrl, EQUIPMENT_SLOTS,
 } from '@/lib/buildSlots'
 
 function DynamicList({ items, onChange, placeholder, max = 5 }) {
@@ -84,6 +84,7 @@ export default function CreateBuildPage() {
   const [saved, setSaved] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [errors, setErrors] = useState([])
+  const [showAlternatives, setShowAlternatives] = useState(false)
 
   const updateBuild = useCallback((patch) => {
     setBuild(prev => ({ ...prev, ...patch }))
@@ -121,24 +122,22 @@ export default function CreateBuildPage() {
     }
 
     setSaving(true)
-    const payload = buildToDbPayload(build, user.id)
+    try {
+      const response = await authenticatedFetch('/api/builds', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ build }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się opublikować buildu.')
 
-    let { data, error } = await supabase.from('builds').insert([payload]).select('id').single()
-
-    if (error?.message?.includes('build_data')) {
-      const { build_data, ...corePayload } = payload
-      const fallback = await supabase.from('builds').insert([corePayload]).select('id').single()
-      data = fallback.data
-      error = fallback.error
-    }
-
-    setSaving(false)
-    if (error) {
-      setErrors([`Błąd zapisu: ${error.message}`])
-    } else {
       setSaved(true)
       setErrors([])
-      router.push(`/buildy/${data.id}`)
+      router.push(`/buildy/${payload.buildId}`)
+    } catch (error) {
+      setErrors([`Błąd zapisu: ${error.message}`])
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -299,7 +298,15 @@ export default function CreateBuildPage() {
             <section className="panel space-y-4 p-5 sm:p-6">
               <h2 className="font-display text-xl font-black text-[#fff8e8]">Alternatywne przedmioty</h2>
               <p className="text-[10px] text-gray-500 font-mono">Dodaj do 2 alternatyw na slot (np. tańszy wariant)</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {!showAlternatives ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAlternatives(true)}
+                  className="btn btn-ghost min-h-11 w-full text-[10px] font-black uppercase tracking-[.12em]"
+                >
+                  <Plus className="h-4 w-4" /> Otwórz warianty wyposażenia
+                </button>
+              ) : <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {EQUIPMENT_SLOTS.filter(s => !s.hasAmount).map((slot) => (
                   <div key={slot.key} className="bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 space-y-2">
                     <span className="text-[10px] font-mono text-gray-400 uppercase">{slot.label}</span>
@@ -322,7 +329,7 @@ export default function CreateBuildPage() {
                     </div>
                   </div>
                 ))}
-              </div>
+              </div>}
             </section>
 
             <section className="panel space-y-3 p-5 sm:p-6">

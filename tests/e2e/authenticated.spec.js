@@ -1,5 +1,6 @@
 import { expect, test } from './browser-health.js'
 import { getCookieAccessToken } from './auth-helpers.js'
+import { createEmptyBuild } from '../../src/lib/buildSlots.js'
 
 test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   test('odrzuca konto bez roli personelu z API moderacji i ról', async ({ page, request }) => {
@@ -60,6 +61,47 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByLabel('Nazwa buildu *')).toBeVisible()
     await expect(page.getByLabel('Specjalizacja (Mastery):')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Opublikuj build' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Alt 1:/ })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Otwórz warianty wyposażenia' }).click()
+    await expect(page.getByRole('button', { name: /Alt 1:/ }).first()).toBeVisible()
+  })
+
+  test('publikuje build przez chronione API z właścicielem ustalanym na serwerze', async ({ page, request }) => {
+    await page.goto('/')
+    const accessToken = await getCookieAccessToken(page)
+    expect(accessToken).toBeTruthy()
+
+    const build = createEmptyBuild()
+    build.title = `E2E build ${Date.now()}`
+    build.budget = 'medium'
+    build.tags = {
+      locations: ['Mists'],
+      zones: ['Strefa Czarna'],
+      sizes: ['Solo'],
+      roles: ['DPS'],
+      activities: ['PvP'],
+    }
+    build.slots.main_hand.main = 'T4_MAIN_SWORD@1'
+    build.user_id = '00000000-0000-0000-0000-000000000000'
+
+    const headers = { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+    let buildId = null
+    try {
+      const response = await request.post('/api/builds', { headers, data: { build } })
+      expect(response.status()).toBe(201)
+      buildId = (await response.json()).buildId
+      expect(buildId).toMatch(/^[0-9a-f-]{36}$/)
+    } finally {
+      if (buildId) {
+        const response = await request.delete(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/builds?id=eq.${buildId}`, {
+          headers: {
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+        expect(response.status()).toBe(204)
+      }
+    }
   })
 
   test('pokazuje obserwacyjną tierlistę 1v1 bez danych demonstracyjnych', async ({ page }) => {
@@ -233,6 +275,17 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.goto('/rynek')
     await expect(page.getByText('Tytuł Oferty *')).toBeVisible()
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
+  })
+
+  test('na mobile otwiera formularz wyprawy dopiero na żądanie', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/wyprawy')
+
+    const openForm = page.getByRole('button', { name: 'Otwórz formularz wyprawy' })
+    await expect(openForm).toBeVisible()
+    await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toHaveCount(0)
+    await openForm.click()
+    await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()
   })
 
   test('publikuje, odnawia i usuwa ofertę przez chronione API rynku', async ({ page, request }) => {

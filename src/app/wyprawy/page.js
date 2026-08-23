@@ -5,6 +5,7 @@ import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
 import UpcomingExpeditionsWidget from '@/components/expeditions/UpcomingExpeditionsWidget'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
+import { scheduleIdleTask } from '@/lib/clientIdle'
 import { 
   Swords, Shield, Heart, UserCheck, Plus, Search,
   Clock, Users, Trash2, AlertTriangle, MapPin, Compass, Sparkles, Calendar 
@@ -33,6 +34,7 @@ export default function Wyprawy() {
   const [deleteMessage, setDeleteMessage] = useState('')
   const [deletingExpeditionId, setDeletingExpeditionId] = useState(null)
   const [publishingExpeditionId, setPublishingExpeditionId] = useState(null)
+  const [showOrganizerForm, setShowOrganizerForm] = useState(false)
 
   const [signupData, setFormSignupData] = useState({
     ingame_nick: '',
@@ -61,6 +63,27 @@ export default function Wyprawy() {
   useEffect(() => {
     if (user) void Promise.resolve().then(fetchExpeditions)
   }, [fetchExpeditions, user])
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    let cancelScheduledOpen = null
+
+    const revealOnDesktop = () => {
+      if (!desktop.matches) return
+      cancelScheduledOpen?.()
+      cancelScheduledOpen = scheduleIdleTask(() => setShowOrganizerForm(true), {
+        minimumDelay: 500,
+        timeout: 2_000,
+      })
+    }
+
+    revealOnDesktop()
+    desktop.addEventListener('change', revealOnDesktop)
+    return () => {
+      cancelScheduledOpen?.()
+      desktop.removeEventListener('change', revealOnDesktop)
+    }
+  }, [])
 
   const openSignupModal = (exp) => {
     const signups = exp.expedition_signups || []
@@ -334,7 +357,16 @@ export default function Wyprawy() {
                 <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Ustal cel, wymagania i skład. Resztę ogłosimy drużynie.</p>
               </div>
 
-              {!user ? (
+              {!showOrganizerForm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowOrganizerForm(true)}
+                  className="btn btn-primary min-h-11 w-full text-xs font-extrabold uppercase tracking-wider lg:hidden"
+                  aria-expanded="false"
+                >
+                  <Plus className="h-4 w-4" /> Otwórz formularz wyprawy
+                </button>
+              ) : !user ? (
                 <p className="text-xs text-gray-400 italic bg-[var(--bg-elevated)] p-4 rounded-2xl border border-[var(--border-hover)]">
                   Zaloguj się na stronie głównej, aby tworzyć nowe ogłoszenia.
                 </p>
@@ -510,7 +542,7 @@ export default function Wyprawy() {
                 const fillPercent = totalSlots > 0 ? Math.min(100, Math.round((signups.length / totalSlots) * 100)) : 0
 
                 return (
-                  <div key={exp.id} className="panel panel-interactive group relative space-y-5 overflow-hidden rounded-3xl p-6">
+                  <div key={exp.id} className="panel panel-interactive group relative space-y-5 overflow-hidden rounded-3xl p-6 [content-visibility:auto] [contain-intrinsic-size:auto_540px]">
                     
                     <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/[.07] pb-4">
                       <div className="space-y-1">

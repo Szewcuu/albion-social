@@ -44,10 +44,10 @@ Gotowe i wdrożone:
 
 > **P45: stabilne mobilne Wyprawy i Kreator buildu**
 
-- [ ] porównać długie zadania głównego wątku i koszt startowy mobilnych Wypraw oraz Kreatora w trzech produkcyjnych próbach P44
-- [ ] rozdzielić ciężkie formularze, selektory i obliczenia od pierwszego renderu, zachowując pełną funkcjonalność po interakcji
-- [ ] ograniczyć zmienność TBT obu tras bez pogorszenia LCP, CLS, dostępności i obsługi klawiatury
-- [ ] objąć krytyczne fragmenty testami E2E oraz utrzymać budżet JavaScript, historię migracji i katalog przedmiotów
+- [x] porównać długie zadania głównego wątku i koszt startowy mobilnych Wypraw oraz Kreatora w trzech produkcyjnych próbach P44 — TBT wahało się odpowiednio `320–730 ms` i `340–620 ms`, a Kreator ładował `798,4 KB` JavaScript
+- [x] rozdzielić ciężkie formularze, selektory i obliczenia od pierwszego renderu, zachowując pełną funkcjonalność po interakcji — mobilny formularz Wypraw i 18 pickerów alternatyw jest montowanych na żądanie, a karty poza ekranem pomijają koszt layoutu
+- [x] ograniczyć zmienność TBT obu tras bez pogorszenia LCP, CLS, dostępności i obsługi klawiatury — publikacja buildu trafia do uwierzytelnionego API, a startowy pakiet Kreatora zmalał o `136,6 KB` do `661,8 KB`
+- [x] objąć krytyczne fragmenty testami E2E oraz utrzymać budżet JavaScript, historię migracji i katalog przedmiotów — dodano test mobilnego odsłaniania formularza, wariantów ekwipunku oraz rzeczywistej publikacji i sprzątania buildu
 - [ ] wdrożyć P45 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`
 
 ### P44 — serwerowa sesja i lżejszy start chronionego portalu
