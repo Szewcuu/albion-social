@@ -67,8 +67,18 @@ export default function TopBar({
       if (notifRef.current && !notifRef.current.contains(event.target)) setShowNotifs(false)
       if (userRef.current && !userRef.current.contains(event.target)) setShowUserMenu(false)
     }
+    const keyboardHandler = (event) => {
+      if (event.key === 'Escape') {
+        setShowNotifs(false)
+        setShowUserMenu(false)
+      }
+    }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('keydown', keyboardHandler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('keydown', keyboardHandler)
+    }
   }, [])
 
   return (
@@ -99,7 +109,7 @@ export default function TopBar({
               </button>
 
               {showNotifs && (
-                <div className="notification-popover">
+                <div className="notification-popover" role="region" aria-label="Lista powiadomień">
                   <div className="notification-popover-header">
                     <div><strong>Powiadomienia</strong><small>{unreadCount > 0 ? `${unreadCount} nieprzeczytane` : 'Wszystko przeczytane'}</small></div>
                     <div>
@@ -128,21 +138,21 @@ export default function TopBar({
                               setShowNotifs(false)
                             }}
                           >
-                            <div className="w-8 h-8 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center text-amber-300 shrink-0 mt-0.5">
-                              <IconComponent className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between gap-1">
-                                <strong className="truncate font-bold text-white text-xs">{notification.title || 'Nowe powiadomienie'}</strong>
-                                {!notification.is_read && <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />}
-                              </div>
-                              <small className="line-clamp-2 text-gray-300 text-[11px] font-sans mt-0.5">{notification.message || notification.content || 'Otwórz, aby zobaczyć szczegóły.'}</small>
+                            <span className="notification-item-icon" aria-hidden="true">
+                              <IconComponent />
+                            </span>
+                            <span className="notification-item-content">
+                              <span className="notification-item-title-row">
+                                <strong>{notification.title || 'Nowe powiadomienie'}</strong>
+                                {!notification.is_read && <span className="notification-unread-dot" />}
+                              </span>
+                              <small>{notification.message || notification.content || 'Otwórz, aby zobaczyć szczegóły.'}</small>
                               {notification.created_at && (
-                                <time className="block text-[9px] font-mono text-gray-500 mt-1">
+                                <time>
                                   {new Intl.DateTimeFormat('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(notification.created_at))}
                                 </time>
                               )}
-                            </div>
+                            </span>
                           </Link>
                         )
                       })

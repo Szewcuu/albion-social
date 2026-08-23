@@ -42,13 +42,24 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P47: stabilny wspólny runtime mobilnego portalu**
+> **Przegląd jakości portalu — podstrona po podstronie**
 
-- [ ] przypisać największe współdzielone chunki i długie zadania do Auth, AppShell, nawigacji oraz usług runtime na podstawie trzech produkcyjnych prób P46
-- [ ] rozdzielić koszt wspólnej hydratacji od pierwszej interakcji bez opóźniania podstawowej treści Tawerny, Wypraw ani Killboardu
-- [ ] ograniczyć skoki TBT Tawerny (`360–710 ms`), Wypraw (`380–590 ms`) i Killboardu (`130–450 ms`) przy zachowaniu LCP oraz CLS
-- [ ] objąć granice wspólnego runtime testami i zaostrzyć budżet, jeżeli redukcja chunków będzie powtarzalna
-- [ ] wdrożyć P47 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`
+Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, przepływów użytkownika, stanów pustych/błędów, treści, dostępności i wydajności; następnie zapisujemy decyzje `zostawić / zmienić / dodać / usunąć`, wdrażamy zaakceptowany zakres i dopiero przechodzimy dalej.
+
+- [x] **Wspólny shell: centrum powiadomień** — naprawić kolizje ikon i tekstu, przewijanie, pozycjonowanie mobilne oraz zamykanie klawiszem Escape
+- [ ] **Brama wejścia** — ekran powitalny, logowanie Discord, footer oraz Regulamin i Prywatność dostępne dla gościa
+- [ ] **Tawerna** — pierwsze wrażenie po zalogowaniu, hierarchia treści, czat i stany Realtime
+- [ ] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
+- [ ] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
+- [ ] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
+- [ ] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
+- [ ] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
+- [ ] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
+- [ ] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
+- [ ] **Profil i Obserwowane** — weryfikacja postaci, statystyki, preferencje, zapisane elementy i usunięcie konta
+- [ ] **Panel administratora** — kolejka moderacji, role, stan usług, dziennik i komunikaty błędów
+- [ ] **Wspólne elementy portalu** — nawigacja, dropdowny, formularze, komunikaty, responsywność i spójność języka
+- [ ] **Podsumowanie przeglądu** — lista wykonanych zmian, pozostały dług techniczny, pomysły rozwojowe i decyzja o kolejnej fazie
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
