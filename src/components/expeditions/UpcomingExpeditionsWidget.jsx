@@ -7,7 +7,7 @@ export default function UpcomingExpeditionsWidget({ expeditions = [], loading = 
 
   return (
     <section
-      className="panel relative mb-6 h-[220px] overflow-hidden rounded-3xl border-purple-500/20 bg-purple-950/10"
+      className={`panel relative mb-6 overflow-hidden rounded-3xl border-purple-500/20 bg-purple-950/10 ${loading || upcoming.length ? 'h-[220px]' : 'min-h-[96px]'}`}
       aria-label="Nadchodzące wyprawy graczy"
       aria-busy={loading}
     >
@@ -22,7 +22,7 @@ export default function UpcomingExpeditionsWidget({ expeditions = [], loading = 
           </div>
         </div>
       ) : upcoming.length === 0 ? (
-        <div className="absolute inset-0 flex items-center p-5 sm:p-6">
+        <div className="flex min-h-[96px] items-center p-5 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="shrink-0 rounded-2xl border border-purple-400/30 bg-purple-500/10 p-2.5 text-purple-300">
               <Compass className="h-5 w-5" />
@@ -62,7 +62,7 @@ export default function UpcomingExpeditionsWidget({ expeditions = [], loading = 
                     <div className="flex items-center justify-between gap-2 font-mono text-[9px]">
                       <span className="truncate rounded-full border border-purple-400/30 bg-purple-500/20 px-2 py-0.5 font-bold uppercase text-purple-300">{exp.activity_type || 'Wyprawa'}</span>
                       <span className="flex shrink-0 items-center gap-1 font-bold text-amber-300">
-                        <Clock className="h-3 w-3" /> {exp.start_time || exp.event_time ? new Date(exp.event_time || exp.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Dziś'}
+                        <Clock className="h-3 w-3" /> {exp.starts_at ? new Intl.DateTimeFormat('pl-PL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(exp.starts_at)) : exp.start_time || 'Termin nieznany'}
                       </span>
                     </div>
                     <h3 className="mt-1 truncate text-sm font-bold text-white">{exp.title}</h3>

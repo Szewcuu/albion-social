@@ -7,6 +7,7 @@ export const EXPEDITION_TTL_HOURS = 72
 export function getExpeditionCutoff(now = new Date()) {
   return new Date(now.getTime() - EXPEDITION_TTL_HOURS * 60 * 60 * 1000)
 }
+
 function getWebhookBaseUrl() {
   const configuredUrl = process.env.DISCORD_EXPEDITIONS_WEBHOOK_URL
   if (!configuredUrl || !isSafeDiscordWebhook(configuredUrl)) return null

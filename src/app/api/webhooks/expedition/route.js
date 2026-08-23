@@ -39,6 +39,7 @@ async function loadExpedition(supabase, expeditionId) {
       activity_type,
       min_ip,
       start_time,
+      starts_at,
       server,
       description,
       max_tanks,
@@ -163,7 +164,7 @@ export async function POST(request) {
           {
             title: `✅ PEŁNY SKŁAD: ${discordText(expedition.title, 200)}`,
             url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://albion-social.vercel.app'}/wyprawy`,
-            description: `Szykujcie ekwipunek! Zbiórka zaplanowana na **${discordText(expedition.start_time, 50)}**.`,
+            description: `Szykujcie ekwipunek! Zbiórka: <t:${Math.floor(new Date(expedition.starts_at).getTime() / 1000)}:F>.`,
             color: 0x10b981,
             fields: [
               { name: '🎯 Aktywność', value: discordText(expedition.activity_type, 100) || 'Wyprawa', inline: true },
@@ -234,7 +235,7 @@ export async function POST(request) {
           fields: [
             { name: '🎯 Aktywność', value: discordText(expedition.activity_type, 100) || 'Statyk', inline: true },
             { name: '🌐 Serwer', value: discordText(expedition.server, 50) || 'Europa', inline: true },
-            { name: '⏰ Czas zbiórki', value: discordText(expedition.start_time, 50) || '19:00 UTC', inline: true },
+            { name: '⏰ Czas zbiórki', value: `<t:${Math.floor(new Date(expedition.starts_at).getTime() / 1000)}:F>`, inline: true },
             { name: '🛡️ Wymagane IP', value: `${Number(expedition.min_ip) || 1200}+`, inline: true },
             { name: '👑 Lider drużyny', value: creator, inline: true },
             { name: '👥 Poszukiwane miejsca', value: rolesList, inline: false },
