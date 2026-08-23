@@ -42,13 +42,21 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P45: stabilne mobilne Wyprawy i Kreator buildu**
+> **P46: stabilna mobilna Zbrojownia buildów i Rynek**
+
+- [ ] rozłożyć koszt startowy mobilnej Zbrojowni i Rynku na skrypty własne, współdzielone zależności, obrazy oraz pracę po hydratacji
+- [ ] odroczyć elementy poniżej pierwszego ekranu i niekrytyczne obliczenia bez pogorszenia interakcji, dostępności ani widoku desktopowego
+- [ ] ograniczyć zmienność mobilnej Zbrojowni (Performance `87–100`, TBT `80–530 ms`) i utrzymać Rynek co najmniej na obecnym poziomie (Performance `90–92`, TBT `350–420 ms`)
+- [ ] objąć zmienione ścieżki testami E2E i utrzymać budżet JavaScript, historię migracji oraz katalog przedmiotów
+- [ ] wdrożyć P46 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`
+
+### P45 — stabilne mobilne Wyprawy i Kreator buildu
 
 - [x] porównać długie zadania głównego wątku i koszt startowy mobilnych Wypraw oraz Kreatora w trzech produkcyjnych próbach P44 — TBT wahało się odpowiednio `320–730 ms` i `340–620 ms`, a Kreator ładował `798,4 KB` JavaScript
 - [x] rozdzielić ciężkie formularze, selektory i obliczenia od pierwszego renderu, zachowując pełną funkcjonalność po interakcji — mobilny formularz Wypraw i 18 pickerów alternatyw jest montowanych na żądanie, a karty poza ekranem pomijają koszt layoutu
 - [x] ograniczyć zmienność TBT obu tras bez pogorszenia LCP, CLS, dostępności i obsługi klawiatury — publikacja buildu trafia do uwierzytelnionego API, a startowy pakiet Kreatora zmalał o `136,6 KB` do `661,8 KB`
 - [x] objąć krytyczne fragmenty testami E2E oraz utrzymać budżet JavaScript, historię migracji i katalog przedmiotów — dodano test mobilnego odsłaniania formularza, wariantów ekwipunku oraz rzeczywistej publikacji i sprzątania buildu
-- [ ] wdrożyć P45 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`
+- [x] wdrożyć P45 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14` — Wyprawy mobile osiągnęły Performance `100` i `97`, LCP `1,2 s` w obu próbach, TBT `80 ms` i `210 ms` oraz CLS `0`; Kreator buildu osiągnął Performance `99` i `92`, LCP `1,3 s` w obu próbach, TBT `100 ms` i `360 ms` oraz CLS `0` ([pierwszy zielony audyt](https://github.com/Szewcuu/albion-social/actions/runs/32635462449), [drugi zielony audyt](https://github.com/Szewcuu/albion-social/actions/runs/32635703903), 23 sierpnia 2026)
 
 ### P44 — serwerowa sesja i lżejszy start chronionego portalu
 
