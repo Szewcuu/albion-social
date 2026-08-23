@@ -22,6 +22,76 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByLabel('Napisz wiadomość w tawernie')).toBeVisible()
   })
 
+  test('obsługuje kronikę Tawerny jak rozmowę forumową', async ({ page }) => {
+    const messages = Array.from({ length: 16 }, (_, index) => ({
+      id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+      user_id: `forum-user-${index}`,
+      username: index === 15 ? 'Rycerz' : `Gracz${index + 1}`,
+      text: index === 15 ? 'Wiadomość do odpowiedzi' : `Wiadomość kroniki ${index + 1}`,
+      channel: 'GLOBALNY',
+      status: 'visible',
+      reply_to: null,
+      created_at: new Date(Date.UTC(2026, 7, 23, 12, index)).toISOString(),
+    }))
+    let sentPayload = null
+
+    await page.route('**/api/chat**', async (route) => {
+      const request = route.request()
+      if (request.method() === 'POST') {
+        sentPayload = request.postDataJSON()
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            message: {
+              ...messages[15],
+              id: '00000000-0000-4000-8000-999999999999',
+              text: sentPayload.text,
+              reply_to: sentPayload.replyTo,
+              created_at: '2026-08-23T13:00:00.000Z',
+            },
+            supportsReplies: true,
+          }),
+        })
+        return
+      }
+
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ messages, hasOlder: false, cursor: null, supportsReplies: true }),
+      })
+    })
+
+    await page.goto('/')
+    await expect(page.getByText('Wiadomość do odpowiedzi', { exact: true })).toBeVisible()
+    await expect(page.getByText('Szybkie Akcje Gracza')).toHaveCount(0)
+
+    const posts = page.locator('.community-posts')
+    await expect.poll(() => posts.evaluate((element) => ({
+      atBottom: element.scrollTop + element.clientHeight >= element.scrollHeight - 2,
+      height: element.clientHeight,
+    }))).toEqual({ atBottom: true, height: 420 })
+
+    const targetMessage = page.locator('.community-post').filter({ hasText: 'Wiadomość do odpowiedzi' })
+    await targetMessage.getByRole('button', { name: 'Odpowiedz' }).click()
+    await expect(page.getByText('Odpowiadasz użytkownikowi')).toBeVisible()
+
+    const composer = page.getByLabel('Napisz wiadomość w tawernie')
+    await composer.fill('@Rycerz Odpowiedź testowa')
+    await composer.press('Enter')
+    await expect(page.getByText('@Rycerz', { exact: true }).last()).toBeVisible()
+    expect(sentPayload).toEqual({
+      text: '@Rycerz Odpowiedź testowa',
+      replyTo: messages[15].id,
+    })
+    await expect.poll(() => posts.evaluate((element) => element.scrollTop + element.clientHeight >= element.scrollHeight - 2)).toBe(true)
+
+    await composer.fill('Pierwsza linia')
+    await composer.press('Shift+Enter')
+    await composer.type('Druga linia')
+    await expect(composer).toHaveValue('Pierwsza linia\nDruga linia')
+  })
+
   test('układa centrum powiadomień bez kolizji na desktopie i telefonie', async ({ page }) => {
     const notifications = [
       {

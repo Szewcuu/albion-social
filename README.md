@@ -48,7 +48,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 
 - [x] **Wspólny shell: centrum powiadomień** — naprawić kolizje ikon i tekstu, przewijanie, pozycjonowanie mobilne oraz zamykanie klawiszem Escape
 - [x] **Brama wejścia** — ekran powitalny, logowanie Discord, footer oraz Regulamin i Prywatność dostępne dla gościa
-- [ ] **Tawerna** — pierwsze wrażenie po zalogowaniu, hierarchia treści, czat i stany Realtime
+- [x] **Tawerna** — pierwsze wrażenie po zalogowaniu, hierarchia treści, czat i stany Realtime
 - [ ] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
 - [ ] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
 - [ ] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
@@ -68,6 +68,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Dodano:** czytelne stany anulowania OAuth i błędu wymiany kodu PKCE, aktualną informację w Polityce Prywatności oraz testy najmniejszego ekranu i obu ścieżek błędu.
 - **Usunięto:** wewnętrzną notatkę roboczą z produkcyjnej Polityki Prywatności.
 - **Do decyzji właściciela przed komercjalizacją:** wskazać pełne dane administratora i dedykowany adres kontaktowy zamiast kontaktu wyłącznie przez profil GitHub.
+
+### Przegląd 02 — Tawerna
+
+- **Zostawić:** forumową formę jednej wspólnej sali, odpowiedzi z cytatem i pingiem, wysyłanie przez `Enter`, nową linię przez `Shift+Enter`, ręczne wczytywanie starszych wpisów oraz statystyki społeczności.
+- **Zmieniono:** historia rozmowy jest pobierana natychmiast po zamontowaniu Tawerny zamiast czekać na bezczynność przeglądarki; kronika pokazuje więcej wiadomości na desktopie i telefonie; stan awarii Realtime nazywa się teraz uczciwie „Tryb ręczny”, ponieważ odczyt i zapis przez API nadal działają.
+- **Usunięto:** liczniki Gildii, Ofert i serwerów powtórzone w nagłówku oraz blok „Szybkie Akcje Gracza”, który duplikował odnośniki istniejące w panelu bocznym i mobilnej nawigacji.
+- **Potwierdzono:** po pierwszym załadowaniu, odświeżeniu i wysłaniu własnej wiadomości kronika przewija się na dół; użytkownik czytający starsze wpisy nie jest wyrywany z miejsca przez nową wiadomość; chronione API ustala autora po stronie serwera i respektuje własność/moderację przy usuwaniu.
+- **Dodano kontrolę regresji:** E2E obejmuje większą historię, start na dole kroniki, odpowiedź z `replyTo`, wysłanie przez `Enter`, nową linię przez `Shift+Enter` oraz brak powielonej sekcji nawigacyjnej.
+- **Do obserwacji przy wzroście ruchu:** obecne `Postgres Changes` jest wystarczające dla jednej małej sali; przy większej liczbie jednoczesnych użytkowników należy przejść na prywatny Supabase Broadcast zgodnie z aktualnym zaleceniem skalowania Realtime.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
