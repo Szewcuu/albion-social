@@ -86,7 +86,7 @@ export default function EventCalendarWidget({ expeditions = [] }) {
   const userExpeditionEvents = expeditions.map(exp => ({
     id: `exp-${exp.id}`,
     title: exp.title,
-    category: exp.activity_type || 'Wyprawa',
+    category: exp.activity_type === 'Statyk T8' ? 'Statyk' : exp.activity_type || 'Wyprawa',
     time: exp.start_time || '19:00 UTC',
     location: exp.city || 'Outlands',
     isOfficial: false,
