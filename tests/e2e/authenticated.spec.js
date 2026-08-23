@@ -397,6 +397,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('otwiera formularze wyprawy i rynku', async ({ page }) => {
     await page.goto('/wyprawy')
+    await page.getByRole('button', { name: 'Otwórz formularz wyprawy' }).click()
     await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()
     await expect(page.getByLabel('Min. IP *')).toBeVisible()
     await expect(page.getByLabel('Tank')).toBeVisible()
