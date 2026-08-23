@@ -70,7 +70,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect.poll(() => posts.evaluate((element) => ({
       atBottom: element.scrollTop + element.clientHeight >= element.scrollHeight - 2,
       height: element.clientHeight,
-    }))).toEqual({ atBottom: true, height: 420 })
+    }))).toEqual({ atBottom: true, height: 360 })
 
     const targetMessage = page.locator('.community-post').filter({ hasText: 'Wiadomość do odpowiedzi' })
     await targetMessage.getByRole('button', { name: 'Odpowiedz' }).click()

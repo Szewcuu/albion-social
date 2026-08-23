@@ -72,7 +72,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 ### Przegląd 02 — Tawerna
 
 - **Zostawić:** forumową formę jednej wspólnej sali, odpowiedzi z cytatem i pingiem, wysyłanie przez `Enter`, nową linię przez `Shift+Enter`, ręczne wczytywanie starszych wpisów oraz statystyki społeczności.
-- **Zmieniono:** historia rozmowy jest pobierana natychmiast po zamontowaniu Tawerny zamiast czekać na bezczynność przeglądarki; kronika pokazuje więcej wiadomości na desktopie i telefonie; stan awarii Realtime nazywa się teraz uczciwie „Tryb ręczny”, ponieważ odczyt i zapis przez API nadal działają.
+- **Zmieniono:** historia rozmowy jest pobierana natychmiast po zamontowaniu Tawerny zamiast czekać na bezczynność przeglądarki; kronika pokazuje więcej wiadomości na desktopie i telefonie; stan awarii Realtime nazywa się teraz uczciwie „Tryb ręczny”, ponieważ odczyt i zapis przez API nadal działają. Po kontroli produkcyjnej usunięto również pusty pasek powitalny, wzmocniono nagłówek kroniki i przebudowano statystyki na czytelną tablicę 2×2.
 - **Usunięto:** liczniki Gildii, Ofert i serwerów powtórzone w nagłówku oraz blok „Szybkie Akcje Gracza”, który duplikował odnośniki istniejące w panelu bocznym i mobilnej nawigacji.
 - **Potwierdzono:** po pierwszym załadowaniu, odświeżeniu i wysłaniu własnej wiadomości kronika przewija się na dół; użytkownik czytający starsze wpisy nie jest wyrywany z miejsca przez nową wiadomość; chronione API ustala autora po stronie serwera i respektuje własność/moderację przy usuwaniu.
 - **Dodano kontrolę regresji:** E2E obejmuje większą historię, start na dole kroniki, odpowiedź z `replyTo`, wysłanie przez `Enter`, nową linię przez `Shift+Enter` oraz brak powielonej sekcji nawigacyjnej.
