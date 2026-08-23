@@ -235,11 +235,12 @@ export default function ChatBox({ user, isAdmin }) {
   }
 
   return (
-    <section className="community-forum !m-0 !w-full rounded-2xl border border-[var(--border)] overflow-hidden" aria-labelledby="community-title">
-      <header className="community-forum-header !py-3 !px-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-amber-400" />
-          <h2 id="community-title" className="text-base font-bold text-white !m-0">Tawerna społeczności</h2>
+    <section className="community-forum tavern-forum !m-0 !w-full rounded-2xl border border-[var(--border)] overflow-hidden" aria-labelledby="community-title">
+      <header className="community-forum-header !py-4 !px-5 flex items-center justify-between">
+        <div>
+          <div className="community-overline"><Users aria-hidden="true" /> Kronika społeczności</div>
+          <h2 id="community-title" className="!mt-1.5 !text-[clamp(1.35rem,2vw,1.8rem)]">Główna sala Tawerny</h2>
+          <p className="!mt-1 !text-[11px]">Rozmowy graczy ze wszystkich serwerów Albion Online.</p>
         </div>
         <div className={`community-connection ${connectionStatus.toLowerCase()} text-xs`}>
           <span className="status-dot" />
@@ -250,13 +251,13 @@ export default function ChatBox({ user, isAdmin }) {
       <div className="community-layout community-single">
         <div className="community-thread">
           <div className="community-thread-heading !py-2 !px-4 text-xs">
-            <div><Sparkles aria-hidden="true" /><span className="text-xs"><strong>Główna sala tawerny</strong> <small className="text-[10px]">({chatMessages.length} wiadomości)</small></span></div>
+            <div><Sparkles aria-hidden="true" /><span className="text-xs"><strong>Ostatnie wiadomości</strong> <small className="text-[10px]">{chatMessages.length} w kronice</small></span></div>
             <button type="button" onClick={() => fetchMessages()} aria-label="Odśwież rozmowę" disabled={loading}>
               <RefreshCw aria-hidden="true" className={loading ? 'spin' : ''} />
             </button>
           </div>
 
-          <div ref={postsRef} className="community-posts !max-h-[340px] sm:!max-h-[420px] overflow-y-auto" aria-live="polite">
+          <div ref={postsRef} className="community-posts !max-h-[340px] sm:!max-h-[360px] overflow-y-auto" aria-live="polite">
             {loading ? (
               <div className="community-empty"><RefreshCw className="spin" aria-hidden="true" /><strong>Otwieramy kronikę rozmów…</strong></div>
             ) : loadError ? (

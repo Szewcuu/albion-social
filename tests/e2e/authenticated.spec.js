@@ -18,7 +18,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('otwiera czat społeczności', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'Tawerna społeczności' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Główna sala Tawerny' })).toBeVisible()
     await expect(page.getByLabel('Napisz wiadomość w tawernie')).toBeVisible()
   })
 
@@ -70,7 +70,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect.poll(() => posts.evaluate((element) => ({
       atBottom: element.scrollTop + element.clientHeight >= element.scrollHeight - 2,
       height: element.clientHeight,
-    }))).toEqual({ atBottom: true, height: 420 })
+    }))).toEqual({ atBottom: true, height: 360 })
 
     const targetMessage = page.locator('.community-post').filter({ hasText: 'Wiadomość do odpowiedzi' })
     await targetMessage.getByRole('button', { name: 'Odpowiedz' }).click()

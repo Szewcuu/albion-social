@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
-import { Activity } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
@@ -40,27 +39,13 @@ export default function MemberTavern() {
 
   useEffect(() => scheduleIdleTask(fetchPortalOverview), [fetchPortalOverview])
 
-  const displayName = (user?.user_metadata?.full_name || user?.user_metadata?.name || 'Wojowniku').replace(/#0$/, '')
-
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 pt-6 space-y-6 animate-fade-in">
-      <div className="panel p-3.5 sm:p-4 border-amber-400/20">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30">
-            <Activity className="w-4 h-4" />
-          </div>
-          <div>
-            <h1 className="text-base font-black text-white">Witaj w tawernie, <span className="text-amber-400">{displayName}</span></h1>
-            <p className="text-[11px] text-gray-400">Główny punkt wypadowy polskiej społeczności Albion Online.</p>
-          </div>
-        </div>
-      </div>
-
+    <div className="w-full max-w-[1320px] mx-auto px-4 sm:px-6 pt-5 sm:pt-7 animate-fade-in">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        <div className="lg:col-span-8">
+        <div className="lg:col-span-7 xl:col-span-8">
           <ChatBox user={user} isAdmin={isAdmin} />
         </div>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-5 xl:col-span-4">
           <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />
         </div>
       </div>
