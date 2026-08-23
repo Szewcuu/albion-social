@@ -15,10 +15,10 @@ function ToolSkeleton({ label }) {
   return <div className="panel min-h-72 animate-pulse" role="status" aria-label={label} />
 }
 
-export default function DeferredMarketTools() {
-  const [ready, setReady] = useState(false)
-  const [activeTool, setActiveTool] = useState('intelligence')
-  const [loadedTools, setLoadedTools] = useState(() => new Set())
+export default function DeferredMarketTools({ initialTool = '' }) {
+  const [ready, setReady] = useState(Boolean(initialTool))
+  const [activeTool, setActiveTool] = useState(initialTool || 'intelligence')
+  const [loadedTools, setLoadedTools] = useState(() => new Set(initialTool ? [initialTool] : []))
 
   const activateTool = (tool) => {
     setActiveTool(tool)

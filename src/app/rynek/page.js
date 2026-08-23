@@ -2,9 +2,11 @@
 
 import dynamic from 'next/dynamic'
 import { startTransition, useCallback, useEffect, useRef, useState } from 'react'
+import { BarChart3, Coins, Store } from 'lucide-react'
 
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { scheduleIdleTask } from '@/lib/clientIdle'
 
 const MarketOfferForm = dynamic(() => import('@/components/market/MarketOfferForm'), {
   ssr: false,
@@ -36,6 +38,8 @@ export default function Rynek() {
   const [hasMore, setHasMore] = useState(false)
   const [loadError, setLoadError] = useState('')
   const [marketBoardReady, setMarketBoardReady] = useState(false)
+  const [showOfferForm, setShowOfferForm] = useState(false)
+  const [activeDeferredTool, setActiveDeferredTool] = useState('')
   const [focusOfferId, setFocusOfferId] = useState('')
   const [selectedOfferForContact, setSelectedOfferForContact] = useState(null)
   const [formData, setFormData] = useState(EMPTY_FORM)
@@ -72,9 +76,31 @@ export default function Rynek() {
   }, [])
 
   useEffect(() => {
+    if (!marketBoardReady) return undefined
     const timerId = window.setTimeout(fetchOffers, 0)
     return () => window.clearTimeout(timerId)
-  }, [fetchOffers])
+  }, [fetchOffers, marketBoardReady])
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)')
+    let cancelScheduledOpen = null
+
+    const revealOnDesktop = () => {
+      if (!desktop.matches) return
+      cancelScheduledOpen?.()
+      cancelScheduledOpen = scheduleIdleTask(() => setShowOfferForm(true), {
+        minimumDelay: 500,
+        timeout: 2_000,
+      })
+    }
+
+    revealOnDesktop()
+    desktop.addEventListener('change', revealOnDesktop)
+    return () => {
+      cancelScheduledOpen?.()
+      desktop.removeEventListener('change', revealOnDesktop)
+    }
+  }, [])
 
   useEffect(() => {
     const offerId = new URLSearchParams(window.location.search).get('offer') || ''
@@ -181,13 +207,31 @@ export default function Rynek() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          <MarketOfferForm
-            user={user}
-            formData={formData}
-            formMessage={formMessage}
-            onChange={setFormData}
-            onSubmit={handleCreateOffer}
-          />
+          {showOfferForm ? (
+            <MarketOfferForm
+              user={user}
+              formData={formData}
+              formMessage={formMessage}
+              onChange={setFormData}
+              onSubmit={handleCreateOffer}
+            />
+          ) : (
+            <section className="panel flex min-h-40 flex-col justify-center gap-4 p-5 lg:col-span-4" aria-labelledby="market-offer-launcher-title">
+              <div className="flex items-center gap-3">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-sky-400/25 bg-sky-400/8 text-sky-300">
+                  <Store className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[.2em] text-sky-300">Twoje stoisko</p>
+                  <h2 id="market-offer-launcher-title" className="font-display text-lg font-black text-white">Chcesz coś sprzedać?</h2>
+                </div>
+              </div>
+              <p className="text-xs leading-5 text-[var(--text-secondary)]">Najpierw pokazujemy oferty. Formularz wystawiania otworzysz wtedy, gdy będzie potrzebny.</p>
+              <button type="button" onClick={() => setShowOfferForm(true)} className="btn btn-secondary btn-sm w-full">
+                <Store className="h-4 w-4" /> Otwórz formularz oferty
+              </button>
+            </section>
+          )}
 
           {marketBoardReady ? (
             <MarketOfferBoard
@@ -213,7 +257,25 @@ export default function Rynek() {
         </div>
 
         <div style={{ contentVisibility: 'auto', containIntrinsicSize: '420px' }}>
-          <DeferredMarketTools />
+          {activeDeferredTool ? (
+            <DeferredMarketTools initialTool={activeDeferredTool} />
+          ) : (
+            <section className="panel flex min-h-40 flex-col items-center justify-center gap-4 border-dashed p-6 text-center" aria-labelledby="market-tools-launcher-title">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[.22em] text-amber-300">Narzędzia kupca</p>
+                <h2 id="market-tools-launcher-title" className="font-display mt-1 text-xl font-black text-white">Uruchom tylko potrzebną analizę</h2>
+                <p className="mt-2 text-xs text-[var(--text-secondary)]">Dane cenowe i wykresy zostaną pobrane dopiero po wybraniu narzędzia.</p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2">
+                <button type="button" onClick={() => setActiveDeferredTool('intelligence')} className="btn btn-primary btn-sm">
+                  <BarChart3 className="h-4 w-4" /> Wywiad rynkowy
+                </button>
+                <button type="button" onClick={() => setActiveDeferredTool('gold')} className="btn btn-secondary btn-sm">
+                  <Coins className="h-4 w-4" /> Kurs złota
+                </button>
+              </div>
+            </section>
+          )}
         </div>
       </div>
 

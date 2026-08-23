@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import Link from 'next/link'
 import { Swords, Users, Shield, Star, Copy, Check, Plus, Trash2, Share2, Download } from 'lucide-react'
-import { EquipmentPreview } from '@/components/builds/EquipmentGrid'
+import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import { buildFromDbRow } from '@/lib/buildSlots'
 
 const ROLE_COLORS = {
@@ -154,7 +154,7 @@ export default function SquadCompBuilder() {
 
               {build ? (
                 <div className="space-y-2">
-                  <EquipmentPreview build={build} compact />
+                  <EquipmentPreview slots={build.slots} size="sm" />
                   <p className="text-xs font-bold text-white truncate">{build.name}</p>
                   <div className="flex gap-1.5">
                     <button

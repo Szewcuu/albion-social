@@ -91,15 +91,18 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       expect(response.status()).toBe(201)
       buildId = (await response.json()).buildId
       expect(buildId).toMatch(/^[0-9a-f-]{36}$/)
+
+      const readResponse = await request.get('/api/builds?category=all&limit=6', { headers })
+      expect(readResponse.status()).toBe(200)
+      expect(readResponse.headers()['cache-control']).toContain('no-store')
+      const payload = await readResponse.json()
+      expect(payload.builds.some((row) => row.id === buildId)).toBe(true)
+      expect(payload.builds.length).toBeLessThanOrEqual(6)
+      expect(typeof payload.hasMore).toBe('boolean')
     } finally {
       if (buildId) {
-        const response = await request.delete(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/builds?id=eq.${buildId}`, {
-          headers: {
-            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
-        expect(response.status()).toBe(204)
+        const response = await request.delete('/api/builds', { headers, data: { id: buildId } })
+        expect(response.status()).toBe(200)
       }
     }
   })
@@ -288,6 +291,18 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByLabel('Cel / Tytuł Wyprawy *')).toBeVisible()
   })
 
+  test('na mobile pokazuje tablicę rynku przed formularzem sprzedaży', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/rynek')
+
+    const openForm = page.getByRole('button', { name: 'Otwórz formularz oferty' })
+    await expect(openForm).toBeVisible()
+    await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Znajdź właściwy towar' })).toBeVisible()
+    await openForm.click()
+    await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
+  })
+
   test('publikuje, odnawia i usuwa ofertę przez chronione API rynku', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await getCookieAccessToken(page)
@@ -364,9 +379,8 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     })
 
     await page.goto('/rynek')
-    const goldTab = page.getByRole('tab', { name: 'Kurs złota' })
-    await goldTab.scrollIntoViewIfNeeded()
-    await goldTab.click()
+    await page.getByRole('button', { name: 'Kurs złota' }).click()
+    await expect(page.getByRole('tab', { name: 'Kurs złota' })).toHaveAttribute('aria-selected', 'true')
 
     await expect(page.getByText(/Kalkulator został wyłączony, aby nie pokazywać zmyślonej ceny/)).toBeVisible()
     await expect(page.getByLabel('Ilość złota do przeliczenia')).toBeDisabled()
