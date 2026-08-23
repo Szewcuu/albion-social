@@ -18,7 +18,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('otwiera czat społeczności', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { name: 'Tawerna społeczności' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Główna sala Tawerny' })).toBeVisible()
     await expect(page.getByLabel('Napisz wiadomość w tawernie')).toBeVisible()
   })
 
