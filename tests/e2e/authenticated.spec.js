@@ -22,6 +22,63 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByLabel('Napisz wiadomość w tawernie')).toBeVisible()
   })
 
+  test('układa centrum powiadomień bez kolizji na desktopie i telefonie', async ({ page }) => {
+    const notifications = [
+      {
+        id: '11111111-1111-4111-8111-111111111111',
+        title: 'Awaria integracji: albion_api o wyjątkowo długiej nazwie',
+        message: 'Gameinfo API nie odpowiada dla regionu Ameryka. Spróbuj ponownie później.',
+        type: 'system',
+        link: '/killboard',
+        is_read: false,
+        created_at: '2026-08-23T06:41:00.000Z',
+      },
+      {
+        id: '22222222-2222-4222-8222-222222222222',
+        title: 'Nowa wiadomość handlowa',
+        message: 'Gracz odpowiedział w sprawie oferty rynkowej.',
+        type: 'market',
+        link: '/wiadomosci',
+        is_read: true,
+        created_at: '2026-08-23T05:20:00.000Z',
+      },
+    ]
+
+    await page.route('**/api/notifications', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ notifications, role: 'user' }) })
+        return
+      }
+      await route.continue()
+    })
+
+    await page.goto('/')
+    const trigger = page.getByRole('button', { name: /Powiadomienia/ })
+    await expect(trigger).toHaveAttribute('aria-label', /nieprzeczytane: 1/)
+    await trigger.click()
+
+    const popover = page.getByRole('region', { name: 'Lista powiadomień' })
+    const firstItem = popover.locator('.notification-item').first()
+    await expect(firstItem).toBeVisible()
+    const desktopLayout = await firstItem.evaluate((item) => {
+      const icon = item.querySelector('.notification-item-icon').getBoundingClientRect()
+      const content = item.querySelector('.notification-item-content').getBoundingClientRect()
+      return { iconRight: icon.right, contentLeft: content.left }
+    })
+    expect(desktopLayout.iconRight).toBeLessThan(desktopLayout.contentLeft)
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    const mobileBox = await popover.boundingBox()
+    expect(mobileBox).not.toBeNull()
+    expect(mobileBox.x).toBeGreaterThanOrEqual(0)
+    expect(mobileBox.x + mobileBox.width).toBeLessThanOrEqual(390)
+    expect(mobileBox.y + mobileBox.height).toBeLessThanOrEqual(844)
+
+    await page.keyboard.press('Escape')
+    await expect(popover).toBeHidden()
+    await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  })
+
   test('pobiera chronioną kronikę Tawerny przez lekkie API', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await getCookieAccessToken(page)
