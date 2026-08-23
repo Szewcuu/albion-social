@@ -42,13 +42,21 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
-> **P46: stabilna mobilna Zbrojownia buildów i Rynek**
+> **P47: stabilny wspólny runtime mobilnego portalu**
+
+- [ ] przypisać największe współdzielone chunki i długie zadania do Auth, AppShell, nawigacji oraz usług runtime na podstawie trzech produkcyjnych prób P46
+- [ ] rozdzielić koszt wspólnej hydratacji od pierwszej interakcji bez opóźniania podstawowej treści Tawerny, Wypraw ani Killboardu
+- [ ] ograniczyć skoki TBT Tawerny (`360–710 ms`), Wypraw (`380–590 ms`) i Killboardu (`130–450 ms`) przy zachowaniu LCP oraz CLS
+- [ ] objąć granice wspólnego runtime testami i zaostrzyć budżet, jeżeli redukcja chunków będzie powtarzalna
+- [ ] wdrożyć P47 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`
+
+### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
 - [x] rozłożyć koszt startowy mobilnej Zbrojowni i Rynku na skrypty własne, współdzielone zależności, obrazy oraz pracę po hydratacji — Zbrojownia ładowała klienta PostgREST i interaktywny picker przedmiotów do samego podglądu kart, a Rynek montował formularz oraz narzędzia analityczne przed użyciem
 - [x] odroczyć elementy poniżej pierwszego ekranu i niekrytyczne obliczenia bez pogorszenia interakcji, dostępności ani widoku desktopowego — podgląd ekwipunku ma osobny lekki komponent, Zbrojownia pobiera sześć kart przez API, a mobilny Rynek pokazuje najpierw oferty i uruchamia formularz oraz wybrane narzędzie na żądanie
-- [ ] ograniczyć zmienność mobilnej Zbrojowni (Performance `87–100`, TBT `80–530 ms`) i utrzymać Rynek co najmniej na obecnym poziomie (Performance `90–92`, TBT `350–420 ms`)
-- [ ] objąć zmienione ścieżki testami E2E i utrzymać budżet JavaScript, historię migracji oraz katalog przedmiotów
-- [ ] wdrożyć P46 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14`
+- [x] ograniczyć zmienność mobilnej Zbrojowni (Performance `87–100`, TBT `80–530 ms`) i utrzymać Rynek co najmniej na obecnym poziomie (Performance `90–92`, TBT `350–420 ms`) — w dwóch zielonych próbach Zbrojownia osiągnęła `93` i `88` oraz TBT `330 ms` i `470 ms`, a Rynek `99` i `96` oraz TBT `100 ms` i `220 ms`
+- [x] objąć zmienione ścieżki testami E2E i utrzymać budżet JavaScript, historię migracji oraz katalog przedmiotów — publiczne testy blokują anonimowy odczyt i usuwanie, a zalogowany pakiet sprawdza paginację, właściciela, RLS, mobilny układ ofert oraz narzędzia na żądanie; JavaScript builda spadł do `1689,6 KB / 1800 KB`
+- [x] wdrożyć P46 i potwierdzić wynik co najmniej dwiema pełnymi produkcyjnymi bramkami Lighthouse `14/14` — wszystkie profile miały Accessibility i Best Practices `100`, a obie trasy P46 utrzymały LCP `1,0–1,4 s` i CLS poniżej `0,03` ([pierwszy zielony audyt](https://github.com/Szewcuu/albion-social/actions/runs/32637104991), [próba diagnostyczna](https://github.com/Szewcuu/albion-social/actions/runs/32637362684), [drugi zielony audyt](https://github.com/Szewcuu/albion-social/actions/runs/32637655859), 23 sierpnia 2026)
 
 ### P45 — stabilne mobilne Wyprawy i Kreator buildu
 
