@@ -50,8 +50,20 @@ export async function GET(request) {
     if (error) throw error
 
     const page = pageFromRows(data || [], requestedPageSize)
+    const buildIds = page.page.map((build) => build.id)
+    let favoriteIds = new Set()
+    if (buildIds.length > 0) {
+      const { data: favorites, error: favoritesError } = await context.supabase
+        .from('build_favorites')
+        .select('build_id')
+        .eq('user_id', context.auth.user.id)
+        .in('build_id', buildIds)
+      if (favoritesError) throw favoritesError
+      favoriteIds = new Set((favorites || []).map((favorite) => favorite.build_id))
+    }
+
     return NextResponse.json({
-      builds: page.page,
+      builds: page.page.map((build) => ({ ...build, is_favorite: favoriteIds.has(build.id) })),
       hasMore: page.hasMore,
       nextCursor: page.nextCursor,
       total: cursor ? undefined : (count || 0),

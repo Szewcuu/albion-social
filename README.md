@@ -51,7 +51,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Tawerna** — pierwsze wrażenie po zalogowaniu, hierarchia treści, czat i stany Realtime
 - [x] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
 - [x] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
-- [ ] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
+- [x] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
 - [ ] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
 - [ ] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
 - [ ] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
@@ -96,6 +96,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Usunięto:** wysoki pusty baner nadchodzących wypraw, przycinanie zawartości kart w panelu nadchodzących zbiórek oraz automatyczne montowanie ciężkiego formularza po bezczynności, które powodowało zmianę układu bez działania użytkownika.
 - **Utwardzono backend:** klient nie otrzymuje identyfikatorów wiadomości Discord; API odrzuca terminy wcześniejsze niż 10 minut i późniejsze niż 30 dni; zapis do wygasłej wyprawy jest blokowany; cron usuwa rekordy według `expires_at`; migracja zgodności chroni już otwarte starsze sesje podczas publikacji nowego klienta.
 - **Potwierdzono:** produkcyjny cron Vercel dla `/api/cron/expeditions` jest zaplanowany codziennie, przypomnienia wydarzeń gildii działają przez aktywny Supabase Cron co pięć minut, a doradca bezpieczeństwa nie wykrył nowego problemu z RLS po migracji.
+
+### Przegląd 05 — Kuźnia Buildów
+
+- **Zostawić:** układ ekwipunku zgodny z grą, enchanty `.0–.4`, kalkulator statystyk, porównywarkę zestawów, komentarze „Rada wojowników”, warianty przedmiotów oraz osobne moduły Meta 1v1 i planera 5v5.
+- **Naprawiono planer:** buildy zachowują identyfikator, nazwę, rolę i autora; wyszukiwanie działa po nazwie i roli; błędy API są widoczne i można ponowić odczyt; eksport TXT używa prawidłowych danych; udostępniony link rzeczywiście odtwarza nazwę oraz pięć slotów składu.
+- **Ujednolicono zapisane buildy:** gwiazdka na karcie i „Zapisz build” na szczegółach korzystają z jednego serwerowego mechanizmu `build_favorites`; lista pobiera stan zbiorczo w kontekście użytkownika i z zachowaniem RLS.
+- **Zmieniono UX:** przy dwóch kartach Zbrojownia wykorzystuje pełną szerokość desktopu; etykiety aktywności i budżetu nie pokazują już surowych identyfikatorów `EXPLORATION` lub `medium`; na telefonie kreator prowadzi przez informacje, ekwipunek i kalkulator przed rozbudowanymi dodatkami.
+- **Dodano kontrolę regresji:** testy obejmują normalizację danych planera, puste sloty i link udostępniania, spójność ulubionych po ponownym pobraniu listy, mobilną kolejność kreatora oraz odtworzenie składu 5v5.
+- **Do obserwacji przy większej liczbie buildów:** planer świadomie pobiera do 12 najnowszych zestawów; kolejnym krokiem skalowania będzie wyszukiwanie serwerowe w oknie wyboru zamiast powiększania jednorazowego payloadu.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
