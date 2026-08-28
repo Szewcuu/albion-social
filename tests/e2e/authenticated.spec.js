@@ -460,8 +460,12 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: 'Ogłoś Wyprawę' })).toBeVisible()
 
     await page.goto('/rynek')
+    await page.getByRole('button', { name: 'Otwórz formularz oferty' }).click()
     await expect(page.getByText('Tytuł Oferty *')).toBeVisible()
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
+    await expect(page.getByRole('button', { name: /Przedmiot do wyceny/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Zamknij formularz oferty' }).click()
+    await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toHaveCount(0)
   })
 
   test('pokazuje katalog gildii przed formularzem i otwiera manifest na żądanie', async ({ page }) => {
@@ -557,6 +561,9 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(openForm).toBeVisible()
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Znajdź właściwy towar' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Aktywne oferty' })).toHaveAttribute('aria-pressed', 'true')
+    await page.getByRole('button', { name: 'Moje ogłoszenia' }).click()
+    await expect(page.getByRole('button', { name: 'Moje ogłoszenia' })).toHaveAttribute('aria-pressed', 'true')
     await openForm.click()
     await expect(page.getByPlaceholder(/Sprzedam Mamuta Transportowego/i)).toBeVisible()
   })
@@ -569,15 +576,16 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     let offerId = null
 
     try {
+      const offerTitle = `E2E oferta ${Date.now()}`
       const createResponse = await request.post('/api/market/offers', {
         headers,
         data: {
-          title: `E2E oferta ${Date.now()}`,
+          title: offerTitle,
           item_name: 'T4_BAG',
           price: 12345,
           city: 'Caerleon',
           category: 'Ekwipunek',
-          server: 'Europa',
+          server: 'Wszystkie serwery',
         },
       })
       expect(createResponse.status()).toBe(201)
@@ -590,6 +598,19 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       const payload = await readResponse.json()
       expect(Array.isArray(payload.offers)).toBe(true)
       expect(typeof payload.hasMore).toBe('boolean')
+      expect(typeof payload.total).toBe('number')
+      expect(payload.scope).toBe('active')
+
+      const ownResponse = await request.get('/api/market/offers?scope=mine', { headers })
+      expect(ownResponse.status()).toBe(200)
+      const ownPayload = await ownResponse.json()
+      expect(ownPayload.scope).toBe('mine')
+      expect(ownPayload.offers.some((offer) => offer.id === offerId)).toBe(true)
+
+      const searchResponse = await request.get(`/api/market/offers?scope=mine&q=${encodeURIComponent(offerTitle)}`, { headers })
+      expect(searchResponse.status()).toBe(200)
+      const searchPayload = await searchResponse.json()
+      expect(searchPayload.offers.map((offer) => offer.id)).toContain(offerId)
 
       const renewResponse = await request.patch('/api/market/offers', {
         headers,
@@ -621,7 +642,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
   test('otwiera tablicę rynku natychmiast dla bezpośredniego linku do oferty', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
-    await page.goto('/rynek?offer=e2e-market-offer')
+    await page.goto('/rynek?offer=11111111-1111-4111-8111-111111111111')
 
     await expect(page.getByPlaceholder('Szukaj przedmiotów na rynku...')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Znajdź właściwy towar' })).toBeVisible()

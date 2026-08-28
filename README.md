@@ -52,7 +52,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Gildie** — katalog, filtry, karta gildii, analiza starć i zgłoszenia
 - [x] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
 - [x] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
-- [ ] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
+- [x] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
 - [ ] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
 - [ ] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
 - [ ] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
@@ -105,6 +105,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Zmieniono UX:** przy dwóch kartach Zbrojownia wykorzystuje pełną szerokość desktopu; etykiety aktywności i budżetu nie pokazują już surowych identyfikatorów `EXPLORATION` lub `medium`; na telefonie kreator prowadzi przez informacje, ekwipunek i kalkulator przed rozbudowanymi dodatkami.
 - **Dodano kontrolę regresji:** testy obejmują normalizację danych planera, puste sloty i link udostępniania, spójność ulubionych po ponownym pobraniu listy, mobilną kolejność kreatora oraz odtworzenie składu 5v5.
 - **Do obserwacji przy większej liczbie buildów:** planer świadomie pobiera do 12 najnowszych zestawów; kolejnym krokiem skalowania będzie wyszukiwanie serwerowe w oknie wyboru zamiast powiększania jednorazowego payloadu.
+
+### Przegląd 06 — Rynek i Skrzynka handlowa
+
+- **Zostawić:** prywatne negocjacje w portalu, migawkę ceny i tytułu oferty w rozmowie, ręczne zamykanie i wznawianie wątku, obserwowanie sprzedawcy/oferty oraz narzędzia wyceny uruchamiane na żądanie.
+- **Naprawiono cykl życia i wyszukiwanie:** główna tablica pokazuje wyłącznie oferty aktywne przez siedem dni; właściciel ma osobny widok „Moje ogłoszenia” z aktywnymi i wygasłymi wpisami; fraza, miasto i kategoria filtrują pełny zbiór po stronie API zamiast tylko pierwszej wczytanej strony; wygasłej oferty nie można już negocjować; odnowienie i zakończenie mają blokadę wielokrotnego kliknięcia oraz widoczny komunikat obok karty.
+- **Zmieniono publikację:** formularz nie zajmuje automatycznie pierwszego ekranu także na desktopie; serwer domyślny to neutralne „Wszystkie serwery”; surowe pole ID zastąpił katalog przedmiotów z enchantami, obrazem i wyszukiwaniem; formularz można jawnie zamknąć.
+- **Usprawniono skrzynkę:** rozmowy można wyszukać po graczu, ofercie lub wiadomości i filtrować na aktywne/zamknięte; `Enter` wysyła, a `Shift+Enter` dodaje wiersz; puste wyniki filtrów mają osobny stan i szybkie zerowanie.
+- **Utwardzono backend i dostępność:** API odrzuca kontakt do wygasłej oferty, a funkcja Supabase powtarza tę kontrolę w bazie; modal negocjacji obsługuje Escape, kliknięcie tła, powrót fokusu i semantykę dialogu; API potwierdza własność przy usuwaniu i zwraca rzeczywistą liczbę ofert.
+- **Potwierdzono:** lint, 64 testy jednostkowe i produkcyjny build są zielone; po migracji doradca Supabase nie wykrył nowego problemu bezpieczeństwa ani wydajności. Ostrzeżenie o ochronie haseł nie dotyczy logowania wyłącznie przez Discord, a historycznych nieużywanych indeksów nie usuwamy bez wiarygodnej próbki ruchu.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 

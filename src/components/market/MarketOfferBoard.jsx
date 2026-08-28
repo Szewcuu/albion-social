@@ -18,8 +18,7 @@ import {
 import CustomSelect from '@/components/ui/CustomSelect'
 import FavoriteButton from '@/components/ui/FavoriteButton'
 import FollowButton from '@/components/ui/FollowButton'
-
-const MARKET_BOARD_LOADED_AT = Date.now()
+import { isMarketOfferExpired, marketOfferDaysRemaining } from '@/lib/marketOffers'
 
 export default function MarketOfferBoard({
   offers,
@@ -28,8 +27,14 @@ export default function MarketOfferBoard({
   loadError,
   loadingMore,
   hasMore,
+  total,
+  scope,
+  actionState,
   focusOfferId,
   onLoadMore,
+  onRetry,
+  onScopeChange,
+  onFiltersChange,
   onRenew,
   onDelete,
   onContact,
@@ -39,6 +44,14 @@ export default function MarketOfferBoard({
   const [filterCategory, setFilterCategory] = useState('ALL')
   const [sortBy, setSortBy] = useState('newest')
   const deferredSearchTerm = useDeferredValue(searchTerm)
+
+  useEffect(() => {
+    onFiltersChange({
+      q: deferredSearchTerm.trim(),
+      city: filterCity === 'ALL' ? '' : filterCity,
+      category: filterCategory === 'ALL' ? '' : filterCategory,
+    })
+  }, [deferredSearchTerm, filterCategory, filterCity, onFiltersChange])
 
   const filteredOffers = useMemo(() => {
     const normalizedSearch = deferredSearchTerm.trim().toLowerCase()
@@ -75,8 +88,19 @@ export default function MarketOfferBoard({
             <p className="text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Tablica ogłoszeń</p>
             <h2 className="font-display text-lg font-black text-[#fff]">Znajdź właściwy towar</h2>
           </div>
-          <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">{filteredOffers.length} Ofert</span>
+          <span className="text-[10px] font-mono text-gray-400 bg-white/5 px-2.5 py-1 rounded-lg border border-white/10">{total} {total === 1 ? 'oferta' : 'ofert'}</span>
         </div>
+
+        <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/8 bg-black/15 p-1" role="group" aria-label="Zakres ofert rynku">
+          <button type="button" onClick={() => onScopeChange('active')} aria-pressed={scope === 'active'} className={`min-h-10 rounded-lg px-3 text-[10px] font-black uppercase tracking-[.12em] transition ${scope === 'active' ? 'bg-amber-400 text-black' : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-white'}`}>Aktywne oferty</button>
+          <button type="button" onClick={() => onScopeChange('mine')} aria-pressed={scope === 'mine'} className={`min-h-10 rounded-lg px-3 text-[10px] font-black uppercase tracking-[.12em] transition ${scope === 'mine' ? 'bg-amber-400 text-black' : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-white'}`}>Moje ogłoszenia</button>
+        </div>
+
+        {actionState?.message && (
+          <div role={actionState.error ? 'alert' : 'status'} className={`rounded-xl border px-3 py-2 text-xs ${actionState.error ? 'border-rose-400/25 bg-rose-400/8 text-rose-200' : 'border-emerald-400/25 bg-emerald-400/8 text-emerald-100'}`}>
+            {actionState.message}
+          </div>
+        )}
 
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4 pointer-events-none" />
@@ -124,8 +148,8 @@ export default function MarketOfferBoard({
             onChange={setSortBy}
             options={[
               { value: 'newest', label: 'Najnowsze' },
-              { value: 'price_asc', label: 'Cena: Najniższa' },
-              { value: 'price_desc', label: 'Cena: Najwyższa' },
+              { value: 'price_asc', label: 'Cena: Najniższa (wczytane)' },
+              { value: 'price_desc', label: 'Cena: Najwyższa (wczytane)' },
             ]}
           />
         </div>
@@ -139,21 +163,21 @@ export default function MarketOfferBoard({
             <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-rose-300/70" />
             <p className="font-display text-lg font-bold text-[var(--text-primary)]">Tablica rynku chwilowo nie odpowiada.</p>
             <p className="mt-1 text-xs text-[var(--text-secondary)]">{loadError}</p>
+            <button type="button" onClick={onRetry} className="btn btn-secondary btn-sm mt-5"><RefreshCw className="h-3.5 w-3.5" /> Spróbuj ponownie</button>
           </div>
         ) : filteredOffers.length === 0 ? (
           <div className="panel py-14 text-center">
             <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-sky-300/70" />
-            <p className="font-display text-lg font-bold text-[var(--text-primary)]">Stragany czekają na pierwszą ofertę.</p>
-            <p className="mt-1 text-xs text-[var(--text-secondary)]">Zmień filtry albo wystaw własne ogłoszenie.</p>
+            <p className="font-display text-lg font-bold text-[var(--text-primary)]">{scope === 'mine' ? 'Nie masz jeszcze własnych ogłoszeń.' : 'Brak aktywnych ofert.'}</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">{scope === 'mine' ? 'Wystaw ofertę, aby pojawiła się w tym archiwum.' : 'Zmień filtry albo zajrzyj ponownie później.'}</p>
           </div>
         ) : (
           filteredOffers.map((offer) => {
             const isOwner = user?.id === offer.user_id
             const cleanItemName = (offer.item_name || '').trim().toUpperCase()
-            const createdDate = offer.created_at ? new Date(offer.created_at) : new Date()
-            const ageInDays = Math.floor((MARKET_BOARD_LOADED_AT - createdDate.getTime()) / (1000 * 60 * 60 * 24))
-            const daysRemaining = Math.max(0, 7 - ageInDays)
-            const isExpired = daysRemaining === 0
+            const daysRemaining = marketOfferDaysRemaining(offer.created_at)
+            const isExpired = isMarketOfferExpired(offer.created_at)
+            const isBusy = actionState?.busyId === offer.id
 
             return (
               <article
@@ -190,7 +214,7 @@ export default function MarketOfferBoard({
                     <div className="flex items-center gap-2 font-mono text-[10px] flex-wrap">
                       <span className="bg-sky-500/10 text-sky-400 border border-sky-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase">{offer.category || 'Przedmiot'}</span>
                       <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><MapPin className="w-3 h-3" /> {offer.city}</span>
-                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> {offer.server || 'Europa'}</span>
+                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Globe className="w-3 h-3" /> {offer.server || 'Wszystkie serwery'}</span>
                       {isExpired ? (
                         <span className="bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2.5 py-0.5 rounded-full font-bold uppercase flex items-center gap-1"><Clock className="w-3 h-3 text-rose-400" /> Wygasła</span>
                       ) : (
@@ -235,19 +259,23 @@ export default function MarketOfferBoard({
                       <button
                         type="button"
                         onClick={() => onRenew(offer.id)}
+                        disabled={isBusy}
                         className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/30 text-amber-300 p-2 rounded-xl transition cursor-pointer flex items-center gap-1 text-[10px] font-mono font-bold"
                         title="Odśwież ważność oferty na kolejne 7 dni"
                       >
-                        <RefreshCw className="w-3.5 h-3.5 text-amber-400" /> Odnów (7d)
+                        <RefreshCw className={`w-3.5 h-3.5 text-amber-400 ${isBusy ? 'animate-spin' : ''}`} /> Odnów (7d)
                       </button>
                       <button
                         type="button"
                         onClick={() => onDelete(offer.id)}
+                        disabled={isBusy}
                         className="bg-rose-950/80 hover:bg-rose-900 border border-rose-900/60 text-rose-300 p-2 rounded-xl transition cursor-pointer flex items-center gap-1 text-[10px] font-mono font-bold"
                       >
-                        <Trash2 className="w-3.5 h-3.5" /> Usuń
+                        <Trash2 className="w-3.5 h-3.5" /> Zakończ
                       </button>
                     </div>
+                  ) : isExpired ? (
+                    <span className="rounded-xl border border-rose-400/20 bg-rose-400/5 px-3 py-2 text-[10px] font-bold uppercase text-rose-200">Oferta wygasła</span>
                   ) : (
                     <button type="button" onClick={() => onContact(offer)} className="btn btn-secondary btn-sm flex items-center gap-1.5">
                       <HandCoins className="w-3.5 h-3.5 text-[var(--gold)]" /> Napisz do sprzedawcy

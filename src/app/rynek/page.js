@@ -6,7 +6,6 @@ import { BarChart3, Coins, Store } from 'lucide-react'
 
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
-import { scheduleIdleTask } from '@/lib/clientIdle'
 
 const MarketOfferForm = dynamic(() => import('@/components/market/MarketOfferForm'), {
   ssr: false,
@@ -27,7 +26,7 @@ const EMPTY_FORM = {
   price: '',
   city: 'Caerleon',
   category: 'Ekwipunek',
-  server: 'Europa',
+  server: 'Wszystkie serwery',
 }
 
 export default function Rynek() {
@@ -37,6 +36,10 @@ export default function Rynek() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [loadError, setLoadError] = useState('')
+  const [offerScope, setOfferScope] = useState('active')
+  const [offerTotal, setOfferTotal] = useState(0)
+  const [offerAction, setOfferAction] = useState({ busyId: '', message: '', error: false })
+  const [offerFilters, setOfferFilters] = useState({ q: '', city: '', category: '' })
   const [marketBoardReady, setMarketBoardReady] = useState(false)
   const [showOfferForm, setShowOfferForm] = useState(false)
   const [activeDeferredTool, setActiveDeferredTool] = useState('')
@@ -47,20 +50,27 @@ export default function Rynek() {
   const cursorRef = useRef(null)
   const marketBoardRef = useRef(null)
 
-  const fetchOffers = useCallback(async ({ append = false } = {}) => {
+  const fetchOffers = useCallback(async ({ append = false, scope = offerScope } = {}) => {
     if (append) setLoadingMore(true)
     else setLoading(true)
     setLoadError('')
 
     try {
       const cursor = append ? cursorRef.current : null
-      const response = await authenticatedFetch(`/api/market/offers${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)
+      const params = new URLSearchParams({ scope })
+      if (offerFilters.q) params.set('q', offerFilters.q)
+      if (offerFilters.city) params.set('city', offerFilters.city)
+      if (offerFilters.category) params.set('category', offerFilters.category)
+      if (cursor) params.set('cursor', cursor)
+      if (!append && focusOfferId) params.set('offer', focusOfferId)
+      const response = await authenticatedFetch(`/api/market/offers?${params}`)
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Nie udało się pobrać ofert.')
       cursorRef.current = result.nextCursor || null
 
       startTransition(() => {
         setHasMore(result.hasMore === true)
+        setOfferTotal(Number(result.total || 0))
         setOffers((current) => append
           ? [...current, ...(result.offers || []).filter((row) => !current.some((item) => item.id === row.id))]
           : (result.offers || []))
@@ -73,34 +83,13 @@ export default function Rynek() {
       if (append) setLoadingMore(false)
       else setLoading(false)
     }
-  }, [])
+  }, [focusOfferId, offerFilters, offerScope])
 
   useEffect(() => {
     if (!marketBoardReady) return undefined
     const timerId = window.setTimeout(fetchOffers, 0)
     return () => window.clearTimeout(timerId)
   }, [fetchOffers, marketBoardReady])
-
-  useEffect(() => {
-    const desktop = window.matchMedia('(min-width: 1024px)')
-    let cancelScheduledOpen = null
-
-    const revealOnDesktop = () => {
-      if (!desktop.matches) return
-      cancelScheduledOpen?.()
-      cancelScheduledOpen = scheduleIdleTask(() => setShowOfferForm(true), {
-        minimumDelay: 500,
-        timeout: 2_000,
-      })
-    }
-
-    revealOnDesktop()
-    desktop.addEventListener('change', revealOnDesktop)
-    return () => {
-      cancelScheduledOpen?.()
-      desktop.removeEventListener('change', revealOnDesktop)
-    }
-  }, [])
 
   useEffect(() => {
     const offerId = new URLSearchParams(window.location.search).get('offer') || ''
@@ -150,13 +139,15 @@ export default function Rynek() {
       if (!response.ok) throw new Error(result.error || 'Nie udało się wystawić oferty.')
       setFormMessage('Oferta została wystawiona na rynku!')
       setFormData(EMPTY_FORM)
-      fetchOffers()
+      if (offerScope === 'mine') await fetchOffers()
+      else setOfferScope('mine')
     } catch (error) {
       setFormMessage(`Błąd: ${error.message}`)
     }
   }
 
   const handleRenewOffer = async (offerId) => {
+    setOfferAction({ busyId: offerId, message: '', error: false })
     try {
       const response = await authenticatedFetch('/api/market/offers', {
         method: 'PATCH',
@@ -165,15 +156,16 @@ export default function Rynek() {
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Nie udało się odnowić oferty.')
-      setFormMessage('Ważność oferty została odnowiona na 7 dni.')
-      fetchOffers()
+      setOfferAction({ busyId: '', message: 'Oferta jest ponownie aktywna przez 7 dni.', error: false })
+      await fetchOffers()
     } catch (error) {
-      setFormMessage(`Błąd: ${error.message}`)
+      setOfferAction({ busyId: '', message: error.message, error: true })
     }
   }
 
   const handleDeleteOffer = async (offerId) => {
-    if (!window.confirm('Czy na pewno chcesz usunąć tę ofertę z rynku?')) return
+    if (!window.confirm('Zakończyć i usunąć tę ofertę? Historia istniejących rozmów pozostanie w skrzynce.')) return
+    setOfferAction({ busyId: offerId, message: '', error: false })
     try {
       const response = await authenticatedFetch('/api/market/offers', {
         method: 'DELETE',
@@ -182,12 +174,31 @@ export default function Rynek() {
       })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Nie udało się usunąć oferty.')
-      setFormMessage('Oferta została usunięta.')
-      fetchOffers()
+      setOfferAction({ busyId: '', message: 'Oferta została zakończona. Rozmowy pozostały w skrzynce.', error: false })
+      await fetchOffers()
     } catch (error) {
-      setFormMessage(`Błąd: ${error.message}`)
+      setOfferAction({ busyId: '', message: error.message, error: true })
     }
   }
+
+  const handleScopeChange = (scope) => {
+    if (scope === offerScope) return
+    cursorRef.current = null
+    setOffers([])
+    setLoading(true)
+    setOfferScope(scope)
+    setFocusOfferId('')
+  }
+
+  const handleFiltersChange = useCallback((filters) => {
+    setOfferFilters((current) => {
+      if (current.q === filters.q && current.city === filters.city && current.category === filters.category) return current
+      cursorRef.current = null
+      setOffers([])
+      setLoading(true)
+      return filters
+    })
+  }, [])
 
   return (
     <div className="page-content">
@@ -214,6 +225,7 @@ export default function Rynek() {
               formMessage={formMessage}
               onChange={setFormData}
               onSubmit={handleCreateOffer}
+              onClose={() => setShowOfferForm(false)}
             />
           ) : (
             <section className="panel flex min-h-40 flex-col justify-center gap-4 p-5 lg:col-span-4" aria-labelledby="market-offer-launcher-title">
@@ -241,8 +253,14 @@ export default function Rynek() {
               loadError={loadError}
               loadingMore={loadingMore}
               hasMore={hasMore}
+              total={offerTotal}
+              scope={offerScope}
+              actionState={offerAction}
               focusOfferId={focusOfferId}
               onLoadMore={() => fetchOffers({ append: true })}
+              onRetry={() => fetchOffers()}
+              onScopeChange={handleScopeChange}
+              onFiltersChange={handleFiltersChange}
               onRenew={handleRenewOffer}
               onDelete={handleDeleteOffer}
               onContact={setSelectedOfferForContact}

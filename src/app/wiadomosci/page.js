@@ -1,8 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Archive, ArrowLeft, HandCoins, Inbox, LockKeyhole, MessageSquareText, RefreshCw, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
+import { Archive, ArrowLeft, HandCoins, Inbox, LockKeyhole, MessageSquareText, RefreshCw, Search, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
 
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
@@ -26,7 +26,19 @@ export default function TradeInboxPage() {
   const [detailLoading, setDetailLoading] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [threadFilter, setThreadFilter] = useState('all')
+  const [threadSearch, setThreadSearch] = useState('')
   const endRef = useRef(null)
+  const deferredThreadSearch = useDeferredValue(threadSearch)
+
+  const visibleConversations = useMemo(() => {
+    const search = deferredThreadSearch.trim().toLocaleLowerCase('pl')
+    return conversations.filter((conversation) => {
+      const matchesStatus = threadFilter === 'all' || conversation.status === threadFilter
+      const matchesSearch = !search || `${conversation.counterpartName} ${conversation.offerTitle} ${conversation.lastMessage}`.toLocaleLowerCase('pl').includes(search)
+      return matchesStatus && matchesSearch
+    })
+  }, [conversations, deferredThreadSearch, threadFilter])
 
   const loadInbox = useCallback(async ({ quiet = false } = {}) => {
     if (!quiet) setLoading(true)
@@ -150,9 +162,20 @@ export default function TradeInboxPage() {
 
         <section className="panel grid min-h-[650px] overflow-hidden p-0 lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className={`${selectedId ? 'hidden lg:flex' : 'flex'} min-h-[650px] flex-col border-r border-white/8 bg-black/15`}>
-            <div className="flex items-center justify-between border-b border-white/8 p-4">
-              <div><p className="text-[9px] font-black uppercase tracking-[.2em] text-sky-300">Wątki transakcyjne</p><h2 className="font-display text-lg font-black text-white">Rozmowy</h2></div>
-              <button type="button" onClick={() => loadInbox()} className="btn-icon" aria-label="Odśwież skrzynkę"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></button>
+            <div className="space-y-3 border-b border-white/8 p-4">
+              <div className="flex items-center justify-between">
+                <div><p className="text-[9px] font-black uppercase tracking-[.2em] text-sky-300">Wątki transakcyjne</p><h2 className="font-display text-lg font-black text-white">Rozmowy</h2></div>
+                <button type="button" onClick={() => loadInbox()} className="btn-icon" aria-label="Odśwież skrzynkę"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /></button>
+              </div>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input value={threadSearch} onChange={(event) => setThreadSearch(event.target.value)} aria-label="Szukaj rozmowy handlowej" placeholder="Gracz, oferta lub wiadomość…" className="input-with-icon w-full rounded-xl py-2 pr-3 text-xs" />
+              </div>
+              <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/8 bg-black/20 p-1" role="group" aria-label="Stan rozmów">
+                {[['all', 'Wszystkie'], ['open', 'Aktywne'], ['closed', 'Zamknięte']].map(([value, label]) => (
+                  <button key={value} type="button" onClick={() => setThreadFilter(value)} aria-pressed={threadFilter === value} className={`min-h-9 rounded-lg px-1 text-[9px] font-black uppercase transition ${threadFilter === value ? 'bg-amber-400 text-black' : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-white'}`}>{label}</button>
+                ))}
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-2">
@@ -165,7 +188,13 @@ export default function TradeInboxPage() {
                   <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Otwórz wybraną ofertę na rynku i kliknij „Napisz do sprzedawcy”.</p>
                   <Link href="/rynek" className="btn btn-primary btn-sm mt-5"><ShoppingBag className="h-4 w-4" /> Przejdź na rynek</Link>
                 </div>
-              ) : conversations.map((conversation) => (
+              ) : visibleConversations.length === 0 ? (
+                <div className="flex h-48 flex-col items-center justify-center px-6 text-center">
+                  <Search className="mb-3 h-7 w-7 text-[var(--text-muted)]" />
+                  <h3 className="font-display text-base font-bold text-white">Brak pasujących rozmów</h3>
+                  <button type="button" onClick={() => { setThreadFilter('all'); setThreadSearch('') }} className="btn btn-ghost btn-sm mt-3">Wyczyść filtry</button>
+                </div>
+              ) : visibleConversations.map((conversation) => (
                 <button
                   key={conversation.id}
                   type="button"

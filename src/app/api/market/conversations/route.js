@@ -5,6 +5,7 @@ import { checkRateLimit } from '@/lib/server/rateLimit'
 import { isMarketConversationId, marketDisplayName, serializeConversation } from '@/lib/server/marketConversations'
 import { createSupabaseAdminClient, requireApiUser } from '@/lib/server/supabaseAdmin'
 import { cleanInteger, cleanText } from '@/lib/server/validation'
+import { isMarketOfferExpired } from '@/lib/marketOffers'
 
 const jsonError = (message, status, headers) => NextResponse.json({ error: message }, { status, headers })
 
@@ -50,6 +51,17 @@ export async function POST(request) {
     if (!marketItemId || !offeredPrice || !message) return jsonError('Uzupełnij poprawną cenę i wiadomość.', 400)
 
     const admin = createSupabaseAdminClient()
+    const { data: offer, error: offerError } = await admin
+      .from('market_items')
+      .select('id, user_id, status, created_at')
+      .eq('id', marketItemId)
+      .maybeSingle()
+    if (offerError) throw offerError
+    if (!offer || offer.status !== 'visible' || isMarketOfferExpired(offer.created_at)) {
+      return jsonError('Ta oferta wygasła albo nie jest już dostępna.', 410)
+    }
+    if (offer.user_id === auth.user.id) return jsonError('Nie można rozpocząć rozmowy z samym sobą.', 400)
+
     const { data: conversationId, error } = await admin.rpc('service_open_market_conversation', {
       p_actor_id: auth.user.id,
       p_market_item_id: marketItemId,

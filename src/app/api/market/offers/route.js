@@ -9,12 +9,13 @@ import {
   requireApiUser,
 } from '@/lib/server/supabaseAdmin'
 import { cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
+import { marketOfferCutoff } from '@/lib/marketOffers'
 
 const MARKET_PAGE_SIZE = 12
 const MARKET_FIELDS = 'id, created_at, user_id, title, price, city, category, description, status, item_name, server, profiles!market_items_user_id_fkey(username)'
 const MARKET_CITIES = ['Caerleon', 'Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford', 'Brecilien']
 const MARKET_CATEGORIES = ['Ekwipunek', 'Wierzchowce', 'Surowce', 'Jedzenie & Potiony', 'Inne']
-const MARKET_SERVERS = ['Europa', 'Ameryka', 'Azja']
+const MARKET_SERVERS = ['Wszystkie serwery', 'Europa', 'Ameryka', 'Azja']
 const NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store, max-age=0' }
 
 const jsonError = (message, status, headers) => NextResponse.json(
@@ -40,24 +41,55 @@ export async function GET(request) {
     const context = await authorize(request)
     if (context.response) return context.response
 
-    const cursor = decodeCreatedAtCursor(new URL(request.url).searchParams.get('cursor'), isModerationId)
+    const searchParams = new URL(request.url).searchParams
+    const cursor = decodeCreatedAtCursor(searchParams.get('cursor'), isModerationId)
     if (cursor === undefined) return jsonError('Nieprawidłowy kursor ofert.', 400)
+    const scope = cleanEnum(searchParams.get('scope') || 'active', ['active', 'mine'])
+    if (!scope) return jsonError('Nieprawidłowy zakres ofert.', 400)
+    const focusOfferId = searchParams.get('offer')
+    if (focusOfferId && !isModerationId(focusOfferId)) return jsonError('Nieprawidłowy identyfikator oferty.', 400)
+    const city = searchParams.get('city') ? cleanEnum(searchParams.get('city'), MARKET_CITIES) : null
+    const category = searchParams.get('category') ? cleanEnum(searchParams.get('category'), MARKET_CATEGORIES) : null
+    if (searchParams.get('city') && !city) return jsonError('Nieprawidłowy filtr miasta.', 400)
+    if (searchParams.get('category') && !category) return jsonError('Nieprawidłowy filtr kategorii.', 400)
+    const rawSearch = cleanText(searchParams.get('q') || '', { max: 80 })
+    if (rawSearch === null) return jsonError('Wyszukiwana fraza jest zbyt długa.', 400)
+    const search = rawSearch.replace(/[,()%"'\\]/g, ' ').replace(/\s+/g, ' ').trim()
 
-    const query = context.supabase
+    let query = context.supabase
       .from('market_items')
-      .select(MARKET_FIELDS)
+      .select(MARKET_FIELDS, { count: 'exact' })
       .eq('status', 'visible')
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .limit(MARKET_PAGE_SIZE + 1)
-    const { data, error } = await applyCreatedAtCursor(query, cursor)
+    query = scope === 'mine'
+      ? query.eq('user_id', context.auth.user.id)
+      : query.gt('created_at', marketOfferCutoff())
+    if (city) query = query.eq('city', city)
+    if (category) query = query.eq('category', category)
+    if (search) query = query.or(`title.ilike.%${search}%,item_name.ilike.%${search}%`)
+
+    const { data, error, count } = await applyCreatedAtCursor(query, cursor)
     if (error) throw error
 
     const page = pageFromRows(data || [], MARKET_PAGE_SIZE)
+    if (focusOfferId && !cursor && !page.page.some((offer) => offer.id === focusOfferId)) {
+      const { data: focusedOffer, error: focusError } = await context.supabase
+        .from('market_items')
+        .select(MARKET_FIELDS)
+        .eq('id', focusOfferId)
+        .eq('status', 'visible')
+        .maybeSingle()
+      if (focusError) throw focusError
+      if (focusedOffer) page.page.unshift(focusedOffer)
+    }
     return NextResponse.json({
       offers: page.page,
       hasMore: page.hasMore,
       nextCursor: page.nextCursor,
+      total: Math.max(count || 0, page.page.length),
+      scope,
     }, { headers: NO_STORE_HEADERS })
   } catch (error) {
     console.error('Błąd pobierania ofert rynku:', error)
@@ -169,12 +201,14 @@ export async function DELETE(request) {
     const body = await request.json().catch(() => null)
     if (!isModerationId(body?.id)) return jsonError('Nieprawidłowy identyfikator oferty.', 400)
 
-    const { error } = await context.supabase
+    const { data, error } = await context.supabase
       .from('market_items')
       .delete()
       .eq('id', body.id)
       .eq('user_id', context.auth.user.id)
+      .select('id')
     if (error) throw error
+    if (!data?.length) return jsonError('Oferta nie istnieje albo nie należy do Ciebie.', 404)
 
     return NextResponse.json({ success: true }, { headers: NO_STORE_HEADERS })
   } catch (error) {
