@@ -1,5 +1,6 @@
 import 'server-only'
 import { supabase } from '@/lib/supabase'
+import { getAlbionFameBreakdown } from '@/lib/albionPlayer'
 import { valuateEquipment } from '@/lib/marketValuation'
 import { ExternalApiError, fetchExternalJson } from '@/lib/externalApiClient'
 import { getEquipmentMarketPrices } from '@/lib/server/albionMarketApi'
@@ -128,31 +129,8 @@ function normalizeEvent(event, perspective) {
   }
 }
 
-function totalGatheringFame(gathering) {
-  if (Number.isFinite(gathering?.All?.Total)) return gathering.All.Total
-  return ['Fiber', 'Hide', 'Ore', 'Rock', 'Wood']
-    .reduce((sum, key) => sum + (gathering?.[key]?.Total || 0), 0)
-}
-
-function getFameTotal(category, fallbackValue = 0) {
-  if (typeof fallbackValue === 'number' && Number.isFinite(fallbackValue) && fallbackValue > 0) {
-    return fallbackValue
-  }
-  if (typeof category === 'number' && Number.isFinite(category)) return category
-  if (!category || typeof category !== 'object') return 0
-  if (Number.isFinite(category.Total)) return category.Total
-  if (Number.isFinite(category.total)) return category.total
-  const sum = Object.values(category).reduce((acc, val) => acc + (typeof val === 'number' ? val : 0), 0)
-  return sum
-}
-
 function normalizePlayer(player) {
-  const lifetime = player.LifetimeStatistics || player.lifetimeStatistics || {}
-  const pveFame = getFameTotal(lifetime.PvE || lifetime.pve, player.PvEFame || player.PveFame || player.pveFame)
-  const craftingFame = getFameTotal(lifetime.Crafting || lifetime.crafting, player.CraftingFame)
-  const gatheringFame = totalGatheringFame(lifetime.Gathering || lifetime.gathering)
-  const fishingFame = getFameTotal(lifetime.Fishing || lifetime.fishing, player.FishingFame)
-  const farmingFame = getFameTotal(lifetime.Farming || lifetime.farming, player.FarmingFame)
+  const fame = getAlbionFameBreakdown(player)
 
   return {
     id: player.Id || player.id || '',
@@ -168,13 +146,7 @@ function normalizePlayer(player) {
     deathFame: player.DeathFame ?? player.deathFame ?? 0,
     fameRatio: Number(player.FameRatio ?? player.fameRatio ?? 0),
     averageItemPower: Math.round(player.AverageItemPower || 0),
-    fame: {
-      pve: pveFame,
-      gathering: gatheringFame,
-      crafting: craftingFame,
-      fishing: fishingFame,
-      farming: farmingFame,
-    },
+    fame,
   }
 }
 
@@ -216,7 +188,8 @@ export async function searchAlbionPlayers(query, region) {
   const result = await fetchAlbionJson(`/search?q=${encodeURIComponent(query)}`, {
     region,
     revalidate: 45,
-    timeoutMs: 7000,
+    timeoutMs: 4500,
+    retry: false,
   })
 
   return (result?.players || []).slice(0, 10).map((player) => ({

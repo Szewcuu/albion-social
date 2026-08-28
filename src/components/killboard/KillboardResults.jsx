@@ -33,7 +33,13 @@ function formatNumber(value) {
   return new Intl.NumberFormat('pl-PL', { notation: 'compact', maximumFractionDigits: 1 }).format(value || 0)
 }
 
-function SearchResults({ results, currentRegion, onLoadPlayer }) {
+const REGION_LABELS = {
+  europe: 'Europa · EU',
+  america: 'Ameryka · NA',
+  asia: 'Azja · ASIA',
+}
+
+function SearchResults({ results, meta, onLoadPlayer }) {
   if (!results.length) return null
 
   return (
@@ -43,7 +49,7 @@ function SearchResults({ results, currentRegion, onLoadPlayer }) {
           <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Wyniki wyszukiwania</p>
           <h2 className="font-display mt-1 text-xl font-black text-[#fff]">Wybierz właściwego wojownika</h2>
         </div>
-        <span className="text-[10px] text-[#6f6b64]">{results.length} wyników • {currentRegion?.label}</span>
+        <span className="text-[10px] text-[#6f6b64]">{results.length} {results.length === 1 ? 'wynik' : 'wyników'} • {meta?.searchedAllRegions ? 'sprawdzone serwery' : 'wybrany serwer'}</span>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -60,9 +66,10 @@ function SearchResults({ results, currentRegion, onLoadPlayer }) {
                 <div className="min-w-0">
                   <p className="font-display truncate text-lg font-black text-[#fff]">{result.name}</p>
                   <p className="truncate text-[10px] text-[var(--text-secondary)]">
-                    {result.partial ? 'Potwierdzony w archiwum społecznościowym' : (result.guildName || 'Bez gildii')}
+                    {result.partial ? 'Sprawdź nick w zewnętrznym archiwum' : (result.guildName || 'Bez gildii')}
                     {!result.partial && result.allianceName ? ` • ${result.allianceName}` : ''}
                   </p>
+                  <p className="mt-1 text-[8px] font-black uppercase tracking-[.1em] text-sky-200/65">{REGION_LABELS[result.region] || result.region}</p>
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-3">
@@ -78,6 +85,9 @@ function SearchResults({ results, currentRegion, onLoadPlayer }) {
           )
         })}
       </div>
+      {meta?.warnings?.length > 0 && (
+        <p className="text-[9px] leading-4 text-amber-200/70">{meta.warnings.join(' ')}</p>
+      )}
     </section>
   )
 }
@@ -123,7 +133,7 @@ function PlayerOverview({ overview, meta, currentRegion, region, activeHistory, 
             { label: 'PvP Kill Fame', value: formatNumber(player.killFame), icon: Swords, tone: 'text-rose-300' },
             { label: 'Death Fame', value: formatNumber(player.deathFame), icon: Skull, tone: 'text-[#b6b0a7]' },
             { label: 'Fame Ratio', value: calculatedRatio.toFixed(2), icon: Flame, tone: 'text-orange-200' },
-            { label: 'Średnie IP', value: player.averageItemPower || '—', icon: Shield, tone: 'text-sky-300' },
+            { label: 'Śr. IP z walk', value: player.averageItemPower || '—', icon: Shield, tone: 'text-sky-300' },
           ].map((stat) => {
             const Icon = stat.icon
             return <div key={stat.label} className="bg-[#0c0e0c]/95 p-5"><p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.14em] text-[#6f6b64]"><Icon className={`h-3.5 w-3.5 ${stat.tone}`} /> {stat.label}</p><p className={`font-display mt-2 text-2xl font-black ${stat.tone}`}>{stat.value}</p></div>
@@ -149,7 +159,7 @@ function PlayerOverview({ overview, meta, currentRegion, region, activeHistory, 
           </div>
 
           {history.length > 0
-            ? history.map((event) => <CombatEventCard key={`${event.perspective}-${event.id}`} event={event} />)
+            ? history.map((event) => <CombatEventCard key={`${event.perspective}-${event.id}`} event={event} region={region} onLoadPlayer={onLoadPlayer} />)
             : <div className="panel py-14 text-center"><Skull className="mx-auto mb-3 h-7 w-7 text-[#625e57]" /><p className="font-display text-lg font-bold text-[#bcb5aa]">Brak zapisanych zdarzeń.</p><p className="mt-1 text-[10px] text-[#666159]">Źródło nie zwróciło historii dla tej postaci.</p></div>}
         </div>
 
@@ -192,5 +202,5 @@ function PlayerOverview({ overview, meta, currentRegion, region, activeHistory, 
 
 export default function KillboardResults(props) {
   if (props.overview?.player) return <PlayerOverview {...props} />
-  return <SearchResults results={props.searchResults} currentRegion={props.currentRegion} onLoadPlayer={props.onLoadPlayer} />
+  return <SearchResults results={props.searchResults} meta={props.meta} onLoadPlayer={props.onLoadPlayer} />
 }

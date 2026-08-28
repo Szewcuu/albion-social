@@ -14,7 +14,7 @@ function getClientKey(request) {
   return forwarded || request.headers.get('x-real-ip') || 'anonymous'
 }
 
-function apiResponse(data, { region, mode, status = 200, warnings = [] } = {}) {
+function apiResponse(data, { region, mode, status = 200, warnings = [], metaDetails = {} } = {}) {
   return NextResponse.json({
     data,
     meta: {
@@ -24,6 +24,7 @@ function apiResponse(data, { region, mode, status = 200, warnings = [] } = {}) {
       fetchedAt: new Date().toISOString(),
       cacheSeconds: CACHE_SECONDS[mode] || 0,
       warnings,
+      ...metaDetails,
     },
   }, { status })
 }
@@ -66,11 +67,13 @@ export async function GET(request) {
       }
 
       let players = []
+      let checkedRegions = []
       const unavailableRegions = []
+
       try {
         players = await searchAlbionPlayers(query, region)
+        checkedRegions.push(region)
       } catch (error) {
-        players = []
         unavailableRegions.push({
           region,
           code: error?.code || 'UPSTREAM_UNAVAILABLE',
@@ -79,9 +82,10 @@ export async function GET(request) {
       }
 
       if (players.length === 0) {
-        const regionalSearch = await searchAlbionPlayersAllRegionsDetailed(query, region, [region])
-        players = regionalSearch.players
-        unavailableRegions.push(...regionalSearch.unavailableRegions)
+        const fallbackSearch = await searchAlbionPlayersAllRegionsDetailed(query, region, [region])
+        players = fallbackSearch.players.slice(0, 18)
+        checkedRegions = [...checkedRegions, ...fallbackSearch.checkedRegions]
+        unavailableRegions.push(...fallbackSearch.unavailableRegions)
       }
 
       if (players.length === 0) {
@@ -109,7 +113,23 @@ export async function GET(request) {
       }
 
       const activeRegion = players[0]?.region || region
-      return apiResponse({ players }, { region: activeRegion, mode })
+      const unavailableLabels = unavailableRegions
+        .map((item) => ALBION_REGIONS[item.region]?.label)
+        .filter(Boolean)
+
+      return apiResponse({ players }, {
+        region: activeRegion,
+        mode,
+        warnings: unavailableLabels.length > 0
+          ? [`Nie wszystkie serwery odpowiedziały: ${unavailableLabels.join(', ')}.`]
+          : [],
+        metaDetails: {
+          requestedRegion: region,
+          checkedRegions,
+          unavailableRegions: unavailableRegions.map((item) => item.region),
+          searchedAllRegions: checkedRegions.length + unavailableRegions.length > 1,
+        },
+      })
     }
 
     const playerId = cleanAlbionId(searchParams.get('id'))

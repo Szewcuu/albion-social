@@ -728,12 +728,20 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
         body: JSON.stringify({
           data: {
             player: { id: 'pricing-player', name: 'PricingKnight', guildName: 'Codex', killFame: 123456, deathFame: 20000, averageItemPower: 1450, fame: {} },
-            kills: [{
-              id: 'pricing-event', perspective: 'kill', timestamp: '2026-08-15T18:00:00Z', fame: 8748, killArea: 'OPEN_WORLD', participantCount: 1,
-              killer: { id: 'pricing-player', name: 'PricingKnight', averageItemPower: 1450, equipment: emptyEquipment },
-              victim: { id: 'victim', name: 'LostKnight', averageItemPower: 1300, equipment: { ...emptyEquipment, MainHand: { type: 'T6_MAIN_SWORD', count: 1, quality: 1 } } },
-              lossValuation: { estimatedValue: 125000, pricedItems: 1, totalItems: 1, coveragePercent: 100, freshness: 'fresh', maxAgeHours: 2, fallbackItems: 0, items: [{ total: 125000, quote: { city: 'Martlock', source: 'sell' } }] },
-            }],
+            kills: [
+              {
+                id: 'pricing-event', perspective: 'kill', timestamp: '2026-08-15T18:00:00Z', fame: 8748, killArea: 'OPEN_WORLD', participantCount: 1,
+                killer: { id: 'pricing-player', name: 'PricingKnight', averageItemPower: 1450, equipment: emptyEquipment },
+                victim: { id: 'victim', name: 'LostKnight', averageItemPower: 1300, equipment: { ...emptyEquipment, MainHand: { type: 'T6_MAIN_SWORD', count: 1, quality: 1 } } },
+                lossValuation: { estimatedValue: 125000, pricedItems: 1, totalItems: 1, coveragePercent: 100, freshness: 'fresh', maxAgeHours: 2, fallbackItems: 0, items: [{ total: 125000, quote: { city: 'Martlock', source: 'sell' } }] },
+              },
+              {
+                id: 'unknown-fame-event', perspective: 'kill', timestamp: '2026-08-15T17:00:00Z', fame: null, killArea: 'MISTS', participantCount: 1,
+                killer: { id: 'pricing-player', name: 'PricingKnight', averageItemPower: 1450, equipment: emptyEquipment },
+                victim: { id: 'unknown-victim', name: 'UnknownKnight', averageItemPower: 1200, equipment: emptyEquipment },
+                lossValuation: { estimatedValue: 0, pricedItems: 0, totalItems: 0, coveragePercent: 0, freshness: 'missing', fallbackItems: 0, items: [] },
+              },
+            ],
             deaths: [], guild: null, warnings: [], marketPricing: { available: true, source: 'Albion Online Data Project', region: 'europe' },
           },
           meta: { source: 'Albion Online Gameinfo', region: 'europe', fetchedAt: '2026-08-15T18:00:00Z', cacheSeconds: 90 },
@@ -746,11 +754,15 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.getByRole('button', { name: 'Szukaj', exact: true }).click()
     await page.getByRole('button', { name: /PricingKnight/ }).click()
 
-    await expect(page.getByText('Wartość utraconego zestawu')).toBeVisible()
+    await expect(page.getByText('Wartość utraconego zestawu').first()).toBeVisible()
     await expect(page.getByText('125 000 Silver').first()).toBeVisible()
     await expect(page.getByText(/Świeże · 2 h/)).toBeVisible()
     await expect(page.getByText(/Straty przeciwników:\s*125\s*tys\.\s*Silver/)).toBeVisible()
     await expect(page.getByText(/Pokrycie 1\/1 slotów \(100%\)/)).toBeVisible()
+    await expect(page.getByText('Brak danych')).toBeVisible()
+    await expect(page.getByText('1 uczestnik').first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Otwórz kronikę: UnknownKnight' })).toBeVisible()
+    await expect(page.getByRole('img', { name: 'Broń główna: T6_MAIN_SWORD' })).toBeVisible()
     await page.getByText('Skład wyceny (1/1)').click()
     await expect(page.getByText(/Martlock · oferta sprzedaży/)).toBeVisible()
 
@@ -771,8 +783,11 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({
-          data: { players: [{ id: 'direct-player', name: 'DirectKnight', guildName: 'Codex', allianceName: '', killFame: 8748, region: 'asia' }] },
-          meta: { source: 'E2E', region: 'asia', fetchedAt: '2026-08-21T20:00:00Z', cacheSeconds: 45 },
+          data: { players: [
+            { id: 'direct-player', name: 'DirectKnight', guildName: 'Codex', allianceName: '', killFame: 8748, region: 'asia' },
+            { id: 'direct-player-eu', name: 'DirectKnightEU', guildName: '', allianceName: '', killFame: 1200, region: 'europe' },
+          ] },
+          meta: { source: 'E2E', region: 'asia', fetchedAt: '2026-08-21T20:00:00Z', cacheSeconds: 45, searchedAllRegions: true, warnings: [] },
         }),
       })
     })
@@ -780,8 +795,10 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.goto('/killboard?nick=DirectKnight&region=asia')
 
     await expect(page.getByRole('heading', { name: 'Wybierz właściwego wojownika' })).toBeVisible()
-    await expect(page.getByRole('button', { name: /DirectKnight/ })).toBeVisible()
-    await expect(page.getByText('Azja').last()).toBeVisible()
+    await expect(page.getByRole('button', { name: /^DirectKnight Codex/ })).toBeVisible()
+    await expect(page.getByText('Azja · ASIA')).toBeVisible()
+    await expect(page.getByText('Europa · EU')).toBeVisible()
+    await expect(page.getByText(/2 wyników • sprawdzone serwery/)).toBeVisible()
   })
 
   test('nie zgłasza braku gracza, gdy wybrany region Gameinfo jest niedostępny', async ({ page }) => {
@@ -794,7 +811,10 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
           error: {
             code: 'REGION_UNAVAILABLE',
             message: 'Nie można potwierdzić, czy gracz „Localniaq” istnieje. Gameinfo chwilowo nie odpowiada dla: Ameryka. Spróbuj ponownie później.',
-            details: { unavailableRegions: ['america'] },
+            details: {
+              unavailableRegions: ['america'],
+              archiveUrl: 'https://killboard-1.com/us/player/Localniaq',
+            },
           },
         }),
       })
@@ -806,6 +826,8 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
     await expect(page.getByText(/Gameinfo chwilowo nie odpowiada dla: Ameryka/)).toBeVisible()
     await expect(page.getByText(/Nie znaleziono gracza/)).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Spróbuj ponownie' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Sprawdź w KillBoard#1/ })).toHaveAttribute('href', 'https://killboard-1.com/us/player/Localniaq')
   })
 
   test('otwiera prywatną skrzynkę handlową i jej API', async ({ page, request }) => {
