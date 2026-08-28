@@ -54,7 +54,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
 - [x] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
 - [x] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
-- [ ] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
+- [x] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
 - [ ] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
 - [ ] **Profil i Obserwowane** — weryfikacja postaci, statystyki, preferencje, zapisane elementy i usunięcie konta
 - [ ] **Panel administratora** — kolejka moderacji, role, stan usług, dziennik i komunikaty błędów
@@ -123,6 +123,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Dodano pełny rachunek:** osobne ceny wejściowe i wyjściowe dla wskazanych miast, zużycie i zwrot każdego składnika, koszt stanowiska zależny od odżywiania, łączne opłaty sprzedaży, przychód netto, ROI oraz ostrzeżenia po 12 godzinach od skanu.
 - **Zmieniono hierarchię strony:** właściwy kalkulator jest pierwszym i głównym narzędziem; historia ceny, kurs złota i ręczny scenariusz transportu są ładowane dopiero na żądanie.
 - **Potwierdzono:** reguły receptur i miast z oficjalnym przewodnikiem Albion Online, format enchantowanych surowców bezpośrednim zapytaniem AODP oraz obliczenia zestawem testów jednostkowych. Zalogowany E2E obejmuje pełną recepturę i szerokość 390 px; lokalne uruchomienie wymaga sekretów CI i jest wykonywane w GitHub Actions.
+
+### Przegląd 08 — Kroniki Walk
+
+- **Zostawić:** profil wojownika z podziałem fame, przełącznik zabójstw i zgonów, pełne zestawy obu stron starcia, kontekst gildii, obserwowanie gracza oraz regionalną wycenę utraconego ekwipunku z jawnym pokryciem i świeżością cen.
+- **Zmieniono wyszukiwanie:** wybrany serwer odpowiada jako pierwszy, a przy braku wyniku pozostałe regiony są sprawdzane równolegle z krótszym limitem odpowiedzi; każdy wynik pokazuje własny serwer, a częściowa awaria nie ukrywa danych zwróconych przez pozostałe regiony.
+- **Naprawiono wiarygodność danych:** brak Fame wydarzenia jest oznaczany jako „Brak danych”, nie jako prawdziwe zero; Fishing i Farming Fame są czytane z rzeczywistej struktury `LifetimeStatistics`; IP wyliczone z ostatnich walk ma precyzyjną etykietę.
+- **Dodano:** widoczny status sprawdzania wszystkich regionów, ponowienie po awarii, bezpośredni fallback do KillBoard#1 dla niedostępnego serwera oraz przejście z karty starcia prosto do kroniki przeciwnika.
+- **Potwierdzono produkcyjnie przed zmianą:** Europa zwraca profil, historię i wycenę z pokryciem cen, natomiast endpoint Gameinfo Ameryki odpowiada `502`; portal nie udaje wtedy braku gracza i wyjaśnia awarię zewnętrznego źródła.
+- **Do obserwacji:** Gameinfo jest niewspieranym publicznie interfejsem strony Albionu i okresowo traci dostępność regionu Ameryki; nie wolno zastępować brakujących danych fikcyjnymi statystykami. Dalsza odporność wymagałaby własnego, okresowo zasilanego archiwum zdarzeń.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 

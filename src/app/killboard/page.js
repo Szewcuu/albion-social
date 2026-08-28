@@ -78,8 +78,7 @@ function KillboardContent() {
     resetResults()
   }
 
-  const handleSearch = async (event) => {
-    event.preventDefault()
+  const runSearch = async () => {
     const query = searchNick.trim()
     if (query.length < 2) return
 
@@ -113,6 +112,11 @@ function KillboardContent() {
       setErrorMsg(error.message || 'Błąd połączenia. Spróbuj ponownie później.')
       setSearching(false)
     }
+  }
+
+  const handleSearch = (event) => {
+    event.preventDefault()
+    void runSearch()
   }
 
   const loadPlayer = async (player) => {
@@ -166,6 +170,7 @@ function KillboardContent() {
               value={region}
               onChange={handleRegionChange}
               options={REGIONS.map((item) => ({ value: item.id, label: `${item.label} (${item.short})` }))}
+              disabled={searching}
             />
             <label className="relative" htmlFor="killboard-player">
               <span className="sr-only">Nick gracza</span>
@@ -179,7 +184,8 @@ function KillboardContent() {
                 placeholder="Wpisz nick gracza..."
                 value={searchNick}
                 onChange={(event) => setSearchNick(event.target.value)}
-                className="input-with-icon !pl-12 w-full rounded-xl border border-white/10 bg-black/35 py-3 pr-4 text-xs text-[#f2ede3] outline-none placeholder:text-[#5f5a53] focus:border-rose-300/45"
+                disabled={searching}
+                className="input-with-icon !pl-12 w-full rounded-xl border border-white/10 bg-black/35 py-3 pr-4 text-xs text-[#f2ede3] outline-none placeholder:text-[#5f5a53] focus:border-rose-300/45 disabled:cursor-wait disabled:opacity-65"
               />
             </label>
             <button type="submit" disabled={searching || searchNick.trim().length < 2} className="btn btn-primary inline-flex items-center justify-center gap-2 px-7 py-3 text-[10px] font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40">
@@ -187,6 +193,11 @@ function KillboardContent() {
               {searching ? 'Przeszukuję' : 'Szukaj'}
             </button>
           </form>
+          {searching && (
+            <p role="status" className="mt-3 text-[9px] leading-4 text-[var(--text-secondary)]">
+              Sprawdzam wybrany serwer. Jeśli nie znajdę nicku, automatycznie przeszukam pozostałe regiony.
+            </p>
+          )}
         </section>
 
         <div aria-live="polite">
@@ -196,7 +207,12 @@ function KillboardContent() {
               <div>
                 <p className="font-bold">Nie udało się otworzyć kroniki.</p>
                 <p className="mt-1 text-rose-200/65">{errorMsg}</p>
-                {recoveryUrl && <a href={recoveryUrl} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-2 rounded-lg border border-rose-200/20 bg-black/20 px-3 py-2 text-[9px] font-black uppercase tracking-[.1em] text-rose-100 transition hover:border-rose-200/40 hover:bg-black/35">Sprawdź w archiwum społecznościowym <ExternalLink className="h-3.5 w-3.5" /></a>}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button type="button" onClick={() => void runSearch()} className="inline-flex items-center gap-2 rounded-lg border border-rose-200/20 bg-black/20 px-3 py-2 text-[9px] font-black uppercase tracking-[.1em] text-rose-100 transition hover:border-rose-200/40 hover:bg-black/35">
+                    <RefreshCw className="h-3.5 w-3.5" /> Spróbuj ponownie
+                  </button>
+                  {recoveryUrl && <a href={recoveryUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-rose-200/20 bg-black/20 px-3 py-2 text-[9px] font-black uppercase tracking-[.1em] text-rose-100 transition hover:border-rose-200/40 hover:bg-black/35">Sprawdź w KillBoard#1 <ExternalLink className="h-3.5 w-3.5" /></a>}
+                </div>
               </div>
             </div>
           )}

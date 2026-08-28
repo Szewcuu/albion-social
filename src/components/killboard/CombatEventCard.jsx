@@ -26,6 +26,11 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
+function formatParticipants(value) {
+  const count = Math.max(0, Number(value) || 0)
+  return `${count} ${count === 1 ? 'uczestnik' : 'uczestników'}`
+}
+
 function freshnessPresentation(valuation) {
   if (!valuation || Number(valuation.totalItems) === 0) {
     return { label: 'Brak zestawu', classes: 'border-white/10 bg-white/[.03] text-[#8f8980]' }
@@ -51,7 +56,7 @@ function EquipmentStrip({ equipment }) {
         return (
           <div key={key} className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-white/8 bg-black/35 sm:h-10 sm:w-10">
             {item?.type ? (
-              <Image src={itemImageUrl(item)} alt="" title={`${item.type} · jakość ${item.quality || 1}`} width={40} height={40} unoptimized className="h-10 w-10 object-contain sm:h-9 sm:w-9" />
+              <Image src={itemImageUrl(item)} alt={`${VALUATION_SLOT_LABELS[key]}: ${item.type}`} title={`${item.type} · jakość ${item.quality || 1}`} width={40} height={40} unoptimized className="h-10 w-10 object-contain sm:h-9 sm:w-9" />
             ) : (
               <span className="text-[9px] text-[#3e3b36]">—</span>
             )}
@@ -129,7 +134,7 @@ function EquipmentPanel({ combatant, victim, valuation }) {
   )
 }
 
-export default function CombatEventCard({ event }) {
+export default function CombatEventCard({ event, region, onLoadPlayer }) {
   const isKill = event.perspective === 'kill'
   const opponent = isKill ? event.victim : event.killer
   const ownSide = isKill ? event.killer : event.victim
@@ -155,10 +160,20 @@ export default function CombatEventCard({ event }) {
 
         <div className="text-right">
           <p className="text-[9px] font-black uppercase tracking-[.14em] text-[#918b82]">Fame wydarzenia</p>
-          <p className="font-display text-xl font-black text-[#e5bb55]">{(event.fame || 0).toLocaleString('pl-PL')}</p>
-          <p className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#918b82]"><Users className="h-3 w-3" /> {event.participantCount} uczestników</p>
+          <p className="font-display text-xl font-black text-[#e5bb55]">{event.fame == null ? 'Brak danych' : event.fame.toLocaleString('pl-PL')}</p>
+          <p className="mt-1 flex items-center justify-end gap-1 text-[9px] text-[#918b82]"><Users className="h-3 w-3" /> {formatParticipants(event.participantCount)}</p>
         </div>
       </div>
+
+      {opponent?.id && onLoadPlayer && (
+        <button
+          type="button"
+          onClick={() => onLoadPlayer({ id: opponent.id, name: opponent.name, region })}
+          className="inline-flex items-center gap-2 text-[9px] font-black uppercase tracking-[.1em] text-amber-200/75 transition hover:text-amber-100"
+        >
+          Otwórz kronikę: {opponent.name}
+        </button>
+      )}
 
       <div className="grid gap-3 border-t border-white/8 pt-4 lg:grid-cols-2">
         <EquipmentPanel combatant={ownSide} victim={ownSideIsVictim} valuation={event.lossValuation} />
