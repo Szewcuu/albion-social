@@ -1,8 +1,8 @@
 import { createPageMetadata } from '@/lib/seo'
 
 export const metadata = createPageMetadata({
-  title: 'Kalkulator Zysku z Craftingu & RRR',
-  description: 'Kalkulator rzemiosła i przetwórstwa w Albion Online. Obliczaj czysty zysk netto uwzględniając bonusy miast (RRR %), skupienie i podatki.',
+  title: 'Kalkulator Rafinacji, RRR i Zysku',
+  description: 'Kalkulator rafinacji Albion Online oparty na pełnych recepturach, cenach materiałów, bonusach miast, Focusie, opłacie stanowiska i kosztach rynku.',
   path: '/kalkulator-craftingu',
 })
 

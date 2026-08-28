@@ -1,384 +1,274 @@
 'use client'
 
+import dynamic from 'next/dynamic'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AlertCircle, BarChart3, CheckCircle2, Coins, Hammer, LoaderCircle, RefreshCw, Route, ShieldCheck, Sparkles, Zap } from 'lucide-react'
+
 import CustomSelect from '@/components/ui/CustomSelect'
+import {
+  calculateRefiningProfit,
+  getPresetReturnRate,
+  getRefiningRecipe,
+  quoteAgeHours,
+  REFINING_CITIES,
+  REFINING_RESOURCES,
+} from '@/lib/refiningCalculator'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Hammer, Sparkles, TrendingUp, TrendingDown, Coins, Percent, Zap, LoaderCircle, AlertCircle, RefreshCw } from 'lucide-react'
-import GoldExchangeWidget from '@/components/economy/GoldExchangeWidget'
-import TradeArbitrageCalculator from '@/components/market/TradeArbitrageCalculator'
-import ItemPriceHistoryChart from '@/components/market/ItemPriceHistoryChart'
+const ItemPriceHistoryChart = dynamic(() => import('@/components/market/ItemPriceHistoryChart'), { loading: () => <ToolLoading label="Ładowanie historii ceny…" /> })
+const GoldExchangeWidget = dynamic(() => import('@/components/economy/GoldExchangeWidget'), { loading: () => <ToolLoading label="Ładowanie kursu złota…" /> })
+const TradeArbitrageCalculator = dynamic(() => import('@/components/market/TradeArbitrageCalculator'), { loading: () => <ToolLoading label="Ładowanie kalkulatora trasy…" /> })
 
-const RESOURCES = [
-  { id: 'CLOTH', label: 'Tkanina (Cloth)', rawId: 'FIBER' },
-  { id: 'LEATHER', label: 'Skóra (Leather)', rawId: 'HIDE' },
-  { id: 'METALBAR', label: 'Metal (Ingot)', rawId: 'ORE' },
-  { id: 'PLANKS', label: 'Drewno (Planks)', rawId: 'WOOD' },
-  { id: 'STONEBLOCK', label: 'Kamień (Stone Block)', rawId: 'ROCK' },
+const TIERS = [4, 5, 6, 7, 8]
+const ENCHANTS = [0, 1, 2, 3, 4]
+const REGIONS = [
+  { value: 'europe', label: 'Europa (AMS)' },
+  { value: 'america', label: 'Ameryka (NWA)' },
+  { value: 'asia', label: 'Azja (SGP)' },
 ]
 
-const TIERS = [
-  { level: 'T4', label: 'Tier 4' },
-  { level: 'T5', label: 'Tier 5' },
-  { level: 'T6', label: 'Tier 6' },
-  { level: 'T7', label: 'Tier 7' },
-  { level: 'T8', label: 'Tier 8' },
-]
+function ToolLoading({ label }) {
+  return <div className="panel flex min-h-36 items-center justify-center gap-2 rounded-3xl p-6 font-mono text-xs text-[var(--text-muted)]"><LoaderCircle className="h-4 w-4 animate-spin text-[var(--gold)]" />{label}</div>
+}
 
-const ENCHANTS = [
-  { level: '0', label: '@0 (Zwykły)' },
-  { level: '1', label: '@1 (Uncommon)' },
-  { level: '2', label: '@2 (Rare)' },
-  { level: '3', label: '@3 (Exceptional)' },
-  { level: '4', label: '@4 (Pristine)' },
-]
+function formatSilver(value) {
+  return `${Math.round(Number(value) || 0).toLocaleString('pl-PL')} Silver`
+}
 
-const CITY_BONUSES = {
-  'Lymhurst': { bonusResource: 'PLANKS', baseRrr: 28.5, focusRrr: 47.9, label: 'Lymhurst (Bonus: Drewno / Planks)' },
-  'Martlock': { bonusResource: 'LEATHER', baseRrr: 28.5, focusRrr: 47.9, label: 'Martlock (Bonus: Skóra / Leather)' },
-  'Thetford': { bonusResource: 'METALBAR', baseRrr: 28.5, focusRrr: 47.9, label: 'Thetford (Bonus: Metal / Ore)' },
-  'Fort Sterling': { bonusResource: 'CLOTH', baseRrr: 28.5, focusRrr: 47.9, label: 'Fort Sterling (Bonus: Tkanina / Cloth)' },
-  'Bridgewatch': { bonusResource: 'STONEBLOCK', baseRrr: 28.5, focusRrr: 47.9, label: 'Bridgewatch (Bonus: Kamień / Stone)' },
-  'Caerleon': { bonusResource: 'ALL', baseRrr: 15.2, focusRrr: 43.5, label: 'Caerleon (Czerwona Strefa)' },
-  'Brecilien': { bonusResource: 'ALL', baseRrr: 20.0, focusRrr: 45.0, label: 'Brecilien (Mgły)' },
+function formatAmount(value) {
+  return Number(value || 0).toLocaleString('pl-PL', { maximumFractionDigits: 1 })
+}
+
+function quoteKey(itemId, city) {
+  return `${itemId}:${city}`
+}
+
+function observedAtLabel(timestamp) {
+  const age = quoteAgeHours(timestamp)
+  if (age === null) return 'brak czasu skanu'
+  if (age < 1) return `${Math.max(1, Math.round(age * 60))} min temu`
+  if (age < 48) return `${Math.round(age)} godz. temu`
+  return `${Math.round(age / 24)} dni temu`
 }
 
 export default function CraftingCalculatorPage() {
   const [resourceType, setResourceType] = useState('PLANKS')
-  const [tier, setTier] = useState('T5')
-  const [enchant, setEnchant] = useState('0')
-  const [server, setServer] = useState('Europa')
-  const [selectedCity, setSelectedCity] = useState('Lymhurst')
-  const [useFocus, setUseFocus] = useState(true)
-  const [rrr, setRrr] = useState(47.9) // RRR %
-  const [stationTax, setStationTax] = useState(500) // Tax per 100 nutrition
+  const [tier, setTier] = useState(5)
+  const [enchant, setEnchant] = useState(0)
+  const [region, setRegion] = useState('europe')
+  const [craftCity, setCraftCity] = useState('Fort Sterling')
+  const [buyCity, setBuyCity] = useState('Fort Sterling')
+  const [sellCity, setSellCity] = useState('Fort Sterling')
+  const [useFocus, setUseFocus] = useState(false)
+  const [rrr, setRrr] = useState(36.7)
   const [quantity, setQuantity] = useState(100)
-
-  const applyCityRrr = useCallback((city, focus, resType) => {
-    const cityConfig = CITY_BONUSES[city] || CITY_BONUSES['Lymhurst']
-    const hasBonus = cityConfig.bonusResource === 'ALL' || cityConfig.bonusResource === resType
-    const baseRrr = hasBonus ? cityConfig.baseRrr : 15.2
-    const finalRrr = focus ? (hasBonus ? cityConfig.focusRrr : 43.5) : baseRrr
-    setRrr(finalRrr)
-  }, [])
-
-  const handleCityChange = (newCity) => {
-    setSelectedCity(newCity)
-    applyCityRrr(newCity, useFocus, resourceType)
-  }
-
-  const handleFocusToggle = () => {
-    const newFocus = !useFocus
-    setUseFocus(newFocus)
-    applyCityRrr(selectedCity, newFocus, resourceType)
-  }
-
-  const handleResourceChange = (newRes) => {
-    setResourceType(newRes)
-    applyCityRrr(selectedCity, useFocus, newRes)
-  }
-
-  const [loading, setLoading] = useState(false)
+  const [stationFee, setStationFee] = useState(500)
+  const [marketFee, setMarketFee] = useState(6.5)
+  const [priceInputs, setPriceInputs] = useState({})
+  const [quotes, setQuotes] = useState({})
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [priceData, setPriceData] = useState(null)
+  const [notice, setNotice] = useState(null)
+  const [showHistory, setShowHistory] = useState(false)
+  const [activeExtra, setActiveExtra] = useState(null)
 
-  const getItemId = useCallback(() => {
-    const enc = enchant !== '0' ? `_LEVEL${enchant}@${enchant}` : ''
-    return `${tier}_${resourceType}${enc}`
-  }, [tier, resourceType, enchant])
+  const selectedResource = useMemo(() => REFINING_RESOURCES.find((resource) => resource.id === resourceType), [resourceType])
+  const recipe = useMemo(() => getRefiningRecipe({ resourceType, tier, enchant }), [resourceType, tier, enchant])
 
   const fetchPrices = useCallback(async () => {
     setLoading(true)
     setError(null)
-    const itemId = getItemId()
-    const regionKey = server.toLowerCase().includes('ameryka') ? 'america' : server.toLowerCase().includes('azja') ? 'asia' : 'europe'
+    setNotice(null)
+    const itemIds = [recipe.output.itemId, ...recipe.ingredients.map((ingredient) => ingredient.itemId)]
+    const cities = [...new Set([buyCity, sellCity])]
+    const params = new URLSearchParams({ mode: 'current', items: itemIds.join(','), cities: cities.join(','), qualities: '1', region })
 
     try {
-      let rawPrices = []
-      try {
-        const res = await fetch(`/api/prices?mode=current&items=${encodeURIComponent(itemId)}&region=${regionKey}&cities=Caerleon,Martlock,Lymhurst,Bridgewatch,Fort%20Sterling,Thetford,Brecilien`)
-        if (res.ok) {
-          const data = await res.json()
-          rawPrices = data.data || []
-        }
-      } catch {
-        rawPrices = []
-      }
-
-      if (!rawPrices || rawPrices.length === 0) {
-        const host = regionKey === 'america' ? 'west' : regionKey === 'asia' ? 'east' : 'europe'
-        const directRes = await fetch(`https://${host}.albion-online-data.com/api/v2/stats/prices/${encodeURIComponent(itemId)}.json?locations=Caerleon,Martlock,Lymhurst,Bridgewatch,FortSterling,Thetford,Brecilien`)
-        if (directRes.ok) {
-          rawPrices = await directRes.json()
-        }
-      }
-
-      const validPrices = (rawPrices || []).filter(p => p.sell_price_min > 0)
-      if (validPrices.length === 0) {
-        setError(`Brak aktywnych danych cenowych dla przedmiotu ${itemId} na serwerze ${server}.`)
-        setPriceData(null)
-      } else {
-        validPrices.sort((a, b) => a.sell_price_min - b.sell_price_min)
-        const cheapest = validPrices[0]
-        const avg = Math.round(validPrices.reduce((sum, p) => sum + p.sell_price_min, 0) / validPrices.length)
-
-        setPriceData({
-          cheapestCity: cheapest.city,
-          minPrice: cheapest.sell_price_min,
-          avgPrice: avg,
-        })
-      }
-    } catch (err) {
-      setError(err.message || 'Nie udało się pobrać cen z API.')
-      setPriceData(null)
+      const response = await fetch(`/api/prices?${params}`)
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload?.error?.message || 'Nie udało się pobrać skanów rynku.')
+      const rows = Array.isArray(payload.data) ? payload.data : []
+      const nextQuotes = Object.fromEntries(rows.map((row) => [quoteKey(row.item_id, row.city), row]))
+      const nextPrices = {}
+      for (const ingredient of recipe.ingredients) nextPrices[ingredient.itemId] = Number(nextQuotes[quoteKey(ingredient.itemId, buyCity)]?.sell_price_min) || 0
+      nextPrices[recipe.output.itemId] = Number(nextQuotes[quoteKey(recipe.output.itemId, sellCity)]?.sell_price_min) || 0
+      const missingCount = Object.values(nextPrices).filter((price) => price <= 0).length
+      setQuotes(nextQuotes)
+      setPriceInputs(nextPrices)
+      if (missingCount > 0) setNotice(`Brakuje ${missingCount} ${missingCount === 1 ? 'ceny' : 'cen'} w wybranych miastach. Uzupełnij je ręcznie albo zmień rynek.`)
+    } catch (fetchError) {
+      setQuotes({})
+      setPriceInputs(Object.fromEntries([recipe.output, ...recipe.ingredients].map((item) => [item.itemId, 0])))
+      setError(fetchError.message || 'Albion Online Data Project chwilowo nie odpowiada. Ceny możesz wpisać ręcznie.')
     } finally {
       setLoading(false)
     }
-  }, [getItemId, server])
+  }, [buyCity, recipe, region, sellCity])
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchPrices()
-    }, 0)
-    return () => clearTimeout(timer)
+    const timer = window.setTimeout(fetchPrices, 150)
+    return () => window.clearTimeout(timer)
   }, [fetchPrices])
 
-  const unitPrice = priceData?.minPrice || 0
-  const rawMaterialEstCost = Math.round(unitPrice * 0.7)
-  const returnRateMultiplier = 1 - rrr / 100
-  const totalCost = Math.round(quantity * rawMaterialEstCost * returnRateMultiplier + (quantity * (stationTax / 10)))
-  const totalRevenue = Math.round(quantity * unitPrice)
-  const netProfit = totalRevenue - totalCost
-  const profitPerItem = quantity > 0 ? Math.round(netProfit / quantity) : 0
-  const returnedItems = Math.round(quantity * (rrr / 100))
+  const result = useMemo(() => calculateRefiningProfit({
+    recipe,
+    quantity,
+    ingredientPrices: priceInputs,
+    outputPrice: priceInputs[recipe.output.itemId],
+    returnRate: rrr,
+    stationFeePerHundredNutrition: stationFee,
+    marketFeeRate: marketFee,
+  }), [marketFee, priceInputs, quantity, recipe, rrr, stationFee])
+
+  const requiredPriceIds = [recipe.output.itemId, ...recipe.ingredients.map((ingredient) => ingredient.itemId)]
+  const hasCompletePrices = requiredPriceIds.every((itemId) => Number(priceInputs[itemId]) > 0)
+  const staleQuotes = [...recipe.ingredients.map((ingredient) => quotes[quoteKey(ingredient.itemId, buyCity)]), quotes[quoteKey(recipe.output.itemId, sellCity)]]
+    .filter((quote) => quote && quoteAgeHours(quote.sell_price_min_date) > 12)
+
+  function handleResourceChange(nextResourceId) {
+    const resource = REFINING_RESOURCES.find((entry) => entry.id === nextResourceId)
+    setResourceType(nextResourceId)
+    setCraftCity(resource.bonusCity)
+    setRrr(getPresetReturnRate({ craftCity: resource.bonusCity, bonusCity: resource.bonusCity, useFocus }))
+    if (resource.enchantable === false) setEnchant(0)
+  }
+
+  function handleCraftCityChange(nextCity) {
+    setCraftCity(nextCity)
+    setRrr(getPresetReturnRate({ craftCity: nextCity, bonusCity: recipe.bonusCity, useFocus }))
+  }
+
+  function handleFocusToggle() {
+    const nextFocus = !useFocus
+    setUseFocus(nextFocus)
+    setRrr(getPresetReturnRate({ craftCity, bonusCity: recipe.bonusCity, useFocus: nextFocus }))
+  }
+
+  function updatePrice(itemId, value) {
+    setPriceInputs((current) => ({ ...current, [itemId]: Math.max(0, Number(value) || 0) }))
+  }
 
   return (
     <div className="page-content">
       <div className="subpage-header">
-        <h1>Kalkulator Craftingu</h1>
-        <p>Oblicz zysk netto z craftingu uwzględniając Return Rate (RRR) oraz opłaty stanowisk.</p>
+        <h1>Kalkulator Rafinacji</h1>
+        <p>Policz koszt prawdziwej receptury, zwrot materiałów, opłatę stanowiska i sprzedaż na wybranym rynku.</p>
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-        <GoldExchangeWidget />
-        <TradeArbitrageCalculator />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* USTAWIENIA CRAFTINGU */}
-          <div className="lg:col-span-5 space-y-5">
-            <div className="panel rounded-3xl p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <h3 className="font-display text-lg font-bold text-[#fff] flex items-center gap-2">
-                  <Hammer className="w-5 h-5 text-amber-400" /> Parametry Rzemiosła
-                </h3>
-                <button
-                  onClick={fetchPrices}
-                  disabled={loading}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-amber-300 text-xs font-mono transition flex items-center gap-1 cursor-pointer"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                  Odśwież ceny
-                </button>
-              </div>
-
-              <div className="space-y-3 text-xs font-mono">
-                <div>
-                  <CustomSelect
-                    label="Typ Surowca / Przedmiotu"
-                    value={resourceType}
-                    onChange={(val) => handleResourceChange(val)}
-                    options={RESOURCES.map((r) => ({ value: r.id, label: r.label }))}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <CustomSelect
-                      label="Miasto Rzemiosła (Bonus RRR)"
-                      value={selectedCity}
-                      onChange={(val) => handleCityChange(val)}
-                      options={Object.keys(CITY_BONUSES).map(city => ({ value: city, label: CITY_BONUSES[city].label }))}
-                    />
-                  </div>
-
-                  <div className="flex flex-col justify-end">
-                    <button
-                      type="button"
-                      onClick={handleFocusToggle}
-                      className={`w-full py-3 px-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                        useFocus
-                          ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.2)]'
-                          : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
-                      }`}
-                    >
-                      <Zap className={`w-3.5 h-3.5 ${useFocus ? 'text-amber-400' : 'text-gray-500'}`} />
-                      <span>{useFocus ? 'Skupienie (Focus) ON' : 'Skupienie (Focus) OFF'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <CustomSelect
-                      label="Tier Surowca"
-                      value={tier}
-                      onChange={(val) => setTier(val)}
-                      options={TIERS.map((t) => ({ value: t.level, label: t.label }))}
-                    />
-                  </div>
-
-                  <div>
-                    <CustomSelect
-                      label="Zaklęcie (@Enchant)"
-                      value={enchant}
-                      onChange={(val) => setEnchant(val)}
-                      options={ENCHANTS.map((e) => ({ value: e.level, label: e.label }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <CustomSelect
-                      label="Serwer Gry"
-                      value={server}
-                      onChange={(val) => setServer(val)}
-                      options={[
-                        { value: 'Europa', label: 'Europa (AMS)' },
-                        { value: 'Ameryka', label: 'Ameryka (NWA)' },
-                        { value: 'Azja', label: 'Azja (SGP)' },
-                      ]}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 mb-1 font-bold uppercase text-[10px]">Ilość Sztuk</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={10000}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Number(e.target.value) || 1)}
-                      className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 text-gray-100 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3 pt-2 border-t border-white/10">
-                  <div>
-                    <div className="flex justify-between text-[11px] font-bold text-emerald-400 mb-1">
-                      <span>Zwrot Surowców (RRR %):</span>
-                      <span>{rrr}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={15.2}
-                      max={53.9}
-                      step={0.1}
-                      value={rrr}
-                      onChange={(e) => setRrr(Number(e.target.value))}
-                      className="w-full accent-emerald-500 cursor-pointer"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-[11px] font-bold text-amber-300 mb-1">
-                      <span>Podatek Stanowiska (Tax):</span>
-                      <span>{stationTax} Silver / 100 odżywiania</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={100}
-                      max={2000}
-                      step={50}
-                      value={stationTax}
-                      onChange={(e) => setStationTax(Number(e.target.value))}
-                      className="w-full accent-amber-500 cursor-pointer"
-                    />
-                  </div>
-                </div>
+      <main className="relative z-10 mx-auto mt-2 w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8">
+        <section className="panel overflow-hidden rounded-3xl border border-amber-500/20">
+          <div className="grid gap-4 border-b border-white/8 bg-black/20 p-5 sm:grid-cols-[1fr_auto] sm:items-center sm:p-6">
+            <div className="flex items-start gap-3">
+              <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-3 text-amber-300"><Hammer className="h-5 w-5" /></div>
+              <div>
+                <span className="font-mono text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Warsztat ekonomisty</span>
+                <h2 className="mt-1 font-display text-2xl font-black text-[var(--text-bright)]">Jedna receptura. Wszystkie koszty na stole.</h2>
+                <p className="mt-1 max-w-3xl text-sm text-[var(--text-muted)]">Ceny pochodzą ze skanów społeczności Albion Data Project. Każdą z nich możesz poprawić zgodnie z rynkiem widocznym w grze.</p>
               </div>
             </div>
+            <div className="flex items-center gap-2 rounded-2xl border border-emerald-500/20 bg-emerald-950/20 px-3 py-2 font-mono text-[10px] text-emerald-200"><ShieldCheck className="h-4 w-4" />Bez cen zastępczych i ukrytych kosztów</div>
           </div>
 
-          {/* PRAWA KOLUMNA: PODSUMOWANIE EKONOMICZNE */}
-          <div className="lg:col-span-7 space-y-5">
-            <div className="panel rounded-3xl p-6 space-y-5">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div>
-                  <div className="text-[10px] font-mono uppercase text-gray-400">Wybrany Przedmiot:</div>
-                  <div className="text-lg font-bold text-amber-200 font-mono">{getItemId()}</div>
-                </div>
-
-                {priceData && (
-                  <div className="text-right font-mono">
-                    <div className="text-[10px] text-gray-400">Cena w {priceData.cheapestCity}:</div>
-                    <div className="text-sm font-bold text-emerald-400">{priceData.minPrice.toLocaleString('pl-PL')} Silver</div>
-                  </div>
-                )}
+          <div className="grid gap-6 p-5 sm:p-6 xl:grid-cols-[0.92fr_1.08fr]">
+            <div className="space-y-5">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <CustomSelect label="Co rafinujesz" value={resourceType} onChange={handleResourceChange} options={REFINING_RESOURCES.map((resource) => ({ value: resource.id, label: resource.label }))} />
+                <CustomSelect label="Serwer rynku" value={region} onChange={setRegion} options={REGIONS} />
+                <CustomSelect label="Tier" value={tier} onChange={(value) => setTier(Number(value))} options={TIERS.map((value) => ({ value, label: `Tier ${value}` }))} />
+                <CustomSelect label="Enchant" value={enchant} disabled={selectedResource.enchantable === false} onChange={(value) => setEnchant(Number(value))} options={ENCHANTS.map((value) => ({ value, label: `.${value}${value === 0 ? ' — zwykły' : ''}` }))} />
               </div>
 
-              {loading && (
-                <div className="py-12 text-center space-y-3 font-mono text-xs text-amber-400">
-                  <LoaderCircle className="w-8 h-8 animate-spin mx-auto text-amber-400" />
-                  <div>Pobieranie aktualnych cen z miast królewskich...</div>
+              {selectedResource.enchantable === false && <p className="rounded-xl border border-sky-500/20 bg-sky-950/20 p-3 font-mono text-[10px] text-sky-200">Bloki kamienne nie mają enchantów. Enchantowane skały zwiększają skalę receptury, a nie tworzą bloków .1–.4.</p>}
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <CustomSelect label="Kup materiały w" value={buyCity} onChange={setBuyCity} options={REFINING_CITIES} />
+                <CustomSelect label="Rafinuj w" value={craftCity} onChange={handleCraftCityChange} options={REFINING_CITIES} />
+                <CustomSelect label="Sprzedaj w" value={sellCity} onChange={setSellCity} options={REFINING_CITIES} />
+              </div>
+
+              <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div><p className="font-mono text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Zwrot materiałów</p><p className="mt-1 text-sm text-[var(--text-primary)]">{craftCity === recipe.bonusCity ? `Bonus ${recipe.resource.label.toLowerCase()}: ${recipe.bonusCity}` : `Bez specjalizacji: bonus jest w ${recipe.bonusCity}`}</p></div>
+                  <button type="button" onClick={handleFocusToggle} aria-pressed={useFocus} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 font-mono text-[11px] font-black transition ${useFocus ? 'border-amber-400 bg-amber-500/20 text-amber-200' : 'border-white/10 bg-white/5 text-[var(--text-muted)] hover:border-amber-400/40'}`}><Zap className="h-4 w-4" />{useFocus ? 'Focus włączony' : 'Focus wyłączony'}</button>
                 </div>
-              )}
-
-              {error && !loading && (
-                <div className="flex items-center gap-2 bg-rose-950/40 border border-rose-800/50 p-4 rounded-2xl text-rose-300 text-xs font-mono">
-                  <AlertCircle className="w-5 h-5 shrink-0" />
-                  <span>{error}</span>
+                <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_132px] sm:items-end">
+                  <div><div className="mb-1 flex justify-between font-mono text-[10px] font-bold text-emerald-300"><span>RRR — możesz skorygować ręcznie</span><span>{rrr.toFixed(1)}%</span></div><input aria-label="Zwrot materiałów RRR" type="range" min="0" max="60" step="0.1" value={rrr} onChange={(event) => setRrr(Number(event.target.value))} className="w-full accent-emerald-500" /></div>
+                  <label className="font-mono text-[10px] font-bold uppercase text-[var(--text-muted)]">Liczba sztuk<input type="number" min="1" max="10000" value={quantity} onChange={(event) => setQuantity(Math.min(10000, Math.max(1, Number(event.target.value) || 1)))} className="mt-1 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] p-3 text-[var(--text-bright)] outline-none focus:border-[var(--gold)]" /></label>
                 </div>
-              )}
+              </div>
 
-              {priceData && !loading && (
-                <div className="space-y-5">
-                  <div className={`p-5 rounded-3xl border ${
-                    netProfit > 0
-                      ? 'bg-gradient-to-r from-emerald-950/60 to-emerald-900/40 border-emerald-500/40'
-                      : 'bg-gradient-to-r from-rose-950/60 to-rose-900/40 border-rose-500/40'
-                  }`}>
-                    <div className="flex items-center justify-between font-mono">
-                      <div>
-                        <div className="text-xs uppercase font-bold text-gray-300">Szacowany Zysk Netto ({quantity} szt):</div>
-                        <div className={`text-3xl font-black mt-1 ${netProfit > 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                          {netProfit > 0 ? '+' : ''}{netProfit.toLocaleString('pl-PL')} Silver
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <div className="text-[10px] uppercase text-gray-400">Zysk na 1 sztukę:</div>
-                        <div className={`text-lg font-bold ${netProfit > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {profitPerItem > 0 ? '+' : ''}{profitPerItem.toLocaleString('pl-PL')} Silver
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 font-mono text-xs">
-                    <div className="bg-[#050204] p-3 rounded-2xl border border-[#200d14]">
-                      <div className="text-gray-400 text-[10px]">Łączny Koszt Wytworzenia:</div>
-                      <div className="font-bold text-gray-200 mt-0.5">{totalCost.toLocaleString('pl-PL')} Silver</div>
-                    </div>
-
-                    <div className="bg-[#050204] p-3 rounded-2xl border border-[#200d14]">
-                      <div className="text-gray-400 text-[10px]">Zwrócone Surowce (RRR):</div>
-                      <div className="font-bold text-amber-300 mt-0.5">{returnedItems} szt. ({rrr}%)</div>
-                    </div>
-
-                    <div className="bg-[#050204] p-3 rounded-2xl border border-[#200d14] col-span-2 sm:col-span-1">
-                      <div className="text-gray-400 text-[10px]">Przychód ze Sprzedaży:</div>
-                      <div className="font-bold text-emerald-300 mt-0.5">{totalRevenue.toLocaleString('pl-PL')} Silver</div>
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="font-mono text-[10px] font-bold uppercase text-[var(--text-muted)]">Opłata stanowiska / 100 odżywiania<input type="number" min="0" value={stationFee} onChange={(event) => setStationFee(Math.max(0, Number(event.target.value) || 0))} className="mt-1 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] p-3 text-[var(--text-bright)] outline-none focus:border-[var(--gold)]" /></label>
+                <label className="font-mono text-[10px] font-bold uppercase text-[var(--text-muted)]">Łączne opłaty sprzedaży<div className="relative mt-1"><input type="number" min="0" max="100" step="0.1" value={marketFee} onChange={(event) => setMarketFee(Math.min(100, Math.max(0, Number(event.target.value) || 0)))} className="w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] p-3 pr-9 text-[var(--text-bright)] outline-none focus:border-[var(--gold)]" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--text-muted)]">%</span></div></label>
+              </div>
+              <p className="font-mono text-[9px] leading-relaxed text-[var(--text-faded)]">Preset 6,5% odpowiada podatkowi Premium 4% i opłacie wystawienia 2,5%. Zmień go, jeśli używasz innego sposobu sprzedaży.</p>
             </div>
 
-            {/* WYKRES HISTORII CEN SUROWCA */}
-            <ItemPriceHistoryChart itemId={getItemId()} defaultCity={selectedCity} />
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div><p className="font-mono text-[10px] font-black uppercase tracking-wider text-amber-300">Receptura {recipe.output.label}</p><p className="mt-1 text-sm text-[var(--text-muted)]">Kupno: {buyCity} • sprzedaż: {sellCity}</p></div>
+                <button type="button" onClick={fetchPrices} disabled={loading} className="flex min-h-11 items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 font-mono text-[10px] font-black uppercase text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Odśwież skany</button>
+              </div>
+
+              {error && <div className="flex gap-3 rounded-2xl border border-rose-500/30 bg-rose-950/30 p-4 text-xs text-rose-200"><AlertCircle className="h-5 w-5 shrink-0" /><div><strong className="block">Źródło cen jest niedostępne</strong><span>{error} Wynik pojawi się dopiero po uzupełnieniu wszystkich pól.</span></div></div>}
+              {notice && !error && <div className="flex gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4 text-xs text-amber-100"><AlertCircle className="h-5 w-5 shrink-0" /><span>{notice}</span></div>}
+              {staleQuotes.length > 0 && <div className="flex gap-3 rounded-2xl border border-sky-500/20 bg-sky-950/20 p-4 text-xs text-sky-100"><AlertCircle className="h-5 w-5 shrink-0" /><span>{staleQuotes.length === 1 ? 'Jeden skan ma' : `${staleQuotes.length} skany mają`} ponad 12 godzin. Porównaj ceny w grze przed inwestycją.</span></div>}
+
+              <div className="space-y-2">
+                {recipe.ingredients.map((ingredient) => <PriceRow key={ingredient.itemId} item={ingredient} role={`Materiał ×${ingredient.quantity}`} city={buyCity} value={priceInputs[ingredient.itemId]} quote={quotes[quoteKey(ingredient.itemId, buyCity)]} onChange={updatePrice} />)}
+                <div className="flex justify-center py-0.5 text-[var(--gold)]"><Sparkles className="h-4 w-4" /></div>
+                <PriceRow item={recipe.output} role="Produkt ×1" city={sellCity} value={priceInputs[recipe.output.itemId]} quote={quotes[quoteKey(recipe.output.itemId, sellCity)]} onChange={updatePrice} output />
+              </div>
+
+              {loading ? <div className="flex min-h-48 items-center justify-center gap-2 rounded-3xl border border-white/8 bg-black/20 font-mono text-xs text-[var(--text-muted)]"><LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />Pobieranie trzech notowań…</div> : hasCompletePrices ? <ResultPanel result={result} rrr={rrr} /> : <div className="rounded-3xl border border-dashed border-white/15 bg-black/15 p-8 text-center"><Coins className="mx-auto h-7 w-7 text-[var(--text-faded)]" /><p className="mt-3 font-display text-lg font-bold text-[var(--text-primary)]">Uzupełnij brakujące ceny</p><p className="mt-1 text-xs text-[var(--text-muted)]">Nie pokazujemy zysku opartego na zerach ani sztucznych założeniach.</p></div>}
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
+
+        <section className="panel rounded-3xl p-5 sm:p-6">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div><p className="font-mono text-[10px] font-black uppercase tracking-wider text-[var(--gold)]">Narzędzia pomocnicze</p><h2 className="mt-1 font-display text-xl font-black text-[var(--text-bright)]">Otwieraj tylko wtedy, gdy ich potrzebujesz</h2></div>
+            <div className="flex flex-wrap gap-2">
+              <ToolButton active={showHistory} onClick={() => setShowHistory((value) => !value)} icon={BarChart3}>Historia produktu</ToolButton>
+              <ToolButton active={activeExtra === 'gold'} onClick={() => setActiveExtra((value) => value === 'gold' ? null : 'gold')} icon={Coins}>Kurs złota</ToolButton>
+              <ToolButton active={activeExtra === 'route'} onClick={() => setActiveExtra((value) => value === 'route' ? null : 'route')} icon={Route}>Ręczna trasa</ToolButton>
+            </div>
+          </div>
+        </section>
+
+        {showHistory && <ItemPriceHistoryChart itemId={recipe.output.itemId} defaultCity={sellCity} />}
+        {activeExtra === 'gold' && <GoldExchangeWidget />}
+        {activeExtra === 'route' && <TradeArbitrageCalculator />}
+      </main>
     </div>
   )
+}
+
+function PriceRow({ item, role, city, value, quote, onChange, output = false }) {
+  const age = quoteAgeHours(quote?.sell_price_min_date)
+  const stale = age !== null && age > 12
+  return (
+    <div className={`grid gap-3 rounded-2xl border p-3 sm:grid-cols-[1fr_170px] sm:items-center ${output ? 'border-emerald-500/25 bg-emerald-950/15' : 'border-white/8 bg-black/20'}`}>
+      <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className={`font-mono text-[9px] font-black uppercase tracking-wider ${output ? 'text-emerald-300' : 'text-amber-300'}`}>{role}</span><span className="text-[10px] text-[var(--text-faded)]">{city}</span></div><p className="mt-1 truncate font-mono text-xs font-bold text-[var(--text-bright)]">{item.label}</p><p className={`mt-1 font-mono text-[9px] ${stale ? 'text-sky-300' : 'text-[var(--text-faded)]'}`}>{quote?.sell_price_min > 0 ? `Skan sprzedaży: ${observedAtLabel(quote.sell_price_min_date)}${stale ? ' — sprawdź w grze' : ''}` : 'Brak skanu — wpisz cenę z gry'}</p></div>
+      <label className="font-mono text-[9px] font-bold uppercase text-[var(--text-muted)]">Cena za sztukę<div className="relative mt-1"><input aria-label={`Cena ${item.label}`} type="number" min="0" value={value ?? 0} onChange={(event) => onChange(item.itemId, event.target.value)} className="w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] p-3 pr-14 text-right text-xs font-bold text-[var(--text-bright)] outline-none focus:border-[var(--gold)]" /><span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-[var(--text-faded)]">silver</span></div></label>
+    </div>
+  )
+}
+
+function ResultPanel({ result, rrr }) {
+  const positive = result.profit >= 0
+  return (
+    <div className={`overflow-hidden rounded-3xl border ${positive ? 'border-emerald-500/35 bg-emerald-950/20' : 'border-rose-500/35 bg-rose-950/20'}`}>
+      <div className="grid gap-3 p-5 sm:grid-cols-[1fr_auto] sm:items-end"><div><p className="font-mono text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Wynik po wszystkich zadeklarowanych kosztach</p><p className={`mt-1 font-display text-3xl font-black ${positive ? 'text-emerald-300' : 'text-rose-300'}`}>{result.profit >= 0 ? '+' : ''}{formatSilver(result.profit)}</p></div><div className="sm:text-right"><p className="text-[10px] text-[var(--text-muted)]">na sztukę</p><p className={`font-mono text-sm font-black ${positive ? 'text-emerald-200' : 'text-rose-200'}`}>{result.profitPerCraft >= 0 ? '+' : ''}{formatSilver(result.profitPerCraft)}</p></div></div>
+      <div className="grid grid-cols-2 border-t border-white/8 bg-black/15 sm:grid-cols-4"><ResultMetric label="Materiały po RRR" value={formatSilver(result.materialCost)} /><ResultMetric label="Stanowisko" value={formatSilver(result.stationCost)} /><ResultMetric label="Opłaty rynku" value={formatSilver(result.marketFees)} /><ResultMetric label="ROI" value={`${result.roi >= 0 ? '+' : ''}${result.roi.toFixed(1)}%`} /></div>
+      <div className="space-y-2 border-t border-white/8 p-4"><div className="flex items-center gap-2 font-mono text-[10px] font-black uppercase text-emerald-200"><CheckCircle2 className="h-4 w-4" />Rzeczywiste składniki zwracane przy RRR {rrr.toFixed(1)}%</div>{result.materials.map((material) => <div key={material.itemId} className="flex justify-between gap-3 text-xs text-[var(--text-muted)]"><span>{material.label}</span><span className="font-mono text-[var(--text-primary)]">zużycie {formatAmount(material.consumed)} / zwrot {formatAmount(material.returned)}</span></div>)}<p className="pt-1 font-mono text-[9px] text-[var(--text-faded)]">Odżywianie: {formatAmount(result.nutritionPerCraft)} na craft • przychód netto po rynku: {formatSilver(result.netRevenue)}</p></div>
+    </div>
+  )
+}
+
+function ResultMetric({ label, value }) {
+  return <div className="border-r border-t border-white/8 p-3 last:border-r-0 sm:border-t-0"><p className="font-mono text-[8px] font-bold uppercase text-[var(--text-faded)]">{label}</p><p className="mt-1 font-mono text-xs font-black text-[var(--text-primary)]">{value}</p></div>
+}
+
+function ToolButton({ active, onClick, icon: Icon, children }) {
+  return <button type="button" onClick={onClick} aria-pressed={active} className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 font-mono text-[10px] font-black uppercase transition ${active ? 'border-amber-400 bg-amber-500/20 text-amber-200' : 'border-white/10 bg-black/20 text-[var(--text-muted)] hover:border-amber-400/30 hover:text-[var(--text-primary)]'}`}><Icon className="h-4 w-4" />{children}</button>
 }

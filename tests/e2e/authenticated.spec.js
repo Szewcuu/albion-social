@@ -428,6 +428,39 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByText(/Silver/).first()).toBeVisible()
   })
 
+  test('liczy rafinację z pełnej receptury i zachowuje mobilny układ', async ({ page }) => {
+    await page.route('**/api/prices?**', async (route) => {
+      const url = new URL(route.request().url())
+      if (url.searchParams.get('mode') !== 'current') return route.continue()
+
+      const prices = { T5_WOOD: 100, T4_PLANKS: 200, T5_PLANKS: 500 }
+      const city = (url.searchParams.get('cities') || 'Fort Sterling').split(',')[0]
+      const observedAt = new Date().toISOString()
+      const data = (url.searchParams.get('items') || '').split(',').filter(Boolean).map((itemId) => ({
+        item_id: itemId,
+        city,
+        quality: 1,
+        sell_price_min: prices[itemId] || 0,
+        sell_price_min_date: observedAt,
+        buy_price_max: 0,
+        buy_price_max_date: '0001-01-01T00:00:00',
+      }))
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data, meta: { source: 'E2E' } }) })
+    })
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/kalkulator-craftingu')
+
+    await expect(page.getByRole('heading', { name: 'Kalkulator Rafinacji' })).toBeVisible()
+    await expect(page.getByLabel('Cena Kłody T5.0')).toHaveValue('100')
+    await expect(page.getByLabel('Cena Deski T4.0')).toHaveValue('200')
+    await expect(page.getByLabel('Cena Deski T5.0')).toHaveValue('500')
+    await expect(page.getByText(/Rzeczywiste składniki zwracane/)).toBeVisible()
+    await expect(page.getByText(/13.300 Silver|13 300 Silver/).first()).toBeVisible()
+    await expect(page.getByText('Kurs złota')).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true)
+  })
+
   test('zwraca zalogowanemu wątkowane komentarze buildu', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await getCookieAccessToken(page)

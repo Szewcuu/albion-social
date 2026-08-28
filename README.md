@@ -53,7 +53,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Wyprawy i Kalendarz** — tworzenie, zapisy, role, terminy, wygasanie i Discord
 - [x] **Kuźnia Buildów** — lista, kreator, szczegóły, komentarze, warianty i zapisane buildy
 - [x] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
-- [ ] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
+- [x] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
 - [ ] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
 - [ ] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
 - [ ] **Profil i Obserwowane** — weryfikacja postaci, statystyki, preferencje, zapisane elementy i usunięcie konta
@@ -114,6 +114,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Usprawniono skrzynkę:** rozmowy można wyszukać po graczu, ofercie lub wiadomości i filtrować na aktywne/zamknięte; `Enter` wysyła, a `Shift+Enter` dodaje wiersz; puste wyniki filtrów mają osobny stan i szybkie zerowanie.
 - **Utwardzono backend i dostępność:** API odrzuca kontakt do wygasłej oferty, a funkcja Supabase powtarza tę kontrolę w bazie; modal negocjacji obsługuje Escape, kliknięcie tła, powrót fokusu i semantykę dialogu; API potwierdza własność przy usuwaniu i zwraca rzeczywistą liczbę ofert.
 - **Potwierdzono:** lint, 64 testy jednostkowe i produkcyjny build są zielone; po migracji doradca Supabase nie wykrył nowego problemu bezpieczeństwa ani wydajności. Ostrzeżenie o ochronie haseł nie dotyczy logowania wyłącznie przez Discord, a historycznych nieużywanych indeksów nie usuwamy bez wiarygodnej próbki ruchu.
+
+### Przegląd 07 — Kalkulator Rafinacji
+
+- **Usunięto fałszywą precyzję:** koszt materiałów nie jest już zakładany jako 70% ceny produktu, a wynik nie pojawia się przy brakujących cenach. Ręczna trasa arbitrażowa nie startuje z przykładowym „zyskiem” wyglądającym jak dane rynkowe.
+- **Naprawiono model gry:** każda receptura T4–T8 zawiera właściwą liczbę surowców `2/3/4/5/5` oraz jeden przetworzony materiał tieru niżej; enchantowane surowce używają identyfikatorów AODP `_LEVELn@n`; T4 korzysta ze zwykłego materiału T3, a bloki kamienne nie udają przedmiotów `.1–.4`.
+- **Naprawiono miasta i zwrot:** drewno otrzymało prawidłowy bonus Fort Sterling, tkanina Lymhurst, skóra Martlock, metal Thetford, a kamień Bridgewatch. Presety rozróżniają rafinację w mieście specjalizacji i poza nim oraz Focus, pozostawiając RRR do ręcznej korekty.
+- **Dodano pełny rachunek:** osobne ceny wejściowe i wyjściowe dla wskazanych miast, zużycie i zwrot każdego składnika, koszt stanowiska zależny od odżywiania, łączne opłaty sprzedaży, przychód netto, ROI oraz ostrzeżenia po 12 godzinach od skanu.
+- **Zmieniono hierarchię strony:** właściwy kalkulator jest pierwszym i głównym narzędziem; historia ceny, kurs złota i ręczny scenariusz transportu są ładowane dopiero na żądanie.
+- **Potwierdzono:** reguły receptur i miast z oficjalnym przewodnikiem Albion Online, format enchantowanych surowców bezpośrednim zapytaniem AODP oraz obliczenia zestawem testów jednostkowych. Zalogowany E2E obejmuje pełną recepturę i szerokość 390 px; lokalne uruchomienie wymaga sekretów CI i jest wykonywane w GitHub Actions.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
