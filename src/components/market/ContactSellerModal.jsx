@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import { X, Send, Check, HandCoins, ShieldCheck } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
@@ -12,6 +12,22 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
   const [sentSuccess, setSentSuccess] = useState(false)
   const [sendError, setSendError] = useState('')
   const [conversationId, setConversationId] = useState(null)
+  const titleId = useId()
+  const dialogRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+    const previousFocus = document.activeElement
+    dialogRef.current?.focus()
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      previousFocus?.focus?.()
+    }
+  }, [isOpen, onClose])
 
   if (!isOpen || !offer) return null
 
@@ -46,11 +62,13 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="panel relative w-full max-w-lg rounded-2xl border border-[var(--border-warm)] p-6 shadow-2xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose() }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className="panel relative w-full max-w-lg rounded-2xl border border-[var(--border-warm)] p-6 shadow-2xl space-y-4 outline-none">
         {/* Close Button */}
         <button
           onClick={onClose}
+          type="button"
+          aria-label="Zamknij kontakt ze sprzedawcą"
           className="absolute top-4 right-4 text-[var(--text-muted)] hover:text-[var(--text-bright)] transition"
         >
           <X className="w-5 h-5" />
@@ -62,7 +80,7 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
             <HandCoins className="w-5 h-5" />
           </div>
           <div>
-            <h3 style={{ fontFamily: 'var(--font-heading)' }} className="text-lg font-bold text-[var(--text-bright)]">
+            <h3 id={titleId} style={{ fontFamily: 'var(--font-heading)' }} className="text-lg font-bold text-[var(--text-bright)]">
               Kontakt ze sprzedawcą
             </h3>
             <p className="text-xs text-[var(--text-muted)] font-mono">
@@ -114,6 +132,9 @@ export default function ContactSellerModal({ isOpen, onClose, offer, currentUser
                   </label>
                   <input
                     type="number"
+                    min="1"
+                    max="1000000000000"
+                    required
                     value={offeredPrice}
                     onChange={(e) => setOfferedPrice(e.target.value)}
                     placeholder={offer.price}

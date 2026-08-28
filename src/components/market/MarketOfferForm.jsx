@@ -1,15 +1,16 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { Plus, Store } from 'lucide-react'
+import { Plus, Store, X } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
+import ItemPicker from '@/components/builds/ItemPicker'
 
 const LiveMarketPriceEstimator = dynamic(() => import('./LiveMarketPriceEstimator'), {
   loading: () => <div className="min-h-24 rounded-xl border border-white/8 bg-black/20 animate-pulse" aria-label="Ładowanie wyceny rynkowej" />,
 })
 
-export default function MarketOfferForm({ user, formData, formMessage, onChange, onSubmit }) {
+export default function MarketOfferForm({ user, formData, formMessage, onChange, onSubmit, onClose }) {
   const numericPrice = Number(formData.price) || 0
   const formattedPricePreview = numericPrice > 0
     ? numericPrice >= 1_000_000
@@ -24,7 +25,10 @@ export default function MarketOfferForm({ user, formData, formMessage, onChange,
   return (
     <div className="lg:col-span-4">
       <div className="panel sticky top-6 space-y-5 p-5 sm:p-6 relative z-30 !overflow-visible">
-        <div className="border-b border-white/8 pb-4">
+        <div className="relative border-b border-white/8 pb-4 pr-12">
+          <button type="button" onClick={onClose} aria-label="Zamknij formularz oferty" className="btn-icon absolute right-0 top-0">
+            <X className="h-4 w-4" />
+          </button>
           <p className="mb-2 text-[9px] font-black uppercase tracking-[.22em] text-sky-300">Twoje stoisko</p>
           <h2 className="font-display flex items-center gap-2 text-xl font-black text-[#fff]">
             <Plus className="h-4 w-4" />
@@ -51,18 +55,19 @@ export default function MarketOfferForm({ user, formData, formMessage, onChange,
               />
             </div>
 
-            <div>
-              <label className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">ID Przedmiotu (opcjonalnie do wyceny API)</label>
-              <input
-                type="text"
-                value={formData.item_name}
-                onChange={(event) => updateField('item_name', event.target.value)}
-                className="w-full bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-2.5 text-amber-200 focus:border-[var(--amber)] outline-none text-xs font-mono uppercase"
-                placeholder="np. T8_BAG, T4_BAG, T8_MAIN_SWORD"
-              />
-            </div>
+            <ItemPicker
+              label="Przedmiot do wyceny (opcjonalnie)"
+              value={formData.item_name}
+              onChange={(value) => updateField('item_name', value)}
+            />
 
-            {formData.item_name.trim().length >= 3 && (
+            {formData.item_name.trim().length >= 3 && formData.server === 'Wszystkie serwery' && (
+              <p className="rounded-xl border border-sky-400/20 bg-sky-400/5 p-3 text-[10px] leading-4 text-sky-100">
+                Wybierz konkretny serwer, jeśli chcesz porównać cenę z Albion Data Project. Sama oferta nadal może dotyczyć wszystkich serwerów.
+              </p>
+            )}
+
+            {formData.item_name.trim().length >= 3 && formData.server !== 'Wszystkie serwery' && (
               <LiveMarketPriceEstimator
                 itemId={formData.item_name}
                 userPrice={formData.price}
@@ -103,7 +108,7 @@ export default function MarketOfferForm({ user, formData, formMessage, onChange,
                 label="Serwer"
                 value={formData.server}
                 onChange={(value) => updateField('server', value)}
-                options={['Europa', 'Ameryka', 'Azja']}
+                options={['Wszystkie serwery', 'Europa', 'Ameryka', 'Azja']}
               />
             </div>
 
