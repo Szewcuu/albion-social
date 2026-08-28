@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
-import Link from 'next/link'
-import { Swords, Users, Shield, Star, Copy, Check, Plus, Trash2, Share2, Download } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { AlertTriangle, Check, Download, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react'
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
-import { buildFromDbRow } from '@/lib/buildSlots'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { buildSquadShareUrl, normalizeSquadBuild, restoreSquadFromSearch } from '@/lib/buildPresentation'
 
 const ROLE_COLORS = {
   Tank: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
@@ -28,20 +27,45 @@ export default function SquadCompBuilder() {
   const [squadName, setSquadName] = useState('Mój Skład Drużynowy')
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [message, setMessage] = useState('')
   const [search, setSearch] = useState('')
   const [activeSlot, setActiveSlot] = useState(null)
+  const restoredRef = useRef(false)
+
+  const loadBuilds = useCallback(async () => {
+    setLoading(true)
+    setLoadError('')
+    try {
+      const response = await authenticatedFetch('/api/builds?category=all&limit=12', { cache: 'no-store' })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się pobrać buildów.')
+      setBuilds((payload.builds || []).map(normalizeSquadBuild))
+    } catch (error) {
+      setBuilds([])
+      setLoadError(error.message || 'Nie udało się pobrać buildów.')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { void Promise.resolve().then(loadBuilds) }, [loadBuilds])
 
   useEffect(() => {
-    supabase
-      .from('builds')
-      .select('*, profiles!builds_user_id_fkey(username)')
-      .order('created_at', { ascending: false })
-      .limit(100)
-      .then(({ data }) => {
-        setBuilds(data?.map(b => buildFromDbRow(b)) || [])
-        setLoading(false)
-      })
-  }, [])
+    if (loading || restoredRef.current || typeof window === 'undefined') return
+    let active = true
+    void Promise.resolve().then(() => {
+      if (!active || restoredRef.current) return
+      restoredRef.current = true
+      const restored = restoreSquadFromSearch(window.location.search, builds)
+      if (restored.name) setSquadName(restored.name)
+      if (restored.squad.some(Boolean)) {
+        setSquad(restored.squad)
+        setMessage('Przywrócono udostępniony skład.')
+      }
+    })
+    return () => { active = false }
+  }, [builds, loading])
 
   const assignBuild = useCallback((slotIdx, build) => {
     setSquad(prev => {
@@ -67,7 +91,7 @@ export default function SquadCompBuilder() {
       '',
       ...squad.map((b, i) => {
         const label = SLOT_LABELS[i].label
-        return b ? `${label}: ${b.name} (${b.role || 'Brak roli'})` : `${label}: — (pusty)`
+        return b ? `${label}: ${b.title} (${b.role || 'Brak roli'})` : `${label}: — (pusty)`
       }),
       '',
       `Generowane przez Albion Polska Portal`,
@@ -82,17 +106,20 @@ export default function SquadCompBuilder() {
     URL.revokeObjectURL(url)
   }
 
-  const copySquadLink = () => {
-    const ids = squad.map(b => b?.id || '').join(',')
-    const url = `${window.location.origin}/buildy?squad=${encodeURIComponent(ids)}&name=${encodeURIComponent(squadName)}`
-    navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2500)
+  const copySquadLink = async () => {
+    try {
+      await navigator.clipboard.writeText(buildSquadShareUrl(window.location.origin, squad, squadName))
+      setCopied(true)
+      setMessage('Link do składu skopiowany.')
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      setMessage('Nie udało się skopiować linku. Sprawdź uprawnienia przeglądarki.')
+    }
   }
 
   const filteredBuilds = builds.filter(b =>
     search.trim() === '' ||
-    (b.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
     (b.role || '').toLowerCase().includes(search.toLowerCase())
   )
 
@@ -155,7 +182,7 @@ export default function SquadCompBuilder() {
               {build ? (
                 <div className="space-y-2">
                   <EquipmentPreview slots={build.slots} size="sm" />
-                  <p className="text-xs font-bold text-white truncate">{build.name}</p>
+                  <p className="text-xs font-bold text-white truncate">{build.title}</p>
                   <div className="flex gap-1.5">
                     <button
                       onClick={() => setActiveSlot(activeSlot === i ? null : i)}
@@ -165,6 +192,7 @@ export default function SquadCompBuilder() {
                     </button>
                     <button
                       onClick={() => clearSlot(i)}
+                      aria-label={`Wyczyść ${slotDef.label}`}
                       className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition cursor-pointer"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -191,7 +219,7 @@ export default function SquadCompBuilder() {
             <p className="text-xs font-bold text-violet-300">
               Wybierz build dla: <strong>{SLOT_LABELS[activeSlot].label}</strong>
             </p>
-            <button onClick={() => setActiveSlot(null)} className="text-gray-500 hover:text-white transition text-xs cursor-pointer">
+            <button type="button" onClick={() => setActiveSlot(null)} aria-label="Zamknij wybór buildu" className="text-gray-500 hover:text-white transition text-xs cursor-pointer">
               ✕ Zamknij
             </button>
           </div>
@@ -203,6 +231,14 @@ export default function SquadCompBuilder() {
           />
           {loading ? (
             <p className="text-xs text-gray-500 font-mono text-center py-4 animate-pulse">Pobieranie buildów...</p>
+          ) : loadError ? (
+            <div className="rounded-xl border border-rose-400/25 bg-rose-500/8 p-4 text-center" role="alert">
+              <AlertTriangle className="mx-auto h-5 w-5 text-rose-300" aria-hidden="true" />
+              <p className="mt-2 text-xs text-rose-100">{loadError}</p>
+              <button type="button" onClick={loadBuilds} className="btn btn-ghost btn-sm mt-3 inline-flex">
+                <RefreshCw className="h-3.5 w-3.5" /> Spróbuj ponownie
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
               {filteredBuilds.map(build => (
@@ -211,7 +247,7 @@ export default function SquadCompBuilder() {
                   onClick={() => assignBuild(activeSlot, build)}
                   className="text-left p-3 rounded-xl bg-black/30 hover:bg-violet-500/10 border border-white/5 hover:border-violet-400/40 transition cursor-pointer space-y-1"
                 >
-                  <p className="text-xs font-bold text-white truncate">{build.name}</p>
+                  <p className="text-xs font-bold text-white truncate">{build.title}</p>
                   <p className="text-[10px] text-gray-400 font-mono truncate">{build.role || 'Brak roli'} · {build.profiles?.username?.replace(/#0$/, '') || 'Gracz'}</p>
                 </button>
               ))}
@@ -226,6 +262,7 @@ export default function SquadCompBuilder() {
       <p className="text-[10px] text-gray-500 font-mono text-center">
         Skład {squad.filter(Boolean).length}/5 slotów wypełniony
       </p>
+      {message && <p role="status" aria-live="polite" className="text-center text-[10px] font-mono text-violet-200">{message}</p>}
     </div>
   )
 }

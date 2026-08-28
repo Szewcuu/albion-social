@@ -20,6 +20,7 @@ import BuildComments from '@/components/builds/BuildComments'
 import BuildSocialActions from '@/components/builds/BuildSocialActions'
 import { EmptyState } from '@/components/ui/FeedbackState'
 import { buildFromDbRow } from '@/lib/buildSlots'
+import { getBudgetLabel, getBuildLabel } from '@/lib/buildPresentation'
 import { getPublicBuild } from '@/lib/server/builds'
 import { createPageMetadata } from '@/lib/seo'
 
@@ -104,10 +105,10 @@ export default async function BuildDetailPage({ params }) {
           <div className="absolute -right-12 -top-16 h-64 w-64 rounded-full border border-orange-200/10 shadow-[0_0_90px_rgba(226,98,31,.14)]" aria-hidden="true" />
           <div className="relative max-w-4xl">
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-full border border-orange-300/35 bg-orange-300/10 px-3 py-1 font-mono text-[9px] font-black uppercase tracking-[.14em] text-orange-100">{row.activity_type || 'Build'}</span>
+              <span className="rounded-full border border-orange-300/35 bg-orange-300/10 px-3 py-1 font-mono text-[9px] font-black uppercase tracking-[.14em] text-orange-100">{getBuildLabel(row.activity_type)}</span>
               {build.budget && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/20 bg-amber-300/7 px-3 py-1 font-mono text-[9px] font-bold uppercase text-amber-100">
-                  <Coins className="h-3 w-3" aria-hidden="true" /> {build.budget}
+                  <Coins className="h-3 w-3" aria-hidden="true" /> {getBudgetLabel(build.budget)}
                 </span>
               )}
             </div>
@@ -188,7 +189,7 @@ export default async function BuildDetailPage({ params }) {
                     <p className="mb-2 text-[9px] font-black uppercase tracking-[.15em] text-[var(--text-secondary)]">{label}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {build.tags[key].map((tag) => (
-                        <span key={tag} className="rounded-lg border border-orange-200/12 bg-orange-200/[.055] px-2.5 py-1 text-[10px] text-[#c9c3b8]">{tag}</span>
+                        <span key={tag} className="rounded-lg border border-orange-200/12 bg-orange-200/[.055] px-2.5 py-1 text-[10px] text-[#c9c3b8]">{getBuildLabel(tag)}</span>
                       ))}
                     </div>
                   </div>

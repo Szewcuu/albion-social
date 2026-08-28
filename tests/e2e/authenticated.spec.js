@@ -193,6 +193,18 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByRole('button', { name: /Alt 1:/ }).first()).toBeVisible()
   })
 
+  test('na telefonie pokazuje ekwipunek przed dodatkowymi sekcjami kreatora', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/buildy/create')
+
+    const equipment = page.getByText('Ekwipunek — kliknij slot aby wybrać przedmiot')
+    const doctrine = page.getByRole('heading', { name: 'Doktryna i przeznaczenie' })
+    await expect(equipment).toBeVisible()
+    await expect(doctrine).toBeVisible()
+    const [equipmentBox, doctrineBox] = await Promise.all([equipment.boundingBox(), doctrine.boundingBox()])
+    expect(equipmentBox.y).toBeLessThan(doctrineBox.y)
+  })
+
   test('publikuje build przez chronione API z właścicielem ustalanym na serwerze', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await getCookieAccessToken(page)
@@ -223,15 +235,59 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       expect(readResponse.status()).toBe(200)
       expect(readResponse.headers()['cache-control']).toContain('no-store')
       const payload = await readResponse.json()
-      expect(payload.builds.some((row) => row.id === buildId)).toBe(true)
+      const publishedBuild = payload.builds.find((row) => row.id === buildId)
+      expect(publishedBuild).toBeTruthy()
+      expect(publishedBuild.is_favorite).toBe(false)
       expect(payload.builds.length).toBeLessThanOrEqual(6)
       expect(typeof payload.hasMore).toBe('boolean')
+
+      const favoriteResponse = await request.post(`/api/builds/${buildId}/social`, { headers })
+      expect(favoriteResponse.status()).toBe(200)
+      expect((await favoriteResponse.json()).favorite).toBe(true)
+
+      const favoriteListResponse = await request.get('/api/builds?category=all&limit=6', { headers })
+      const favoriteList = await favoriteListResponse.json()
+      expect(favoriteList.builds.find((row) => row.id === buildId)?.is_favorite).toBe(true)
+
+      const unfavoriteResponse = await request.post(`/api/builds/${buildId}/social`, { headers })
+      expect(unfavoriteResponse.status()).toBe(200)
+      expect((await unfavoriteResponse.json()).favorite).toBe(false)
     } finally {
       if (buildId) {
         const response = await request.delete('/api/builds', { headers, data: { id: buildId } })
         expect(response.status()).toBe(200)
       }
     }
+  })
+
+  test('planer pokazuje nazwy i role oraz odtwarza udostępniony skład', async ({ page }) => {
+    const buildId = '11111111-1111-4111-8111-111111111111'
+    await page.route('**/api/builds?**', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          builds: [{
+            id: buildId,
+            title: 'Młot frontowy',
+            description: 'Tank do inicjacji',
+            profiles: { username: 'Kowal' },
+            build_data: {
+              tags: { locations: [], zones: [], sizes: [], roles: ['Tank'], activities: ['PvP'] },
+            },
+          }],
+          total: 1,
+          hasMore: false,
+          nextCursor: null,
+        }),
+      })
+    })
+
+    await page.goto(`/buildy?squad=${buildId},,,,&name=Front%205v5`)
+    await page.getByRole('button', { name: 'Planer Składu (5v5)' }).click()
+
+    await expect(page.getByPlaceholder('np. Nasza taktyka na ZvZ...')).toHaveValue('Front 5v5')
+    await expect(page.getByText('Młot frontowy')).toBeVisible()
+    await expect(page.getByText('Przywrócono udostępniony skład.')).toBeVisible()
   })
 
   test('pokazuje obserwacyjną tierlistę 1v1 bez danych demonstracyjnych', async ({ page }) => {

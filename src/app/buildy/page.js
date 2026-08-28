@@ -4,8 +4,9 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, ArrowRightLeft } from 'lucide-react'
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
+import BuildFavoriteButton from '@/components/builds/BuildFavoriteButton'
 import { buildFromDbRow } from '@/lib/buildSlots'
-import FavoriteButton from '@/components/ui/FavoriteButton'
+import { getBuildLabel } from '@/lib/buildPresentation'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
@@ -210,7 +211,7 @@ export default function BuildyPage() {
           )}
 
           {/* Builds Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
         {loading ? (
           <p className="text-[var(--text-muted)] italic col-span-full text-center py-10">Pobieranie buildów...</p>
         ) : loadError ? (
@@ -250,9 +251,9 @@ export default function BuildyPage() {
                 />
                 <div className="pointer-events-none relative z-0 p-5">
                   <div className="flex justify-between items-start mb-3">
-                    <span className="badge badge-amber">{b.activity_type}</span>
+                    <span className="badge badge-amber">{getBuildLabel(b.activity_type)}</span>
                     <div className="flex items-center gap-2 pointer-events-auto">
-                      <FavoriteButton id={b.id} title={b.title} type="build" />
+                      <BuildFavoriteButton buildId={b.id} title={b.title} initialFavorite={b.is_favorite === true} />
                       <span className="text-[11px] text-[var(--text-muted)] font-mono">
                         {new Date(b.created_at).toLocaleDateString()}
                       </span>
@@ -264,7 +265,7 @@ export default function BuildyPage() {
                   {hasExtended && parsed.tags?.activities?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {parsed.tags.activities.slice(0, 3).map(tag => (
-                        <span key={tag} className="px-1.5 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border)] rounded text-[9px] font-mono text-[var(--text-muted)]">{tag}</span>
+                        <span key={tag} className="px-1.5 py-0.5 bg-[var(--bg-elevated)] border border-[var(--border)] rounded text-[9px] font-mono text-[var(--text-muted)]">{getBuildLabel(tag)}</span>
                       ))}
                     </div>
                   )}

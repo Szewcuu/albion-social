@@ -214,9 +214,9 @@ export default function CreateBuildPage() {
 
         <div className="w-full grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
 
-          <div className="space-y-6">
+          <div className="contents xl:block">
 
-            <section className="panel space-y-4 p-5 sm:p-6">
+            <section className="panel order-1 space-y-4 p-5 sm:p-6">
               <h2 className="font-display text-xl font-black text-[#fff8e8]">Informacje ogólne</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -260,6 +260,7 @@ export default function CreateBuildPage() {
               </div>
             </section>
 
+            <div className="order-3 space-y-6 xl:mt-6">
             <section className="panel p-5 sm:p-6">
               <h2 className="font-display mb-4 text-xl font-black text-[#fff8e8]">Doktryna i przeznaczenie</h2>
               <TagSelector
@@ -449,9 +450,10 @@ export default function CreateBuildPage() {
                 </button>
               )}
             </section>
+            </div>
           </div>
 
-          <div className="self-start space-y-4">
+          <div className="order-2 self-start space-y-4 xl:order-none">
             <EquipmentGrid slots={build.slots} onSlotChange={updateSlot} />
             <BuildStatsCalculator
               slots={build.slots}
