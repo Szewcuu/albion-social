@@ -754,7 +754,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.getByRole('button', { name: 'Szukaj', exact: true }).click()
     await page.getByRole('button', { name: /PricingKnight/ }).click()
 
-    await expect(page.getByText('Wartość utraconego zestawu')).toBeVisible()
+    await expect(page.getByText('Wartość utraconego zestawu').first()).toBeVisible()
     await expect(page.getByText('125 000 Silver').first()).toBeVisible()
     await expect(page.getByText(/Świeże · 2 h/)).toBeVisible()
     await expect(page.getByText(/Straty przeciwników:\s*125\s*tys\.\s*Silver/)).toBeVisible()
@@ -795,7 +795,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.goto('/killboard?nick=DirectKnight&region=asia')
 
     await expect(page.getByRole('heading', { name: 'Wybierz właściwego wojownika' })).toBeVisible()
-    await expect(page.getByRole('button', { name: /DirectKnight/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^DirectKnight Codex/ })).toBeVisible()
     await expect(page.getByText('Azja · ASIA')).toBeVisible()
     await expect(page.getByText('Europa · EU')).toBeVisible()
     await expect(page.getByText(/2 wyników • sprawdzone serwery/)).toBeVisible()
