@@ -7,7 +7,7 @@ import { scheduleIdleTask } from '@/lib/clientIdle'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 
 const ChatBox = dynamic(() => import('@/components/ChatBox'), {
-  loading: () => <div className="panel min-h-[430px] animate-pulse" aria-label="Ładowanie czatu tawerny" />,
+  loading: () => <div className="panel min-h-[640px] animate-pulse" aria-label="Ładowanie czatu tawerny" />,
 })
 const PortalAnalyticsWidget = dynamic(() => import('@/components/stats/PortalAnalyticsWidget'), {
   loading: () => <div className="panel min-h-[240px] animate-pulse" aria-label="Ładowanie statystyk portalu" />,

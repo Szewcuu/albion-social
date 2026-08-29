@@ -93,6 +93,7 @@ export default function CustomSelect({ value, onChange, options = [], placeholde
         }}
         onKeyDown={handleKeyDown}
         aria-haspopup="listbox"
+        aria-label={label || placeholder}
         aria-expanded={isOpen}
         aria-controls={listboxId}
         aria-activedescendant={isOpen && activeIndex >= 0 ? `${controlId}-option-${activeIndex}` : undefined}
