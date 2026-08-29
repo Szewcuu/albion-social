@@ -15,6 +15,9 @@ export async function captureResponsiveView(page, testInfo, route, viewport) {
   await page.goto(route.path, { waitUntil: 'domcontentloaded' })
   await page.locator('.auth-loading-screen').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => {})
   await expect(page.locator('#main-content')).toBeVisible()
+  if (route.heading) {
+    await expect(page.getByRole('heading', { name: route.heading, exact: route.headingExact ?? true })).toBeVisible()
+  }
 
   await page.addStyleTag({ content: `
     *, *::before, *::after {
