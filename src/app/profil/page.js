@@ -32,6 +32,7 @@ import { supabase } from '@/lib/supabase'
 import { portalAuth } from '@/lib/supabaseAuth'
 import CharacterVerificationModal from '@/components/CharacterVerificationModal'
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 const INITIAL_FORM = {
   ingame_nick: '',
@@ -85,6 +86,7 @@ function ProfileSkeleton() {
 }
 
 export default function ProfilePage() {
+  const { requestConfirmation, confirmationDialog } = useConfirmDialog()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -253,7 +255,12 @@ export default function ProfilePage() {
 
   async function handleUnlinkCharacter() {
     if (!user || unlinkingCharacter) return
-    if (!window.confirm('Odłączyć postać Albion Online od profilu? Zachowasz pozostałe dane profilu.')) return
+    const accepted = await requestConfirmation({
+      title: 'Odłączyć postać?',
+      description: 'Połączenie z Albion Online zostanie usunięte, ale pozostałe dane profilu pozostaną bez zmian.',
+      confirmLabel: 'Odłącz postać',
+    })
+    if (!accepted) return
 
     setUnlinkingCharacter(true)
     try {
@@ -301,6 +308,7 @@ export default function ProfilePage() {
 
   return (
     <div className="page-content">
+      {confirmationDialog}
 <div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
 {notice && <StatusNotice type={notice.type === 'success' ? 'success' : 'error'}>{notice.text}</StatusNotice>}
 

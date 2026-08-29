@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useRef } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 
 const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -75,4 +75,37 @@ export default function ConfirmDialog({
       </div>
     </div>
   )
+}
+
+export function useConfirmDialog() {
+  const [request, setRequest] = useState(null)
+  const requestRef = useRef(null)
+
+  const requestConfirmation = useCallback((options) => new Promise((resolve) => {
+    const nextRequest = { ...options, resolve }
+    requestRef.current = nextRequest
+    setRequest(nextRequest)
+  }), [])
+
+  const finish = useCallback((accepted) => {
+    const currentRequest = requestRef.current
+    requestRef.current = null
+    setRequest(null)
+    currentRequest?.resolve(accepted)
+  }, [])
+
+  const confirmationDialog = (
+    <ConfirmDialog
+      open={Boolean(request)}
+      title={request?.title || 'Potwierdź działanie'}
+      description={request?.description || ''}
+      confirmLabel={request?.confirmLabel}
+      cancelLabel={request?.cancelLabel}
+      tone={request?.tone}
+      onConfirm={() => finish(true)}
+      onOpenChange={(open) => { if (!open) finish(false) }}
+    />
+  )
+
+  return { requestConfirmation, confirmationDialog }
 }

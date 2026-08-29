@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { TrendingUp, TrendingDown, Clock, MapPin, RefreshCw, BarChart2, AlertCircle } from 'lucide-react'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 const CITIES = ['Caerleon', 'Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford', 'Brecilien']
 const RANGES = [
@@ -168,15 +169,7 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
 
         <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
           {/* City selector */}
-          <select
-            value={city}
-            onChange={e => setCity(e.target.value)}
-            className="bg-black/50 border border-white/10 rounded-lg px-2.5 py-1 text-gray-200 text-[11px] outline-none focus:border-amber-400/60"
-          >
-            {CITIES.map(c => (
-              <option key={c} value={c} className="bg-[#120d0a] text-white">{c}</option>
-            ))}
-          </select>
+          <CustomSelect label="Miasto historii cen" value={city} onChange={setCity} options={CITIES} className="min-w-40" />
 
           {/* Range selector */}
           <div className="flex items-center rounded-lg border border-white/10 bg-black/50 p-0.5">

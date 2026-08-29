@@ -9,6 +9,7 @@ import { buildFromDbRow } from '@/lib/buildSlots'
 import { getBuildLabel } from '@/lib/buildPresentation'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 const BuildComparator = dynamic(() => import('@/components/builds/BuildComparator'), {
   loading: () => <div className="panel mb-6 min-h-32 animate-pulse" aria-label="Ładowanie porównywarki buildów" />,
@@ -30,6 +31,7 @@ const BUILDS_PAGE_SIZE = 6
 
 export default function BuildyPage() {
   const { user } = usePortalSession()
+  const { requestConfirmation, confirmationDialog } = useConfirmDialog()
   const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -71,7 +73,12 @@ export default function BuildyPage() {
   }, [fetchBuilds])
 
   const handleDeleteBuild = async (id) => {
-    if (!confirm('Czy na pewno chcesz usunąć ten zestaw?')) return
+    const accepted = await requestConfirmation({
+      title: 'Usunąć build?',
+      description: 'Build zniknie ze Zbrojowni. Tej operacji nie można cofnąć.',
+      confirmLabel: 'Usuń build',
+    })
+    if (!accepted) return
     try {
       const response = await authenticatedFetch('/api/builds', {
         method: 'DELETE',
@@ -94,6 +101,7 @@ export default function BuildyPage() {
 
   return (
     <div className="page-content">
+      {confirmationDialog}
       {/* Header */}
       <div className="subpage-header">
         <h1><Anvil className="w-5 h-5 text-[var(--amber)]" /> Kuźnia Buildów</h1>

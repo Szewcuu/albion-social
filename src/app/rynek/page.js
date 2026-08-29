@@ -6,6 +6,7 @@ import { BarChart3, Coins, Store } from 'lucide-react'
 
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 const MarketOfferForm = dynamic(() => import('@/components/market/MarketOfferForm'), {
   ssr: false,
@@ -31,6 +32,7 @@ const EMPTY_FORM = {
 
 export default function Rynek() {
   const { user } = usePortalSession()
+  const { requestConfirmation, confirmationDialog } = useConfirmDialog()
   const [offers, setOffers] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -164,7 +166,12 @@ export default function Rynek() {
   }
 
   const handleDeleteOffer = async (offerId) => {
-    if (!window.confirm('Zakończyć i usunąć tę ofertę? Historia istniejących rozmów pozostanie w skrzynce.')) return
+    const accepted = await requestConfirmation({
+      title: 'Zakończyć ofertę?',
+      description: 'Oferta zniknie z aktywnego rynku. Historia istniejących rozmów pozostanie w Skrzynce handlowej.',
+      confirmLabel: 'Zakończ ofertę',
+    })
+    if (!accepted) return
     setOfferAction({ busyId: offerId, message: '', error: false })
     try {
       const response = await authenticatedFetch('/api/market/offers', {
@@ -202,6 +209,7 @@ export default function Rynek() {
 
   return (
     <div className="page-content">
+      {confirmationDialog}
       <div className="subpage-header">
         <h1>Rynek P2P</h1>
         <p>Przeglądaj i publikuj ogłoszenia handlowe w wybranym mieście Albionu.</p>

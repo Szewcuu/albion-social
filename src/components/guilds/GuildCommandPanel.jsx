@@ -5,6 +5,7 @@ import { CalendarPlus, Check, LoaderCircle, Save, ShieldCheck, UserCog, UserMinu
 
 import CustomSelect from '@/components/ui/CustomSelect'
 import { StatusNotice } from '@/components/ui/FeedbackState'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const EMPTY_EVENT = {
@@ -25,6 +26,7 @@ async function readJson(response) {
 }
 
 export default function GuildCommandPanel({ guild, onChanged }) {
+  const { requestConfirmation, confirmationDialog } = useConfirmDialog()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState('')
@@ -87,6 +89,26 @@ export default function GuildCommandPanel({ guild, onChanged }) {
     if (result) setEventForm({ ...EMPTY_EVENT, server: guild.server || 'Europa' })
   }
 
+  async function removeMember(memberId, name, draft) {
+    const accepted = await requestConfirmation({
+      title: `Usunąć ${name} ze składu?`,
+      description: 'Gracz straci aktywne członkostwo w składzie gildii. Zmiana zostanie zapisana w kronice.',
+      confirmLabel: 'Usuń ze składu',
+    })
+    if (!accepted) return
+    await runAction({ action: 'update_member', memberId, role: draft.role, title: draft.title, status: 'left' }, `${name} został usunięty ze składu.`)
+  }
+
+  async function cancelEvent(event) {
+    const accepted = await requestConfirmation({
+      title: `Odwołać „${event.title}”?`,
+      description: 'Wydarzenie zostanie oznaczone jako odwołane, a zapisani gracze otrzymają aktualizację.',
+      confirmLabel: 'Odwołaj wydarzenie',
+    })
+    if (!accepted) return
+    await runAction({ action: 'cancel_event', eventId: event.id }, 'Wydarzenie zostało odwołane.')
+  }
+
   if (loading) return <div className="panel flex min-h-48 items-center justify-center rounded-[24px]"><LoaderCircle className="h-6 w-6 animate-spin text-amber-300" /></div>
   if (!data) return <StatusNotice type="error">Nie udało się otworzyć panelu dowodzenia.</StatusNotice>
 
@@ -94,6 +116,7 @@ export default function GuildCommandPanel({ guild, onChanged }) {
 
   return (
     <div className="space-y-5">
+      {confirmationDialog}
       {notice && <StatusNotice type={notice.type}>{notice.text}</StatusNotice>}
 
       <div className="grid gap-5 xl:grid-cols-2">
@@ -148,11 +171,11 @@ export default function GuildCommandPanel({ guild, onChanged }) {
           const draft = memberDrafts[member.id] || { role: member.role, title: member.title || '' }
           const name = member.profiles?.ingame_nick || member.profiles?.username || 'Gracz'
           const leader = member.role === 'leader'
-          return <div key={member.id} className="grid gap-3 rounded-2xl border border-white/8 bg-black/20 p-4 md:grid-cols-[1fr_170px_1fr_auto] md:items-end"><div><p className="text-sm font-black text-white">{name}</p><p className="mt-1 text-[9px] uppercase tracking-[.12em] text-[var(--text-secondary)]">{leader ? 'Lider gildii' : member.role}</p></div>{leader ? <div className="md:col-span-2 flex items-center gap-2 text-xs text-amber-200"><ShieldCheck className="h-4 w-4" /> Rola chroniona</div> : <><CustomSelect label="Rola" value={draft.role} onChange={(value) => setMemberDrafts((current) => ({ ...current, [member.id]: { ...draft, role: value } }))} options={[{ value: 'officer', label: 'Oficer' }, { value: 'member', label: 'Członek' }, { value: 'recruit', label: 'Rekrut' }]} /><label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Tytuł<input maxLength={50} value={draft.title} onChange={(event) => setMemberDrafts((current) => ({ ...current, [member.id]: { ...draft, title: event.target.value } }))} className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" /></label></>}<div className="flex gap-2">{!leader && <><button type="button" title="Zapisz rolę" disabled={Boolean(busy)} onClick={() => runAction({ action: 'update_member', memberId: member.id, role: draft.role, title: draft.title, status: 'active' }, `Zaktualizowano rolę: ${name}.`)} className="aopp-ghost-button inline-flex h-10 w-10 items-center justify-center text-emerald-200"><UserCog className="h-4 w-4" /></button><button type="button" title="Usuń ze składu" disabled={Boolean(busy)} onClick={() => { if (window.confirm(`Usunąć ${name} z aktywnego składu gildii?`)) void runAction({ action: 'update_member', memberId: member.id, role: draft.role, title: draft.title, status: 'left' }, `${name} został usunięty ze składu.`) }} className="aopp-ghost-button inline-flex h-10 w-10 items-center justify-center text-rose-200"><UserMinus className="h-4 w-4" /></button></>}</div></div>
+          return <div key={member.id} className="grid gap-3 rounded-2xl border border-white/8 bg-black/20 p-4 md:grid-cols-[1fr_170px_1fr_auto] md:items-end"><div><p className="text-sm font-black text-white">{name}</p><p className="mt-1 text-[9px] uppercase tracking-[.12em] text-[var(--text-secondary)]">{leader ? 'Lider gildii' : member.role}</p></div>{leader ? <div className="md:col-span-2 flex items-center gap-2 text-xs text-amber-200"><ShieldCheck className="h-4 w-4" /> Rola chroniona</div> : <><CustomSelect label="Rola" value={draft.role} onChange={(value) => setMemberDrafts((current) => ({ ...current, [member.id]: { ...draft, role: value } }))} options={[{ value: 'officer', label: 'Oficer' }, { value: 'member', label: 'Członek' }, { value: 'recruit', label: 'Rekrut' }]} /><label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Tytuł<input maxLength={50} value={draft.title} onChange={(event) => setMemberDrafts((current) => ({ ...current, [member.id]: { ...draft, title: event.target.value } }))} className="mt-1.5 w-full rounded-xl border px-3 py-2.5 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" /></label></>}<div className="flex gap-2">{!leader && <><button type="button" title="Zapisz rolę" disabled={Boolean(busy)} onClick={() => runAction({ action: 'update_member', memberId: member.id, role: draft.role, title: draft.title, status: 'active' }, `Zaktualizowano rolę: ${name}.`)} className="aopp-ghost-button inline-flex h-10 w-10 items-center justify-center text-emerald-200"><UserCog className="h-4 w-4" /></button><button type="button" title="Usuń ze składu" disabled={Boolean(busy)} onClick={() => removeMember(member.id, name, draft)} className="aopp-ghost-button inline-flex h-10 w-10 items-center justify-center text-rose-200"><UserMinus className="h-4 w-4" /></button></>}</div></div>
         })}</div>
       </section>
 
-      {data.events.some((event) => event.status === 'scheduled') && <section className="panel rounded-[24px] p-5 sm:p-6"><p className="text-[8px] font-black uppercase tracking-[.2em] text-violet-300">Zarządzanie planem</p><div className="mt-4 space-y-2">{data.events.filter((event) => event.status === 'scheduled').map((event) => <div key={event.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-black/20 p-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-white">{event.title}</p><p className="mt-1 text-[9px] text-[var(--text-secondary)]">{new Date(event.starts_at).toLocaleString('pl-PL')}</p></div><button type="button" disabled={Boolean(busy)} onClick={() => { if (window.confirm(`Odwołać wydarzenie „${event.title}”?`)) void runAction({ action: 'cancel_event', eventId: event.id }, 'Wydarzenie zostało odwołane.') }} className="aopp-ghost-button shrink-0 px-3 py-2 text-[9px] font-black text-rose-200">Odwołaj</button></div>)}</div></section>}
+      {data.events.some((event) => event.status === 'scheduled') && <section className="panel rounded-[24px] p-5 sm:p-6"><p className="text-[8px] font-black uppercase tracking-[.2em] text-violet-300">Zarządzanie planem</p><div className="mt-4 space-y-2">{data.events.filter((event) => event.status === 'scheduled').map((event) => <div key={event.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-black/20 p-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-white">{event.title}</p><p className="mt-1 text-[9px] text-[var(--text-secondary)]">{new Date(event.starts_at).toLocaleString('pl-PL')}</p></div><button type="button" disabled={Boolean(busy)} onClick={() => cancelEvent(event)} className="aopp-ghost-button shrink-0 px-3 py-2 text-[9px] font-black text-rose-200">Odwołaj</button></div>)}</div></section>}
     </div>
   )
 }

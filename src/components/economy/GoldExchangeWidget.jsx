@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Coins, ArrowRightLeft, TrendingUp, TrendingDown, RefreshCw, ShieldCheck } from 'lucide-react'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 const RANGES = [
   { id: '24h', label: '24h' },
@@ -117,19 +118,20 @@ export default function GoldExchangeWidget() {
 
         <div className="flex items-center gap-2 font-mono text-xs">
           {/* Region selector */}
-          <select
-            aria-label="Region rynku złota"
+          <CustomSelect
+            label="Region rynku złota"
             value={region}
-            onChange={e => {
+            onChange={(nextRegion) => {
               setLoading(true)
-              setRegion(e.target.value)
+              setRegion(nextRegion)
             }}
-            className="bg-black/50 border border-white/10 rounded-xl px-3 py-1.5 text-gray-200 text-xs outline-none focus:border-amber-400/60"
-          >
-            <option value="europe" className="bg-[#120d0a]">Europa (AMS)</option>
-            <option value="america" className="bg-[#120d0a]">Ameryka (NWA)</option>
-            <option value="asia" className="bg-[#120d0a]">Azja (SGP)</option>
-          </select>
+            options={[
+              { value: 'europe', label: 'Europa (AMS)' },
+              { value: 'america', label: 'Ameryka (NWA)' },
+              { value: 'asia', label: 'Azja (SGP)' },
+            ]}
+            className="min-w-40"
+          />
 
           {/* Range selector */}
           <div className="flex items-center rounded-xl border border-white/10 bg-black/50 p-1">

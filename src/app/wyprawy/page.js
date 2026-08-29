@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
 import UpcomingExpeditionsWidget from '@/components/expeditions/UpcomingExpeditionsWidget'
+import { StatusNotice } from '@/components/ui/FeedbackState'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { 
   Swords, Shield, Heart, UserCheck, Plus, Search,
@@ -35,6 +37,7 @@ function formatExpeditionDate(value) {
 
 export default function Wyprawy() {
   const { user } = usePortalSession()
+  const { requestConfirmation, confirmationDialog } = useConfirmDialog()
   const [userProfile, setUserProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expeditions, setExpeditions] = useState([])
@@ -64,6 +67,7 @@ export default function Wyprawy() {
     role_type: 'Tank'
   })
   const [activeExpeditionForSignup, setActiveExpeditionForSignup] = useState(null)
+  const [signupError, setSignupError] = useState('')
 
   // POBIERANIE WYPRAW Z BAZY
   const fetchExpeditions = useCallback(async () => {
@@ -94,6 +98,7 @@ export default function Wyprawy() {
   }, [loading])
 
   const openSignupModal = (exp) => {
+    setSignupError('')
     const signups = exp.expedition_signups || []
     
     const tanksCount = signups.filter(s => s.role_type === 'Tank').length
@@ -206,7 +211,7 @@ export default function Wyprawy() {
     if (role === 'Support') maxAllowed = activeExpeditionForSignup.max_supports
 
     if (maxAllowed <= 0 || currentCount >= maxAllowed) {
-      alert(`Brak wolnych miejsc dla roli ${role}!`)
+      setSignupError(`Brak wolnych miejsc dla roli ${role}. Wybierz inną rolę lub wróć później.`)
       return
     }
 
@@ -273,51 +278,60 @@ export default function Wyprawy() {
       setActiveExpeditionForSignup(null)
       await fetchExpeditions()
     } catch (error) {
-      alert(error.message || 'Nie udało się dołączyć do wyprawy.')
+      setSignupError(error.message || 'Nie udało się dołączyć do wyprawy.')
     }
   }
 
   const handleLeaveExpedition = async (signupId) => {
-    if (confirm('Czy na pewno chcesz opuścić tę drużynę?')) {
-      try {
-        const response = await authenticatedFetch('/api/expeditions', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ signupId }),
-        })
-        const result = await response.json().catch(() => ({}))
-        if (!response.ok) throw new Error(result.error || 'Nie udało się opuścić wyprawy.')
-        await fetchExpeditions()
-      } catch (error) {
-        alert(error.message || 'Nie udało się opuścić wyprawy.')
-      }
+    const accepted = await requestConfirmation({
+      title: 'Opuścić drużynę?',
+      description: 'Twoje miejsce zostanie zwolnione dla innego gracza.',
+      confirmLabel: 'Opuść drużynę',
+    })
+    if (!accepted) return
+    try {
+      const response = await authenticatedFetch('/api/expeditions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signupId }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się opuścić wyprawy.')
+      setDeleteMessage('Opuściłeś drużynę. Zwolnione miejsce jest ponownie dostępne.')
+      await fetchExpeditions()
+    } catch (error) {
+      setDeleteMessage(error.message || 'Nie udało się opuścić wyprawy.')
     }
   }
 
   const handleDeleteExpedition = async (expeditionId) => {
-    if (confirm('Czy na pewno chcesz odwołać tę wyprawę? Wiadomości z Discorda zostaną również usunięte.')) {
-      setDeleteMessage('')
-      setDeletingExpeditionId(expeditionId)
-      try {
-        const response = await authenticatedFetch('/api/webhooks/expedition', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ expeditionId }),
-        })
+    const accepted = await requestConfirmation({
+      title: 'Odwołać wyprawę?',
+      description: 'Ogłoszenie zniknie z portalu, a powiązane wiadomości Discord zostaną usunięte, jeśli integracja na to pozwoli.',
+      confirmLabel: 'Odwołaj wyprawę',
+    })
+    if (!accepted) return
+    setDeleteMessage('')
+    setDeletingExpeditionId(expeditionId)
+    try {
+      const response = await authenticatedFetch('/api/webhooks/expedition', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expeditionId }),
+      })
 
-        const result = await response.json().catch(() => ({}))
-        if (!response.ok) {
-          throw new Error(result.error || 'Nie udało się odwołać wyprawy.')
-        }
-
-        setExpeditions((current) => current.filter((expedition) => expedition.id !== expeditionId))
-        setDeleteMessage(result.warning || 'Wyprawa została odwołana i usunięta z tablicy.')
-      } catch (err) {
-        console.error('Błąd kasowania wyprawy:', err)
-        setDeleteMessage(err.message || 'Nie udało się odwołać wyprawy. Spróbuj ponownie.')
-      } finally {
-        setDeletingExpeditionId(null)
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(result.error || 'Nie udało się odwołać wyprawy.')
       }
+
+      setExpeditions((current) => current.filter((expedition) => expedition.id !== expeditionId))
+      setDeleteMessage(result.warning || 'Wyprawa została odwołana i usunięta z tablicy.')
+    } catch (err) {
+      console.error('Błąd kasowania wyprawy:', err)
+      setDeleteMessage(err.message || 'Nie udało się odwołać wyprawy. Spróbuj ponownie.')
+    } finally {
+      setDeletingExpeditionId(null)
     }
   }
 
@@ -347,6 +361,7 @@ export default function Wyprawy() {
 
   return (
     <div className="page-content">
+      {confirmationDialog}
       <div className="subpage-header">
         <h1>Wyprawy & Party</h1>
         <p>Organizuj zbiórki grupowe, harmonogram wydarzeń i ZvZ z weryfikacją IP.</p>
@@ -686,6 +701,7 @@ export default function Wyprawy() {
             </h2>
 
             <form onSubmit={handleJoinExpedition} className="space-y-3 text-xs">
+              {signupError && <StatusNotice type="error">{signupError}</StatusNotice>}
               <div>
                 <label htmlFor="expedition-signup-nick" className="block text-gray-400 mb-1 font-bold uppercase font-mono text-[10px]">Twój Nick w grze *</label>
                 <input 
@@ -703,7 +719,10 @@ export default function Wyprawy() {
                 <CustomSelect
                   label="Wybierz Rolę *"
                   value={signupData.role_type}
-                  onChange={(val) => setFormSignupData((prev) => ({ ...prev, role_type: val }))}
+                  onChange={(val) => {
+                    setSignupError('')
+                    setFormSignupData((prev) => ({ ...prev, role_type: val }))
+                  }}
                   options={[
                     activeExpeditionForSignup.max_tanks > 0 && {
                       value: 'Tank',
