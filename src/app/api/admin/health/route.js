@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import {
+  createSupabaseAdminClient,
   createSupabaseRequestClient,
   isPortalStaff,
   requireApiUser,
@@ -55,8 +56,11 @@ export async function GET(request) {
     const access = await authorizeStaff(request)
     if (access.error) return access.error
 
+    // Po sprawdzeniu roli czytamy wewnętrzne tabele klientem serwisowym.
+    // Dzięki temu monitoring nie zależy od bezpośredniego dostępu Data API
+    // dla przeglądarki, który celowo odbieramy w migracji Review 11.
     return NextResponse.json(
-      await readHealthData(access.supabase),
+      await readHealthData(createSupabaseAdminClient()),
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {

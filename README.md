@@ -57,7 +57,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
 - [x] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
 - [x] **Profil i Obserwowane** — weryfikacja postaci, statystyki, preferencje, zapisane elementy i usunięcie konta
-- [ ] **Panel administratora** — kolejka moderacji, role, stan usług, dziennik i komunikaty błędów
+- [x] **Panel administratora** — kolejka moderacji, role, stan usług, dziennik i komunikaty błędów
 - [ ] **Wspólne elementy portalu** — nawigacja, dropdowny, formularze, komunikaty, responsywność i spójność języka
 - [ ] **Podsumowanie przeglądu** — lista wykonanych zmian, pozostały dług techniczny, pomysły rozwojowe i decyzja o kolejnej fazie
 
@@ -151,6 +151,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Utwardzono uprawnienia:** anonimowy klient może odczytać wyłącznie publiczne kolumny profilu; zalogowany klient może aktualizować tylko `ingame_nick`, `main_server`, `guild_name`, `main_role`, `avg_ip`, `bio` i `favorite_builds_public`, bez dostępu do `role`, `is_admin` ani pól przypięcia postaci.
 - **Sprawdzono usuwanie konta:** wszystkie zależne dane użytkownika mają `ON DELETE CASCADE`, audyt moderacyjny anonimizuje autora przez `SET NULL`, ostatni administrator jest chroniony, a dialog wymaga dokładnej frazy, wspiera Escape i ma semantykę dostępnego `alertdialog`.
 - **Potwierdzono:** produkcyjny Supabase nie nadaje już domyślnego regionu, anonimowy `SELECT` całej tabeli jest odebrany, granty kolumnowe odpowiadają formularzowi, a doradca nie wykrył nowego problemu RLS. Pozostaje globalne ostrzeżenie o ochronie haseł, które nie wpływa na obecne logowanie wyłącznie przez Discord OAuth.
+
+### Przegląd 11 — Panel administratora
+
+- **Zostawić:** jedną kolejkę zgłoszeń, zbiorczą moderację wszystkich modułów, ręczną kontrolę integracji, trwały dziennik decyzji oraz rozdzielenie uprawnień moderatora i administratora.
+- **Naprawiono monitoring i audyt:** po potwierdzeniu roli personelu wewnętrzne dane są pobierane wyłącznie przez backendowy klient `service_role`; panel nie zależy już od bezpośredniego odczytu chronionych tabel przez przeglądarkę. Dziennik pokazuje czytelną nazwę autora, rolę i polską nazwę obiektu zamiast technicznego identyfikatora konta.
+- **Przebudowano role:** lista ma wyszukiwarkę po nicku, licznik personelu, oznaczenie własnego konta i jawny przycisk „Zapisz”; sam wybór pozycji w dropdownie nie zmienia już natychmiast uprawnień. Surowe UUID użytkowników usunięto z interfejsu.
+- **Poprawiono dostępność i stany działania:** zakładki mają powiązane panele ARIA, filtry informują o aktywnym stanie, checkboxy treści mają etykiety, a przyciski odświeżania są blokowane i animowane podczas zapytania.
+- **Utwardzono Supabase:** `anon` i `authenticated` nie mają już żadnych grantów do `integration_checks`, `system_events` ani `moderation_audit_log`; `service_role` otrzymuje wyłącznie `SELECT` i `INSERT`, a istniejące RLS pozostaje dodatkową warstwą ochrony.
+- **Potwierdzono:** produkcyjna baza zawiera historię czterech integracji i dziennik systemowy; uprzywilejowane funkcje `service_*` nie są wykonywalne przez `anon` ani `authenticated`, mają pusty `search_path`, a doradca bezpieczeństwa nie zgłasza nowej luki. Ostrzeżenie o ochronie haseł nadal nie dotyczy logowania wyłącznie przez Discord OAuth.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
