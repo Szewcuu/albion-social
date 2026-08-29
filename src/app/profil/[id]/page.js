@@ -143,7 +143,7 @@ export default function PublicProfilePage() {
   const roleStyle = ROLE_STYLES[profile.main_role] || 'border-amber-300/25 bg-amber-300/8 text-amber-200'
 
   return (
-    <div className="page-content space-y-6">
+    <div className="page-content min-w-0 space-y-6 overflow-x-clip">
       <Link href="/" className="aopp-ghost-button inline-flex min-h-11 items-center gap-2 px-4 text-xs font-bold"><ArrowLeft className="h-4 w-4" /> Wróć do portalu</Link>
 
       <header className="panel relative overflow-hidden rounded-[30px] border-amber-300/20">

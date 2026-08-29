@@ -94,8 +94,8 @@ export default async function BuildDetailPage({ params }) {
   const publishedAt = new Intl.DateTimeFormat('pl-PL', { dateStyle: 'long' }).format(new Date(row.created_at))
 
   return (
-    <div className="page-content">
-<div className="relative z-10 mx-auto flex w-full max-w-[1320px] flex-1 flex-col gap-5 p-4 sm:p-6 lg:p-8">
+    <div className="page-content overflow-x-clip">
+      <div className="relative z-10 mx-auto flex w-full min-w-0 max-w-[1320px] flex-1 flex-col gap-5 p-4 sm:p-6 lg:p-8">
         <Link href="/buildy" className="group inline-flex min-h-11 w-fit items-center gap-2 rounded-lg pr-2 text-[10px] font-black uppercase tracking-[.2em] text-[var(--amber)] transition hover:text-[#f0cf77]">
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" aria-hidden="true" />
           Powrót do zbrojowni

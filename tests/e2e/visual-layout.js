@@ -42,8 +42,10 @@ export async function captureResponsiveView(page, testInfo, route, viewport) {
             if (style.display === 'none' || style.visibility === 'hidden') return false
             if (element.closest('[data-visual-overflow-ok="true"]')) return false
             const rect = element.getBoundingClientRect()
-            return rect.width > 1 && (rect.left < -1 || rect.right > viewportWidth + 1)
+            const crossesLeftEdge = rect.left < -1 && rect.right > 1
+            return rect.width > 1 && (crossesLeftEdge || rect.right > viewportWidth + 1)
           })
+          .sort((first, second) => second.getBoundingClientRect().right - first.getBoundingClientRect().right)
           .slice(0, 8)
           .map((element) => {
             const rect = element.getBoundingClientRect()
