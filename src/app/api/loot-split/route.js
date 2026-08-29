@@ -6,6 +6,7 @@ import { recordSystemEvent } from '@/lib/server/monitoring'
 import { createSupabaseRequestClient, requireApiUser } from '@/lib/server/supabaseAdmin'
 
 const jsonError = (message, status, headers) => NextResponse.json({ error: message }, { status, headers })
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 async function authorize(request) {
   const auth = await requireApiUser(request)
@@ -91,6 +92,7 @@ export async function DELETE(request) {
     const access = await authorize(request)
     if (access.error) return access.error
     const reportId = new URL(request.url).searchParams.get('reportId')
+    if (reportId && !UUID_PATTERN.test(reportId)) return jsonError('Nieprawidłowy identyfikator raportu.', 400)
     const query = reportId
       ? access.supabase.from('loot_split_reports').delete().eq('id', reportId).eq('user_id', access.auth.user.id)
       : access.supabase.from('loot_split_drafts').delete().eq('user_id', access.auth.user.id)

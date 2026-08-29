@@ -55,7 +55,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Rynek i Skrzynka handlowa** — publikacja, wyszukiwanie, wycena, negocjacje, obserwowanie i cykl życia ofert
 - [x] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
 - [x] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
-- [ ] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
+- [x] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
 - [ ] **Profil i Obserwowane** — weryfikacja postaci, statystyki, preferencje, zapisane elementy i usunięcie konta
 - [ ] **Panel administratora** — kolejka moderacji, role, stan usług, dziennik i komunikaty błędów
 - [ ] **Wspólne elementy portalu** — nawigacja, dropdowny, formularze, komunikaty, responsywność i spójność języka
@@ -132,6 +132,16 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Dodano:** widoczny status sprawdzania wszystkich regionów, ponowienie po awarii, bezpośredni fallback do KillBoard#1 dla niedostępnego serwera oraz przejście z karty starcia prosto do kroniki przeciwnika.
 - **Potwierdzono produkcyjnie przed zmianą:** Europa zwraca profil, historię i wycenę z pokryciem cen, natomiast endpoint Gameinfo Ameryki odpowiada `502`; portal nie udaje wtedy braku gracza i wyjaśnia awarię zewnętrznego źródła.
 - **Do obserwacji:** Gameinfo jest niewspieranym publicznie interfejsem strony Albionu i okresowo traci dostępność regionu Ameryki; nie wolno zastępować brakujących danych fikcyjnymi statystykami. Dalsza odporność wymagałaby własnego, okresowo zasilanego archiwum zdarzeń.
+
+### Przegląd 09 — Podział Łupów i Timery
+
+- **Zostawić:** czterostopniowy przepływ rozliczenia, regeary finansowane z puli po podatku, jawną pozostałość po zaokrągleniu, wersje raportów na koncie, regionalne zegary UTC oraz odnośnik do kalendarza z niezawodnymi przypomnieniami portalowymi.
+- **Naprawiono obliczenia i działania:** srebro jest liczone wyłącznie w pełnych jednostkach; uczestnicy są deduplikowani bez względu na wielkość liter; raport, eksport i udostępnianie są zablokowane do czasu poprawnego rozliczenia; wielokrotne kliknięcie nie tworzy kilku wersji; błędny identyfikator raportu kończy się odpowiedzią `400`.
+- **Dodano udostępnianie:** gotowy raport można przekazać systemowym arkuszem udostępniania, a na urządzeniach bez tej funkcji portal kopiuje tekst gotowy do wklejenia na Discordzie.
+- **Naprawiono timery:** interfejs uczciwie pokazuje stan synchronizacji konta i tryb offline, nie zgłasza sukcesu po nieudanym zapisie, odrzuca duplikaty i przeszłe daty, nie usuwa po cichu najstarszego wpisu po przekroczeniu limitu oraz pozwala zbiorczo wyczyścić zakończone timery.
+- **Zabezpieczono synchronizację:** starsza lokalna lista timerów nie jest już nadpisywana pustym rekordem konta, payload timerów jest ograniczony do wymaganych pól, a niezmienne wersje raportów utraciły przypadkowe uprawnienie `UPDATE` dla roli `authenticated`.
+- **Decyzja o przypomnieniach:** własne timery pozostają osobistymi licznikami synchronizowanymi między urządzeniami; przypomnienia działające również przy zamkniętej stronie są realizowane przez zapisy w Kalendarzu i centrum powiadomień, zamiast obiecywać zawodny alarm przeglądarkowy.
+- **Potwierdzono:** oba widoki mieszczą się w szerokości 390 px; RLS i jawne granty chronią szkice, wersje oraz preferencje per użytkownik; testy jednostkowe obejmują podatek, regeary, deficyt, duplikaty, pozostałość i sanitację timerów, a E2E przywracanie szkicu, blokady działań i widok telefonu.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 

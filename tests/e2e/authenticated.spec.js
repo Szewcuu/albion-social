@@ -871,7 +871,14 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByText(/Znaleziono 2 nowych walk/)).toBeVisible()
   })
 
-  test('zapisuje i przywraca lokalny szkic podziału łupów', async ({ page }) => {
+  test('zapisuje i przywraca zsynchronizowany szkic podziału łupów', async ({ page }) => {
+    await page.route('**/api/loot-split**', async (route) => {
+      if (route.request().method() === 'PUT') {
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ savedAt: '2026-08-29T12:00:00.000Z' }) })
+        return
+      }
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ draft: null, reports: [] }) })
+    })
     await page.goto('/loot-split')
     await page.getByLabel('Nazwa rozliczenia').fill('E2E Ava Roads')
     await page.getByLabel('Łączna wartość łupu').fill('1000000')
@@ -882,5 +889,40 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.reload()
     await expect(page.getByLabel('Nazwa rozliczenia')).toHaveValue('E2E Ava Roads')
     await expect(page.getByLabel('Łączna wartość łupu')).toHaveValue('1000000')
+  })
+
+  test('liczy poprawny raport łupów i blokuje niepełne działania', async ({ page }) => {
+    await page.route('**/api/loot-split**', async (route) => {
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ draft: null, reports: [] }) })
+    })
+    await page.goto('/loot-split')
+    await expect(page.getByRole('button', { name: 'Udostępnij' })).toBeDisabled()
+    await expect(page.getByRole('button', { name: 'Eksport TXT' })).toBeDisabled()
+
+    await page.getByLabel('Łączna wartość łupu').fill('1000000')
+    await page.getByLabel('Podatek gildii (%)').fill('10')
+    await page.getByText('Nicki graczy').locator('textarea').fill('Tank\nHeal\nDPS')
+
+    await expect(page.getByText('300 000 silver').last()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Udostępnij' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: 'Eksport TXT' })).toBeEnabled()
+  })
+
+  test('przywraca osobiste timery i utrzymuje oba moduły w szerokości telefonu', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem('aopp-custom-timers-v2', JSON.stringify({
+        version: 1,
+        value: [{ id: 'timer-e2e', name: 'CTA E2E', date: '2099-08-29T18:00:00.000Z' }],
+        updatedAt: '2026-08-29T12:00:00.000Z',
+      }))
+    })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/timery')
+    await expect(page.getByText('CTA E2E')).toBeVisible()
+    await expect(page.getByText(/Timer zapisuje się na koncie/)).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
+
+    await page.goto('/loot-split')
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   })
 })

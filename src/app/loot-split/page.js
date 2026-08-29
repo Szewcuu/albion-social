@@ -12,10 +12,12 @@ import {
   FileCheck2,
   History,
   HandCoins,
+  LoaderCircle,
   Plus,
   ReceiptText,
   RotateCcw,
   Save,
+  Share2,
   ShieldAlert,
   Sparkles,
   Trash2,
@@ -26,30 +28,12 @@ import {
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { calculateLootSplit, canFinalizeLootSplit, toSilver } from '@/lib/lootSplitCalculator'
 
 const DRAFT_KEY = 'aopp-loot-split-draft-v2'
 
-function toNumber(value) {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
-}
-
 function silver(value) {
   return `${Math.round(Number(value) || 0).toLocaleString('pl-PL')} silver`
-}
-
-function parsePlayers(value) {
-  const seen = new Set()
-  return value
-    .split(/[\n,;]+/)
-    .map((entry) => entry.trim())
-    .filter((entry) => {
-      if (!entry) return false
-      const key = entry.toLocaleLowerCase('pl')
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
 }
 
 export default function LootSplit() {
@@ -65,6 +49,7 @@ export default function LootSplit() {
   const [syncState, setSyncState] = useState('loading')
   const [reportHistory, setReportHistory] = useState([])
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [busyAction, setBusyAction] = useState('')
 
   const applyDraft = useCallback((draft) => {
     setEventName(typeof draft.eventName === 'string' ? draft.eventName : '')
@@ -114,48 +99,18 @@ export default function LootSplit() {
     }
   }, [applyDraft])
 
-  const calculation = useMemo(() => {
-    const totalLoot = toNumber(totalValue)
-    const taxPercent = Math.min(100, Math.max(0, Number(guildTaxPercent) || 0))
-    const guildTaxAmount = Math.round(totalLoot * taxPercent / 100)
-    const afterTax = Math.max(0, totalLoot - guildTaxAmount)
-    const players = parsePlayers(playerNicks)
-    const totalRegearCost = regearList.reduce((sum, item) => sum + toNumber(item.amount), 0)
-    const distributable = Math.max(0, afterTax - totalRegearCost)
-    const deficit = Math.max(0, totalRegearCost - afterTax)
-    const basePayout = players.length ? Math.floor(distributable / players.length) : 0
-    const roundingRemainder = players.length ? distributable - (basePayout * players.length) : distributable
-
-    const payoutRows = players.map((nick) => {
-      const reimbursement = regearList
-        .filter((item) => item.nick.toLocaleLowerCase('pl') === nick.toLocaleLowerCase('pl'))
-        .reduce((sum, item) => sum + toNumber(item.amount), 0)
-      return { nick, basePayout, reimbursement, total: basePayout + reimbursement }
-    })
-
-    const playerKeys = new Set(players.map((nick) => nick.toLocaleLowerCase('pl')))
-    const unassignedRegears = regearList.filter((item) => !playerKeys.has(item.nick.toLocaleLowerCase('pl')))
-
-    return {
-      totalLoot,
-      taxPercent,
-      guildTaxAmount,
-      afterTax,
-      players,
-      totalRegearCost,
-      distributable,
-      deficit,
-      basePayout,
-      roundingRemainder,
-      payoutRows,
-      unassignedRegears,
-    }
-  }, [guildTaxPercent, playerNicks, regearList, totalValue])
+  const calculation = useMemo(() => calculateLootSplit({
+    totalValue,
+    guildTaxPercent,
+    playerNicks,
+    regearList,
+  }), [guildTaxPercent, playerNicks, regearList, totalValue])
+  const canFinalize = canFinalizeLootSplit(calculation)
 
   function handleAddRegear(event) {
     event.preventDefault()
     const nick = regearNick.trim()
-    const amount = toNumber(regearAmount)
+    const amount = toSilver(regearAmount)
     if (!nick || !amount || nick.length > 80 || amount > 10_000_000_000) {
       setNotice({ type: 'error', text: 'Podaj nick i prawidłową kwotę zwrotu.' })
       return
@@ -171,6 +126,7 @@ export default function LootSplit() {
   }
 
   async function saveDraft() {
+    if (busyAction) return
     const savedAt = new Date().toISOString()
     const draft = createDraftPayload(savedAt)
     try {
@@ -185,6 +141,7 @@ export default function LootSplit() {
     }
 
     try {
+      setBusyAction('draft')
       setSyncState('loading')
       const response = await authenticatedFetch('/api/loot-split', {
         method: 'PUT',
@@ -199,6 +156,8 @@ export default function LootSplit() {
     } catch {
       setSyncState('offline')
       setNotice({ type: 'success', text: 'Szkic zapisano lokalnie. Synchronizacja konta zostanie ponowiona przy następnym zapisie.' })
+    } finally {
+      setBusyAction('')
     }
   }
 
@@ -271,11 +230,12 @@ export default function LootSplit() {
   }
 
   async function saveReportVersion() {
-    if (!calculation.totalLoot || !calculation.players.length || calculation.deficit > 0 || calculation.unassignedRegears.length > 0) {
+    if (!canFinalize) {
       setNotice({ type: 'error', text: 'Uzupełnij poprawne rozliczenie przed zapisaniem wersji raportu.' })
       return
     }
     try {
+      setBusyAction('report')
       const response = await authenticatedFetch('/api/loot-split', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -288,6 +248,27 @@ export default function LootSplit() {
       setNotice({ type: 'success', text: `Zapisano wersję ${report?.version || ''} raportu w historii konta.` })
     } catch (error) {
       setNotice({ type: 'error', text: error.message })
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+  async function shareReport() {
+    if (!canFinalize) {
+      setNotice({ type: 'error', text: 'Uzupełnij poprawne rozliczenie przed udostępnieniem raportu.' })
+      return
+    }
+    const text = reportText()
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: eventName.trim() || 'Loot Split AOPP', text })
+        setNotice({ type: 'success', text: 'Raport został przekazany do wybranej aplikacji.' })
+      } else {
+        await navigator.clipboard.writeText(text)
+        setNotice({ type: 'success', text: 'Raport skopiowano do schowka — możesz go wkleić na Discordzie.' })
+      }
+    } catch (error) {
+      if (error?.name !== 'AbortError') setNotice({ type: 'error', text: 'Nie udało się udostępnić raportu.' })
     }
   }
 
@@ -317,7 +298,7 @@ export default function LootSplit() {
               <SectionTitle icon={Calculator} eyebrow="Krok 1" title="Pula i zasady podziału" description="Podatek jest potrącany pierwszy, następnie wypłacane są regeary, a pozostała pula dzielona po równo." />
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <Field label="Nazwa rozliczenia" value={eventName} onChange={setEventName} placeholder="np. Ava Roads 01.08" maxLength={100} />
-                <Field label="Łączna wartość łupu" value={totalValue} onChange={setTotalValue} placeholder="15000000" type="number" min="0" />
+                <Field label="Łączna wartość łupu" value={totalValue} onChange={setTotalValue} placeholder="15000000" type="number" min="0" max="999999999999" step="1" />
                 <Field label="Podatek gildii (%)" value={guildTaxPercent} onChange={setGuildTaxPercent} placeholder="10" type="number" min="0" max="100" step="0.1" />
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -358,7 +339,7 @@ export default function LootSplit() {
                     </label>
                   )}
                 </div>
-                <Field label="Kwota zwrotu" value={regearAmount} onChange={setRegearAmount} placeholder="250000" type="number" min="0" />
+                <Field label="Kwota zwrotu" value={regearAmount} onChange={setRegearAmount} placeholder="250000" type="number" min="0" max="10000000000" step="1" />
                 <button type="submit" className="mt-auto flex h-[43px] items-center justify-center gap-2 rounded-xl border border-rose-400/25 bg-rose-400/8 px-4 text-[10px] font-black uppercase tracking-[.12em] text-rose-200 transition hover:bg-rose-400/12"><Plus className="h-4 w-4" /> Dodaj</button>
               </form>
 
@@ -399,8 +380,8 @@ export default function LootSplit() {
 
                 {calculation.roundingRemainder > 0 && <p className="flex items-start gap-2 text-[9px] leading-4 text-[var(--text-secondary)]"><Coins className="mt-0.5 h-3 w-3 shrink-0 text-[var(--amber)]" /> Pozostałość po zaokrągleniu: {silver(calculation.roundingRemainder)}. Zostaje w banku rozliczenia.</p>}
 
-                <button type="button" onClick={copyReport} disabled={!calculation.totalLoot || !calculation.players.length || calculation.deficit > 0 || calculation.unassignedRegears.length > 0} className="btn btn-primary flex w-full items-center justify-center gap-2 px-4 py-3.5 text-xs font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40"><ClipboardCopy className="h-4 w-4" /> Kopiuj raport</button>
-                <div className="grid gap-2 sm:grid-cols-2"><button type="button" onClick={saveDraft} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Save className="h-3.5 w-3.5" /> {draftSavedAt ? 'Zapisz ponownie' : 'Zapisz szkic'}</button><button type="button" onClick={saveReportVersion} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><History className="h-3.5 w-3.5" /> Zapisz wersję</button><button type="button" onClick={() => downloadReport()} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em]"><Download className="h-3.5 w-3.5" /> Eksport TXT</button><button type="button" onClick={() => setResetDialogOpen(true)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-400/15 bg-rose-400/5 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-rose-300 hover:bg-rose-400/10"><RotateCcw className="h-3.5 w-3.5" /> Wyczyść</button></div>
+                <div className="grid gap-2 sm:grid-cols-2"><button type="button" onClick={copyReport} disabled={!canFinalize} className="btn btn-primary flex min-h-12 items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40"><ClipboardCopy className="h-4 w-4" /> Kopiuj raport</button><button type="button" onClick={shareReport} disabled={!canFinalize} className="btn btn-primary flex min-h-12 items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-40"><Share2 className="h-4 w-4" /> Udostępnij</button></div>
+                <div className="grid gap-2 sm:grid-cols-2"><button type="button" onClick={saveDraft} disabled={Boolean(busyAction)} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] disabled:opacity-45">{busyAction === 'draft' ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />} {draftSavedAt ? 'Zapisz ponownie' : 'Zapisz szkic'}</button><button type="button" onClick={saveReportVersion} disabled={!canFinalize || Boolean(busyAction)} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] disabled:opacity-45">{busyAction === 'report' ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <History className="h-3.5 w-3.5" />} Zapisz wersję</button><button type="button" onClick={() => downloadReport()} disabled={!canFinalize} className="btn btn-ghost flex min-h-11 items-center justify-center gap-2 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] disabled:opacity-45"><Download className="h-3.5 w-3.5" /> Eksport TXT</button><button type="button" onClick={() => setResetDialogOpen(true)} disabled={Boolean(busyAction)} className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-rose-400/15 bg-rose-400/5 px-3 py-2.5 text-[9px] font-black uppercase tracking-[.1em] text-rose-300 hover:bg-rose-400/10 disabled:opacity-45"><RotateCcw className="h-3.5 w-3.5" /> Wyczyść</button></div>
                 <p className={`min-h-4 text-center text-[9px] ${draftSavedAt ? 'text-emerald-300' : 'text-[var(--text-secondary)]'}`} aria-live="polite">
                   {syncState === 'loading' ? 'Synchronizacja konta…' : syncState === 'offline' ? 'Tryb offline — szkic pozostaje bezpieczny na tym urządzeniu.' : draftSavedAt ? `Szkic zsynchronizowany: ${new Date(draftSavedAt).toLocaleString('pl-PL')}` : 'Szkic zostanie zapisany na koncie i lokalnie.'}
                 </p>
@@ -421,7 +402,7 @@ export default function LootSplit() {
       <ConfirmDialog
         open={resetDialogOpen}
         title="Wyczyścić rozliczenie?"
-        description="Usuniemy wszystkie kwoty, uczestników, zwroty oraz szkic zapisany na tym urządzeniu. Tej operacji nie można cofnąć."
+        description="Usuniemy wszystkie kwoty, uczestników, zwroty oraz szkic zapisany na tym urządzeniu i koncie. Zapisane wersje raportów pozostaną w historii."
         confirmLabel="Wyczyść wszystko"
         onConfirm={resetDraft}
         onOpenChange={setResetDialogOpen}
