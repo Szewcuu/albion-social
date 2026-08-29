@@ -116,7 +116,7 @@ export default function GuildDetailPage() {
   ]
 
   return (
-    <div className="page-content space-y-6">
+    <div className="page-content min-w-0 space-y-6 overflow-x-clip">
       <Link href="/gildie" className="aopp-ghost-button inline-flex min-h-11 items-center gap-2 px-4 text-xs font-bold"><ArrowLeft className="h-4 w-4" /> Wróć do rejestru gildii</Link>
 
       <header className="panel relative overflow-hidden rounded-[30px] border-amber-300/20">
@@ -127,7 +127,7 @@ export default function GuildDetailPage() {
             <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[24px] border-2 border-amber-300/40 bg-black/30 font-display text-5xl font-black text-amber-200 shadow-[0_18px_50px_rgba(0,0,0,.45)]">{guild.name.charAt(0)}</div>
             <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.24em] text-amber-300">Centrum gildii</p><h1 className="font-display mt-2 truncate text-3xl font-black text-white sm:text-4xl">{guild.name}</h1><div className="mt-3 flex flex-wrap gap-2"><Badge icon={Globe}>{guild.server || 'Serwer nieustalony'}</Badge><Badge icon={MapPin}>{guild.main_city || 'Nieustalone'}</Badge><Badge icon={Swords}>{guild.activity_type || 'Mieszana'}</Badge><span className={`rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.12em] ${guild.recruitment_open ? 'border-emerald-300/30 bg-emerald-300/10 text-emerald-200' : 'border-rose-300/25 bg-rose-300/8 text-rose-200'}`}>{guild.recruitment_open ? 'Rekrutacja otwarta' : 'Rekrutacja zamknięta'}</span></div></div>
           </div>
-          <div className="grid grid-cols-3 gap-2">{[[Users, 'Skład', members.length], [CalendarDays, 'Nadchodzące', upcomingEvents.length], [Activity, 'Wpisy', activity.length]].map(([Icon, label, value]) => <div key={label} className="min-w-[86px] rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.12em] text-[var(--text-secondary)]">{label}</p></div>)}</div>
+          <div className="grid min-w-0 grid-cols-3 gap-2">{[[Users, 'Skład', members.length], [CalendarDays, 'Nadchodzące', upcomingEvents.length], [Activity, 'Wpisy', activity.length]].map(([Icon, label, value]) => <div key={label} className="min-w-0 rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 break-words text-[8px] font-black uppercase tracking-[.12em] text-[var(--text-secondary)]">{label}</p></div>)}</div>
         </div>
         <div className="relative flex flex-wrap items-center justify-between gap-4 border-t border-white/8 bg-black/15 px-6 py-4 sm:px-8 lg:px-10">
           <p className="text-[10px] text-[var(--text-secondary)]">Lider: <Link href={`/profil/${guild.user_id}`} className="font-bold text-amber-200 hover:underline">{leaderName}</Link> · w portalu od {formatDate(guild.created_at)}</p>

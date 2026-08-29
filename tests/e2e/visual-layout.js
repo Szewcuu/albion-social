@@ -15,6 +15,9 @@ export async function captureResponsiveView(page, testInfo, route, viewport) {
   await page.goto(route.path, { waitUntil: 'domcontentloaded' })
   await page.locator('.auth-loading-screen').waitFor({ state: 'hidden', timeout: 15_000 }).catch(() => {})
   await expect(page.locator('#main-content')).toBeVisible()
+  if (route.heading) {
+    await expect(page.getByRole('heading', { name: route.heading, exact: route.headingExact ?? true })).toBeVisible()
+  }
 
   await page.addStyleTag({ content: `
     *, *::before, *::after {
@@ -39,8 +42,10 @@ export async function captureResponsiveView(page, testInfo, route, viewport) {
             if (style.display === 'none' || style.visibility === 'hidden') return false
             if (element.closest('[data-visual-overflow-ok="true"]')) return false
             const rect = element.getBoundingClientRect()
-            return rect.width > 1 && (rect.left < -1 || rect.right > viewportWidth + 1)
+            const crossesLeftEdge = rect.left < -1 && rect.right > 1
+            return rect.width > 1 && (crossesLeftEdge || rect.right > viewportWidth + 1)
           })
+          .sort((first, second) => second.getBoundingClientRect().right - first.getBoundingClientRect().right)
           .slice(0, 8)
           .map((element) => {
             const rect = element.getBoundingClientRect()
