@@ -1,7 +1,10 @@
+import { isIgnorableRequestError } from '@/lib/adminHealth'
+
 export function register() {}
 
 export async function onRequestError(error, request, context) {
   if (process.env.NEXT_RUNTIME !== 'nodejs') return
+  if (isIgnorableRequestError(error, context)) return
 
   const { recordSystemEvent } = await import('@/lib/server/monitoring')
   await recordSystemEvent({
