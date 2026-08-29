@@ -15,6 +15,8 @@ import {
   MessageSquareText,
   RefreshCw,
   RotateCcw,
+  Save,
+  Search,
   ServerCog,
   ShieldCheck,
   Swords,
@@ -71,6 +73,29 @@ const INTEGRATION_STATUSES = {
   degraded: 'Obniżona jakość',
   down: 'Awaria',
   not_configured: 'Brak konfiguracji',
+}
+
+const EVENT_TYPE_LABELS = {
+  integration_status_changed: 'Zmiana stanu integracji',
+  frontend_error: 'Błąd interfejsu',
+  backend_error: 'Błąd serwera',
+}
+
+const ENTITY_TYPE_LABELS = {
+  build_report: 'Zgłoszenie builda',
+  profile_role: 'Rola użytkownika',
+  chat_message: 'Wiadomość czatu',
+  build: 'Build',
+  market_item: 'Oferta rynkowa',
+  guild: 'Gildia',
+  expedition: 'Wyprawa',
+  build_comment: 'Komentarz builda',
+}
+
+const ROLE_LABELS = {
+  member: 'Użytkownik',
+  moderator: 'Moderator',
+  admin: 'Administrator',
 }
 
 export default function AdminPage() {
@@ -305,7 +330,10 @@ export default function AdminPage() {
   }
 
   async function changeRole(userId, role) {
-    if (reason.trim().length < 3) return setNotice({ type: 'error', text: 'Przed zmianą roli podaj powód — minimum 3 znaki.' })
+    if (reason.trim().length < 3) {
+      setNotice({ type: 'error', text: 'Przed zmianą roli podaj powód — minimum 3 znaki.' })
+      return false
+    }
     setBusy(true)
     try {
       const response = await authenticatedFetch('/api/admin/roles', {
@@ -318,8 +346,10 @@ export default function AdminPage() {
       setRoleUsers((current) => current.map((user) => user.id === userId ? { ...user, role: payload.role } : user))
       setNotice({ type: 'success', text: 'Rola użytkownika została zmieniona i zapisana w dzienniku.' })
       setReason('')
+      return true
     } catch (error) {
       setNotice({ type: 'error', text: error.message })
+      return false
     } finally {
       setBusy(false)
     }
@@ -360,14 +390,16 @@ export default function AdminPage() {
       {dashboard.stats && <section className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"><AdminMetric icon={FileWarning} label="Oczekujące zgłoszenia" value={dashboard.stats.pendingReports} tone="rose" /><AdminMetric icon={MessageSquareText} label="Widoczne komentarze" value={dashboard.stats.visibleComments} tone="sky" /><AdminMetric icon={Swords} label="Publiczne buildy" value={dashboard.stats.builds} tone="gold" /><AdminMetric icon={ShieldCheck} label="Twoja rola" value={dashboard.role === 'admin' ? 'Admin' : 'Moderator'} tone="emerald" /></section>}
 
       <div className="panel mb-5 flex flex-wrap gap-2 p-3" role="tablist" aria-label="Sekcje centrum moderacji">
-        {tabs.map(([value, label, Icon]) => <button key={value} type="button" role="tab" aria-selected={activeTab === value} onClick={() => { setActiveTab(value); setNotice(null) }} className={`chip ${activeTab === value ? 'active' : ''}`}><Icon className="h-3.5 w-3.5" /> {label}</button>)}
+        {tabs.map(([value, label, Icon]) => <button key={value} id={`admin-tab-${value}`} type="button" role="tab" aria-selected={activeTab === value} aria-controls={`admin-panel-${value}`} onClick={() => { setActiveTab(value); setNotice(null) }} className={`chip ${activeTab === value ? 'active' : ''}`}><Icon className="h-3.5 w-3.5" /> {label}</button>)}
       </div>
 
-      {activeTab === 'reports' && <ReportsPanel reports={visibleReports} filter={reportFilter} setFilter={(value) => { setReportFilter(value); setSelectedReportIds([]) }} selectedIds={selectedReportIds} reason={reason} busy={busy} loading={reportsLoading} hasMore={reportsPagination.hasMore} onLoadMore={() => loadReports({ append: true, cursor: reportsPagination.nextCursor })} onSelect={setSelectedReportIds} onReason={setReason} onModerate={moderateReport} onModerateBatch={moderateReportsBatch} />}
-      {activeTab === 'content' && <ContentPanel items={contentItems} type={contentType} status={contentStatus} selectedIds={selectedIds} reason={reason} busy={busy} onType={setContentType} onStatus={setContentStatus} onSelect={setSelectedIds} onReason={setReason} onModerate={moderateContent} onRefresh={loadContent} />}
-      {activeTab === 'health' && <HealthPanel health={health} busy={busy} onRefresh={() => loadHealth(false)} onRun={() => loadHealth(true)} />}
-      {activeTab === 'audit' && <AuditPanel entries={auditEntries} busy={busy} onRefresh={loadAudit} />}
-      {activeTab === 'roles' && dashboard.role === 'admin' && <RolesPanel users={roleUsers} reason={reason} busy={busy} onReason={setReason} onChangeRole={changeRole} onRefresh={loadRoles} />}
+      <div id={`admin-panel-${activeTab}`} role="tabpanel" aria-labelledby={`admin-tab-${activeTab}`}>
+        {activeTab === 'reports' && <ReportsPanel reports={visibleReports} filter={reportFilter} setFilter={(value) => { setReportFilter(value); setSelectedReportIds([]) }} selectedIds={selectedReportIds} reason={reason} busy={busy} loading={reportsLoading} hasMore={reportsPagination.hasMore} onLoadMore={() => loadReports({ append: true, cursor: reportsPagination.nextCursor })} onSelect={setSelectedReportIds} onReason={setReason} onModerate={moderateReport} onModerateBatch={moderateReportsBatch} />}
+        {activeTab === 'content' && <ContentPanel items={contentItems} type={contentType} status={contentStatus} selectedIds={selectedIds} reason={reason} busy={busy} onType={setContentType} onStatus={setContentStatus} onSelect={setSelectedIds} onReason={setReason} onModerate={moderateContent} onRefresh={loadContent} />}
+        {activeTab === 'health' && <HealthPanel health={health} busy={busy} onRefresh={() => loadHealth(false)} onRun={() => loadHealth(true)} />}
+        {activeTab === 'audit' && <AuditPanel entries={auditEntries} busy={busy} onRefresh={loadAudit} />}
+        {activeTab === 'roles' && dashboard.role === 'admin' && <RolesPanel users={roleUsers} reason={reason} busy={busy} onReason={setReason} onChangeRole={changeRole} onRefresh={loadRoles} />}
+      </div>
     </div>
   )
 }
@@ -399,7 +431,7 @@ function HealthPanel({ health, busy, onRefresh, onRun }) {
           {health.events.length > 0 && <p className="pb-1 text-[10px] leading-4 text-[var(--text-muted)]">To dziennik zdarzeń, nie lista aktywnych awarii. Wpis bez nawrotu przez ponad 24 godziny oznaczamy jako historyczny.</p>}
           {health.events.length === 0 ? <EmptyState icon={CheckCircle2} title="Brak zarejestrowanych awarii" description="Nowe błędy aplikacji i integracji pojawią się tutaj." /> : health.events.map((event) => {
             const historical = generatedAtMs - new Date(event.created_at).getTime() > historicalAfterMs
-            return <article key={event.id} className={`grid gap-3 rounded-xl border p-4 sm:grid-cols-[150px_1fr_auto] ${historical ? 'border-[var(--border)] bg-black/10 opacity-70' : 'border-rose-400/20 bg-rose-400/[.035]'}`}><div className="flex flex-wrap gap-1"><span className={`badge ${event.level === 'error' ? 'badge-rose' : 'badge-amber'} w-fit`}>{event.source}</span>{historical && <span className="badge w-fit">Historyczny</span>}</div><div><strong className="text-xs text-white">{event.event_type}</strong><p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{event.message}</p>{historical && <p className="mt-1 text-[9px] text-emerald-300/70">Brak zarejestrowanego nawrotu w ciągu ostatnich 24 godzin.</p>}</div><time className="flex items-center gap-1 text-[9px] text-[var(--text-muted)]"><Clock3 className="h-3 w-3" /> {new Date(event.created_at).toLocaleString('pl-PL')}</time></article>
+            return <article key={event.id} className={`grid gap-3 rounded-xl border p-4 sm:grid-cols-[150px_1fr_auto] ${historical ? 'border-[var(--border)] bg-black/10 opacity-70' : 'border-rose-400/20 bg-rose-400/[.035]'}`}><div className="flex flex-wrap gap-1"><span className={`badge ${event.level === 'error' ? 'badge-rose' : 'badge-amber'} w-fit`}>{INTEGRATION_NAMES[event.source] || event.source}</span>{historical && <span className="badge w-fit">Historyczny</span>}</div><div><strong className="text-xs text-white">{EVENT_TYPE_LABELS[event.event_type] || event.event_type}</strong><p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">{event.message}</p>{historical && <p className="mt-1 text-[9px] text-emerald-300/70">Brak zarejestrowanego nawrotu w ciągu ostatnich 24 godzin.</p>}</div><time className="flex items-center gap-1 text-[9px] text-[var(--text-muted)]"><Clock3 className="h-3 w-3" /> {new Date(event.created_at).toLocaleString('pl-PL')}</time></article>
           })}
         </div>
       </section>
@@ -450,15 +482,26 @@ function ReportsPanel({ reports, filter, setFilter, selectedIds, reason, busy, l
 
 function ContentPanel({ items, type, status, selectedIds, reason, busy, onType, onStatus, onSelect, onReason, onModerate, onRefresh }) {
   const allSelected = items.length > 0 && selectedIds.length === items.length
-  return <section className="panel overflow-hidden"><PanelHeading eyebrow="Wszystkie moduły" title="Moderacja treści"><button type="button" onClick={onRefresh} className="btn btn-ghost btn-sm"><RefreshCw className="h-3.5 w-3.5" /> Odśwież</button></PanelHeading><div className="grid gap-3 border-b border-[var(--border)] p-4 lg:grid-cols-[220px_180px_1fr] items-end"><div><CustomSelect label="Typ treści" value={type} onChange={(val) => onType(val)} options={CONTENT_TYPES.map(([value, label]) => ({ value, label }))} /></div><div><CustomSelect label="Status" value={status} onChange={(val) => onStatus(val)} options={[{ value: 'visible', label: 'Widoczne' }, { value: 'hidden', label: 'Ukryte' }, { value: 'removed', label: 'Usunięte' }]} /></div><label className="form-label">Powód decyzji<input value={reason} onChange={(event) => onReason(event.target.value)} maxLength={500} placeholder="np. spam, naruszenie regulaminu, odwołanie zaakceptowane" className="mt-1.5 w-full rounded-xl border p-3 text-xs font-mono" /></label></div><div className="flex flex-wrap gap-2 border-b border-[var(--border)] p-4"><button type="button" className="btn btn-ghost btn-sm" onClick={() => onSelect(allSelected ? [] : items.map((item) => item.id))}>{allSelected ? 'Odznacz wszystkie' : 'Zaznacz wszystkie'}</button><button disabled={busy || !selectedIds.length} onClick={() => onModerate('hide')} className="btn btn-ghost btn-sm"><EyeOff className="h-3.5 w-3.5" /> Ukryj ({selectedIds.length})</button><button disabled={busy || !selectedIds.length} onClick={() => onModerate('restore')} className="btn btn-ghost btn-sm"><RotateCcw className="h-3.5 w-3.5" /> Przywróć</button><button disabled={busy || !selectedIds.length} onClick={() => onModerate('remove')} className="btn btn-ghost btn-sm text-rose-200"><Trash2 className="h-3.5 w-3.5" /> Usuń</button></div><div className="space-y-2 p-4">{busy && !items.length ? <SkeletonBlock className="h-32" /> : items.length === 0 ? <EmptyState icon={Layers3} title="Brak treści" description="Wybrana kolejka jest pusta." /> : items.map((item) => <label key={item.id} className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-black/15 p-4"><input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => onSelect(selectedIds.includes(item.id) ? selectedIds.filter((id) => id !== item.id) : [...selectedIds, item.id])} className="mt-1" /><span className="min-w-0"><strong className="block truncate text-sm text-white">{item.title}</strong><span className="mt-1 line-clamp-3 block text-xs leading-5 text-[var(--text-secondary)]">{item.summary || 'Brak opisu'}</span><time className="mt-2 block text-[9px] text-[var(--text-muted)]">{new Date(item.createdAt).toLocaleString('pl-PL')}</time></span></label>)}</div></section>
+  return <section className="panel overflow-hidden"><PanelHeading eyebrow="Wszystkie moduły" title="Moderacja treści"><button type="button" disabled={busy} onClick={onRefresh} className="btn btn-ghost btn-sm"><RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} /> Odśwież</button></PanelHeading><div className="grid gap-3 border-b border-[var(--border)] p-4 lg:grid-cols-[220px_180px_1fr] items-end"><div><CustomSelect label="Typ treści" value={type} onChange={(val) => onType(val)} options={CONTENT_TYPES.map(([value, label]) => ({ value, label }))} /></div><div><CustomSelect label="Status" value={status} onChange={(val) => onStatus(val)} options={[{ value: 'visible', label: 'Widoczne' }, { value: 'hidden', label: 'Ukryte' }, { value: 'removed', label: 'Usunięte' }]} /></div><label className="form-label">Powód decyzji<input value={reason} onChange={(event) => onReason(event.target.value)} maxLength={500} placeholder="np. spam, naruszenie regulaminu, odwołanie zaakceptowane" className="mt-1.5 w-full rounded-xl border p-3 text-xs font-mono" /></label></div><div className="flex flex-wrap gap-2 border-b border-[var(--border)] p-4"><button type="button" disabled={busy || !items.length} className="btn btn-ghost btn-sm" onClick={() => onSelect(allSelected ? [] : items.map((item) => item.id))}>{allSelected ? 'Odznacz wszystkie' : 'Zaznacz wszystkie'}</button><button disabled={busy || !selectedIds.length} onClick={() => onModerate('hide')} className="btn btn-ghost btn-sm"><EyeOff className="h-3.5 w-3.5" /> Ukryj ({selectedIds.length})</button><button disabled={busy || !selectedIds.length} onClick={() => onModerate('restore')} className="btn btn-ghost btn-sm"><RotateCcw className="h-3.5 w-3.5" /> Przywróć</button><button disabled={busy || !selectedIds.length} onClick={() => onModerate('remove')} className="btn btn-ghost btn-sm text-rose-200"><Trash2 className="h-3.5 w-3.5" /> Usuń</button></div><div className="space-y-2 p-4">{busy && !items.length ? <SkeletonBlock className="h-32" /> : items.length === 0 ? <EmptyState icon={Layers3} title="Brak treści" description="Wybrana kolejka jest pusta." /> : items.map((item) => <label key={item.id} className="flex cursor-pointer items-start gap-3 rounded-xl border border-[var(--border)] bg-black/15 p-4"><input type="checkbox" aria-label={`Zaznacz ${item.title}`} checked={selectedIds.includes(item.id)} onChange={() => onSelect(selectedIds.includes(item.id) ? selectedIds.filter((id) => id !== item.id) : [...selectedIds, item.id])} className="mt-1" /><span className="min-w-0"><strong className="block truncate text-sm text-white">{item.title}</strong><span className="mt-1 line-clamp-3 block text-xs leading-5 text-[var(--text-secondary)]">{item.summary || 'Brak opisu'}</span><time className="mt-2 block text-[9px] text-[var(--text-muted)]">{new Date(item.createdAt).toLocaleString('pl-PL')}</time></span></label>)}</div></section>
 }
 
 function AuditPanel({ entries, busy, onRefresh }) {
-  return <section className="panel overflow-hidden"><PanelHeading eyebrow="Odpowiedzialność personelu" title="Dziennik moderacji"><button onClick={onRefresh} className="btn btn-ghost btn-sm"><RefreshCw className="h-3.5 w-3.5" /> Odśwież</button></PanelHeading><div className="space-y-2 p-4">{busy && !entries.length ? <SkeletonBlock className="h-32" /> : entries.length === 0 ? <EmptyState icon={BookOpenCheck} title="Dziennik jest pusty" description="Pierwsze akcje moderacyjne pojawią się tutaj." /> : entries.map((entry) => <article key={entry.id} className="grid gap-2 rounded-xl border border-[var(--border)] bg-black/15 p-4 sm:grid-cols-[150px_1fr_auto]"><span className="badge badge-amber w-fit">{AUDIT_ACTIONS[entry.action] || entry.action}</span><div><p className="text-xs font-bold text-white">{entry.entityType} · {entry.entityId.slice(0, 8)}</p><p className="mt-1 text-xs text-[var(--text-secondary)]">{entry.reason}</p><p className="mt-1 text-[9px] text-[var(--text-muted)]">Rola: {entry.actorRole} · {entry.actorId ? entry.actorId.slice(0, 8) : 'konto usunięte'}</p></div><time className="text-[9px] text-[var(--text-muted)]">{new Date(entry.createdAt).toLocaleString('pl-PL')}</time></article>)}</div></section>
+  return <section className="panel overflow-hidden"><PanelHeading eyebrow="Odpowiedzialność personelu" title="Dziennik moderacji"><button disabled={busy} onClick={onRefresh} className="btn btn-ghost btn-sm"><RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} /> Odśwież</button></PanelHeading><div className="space-y-2 p-4">{busy && !entries.length ? <SkeletonBlock className="h-32" /> : entries.length === 0 ? <EmptyState icon={BookOpenCheck} title="Dziennik jest pusty" description="Pierwsze akcje moderacyjne pojawią się tutaj." /> : entries.map((entry) => <article key={entry.id} className="grid gap-2 rounded-xl border border-[var(--border)] bg-black/15 p-4 sm:grid-cols-[150px_1fr_auto]"><span className="badge badge-amber w-fit">{AUDIT_ACTIONS[entry.action] || entry.action}</span><div><p className="text-xs font-bold text-white">{ENTITY_TYPE_LABELS[entry.entityType] || entry.entityType} · {entry.entityId.slice(0, 8)}</p><p className="mt-1 text-xs text-[var(--text-secondary)]">{entry.reason}</p><p className="mt-1 text-[9px] text-[var(--text-muted)]">{entry.actorName} · {ROLE_LABELS[entry.actorRole] || entry.actorRole}</p></div><time className="text-[9px] text-[var(--text-muted)]">{new Date(entry.createdAt).toLocaleString('pl-PL')}</time></article>)}</div></section>
 }
 
 function RolesPanel({ users, reason, busy, onReason, onChangeRole, onRefresh }) {
-  return <section className="panel overflow-hidden"><PanelHeading eyebrow="Tylko administrator" title="Role personelu"><button onClick={onRefresh} className="btn btn-ghost btn-sm"><RefreshCw className="h-3.5 w-3.5" /> Odśwież</button></PanelHeading><div className="border-b border-[var(--border)] p-4"><label className="form-label">Powód zmiany roli<input value={reason} onChange={(event) => onReason(event.target.value)} maxLength={500} placeholder="np. przyznanie uprawnień moderatora po rekrutacji" className="mt-1.5 w-full rounded-xl border p-3 text-xs font-mono" /></label></div><div className="divide-y divide-[var(--border)]">{users.map((user) => <div key={user.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><div><strong className="text-sm text-white">{user.username}</strong><p className="mt-1 font-mono text-[9px] text-[var(--text-muted)]">{user.id}</p></div><div className="min-w-44"><CustomSelect disabled={busy} value={user.role} onChange={(val) => onChangeRole(user.id, val)} options={[{ value: 'member', label: 'Użytkownik' }, { value: 'moderator', label: 'Moderator' }, { value: 'admin', label: 'Administrator' }]} /></div></div>)}</div></section>
+  const [query, setQuery] = useState('')
+  const normalizedQuery = query.trim().toLocaleLowerCase('pl-PL')
+  const visibleUsers = users.filter((user) => !normalizedQuery || user.username.toLocaleLowerCase('pl-PL').includes(normalizedQuery))
+  const staffCount = users.filter((user) => user.role === 'moderator' || user.role === 'admin').length
+
+  return <section className="panel overflow-hidden"><PanelHeading eyebrow="Tylko administrator" title="Role personelu"><span className="badge badge-amber">{staffCount} w personelu</span><button disabled={busy} onClick={onRefresh} className="btn btn-ghost btn-sm"><RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} /> Odśwież</button></PanelHeading><div className="grid gap-3 border-b border-[var(--border)] p-4 lg:grid-cols-[minmax(220px,.7fr)_1fr]"><label className="form-label">Znajdź użytkownika<span className="relative mt-1.5 block"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nick użytkownika" className="w-full rounded-xl border py-3 pl-10 pr-3 text-xs" /></span></label><label className="form-label">Powód zmiany roli<input value={reason} onChange={(event) => onReason(event.target.value)} maxLength={500} placeholder="np. przyznanie uprawnień moderatora po rekrutacji" className="mt-1.5 w-full rounded-xl border p-3 text-xs" /></label></div><div className="divide-y divide-[var(--border)]">{visibleUsers.length === 0 ? <EmptyState icon={UserCog} title="Nie znaleziono użytkownika" description="Zmień wpisany nick i spróbuj ponownie." className="m-4" /> : visibleUsers.map((user) => <RoleRow key={`${user.id}:${user.role}`} user={user} busy={busy} onChangeRole={onChangeRole} />)}</div></section>
+}
+
+function RoleRow({ user, busy, onChangeRole }) {
+  const [selectedRole, setSelectedRole] = useState(user.role)
+
+  return <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-center gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--border)] bg-[var(--amber)]/8 font-display font-black text-[var(--amber)]">{user.username.slice(0, 1).toUpperCase()}</span><div className="min-w-0"><strong className="block truncate text-sm text-white">{user.username}</strong><p className="mt-1 text-[10px] text-[var(--text-muted)]">{ROLE_LABELS[user.role] || user.role}{user.isCurrentUser ? ' · To Twoje konto' : ''}</p></div></div><div className="flex flex-col gap-2 sm:flex-row sm:items-end"><div className="min-w-44"><CustomSelect label={`Rola ${user.username}`} disabled={busy} value={selectedRole} onChange={setSelectedRole} options={[{ value: 'member', label: 'Użytkownik' }, { value: 'moderator', label: 'Moderator' }, { value: 'admin', label: 'Administrator' }]} /></div><button type="button" disabled={busy || selectedRole === user.role} onClick={() => onChangeRole(user.id, selectedRole)} className="btn btn-primary btn-sm sm:mb-px"><Save className="h-3.5 w-3.5" /> Zapisz</button></div></div>
 }
 
 function AccessDenied() {
@@ -470,7 +513,7 @@ function PanelHeading({ eyebrow, title, children }) {
 }
 
 function FilterButtons({ values, value, onChange }) {
-  return values.map(([itemValue, label]) => <button key={itemValue} type="button" onClick={() => onChange(itemValue)} className={`chip ${value === itemValue ? 'active' : ''}`}>{label}</button>)
+  return values.map(([itemValue, label]) => <button key={itemValue} type="button" aria-pressed={value === itemValue} onClick={() => onChange(itemValue)} className={`chip ${value === itemValue ? 'active' : ''}`}>{label}</button>)
 }
 
 function AdminMetric({ icon: Icon, label, value, tone }) {

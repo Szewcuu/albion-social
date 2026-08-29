@@ -26,7 +26,7 @@ export async function GET(request) {
     const access = await authorizeAdmin(request)
     if (access.error) return access.error
 
-    const { data, error } = await access.supabase
+    const { data, error } = await createSupabaseAdminClient()
       .from('profiles')
       .select('id, username, avatar_url, role, is_admin')
       .order('username', { ascending: true })
@@ -40,6 +40,7 @@ export async function GET(request) {
         username: profile.username || 'Użytkownik bez nazwy',
         avatarUrl: profile.avatar_url || null,
         role: profile.is_admin ? 'admin' : profile.role || 'member',
+        isCurrentUser: profile.id === access.auth.user.id,
       })),
     }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {

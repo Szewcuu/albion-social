@@ -16,6 +16,73 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     expect(roleManagement.status()).toBe(403)
   })
 
+  test('panel administratora pokazuje czytelne role, monitoring i dziennik', async ({ page }) => {
+    await page.route('**/api/admin/overview', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        role: 'admin',
+        stats: { pendingReports: 0, allReports: 1, visibleComments: 2, builds: 3 },
+        reports: [],
+      }),
+    }))
+    await page.route('**/api/admin/reports**', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ reports: [], pagination: { hasMore: false, nextCursor: null } }),
+    }))
+    await page.route('**/api/admin/roles', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        currentRole: 'admin',
+        users: [
+          { id: '00000000-0000-4000-8000-000000000001', username: 'Strażnik', role: 'admin', isCurrentUser: true },
+          { id: '00000000-0000-4000-8000-000000000002', username: 'Herold', role: 'moderator', isCurrentUser: false },
+        ],
+      }),
+    }))
+    await page.route('**/api/admin/audit', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        entries: [{
+          id: '00000000-0000-4000-8000-000000000003',
+          actorId: '00000000-0000-4000-8000-000000000001',
+          actorName: 'Strażnik',
+          actorRole: 'admin',
+          action: 'role_change',
+          entityType: 'profile_role',
+          entityId: '00000000-0000-4000-8000-000000000002',
+          reason: 'Awans po rekrutacji',
+          createdAt: '2026-08-29T12:00:00.000Z',
+        }],
+      }),
+    }))
+    await page.route('**/api/admin/health', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        generatedAt: '2026-08-29T12:00:00.000Z',
+        checks: [{ service: 'supabase', status: 'operational', latency_ms: 120, message: 'Baza odpowiada.', metadata: {}, checked_at: '2026-08-29T12:00:00.000Z' }],
+        events: [],
+      }),
+    }))
+
+    await page.goto('/admin')
+    await expect(page.getByRole('heading', { name: 'Centrum moderacji' })).toBeVisible()
+
+    await page.getByRole('tab', { name: 'Role' }).click()
+    await expect(page.getByText('2 w personelu')).toBeVisible()
+    await expect(page.getByText('To Twoje konto')).toBeVisible()
+    await expect(page.getByText('00000000-0000-4000-8000-000000000001')).toHaveCount(0)
+    await page.getByPlaceholder('Nick użytkownika').fill('Nieistniejący')
+    await expect(page.getByText('Nie znaleziono użytkownika')).toBeVisible()
+
+    await page.getByRole('tab', { name: 'Dziennik' }).click()
+    await expect(page.getByText('Rola użytkownika · 00000000')).toBeVisible()
+    await expect(page.getByText('Strażnik · Administrator')).toBeVisible()
+
+    await page.getByRole('tab', { name: 'Stan usług' }).click()
+    await expect(page.getByText('Baza odpowiada.')).toBeVisible()
+    await expect(page.getByText('Brak pomiarów')).toHaveCount(0)
+  })
+
   test('otwiera czat społeczności', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByRole('heading', { name: 'Główna sala Tawerny' })).toBeVisible()
