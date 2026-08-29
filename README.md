@@ -166,17 +166,17 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Pokrycie funkcjonalne:** wszystkie 20 plików stron jest przypisanych do jednego z 11 przeglądów. Obejmuje to bramę i dokumenty prawne, 14 pozycji nawigacji portalu, panel administratora oraz szczegóły buildów, gildii i profili. Skrzynka handlowa została sprawdzona razem z Rynkiem, Timery z Podziałem Łupów, Kalendarz z Wyprawami, a Wartownia z Profilem — nie są pominiętymi modułami.
 - **Pokrycie techniczne:** portal ma 39 tras API, 23 pliki testów jednostkowych z 82 zielonymi przypadkami oraz macierz wizualną 13 tras zalogowanych i 3 publicznych na szerokościach `360/390/430/768/1280/1920 px`. Produkcyjna historia Supabase zawiera 39 zsynchronizowanych migracji, a CI sprawdza lint, testy, build, katalog przedmiotów, migracje, E2E i budżet JavaScript.
 - **Najważniejsze zakończone prace:** serwerowa sesja i blokada prywatnych tras, moderacja i trwały rate limiting, stabilne wyprawy z Discordem, pełny rynek i prywatne negocjacje, buildy z enchantami i komentarzami, wieloregionowy Killboard, profile i obserwacje, kalendarz, alerty cenowe, monitoring integracji oraz responsywny albionowy interfejs.
-- **Pominięta warstwa wspólna:** cztery pomocnicze narzędzia nadal korzystają z natywnego `<select>`, dziewięć akcji z systemowego `confirm()`, a trzy komunikaty Wypraw z `alert()`. Wspólny `CustomSelect` nie obsługuje jeszcze strzałek, Home/End ani poprawnego powiązania etykiety z kontrolką; mobilna etykieta „Home” odstaje od polskiego języka portalu.
+- **Domknięta warstwa wspólna (F1.1):** wszystkie dropdowny korzystają ze wspólnej stylistyki portalu, dziewięć ryzykownych akcji ma dostępne okno potwierdzenia, a błędy zapisów na Wyprawy są pokazywane przy formularzu zamiast w systemowym `alert()`. `CustomSelect` obsługuje strzałki, Home/End, Enter, Escape, stan aktywny i powiązane etykiety; mobilna „Tawerna” jest spójna językowo z resztą portalu.
 - **Luka w regresji wizualnej:** pełna macierz nie obejmuje jeszcze `/admin`, `/kalkulator-craftingu` oraz dynamicznych szczegółów `/buildy/[id]`, `/gildie/[id]` i `/profil/[id]`. Ich główne przepływy mają testy funkcjonalne lub były sprawdzane podczas osobnych przeglądów, lecz brakuje jednego stałego zestawu fixture'ów wizualnych.
 - **Dług operacyjny:** budżet JavaScript ma mały zapas (`1723,5 / 1800 KB`, największy chunk `224,3 / 240 KB`, najcięższa trasa `909,6 / 960 KB`). W bazie pozostaje historyczny szum monitoringu grupowany w panelu, Gameinfo Ameryki jest okresowo niedostępne, a przed ewentualną komercjalizacją trzeba podać pełne dane administratora i dedykowany kontakt prywatności.
 
 #### Rekomendowana kolejna faza — F1 „Final Polish”
 
-1. **Spójne kontrolki i dostępność:** zastąpić natywne dropdowny, `confirm()` i `alert()` wspólnymi komponentami; dodać pełną obsługę klawiatury, fokus i powiązane etykiety; ujednolicić polskie nazwy w nawigacji.
-2. **Pełna regresja wizualna:** dodać pięć brakujących tras do macierzy sześciu viewportów z deterministycznymi fixture'ami dla stron dynamicznych i roli administratora.
-3. **Zapas wydajności:** zejść poniżej `1650 KB` całego JavaScript i `880 KB` najcięższej trasy przez dalsze odroczenie paneli administracyjnych, kalkulatorów i narzędzi stron szczegółowych.
-4. **Porządek operacyjny:** ustalić retencję zdarzeń monitoringu, obserwować stabilność Gameinfo per region i przygotować własne archiwum walk dopiero wtedy, gdy rzeczywisty ruch uzasadni koszt.
-5. **Decyzja produktowa:** po F1 wykonać krótki test z kilkoma graczami Albion Online i na podstawie ich zachowania wybrać rozwój społeczności, rynku albo narzędzi gildyjnych zamiast dodawać kolejny szeroki moduł.
+1. [x] **Spójne kontrolki i dostępność:** zastąpić natywne dropdowny, `confirm()` i `alert()` wspólnymi komponentami; dodać pełną obsługę klawiatury, fokus i powiązane etykiety; ujednolicić polskie nazwy w nawigacji.
+2. [ ] **Pełna regresja wizualna:** dodać pięć brakujących tras do macierzy sześciu viewportów z deterministycznymi fixture'ami dla stron dynamicznych i roli administratora.
+3. [ ] **Zapas wydajności:** zejść poniżej `1650 KB` całego JavaScript i `880 KB` najcięższej trasy przez dalsze odroczenie paneli administracyjnych, kalkulatorów i narzędzi stron szczegółowych.
+4. [ ] **Porządek operacyjny:** ustalić retencję zdarzeń monitoringu, obserwować stabilność Gameinfo per region i przygotować własne archiwum walk dopiero wtedy, gdy rzeczywisty ruch uzasadni koszt.
+5. [ ] **Decyzja produktowa:** po F1 wykonać krótki test z kilkoma graczami Albion Online i na podstawie ich zachowania wybrać rozwój społeczności, rynku albo narzędzi gildyjnych zamiast dodawać kolejny szeroki moduł.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
+import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const REASONS = {
@@ -99,6 +100,7 @@ const ROLE_LABELS = {
 }
 
 export default function AdminPage() {
+  const { requestConfirmation, confirmationDialog } = useConfirmDialog()
   const [dashboard, setDashboard] = useState({ stats: null, reports: [], role: 'member' })
   const [state, setState] = useState({ loading: true, error: '', forbidden: false })
   const [activeTab, setActiveTab] = useState('reports')
@@ -245,7 +247,14 @@ export default function AdminPage() {
   ), [dashboard.reports, reportFilter])
 
   async function moderateReport(report, action) {
-    if (action === 'hide_comment' && !window.confirm('Ukryć ten komentarz i zamknąć zgłoszenie?')) return
+    if (action === 'hide_comment') {
+      const accepted = await requestConfirmation({
+        title: 'Ukryć komentarz?',
+        description: 'Komentarz zostanie ukryty, a powiązane zgłoszenie oznaczone jako obsłużone.',
+        confirmLabel: 'Ukryj komentarz',
+      })
+      if (!accepted) return
+    }
     setBusy(true)
     setNotice(null)
     try {
@@ -306,7 +315,14 @@ export default function AdminPage() {
   async function moderateContent(action, ids = selectedIds) {
     if (!ids.length) return setNotice({ type: 'error', text: 'Wybierz co najmniej jeden rekord.' })
     if (reason.trim().length < 3) return setNotice({ type: 'error', text: 'Podaj powód moderacji — minimum 3 znaki.' })
-    if (action === 'remove' && !window.confirm(`Oznaczyć ${ids.length} rekordów jako usunięte?`)) return
+    if (action === 'remove') {
+      const accepted = await requestConfirmation({
+        title: `Usunąć ${ids.length} ${ids.length === 1 ? 'rekord' : 'rekordów'}?`,
+        description: 'Wybrane treści otrzymają status usuniętych. Decyzja zostanie zapisana w dzienniku moderacji.',
+        confirmLabel: 'Usuń treści',
+      })
+      if (!accepted) return
+    }
 
     setBusy(true)
     setNotice(null)
@@ -379,6 +395,7 @@ export default function AdminPage() {
 
   return (
     <div className="page-content">
+      {confirmationDialog}
       <div className="subpage-header">
         <h1><ShieldCheck className="h-6 w-6 text-[var(--amber)]" /> Centrum moderacji</h1>
         <p>Jedna kolejka dla całego portalu, role personelu i nieusuwalny dziennik decyzji.</p>

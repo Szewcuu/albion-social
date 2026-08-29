@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { TrendingUp } from 'lucide-react'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 const CITIES = ['Caerleon', 'Martlock', 'Fort Sterling', 'Lymhurst', 'Bridgewatch', 'Thetford', 'Brecilien']
 
@@ -54,14 +55,7 @@ export default function TradeArbitrageCalculator() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
         {/* BUY CITY */}
         <div className="space-y-1.5">
-          <label className="text-gray-400 uppercase font-bold text-[10px]">Miasto Zakupu (Kupno)</label>
-          <select
-            value={buyCity}
-            onChange={(e) => setBuyCity(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white font-bold outline-none"
-          >
-            {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <CustomSelect label="Miasto zakupu" value={buyCity} onChange={setBuyCity} options={CITIES} />
           <input
             type="number"
             min="0"
@@ -74,14 +68,7 @@ export default function TradeArbitrageCalculator() {
 
         {/* SELL CITY */}
         <div className="space-y-1.5">
-          <label className="text-gray-400 uppercase font-bold text-[10px]">Miasto Sprzedaży (Zysk)</label>
-          <select
-            value={sellCity}
-            onChange={(e) => setSellCity(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white font-bold outline-none"
-          >
-            {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <CustomSelect label="Miasto sprzedaży" value={sellCity} onChange={setSellCity} options={CITIES} />
           <input
             type="number"
             min="0"
