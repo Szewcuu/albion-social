@@ -20,7 +20,7 @@ export default function PortalAnalyticsWidget({ stats, loading = false }) {
           <div className="flex items-center gap-2 text-sky-400 text-[9px] uppercase font-bold tracking-wide">
             <Users className="w-4 h-4" /> Zweryfikowani
           </div>
-          <p className="text-2xl font-black text-white">{stats.verifiedPlayers} <span className="text-[10px] font-normal text-gray-500">graczy</span></p>
+          <p className="text-2xl font-black text-white">{stats.verifiedPlayers} <span className="text-[10px] font-normal text-gray-400">graczy</span></p>
         </div>
 
         <div className="min-h-[112px] bg-[#17100c] p-4 flex flex-col justify-between">
@@ -40,14 +40,14 @@ export default function PortalAnalyticsWidget({ stats, loading = false }) {
           <div className="flex items-center gap-2 text-amber-400 text-[9px] uppercase font-bold tracking-wide">
             <Sparkles className="w-4 h-4" /> Buildy
           </div>
-          <p className="text-2xl font-black text-amber-300">{stats.activeBuilds} <span className="text-[10px] font-normal text-gray-500">zestawów</span></p>
+          <p className="text-2xl font-black text-amber-300">{stats.activeBuilds} <span className="text-[10px] font-normal text-gray-400">zestawów</span></p>
         </div>
 
         <div className="min-h-[112px] bg-[#17100c] p-4 flex flex-col justify-between">
           <div className="flex items-center gap-2 text-emerald-400 text-[9px] uppercase font-bold tracking-wide">
             <ShoppingBag className="w-4 h-4" /> Rynek P2P
           </div>
-          <p className="text-2xl font-black text-emerald-300">{stats.activeMarketOffers} <span className="text-[10px] font-normal text-gray-500">ofert</span></p>
+          <p className="text-2xl font-black text-emerald-300">{stats.activeMarketOffers} <span className="text-[10px] font-normal text-gray-400">ofert</span></p>
         </div>
       </div>
     </aside>
