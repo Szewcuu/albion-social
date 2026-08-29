@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { collapseSystemEvents } from '@/lib/adminHealth'
 import {
   createSupabaseAdminClient,
   createSupabaseRequestClient,
@@ -31,7 +32,7 @@ async function readHealthData(supabase) {
       .limit(100),
     supabase
       .from('system_events')
-      .select('id, level, source, event_type, message, created_at')
+      .select('id, level, source, event_type, message, fingerprint, created_at')
       .order('created_at', { ascending: false })
       .limit(50),
   ])
@@ -46,7 +47,7 @@ async function readHealthData(supabase) {
 
   return {
     checks: [...latestByService.values()],
-    events: eventsResult.data || [],
+    events: collapseSystemEvents(eventsResult.data || []),
     generatedAt: new Date().toISOString(),
   }
 }

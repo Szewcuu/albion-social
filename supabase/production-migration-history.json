@@ -39,6 +39,7 @@
     { "version": "20260828120000", "name": "harden_market_offer_expiry" },
     { "version": "20260829150000", "name": "review_09_loot_timer_permissions" },
     { "version": "20260829150100", "name": "review_10_profile_permissions" },
-    { "version": "20260829150403", "name": "review_11_admin_permissions" }
+    { "version": "20260829150403", "name": "review_11_admin_permissions" },
+    { "version": "20260829152124", "name": "review_11_monitoring_signal" }
   ]
 }
