@@ -37,6 +37,7 @@
     { "version": "20260823193500", "name": "review_04_expedition_schedule_compat" },
     { "version": "20260823220000", "name": "normalize_expedition_static_activity" },
     { "version": "20260828120000", "name": "harden_market_offer_expiry" },
-    { "version": "20260829150000", "name": "review_09_loot_timer_permissions" }
+    { "version": "20260829150000", "name": "review_09_loot_timer_permissions" },
+    { "version": "20260829150100", "name": "review_10_profile_permissions" }
   ]
 }

@@ -35,13 +35,20 @@ import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/Feedbac
 
 const INITIAL_FORM = {
   ingame_nick: '',
-  main_server: 'Europa',
+  main_server: '',
   guild_name: '',
   main_role: 'DPS',
   avg_ip: 1400,
   bio: '',
   favorite_builds_public: false,
 }
+
+const PROFILE_FIELDS = [
+  'id', 'username', 'avatar_url', 'created_at', 'ingame_nick', 'main_server',
+  'guild_name', 'main_role', 'avg_ip', 'bio', 'favorite_builds_public',
+  'is_verified', 'verified_player_id', 'verified_server', 'verified_region',
+  'pvp_fame', 'pve_fame', 'verified_at',
+].join(', ')
 
 const ROLE_STYLES = {
   Tank: 'border-sky-400/25 bg-sky-400/8 text-sky-300',
@@ -93,7 +100,7 @@ export default function ProfilePage() {
   const fetchProfileData = useCallback(async (userId) => {
     setLoading(true)
     const [profileResult, expeditionsResult, marketResult] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+      supabase.from('profiles').select(PROFILE_FIELDS).eq('id', userId).maybeSingle(),
       supabase.from('expeditions').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('market_items').select('id, created_at, user_id, title, price, city, category, description, status, item_name, server').eq('user_id', userId).order('created_at', { ascending: false }),
     ])
@@ -101,7 +108,7 @@ export default function ProfilePage() {
     if (profileResult.data) {
       setFormData({
         ingame_nick: profileResult.data.ingame_nick || '',
-        main_server: profileResult.data.main_server || 'Europa',
+        main_server: profileResult.data.main_server || '',
         guild_name: profileResult.data.guild_name || '',
         main_role: profileResult.data.main_role || 'DPS',
         avg_ip: profileResult.data.avg_ip || 1400,
@@ -446,7 +453,12 @@ export default function ProfilePage() {
                       label="Serwer główny"
                       value={formData.main_server}
                       onChange={(val) => setFormData({ ...formData, main_server: val })}
-                      options={['Europa', 'Ameryka', 'Azja']}
+                      options={[
+                        { value: '', label: 'Nie wybrano' },
+                        'Europa',
+                        'Ameryka',
+                        'Azja',
+                      ]}
                       disabled={Boolean(verifiedState?.is_verified)}
                     />
                   </div>
@@ -498,7 +510,7 @@ export default function ProfilePage() {
                 </label>
 
                 <div className="flex flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="flex items-start gap-2 text-[10px] leading-5 text-[var(--text-secondary)]"><Gamepad2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" /> Nick i statystyki są deklarowane przez użytkownika.</p>
+                  <p className="flex items-start gap-2 text-[10px] leading-5 text-[var(--text-secondary)]"><Gamepad2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" /> {verifiedState?.is_verified ? 'Nick i statystyki przypiętej postaci pochodzą z publicznego API Albion Online.' : 'Dane nieprzypiętej postaci są deklarowane przez użytkownika.'}</p>
                   <button type="submit" disabled={saving} className="btn btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.12em] disabled:cursor-wait disabled:opacity-60">
                     {saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? 'Zapisywanie' : 'Zapisz kartę'}
                   </button>
@@ -526,7 +538,7 @@ export default function ProfilePage() {
 
             <section className="panel grid gap-4 rounded-[24px] p-5 sm:grid-cols-3">
               {[
-                [Globe2, 'Serwer', formData.main_server],
+                [Globe2, 'Serwer', formData.main_server || 'Nie wybrano'],
                 [Award, 'Rola', formData.main_role],
                 [Activity, 'Aktywności', myExpeditions.length + myOffers.length],
               ].map(([Icon, label, value]) => (
