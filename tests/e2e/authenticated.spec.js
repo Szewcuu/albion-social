@@ -854,19 +854,31 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       }
       await route.fulfill({
         contentType: 'application/json',
-        body: JSON.stringify({ follows: [{
-          entity_type: 'albion_player', entity_id: 'watched-player', label: 'WatchedKnight', region: 'america',
-          last_checked_at: '2026-08-15T18:00:00Z', last_error: null,
-          last_summary: { kills: 1, deaths: 1, killFame: 8748, deathFame: 5000 },
-          created_at: '2026-08-15T17:00:00Z',
-        }] }),
+        body: JSON.stringify({ follows: [
+          {
+            entity_type: 'albion_player', entity_id: 'watched-player', label: 'WatchedKnight', region: 'america',
+            last_checked_at: '2026-08-15T18:00:00Z', last_error: null,
+            last_summary: { kills: 1, deaths: 1, killFame: 8748, deathFame: 5000 },
+            created_at: '2026-08-15T17:00:00Z',
+          },
+          { entity_type: 'build', entity_id: '11111111-1111-4111-8111-111111111111', label: 'Młot frontowy' },
+          { entity_type: 'guild', entity_id: '42', label: 'Strażnicy' },
+          { entity_type: 'market', entity_id: '22222222-2222-4222-8222-222222222222', label: 'Mamut transportowy' },
+          { entity_type: 'player', entity_id: '33333333-3333-4333-8333-333333333333', label: 'Dowódca' },
+        ] }),
       })
     })
     await page.goto('/obserwowane')
     await expect(page.getByRole('heading', { name: 'Obserwowane' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Obserwowane postacie' })).toBeVisible()
     await expect(page.getByText('WatchedKnight')).toBeVisible()
+    await expect(page.getByText('Postać Albionu · Ameryka')).toBeVisible()
     await expect(page.getByText('8,7 tys.')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Buildy, gildie, oferty i profile' })).toBeVisible()
+    await expect(page.getByText('Młot frontowy')).toBeVisible()
+    await expect(page.getByText('Strażnicy')).toBeVisible()
+    await expect(page.getByText('Mamut transportowy')).toBeVisible()
+    await expect(page.getByText('Dowódca')).toBeVisible()
     await page.getByRole('button', { name: 'Sprawdź nowe walki' }).click()
     await expect(page.getByText(/Znaleziono 2 nowych walk/)).toBeVisible()
   })

@@ -21,6 +21,19 @@ const META = {
   },
 }
 
+const REGION_LABELS = {
+  europe: 'Europa',
+  america: 'Ameryka',
+  asia: 'Azja',
+}
+
+const COMMUNITY_SECTIONS = [
+  { type: 'build', label: 'Buildy', icon: BookOpen, href: '/buildy', empty: 'Obserwuj doktrynę w Kuźni Buildów, aby dostać sygnał o aktualizacji lub nowym komentarzu.' },
+  { type: 'guild', label: 'Gildie', icon: Shield, href: '/gildie', empty: 'Obserwuj gildię, aby nie przegapić zmian rekrutacji i nowych wydarzeń.' },
+  { type: 'market', label: 'Oferty', icon: ShoppingBag, href: '/rynek', empty: 'Obserwuj ofertę rynku, aby otrzymać wiadomość o zmianie ceny lub dostępności.' },
+  { type: 'player', label: 'Profile', icon: UserRound, href: '/', empty: 'Otwórz publiczny profil gracza i dodaj go do obserwowanych.' },
+]
+
 async function readJson(response) {
   const payload = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(payload?.error?.message || payload.error || 'Nie udało się pobrać obserwowanych.')
@@ -44,7 +57,7 @@ function PlayerWatchCard({ follow }) {
         <Link href={META.albion_player.href(follow)} className="flex min-w-0 flex-1 items-start gap-4">
           <span className="rounded-xl border border-rose-300/15 bg-rose-400/8 p-3 text-rose-200"><Swords className="h-5 w-5" /></span>
           <span className="min-w-0">
-            <span className="block text-[8px] font-black uppercase tracking-[.15em] text-rose-300">Postać Albionu · {(follow.region || 'europe').toUpperCase()}</span>
+            <span className="block text-[8px] font-black uppercase tracking-[.15em] text-rose-300">Postać Albionu · {REGION_LABELS[follow.region] || 'Europa'}</span>
             <strong className="mt-1 block truncate font-display text-lg text-white">{follow.label}</strong>
             <span className="mt-1 flex items-center gap-1.5 text-[9px] text-[var(--text-muted)]"><Clock3 className="h-3 w-3" /> {formatCheckedAt(follow.last_checked_at)}</span>
           </span>
@@ -114,6 +127,9 @@ export default function FollowedEntitiesPage() {
 
   const playerWatches = useMemo(() => follows.filter((follow) => follow.entity_type === 'albion_player'), [follows])
   const otherFollows = useMemo(() => follows.filter((follow) => follow.entity_type !== 'albion_player'), [follows])
+  const counts = useMemo(() => Object.fromEntries(
+    Object.keys(META).map((type) => [type, follows.filter((follow) => follow.entity_type === type).length]),
+  ), [follows])
 
   async function syncPlayers() {
     setSyncing(true)
@@ -148,6 +164,24 @@ export default function FollowedEntitiesPage() {
       {error && <StatusNotice type="error">{error}</StatusNotice>}
       {message && <StatusNotice type="success">{message}</StatusNotice>}
 
+      {!loading && follows.length > 0 && (
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Podsumowanie obserwowanych">
+          {[
+            ['albion_player', Swords, 'Postacie Albionu'],
+            ['build', BookOpen, 'Buildy'],
+            ['guild', Shield, 'Gildie'],
+            ['market', ShoppingBag, 'Oferty'],
+            ['player', UserRound, 'Profile'],
+          ].map(([type, Icon, label]) => (
+            <div key={type} className="panel rounded-[18px] p-4">
+              <Icon className="h-4 w-4 text-amber-300" />
+              <strong className="font-display mt-3 block text-2xl text-white">{counts[type] || 0}</strong>
+              <span className="mt-1 block text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-muted)]">{label}</span>
+            </div>
+          ))}
+        </section>
+      )}
+
       {loading ? (
         <div className="panel flex min-h-56 items-center justify-center rounded-[24px]"><LoaderCircle className="h-7 w-7 animate-spin text-amber-300" /></div>
       ) : follows.length === 0 ? (
@@ -155,7 +189,19 @@ export default function FollowedEntitiesPage() {
       ) : (
         <div className="space-y-7">
           {playerWatches.length > 0 && <section><div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-[8px] font-black uppercase tracking-[.18em] text-rose-300">Patrol Killboardu</p><h2 className="font-display mt-1 text-2xl font-black text-white">Obserwowane postacie</h2></div><span className="font-mono text-[9px] text-[var(--text-muted)]">{playerWatches.length} postaci</span></div><div className="grid gap-4 xl:grid-cols-2">{playerWatches.map((follow) => <PlayerWatchCard key={`${follow.region}-${follow.entity_id}`} follow={follow} />)}</div></section>}
-          {otherFollows.length > 0 && <section><div className="mb-3"><p className="text-[8px] font-black uppercase tracking-[.18em] text-amber-300">Sygnały społeczności</p><h2 className="font-display mt-1 text-2xl font-black text-white">Pozostałe obserwowane</h2></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{otherFollows.map((follow) => <EntityCard key={`${follow.entity_type}-${follow.entity_id}`} follow={follow} />)}</div></section>}
+          <section>
+            <div className="mb-3"><p className="text-[8px] font-black uppercase tracking-[.18em] text-amber-300">Sygnały społeczności</p><h2 className="font-display mt-1 text-2xl font-black text-white">Buildy, gildie, oferty i profile</h2></div>
+            {otherFollows.length > 0 && <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">{otherFollows.map((follow) => <EntityCard key={`${follow.entity_type}-${follow.entity_id}`} follow={follow} />)}</div>}
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {COMMUNITY_SECTIONS.map(({ type, label, icon: Icon, href, empty }) => (
+                <Link key={type} href={href} className="panel panel-interactive rounded-[20px] p-4">
+                  <div className="flex items-center justify-between"><span className="rounded-xl border border-white/8 bg-black/20 p-2.5 text-amber-200"><Icon className="h-4 w-4" /></span><strong className="font-display text-xl text-white">{counts[type] || 0}</strong></div>
+                  <h3 className="mt-3 text-xs font-black text-white">{label}</h3>
+                  <p className="mt-1.5 text-[9px] leading-4 text-[var(--text-secondary)]">{counts[type] ? 'Otwórz moduł, aby znaleźć kolejne elementy warte obserwowania.' : empty}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
         </div>
       )}
     </div>

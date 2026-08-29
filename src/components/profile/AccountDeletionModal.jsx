@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { AlertTriangle, Trash2, X, LoaderCircle } from 'lucide-react'
 import { portalAuth } from '@/lib/supabaseAuth'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
@@ -11,6 +11,19 @@ export default function AccountDeletionModal({ isOpen, onClose }) {
   const [confirmText, setConfirmText] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState('')
+  const titleId = useId()
+  const descriptionId = useId()
+  const confirmationRef = useRef(null)
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+    confirmationRef.current?.focus()
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && !deleting) onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [deleting, isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -51,23 +64,23 @@ export default function AccountDeletionModal({ isOpen, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4">
-      <div className="panel w-full max-w-md space-y-5 p-6 relative border-rose-500/40 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4" onMouseDown={(event) => event.target === event.currentTarget && handleClose()}>
+      <div role="alertdialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} className="panel w-full max-w-md space-y-5 p-6 relative border-rose-500/40 shadow-2xl">
         
         <div className="flex items-center justify-between border-b border-white/8 pb-4">
           <div className="flex items-center gap-3 text-rose-400">
             <div className="p-2 rounded-xl bg-rose-500/10 border border-rose-500/30">
               <AlertTriangle className="w-5 h-5" />
             </div>
-            <h3 className="font-display text-lg font-black text-white">Usuwanie Konta & Danych RODO</h3>
+            <h3 id={titleId} className="font-display text-lg font-black text-white">Usuwanie konta i danych</h3>
           </div>
-          <button onClick={handleClose} disabled={deleting} className="p-1 text-gray-400 hover:text-white transition disabled:opacity-40">
+          <button type="button" onClick={handleClose} disabled={deleting} aria-label="Zamknij okno usuwania konta" className="p-1 text-gray-400 hover:text-white transition disabled:opacity-40">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="space-y-3 text-xs text-gray-300 leading-relaxed font-sans">
-          <p className="font-bold text-rose-300">
+          <p id={descriptionId} className="font-bold text-rose-300">
             ⚠️ Uwaga: Opcja trwałego usunięcia konta jest nieodwracalna.
           </p>
           <p>
@@ -79,7 +92,9 @@ export default function AccountDeletionModal({ isOpen, onClose }) {
               Wpisz <span className="text-rose-400">USUŃ KONTO</span> aby potwierdzić:
             </label>
             <input
+              ref={confirmationRef}
               type="text"
+              autoComplete="off"
               value={confirmText}
               onChange={e => setConfirmText(e.target.value)}
               placeholder="USUŃ KONTO"
@@ -95,10 +110,11 @@ export default function AccountDeletionModal({ isOpen, onClose }) {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <button onClick={handleClose} disabled={deleting} className="btn btn-ghost btn-sm flex-1 disabled:opacity-40">
+          <button type="button" onClick={handleClose} disabled={deleting} className="btn btn-ghost btn-sm flex-1 disabled:opacity-40">
             Anuluj
           </button>
           <button
+            type="button"
             onClick={handleDelete}
             disabled={deleting || confirmText !== CONFIRMATION}
             className="btn btn-sm bg-rose-600 hover:bg-rose-500 text-white font-bold flex-1 flex items-center justify-center gap-1.5 disabled:opacity-40"

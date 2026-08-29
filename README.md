@@ -56,7 +56,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - [x] **Kalkulator Craftingu** — czytelność danych, źródła cen, scenariusze oraz obsługa błędów API
 - [x] **Kroniki Walk** — wyszukiwanie między regionami, profil gracza, historia walk i wycena ekwipunku
 - [x] **Podział Łupów i Timery** — szkice, udostępnianie, obliczenia, przypomnienia i synchronizacja konta
-- [ ] **Profil i Obserwowane** — weryfikacja postaci, statystyki, preferencje, zapisane elementy i usunięcie konta
+- [x] **Profil i Obserwowane** — weryfikacja postaci, statystyki, preferencje, zapisane elementy i usunięcie konta
 - [ ] **Panel administratora** — kolejka moderacji, role, stan usług, dziennik i komunikaty błędów
 - [ ] **Wspólne elementy portalu** — nawigacja, dropdowny, formularze, komunikaty, responsywność i spójność języka
 - [ ] **Podsumowanie przeglądu** — lista wykonanych zmian, pozostały dług techniczny, pomysły rozwojowe i decyzja o kolejnej fazie
@@ -142,6 +142,15 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Zabezpieczono synchronizację:** starsza lokalna lista timerów nie jest już nadpisywana pustym rekordem konta, payload timerów jest ograniczony do wymaganych pól, a niezmienne wersje raportów utraciły przypadkowe uprawnienie `UPDATE` dla roli `authenticated`.
 - **Decyzja o przypomnieniach:** własne timery pozostają osobistymi licznikami synchronizowanymi między urządzeniami; przypomnienia działające również przy zamkniętej stronie są realizowane przez zapisy w Kalendarzu i centrum powiadomień, zamiast obiecywać zawodny alarm przeglądarkowy.
 - **Potwierdzono:** oba widoki mieszczą się w szerokości 390 px; RLS i jawne granty chronią szkice, wersje oraz preferencje per użytkownik; testy jednostkowe obejmują podatek, regeary, deficyt, duplikaty, pozostałość i sanitację timerów, a E2E przywracanie szkicu, blokady działań i widok telefonu.
+
+### Przegląd 10 — Profil i Obserwowane
+
+- **Zostawić:** przypięcie postaci przez publiczne API Albionu z wyborem regionu, unikalność postaci między kontami, prywatne zapisane buildy z opcjonalnym udostępnieniem, obserwowanie pięciu typów elementów oraz trwałe usunięcie konta po wpisaniu frazy potwierdzającej.
+- **Naprawiono profil:** nowy użytkownik nie jest już automatycznie przypisywany do Europy; karta odróżnia dane deklarowane od statystyk pobranych z API; publiczny profil przekazuje region przypiętej postaci do Killboardu zamiast zawsze otwierać Europę; formularz pobiera jawnie tylko potrzebne kolumny.
+- **Przebudowano Wartownię:** surowy klucz regionu zastąpiła polska nazwa, dodano podsumowanie postaci, buildów, gildii, ofert i profili, a każdy typ ma widoczną drogę do modułu również wtedy, gdy kolekcja jest pusta.
+- **Utwardzono uprawnienia:** anonimowy klient może odczytać wyłącznie publiczne kolumny profilu; zalogowany klient może aktualizować tylko `ingame_nick`, `main_server`, `guild_name`, `main_role`, `avg_ip`, `bio` i `favorite_builds_public`, bez dostępu do `role`, `is_admin` ani pól przypięcia postaci.
+- **Sprawdzono usuwanie konta:** wszystkie zależne dane użytkownika mają `ON DELETE CASCADE`, audyt moderacyjny anonimizuje autora przez `SET NULL`, ostatni administrator jest chroniony, a dialog wymaga dokładnej frazy, wspiera Escape i ma semantykę dostępnego `alertdialog`.
+- **Potwierdzono:** produkcyjny Supabase nie nadaje już domyślnego regionu, anonimowy `SELECT` całej tabeli jest odebrany, granty kolumnowe odpowiadają formularzowi, a doradca nie wykrył nowego problemu RLS. Pozostaje globalne ostrzeżenie o ochronie haseł, które nie wpływa na obecne logowanie wyłącznie przez Discord OAuth.
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
