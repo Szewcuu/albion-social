@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { portalAuth } from '@/lib/supabaseAuth'
+import { sanitizeCustomTimers } from '@/lib/customTimers'
 
 export const PREFERENCES_SYNCED_EVENT = 'aopp-preferences-synced'
+export const PREFERENCES_SYNC_STATE_EVENT = 'aopp-preferences-sync-state'
 
 const CONFIG = {
   favorites: { key: 'aopp-favorites-v1', column: 'favorites', timestamp: 'favorites_updated_at', empty: [] },
@@ -17,7 +19,7 @@ function sanitizeArray(value, maxItems) {
 
 function sanitize(category, value) {
   if (category === 'favorites') return sanitizeArray(value, 200)
-  if (category === 'timers') return sanitizeArray(value, 20)
+  if (category === 'timers') return sanitizeCustomTimers(value)
   if (category === 'reminders' && value && typeof value === 'object' && !Array.isArray(value)) {
     return Object.fromEntries(
       Object.entries(value)
@@ -26,6 +28,17 @@ function sanitize(category, value) {
     )
   }
   return CONFIG[category]?.empty ?? null
+}
+
+function hasContent(category, value) {
+  if (category === 'reminders') return Boolean(value && Object.keys(value).length)
+  return Array.isArray(value) && value.length > 0
+}
+
+function emitSyncState(state) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(PREFERENCES_SYNC_STATE_EVENT, { detail: { state } }))
+  }
 }
 
 function readEnvelope(category) {
@@ -78,8 +91,10 @@ export async function savePortalPreference(category, value) {
 
   if (error) {
     console.warn(`Nie udało się zsynchronizować preferencji „${category}”:`, error.message)
+    emitSyncState('offline')
     return false
   }
+  emitSyncState('synced')
   return true
 }
 
@@ -97,6 +112,7 @@ export async function syncPortalPreferences(userId) {
 
   if (error) {
     console.warn('Nie udało się pobrać preferencji konta:', error.message)
+    emitSyncState('offline')
     return null
   }
 
@@ -109,7 +125,10 @@ export async function syncPortalPreferences(userId) {
     const local = readEnvelope(category)
     const remoteValue = sanitize(category, data?.[config.column] ?? config.empty)
     const remoteUpdatedAt = data?.[config.timestamp] || null
-    const localIsNewer = Boolean(local.updatedAt && (!remoteUpdatedAt || local.updatedAt > remoteUpdatedAt))
+    const localIsNewer = Boolean(
+      (local.updatedAt && (!remoteUpdatedAt || local.updatedAt > remoteUpdatedAt))
+      || (!local.updatedAt && hasContent(category, local.value) && !hasContent(category, remoteValue)),
+    )
 
     if (!data || localIsNewer) {
       updates[config.column] = local.value
@@ -127,9 +146,15 @@ export async function syncPortalPreferences(userId) {
     const { error: uploadError } = await supabase
       .from('user_preferences')
       .upsert(updates, { onConflict: 'user_id' })
-    if (uploadError) console.warn('Nie udało się zapisać scalonych preferencji:', uploadError.message)
+    if (uploadError) {
+      console.warn('Nie udało się zapisać scalonych preferencji:', uploadError.message)
+      emitSyncState('offline')
+      window.dispatchEvent(new CustomEvent(PREFERENCES_SYNCED_EVENT, { detail: synced }))
+      return synced
+    }
   }
 
   window.dispatchEvent(new CustomEvent(PREFERENCES_SYNCED_EVENT, { detail: synced }))
+  emitSyncState('synced')
   return synced
 }

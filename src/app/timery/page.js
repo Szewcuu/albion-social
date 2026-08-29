@@ -9,11 +9,13 @@ import {
   BellRing,
   CalendarClock,
   Castle,
-  ChevronDown,
   Clock3,
+  Cloud,
+  CloudOff,
   Compass,
   Globe2,
   Plus,
+  LoaderCircle,
   Shield,
   Sparkles,
   TimerReset,
@@ -24,8 +26,14 @@ import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
 import {
   getLocalPreference,
   PREFERENCES_SYNCED_EVENT,
+  PREFERENCES_SYNC_STATE_EVENT,
   savePortalPreference,
 } from '@/lib/preferenceSync'
+import {
+  createCustomTimer,
+  MAX_CUSTOM_TIMERS,
+  sanitizeCustomTimers,
+} from '@/lib/customTimers'
 
 const SERVER_CONFIG = {
   Europa: {
@@ -112,25 +120,29 @@ export default function TimeryPage() {
   const [customTimers, setCustomTimers] = useState([])
   const [timerName, setTimerName] = useState('')
   const [timerDate, setTimerDate] = useState('')
-  const [notice, setNotice] = useState('')
+  const [notice, setNotice] = useState(null)
+  const [syncState, setSyncState] = useState('loading')
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000)
     const loadTimers = (event) => {
       const stored = event?.detail?.timers || getLocalPreference('timers')
-      if (Array.isArray(stored)) {
-        setCustomTimers(stored.filter((entry) => entry?.id && entry?.name && entry?.date).slice(0, 20))
-      }
+      setCustomTimers(sanitizeCustomTimers(stored))
+      if (event?.detail?.timers) setSyncState('synced')
     }
+    const updateSyncState = (event) => setSyncState(event?.detail?.state === 'synced' ? 'synced' : 'offline')
     const hydrationTimer = setTimeout(() => {
       loadTimers()
     }, 0)
     window.addEventListener(PREFERENCES_SYNCED_EVENT, loadTimers)
+    window.addEventListener(PREFERENCES_SYNC_STATE_EVENT, updateSyncState)
 
     return () => {
       clearInterval(timer)
       clearTimeout(hydrationTimer)
       window.removeEventListener(PREFERENCES_SYNCED_EVENT, loadTimers)
+      window.removeEventListener(PREFERENCES_SYNC_STATE_EVENT, updateSyncState)
     }
   }, [])
 
@@ -151,28 +163,56 @@ export default function TimeryPage() {
   const hourlyTarget = nextCycle(1, now)
   const sixHourTarget = nextCycle(6, now)
 
-  function saveCustomTimers(next) {
+  async function saveCustomTimers(next) {
     setCustomTimers(next)
-    void savePortalPreference('timers', next)
+    setSaving(true)
+    try {
+      const synced = await savePortalPreference('timers', next)
+      setSyncState(synced ? 'synced' : 'offline')
+      return synced
+    } catch {
+      setSyncState('offline')
+      return false
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function addTimer(event) {
+  async function addTimer(event) {
     event.preventDefault()
-    const target = new Date(timerDate)
-    if (!timerName.trim() || Number.isNaN(target.getTime()) || target <= now) {
-      setNotice('Podaj nazwę i przyszłą datę wydarzenia.')
+    if (customTimers.length >= MAX_CUSTOM_TIMERS) {
+      setNotice({ type: 'error', text: `Możesz mieć maksymalnie ${MAX_CUSTOM_TIMERS} timerów. Usuń zakończony wpis przed dodaniem kolejnego.` })
       return
     }
-    const next = [...customTimers, { id: crypto.randomUUID(), name: timerName.trim().slice(0, 80), date: target.toISOString() }].slice(-20)
-    saveCustomTimers(next)
+    const newTimer = createCustomTimer({ id: crypto.randomUUID(), name: timerName, date: timerDate, now })
+    if (!newTimer) {
+      setNotice({ type: 'error', text: 'Podaj nazwę i przyszłą datę wydarzenia.' })
+      return
+    }
+    const duplicate = customTimers.some((timer) => timer.name.toLocaleLowerCase('pl') === newTimer.name.toLocaleLowerCase('pl') && timer.date === newTimer.date)
+    if (duplicate) {
+      setNotice({ type: 'error', text: 'Taki timer jest już na liście.' })
+      return
+    }
+    const next = [...customTimers, newTimer]
+    const synced = await saveCustomTimers(next)
     setTimerName('')
     setTimerDate('')
-    setNotice('Timer został zapisany i zsynchronizowany z kontem.')
+    setNotice({ type: 'success', text: synced ? 'Timer zapisano na koncie i na tym urządzeniu.' : 'Timer zapisano na tym urządzeniu. Synchronizacja konta jest chwilowo niedostępna.' })
   }
 
-  function removeTimer(id) {
-    saveCustomTimers(customTimers.filter((timer) => timer.id !== id))
+  async function removeTimer(id) {
+    const synced = await saveCustomTimers(customTimers.filter((timer) => timer.id !== id))
+    setNotice({ type: 'success', text: synced ? 'Timer usunięto z konta.' : 'Timer usunięto lokalnie; konto zsynchronizuje się przy kolejnym zapisie.' })
   }
+
+  async function clearExpiredTimers() {
+    const next = customTimers.filter((timer) => new Date(timer.date) > now)
+    const synced = await saveCustomTimers(next)
+    setNotice({ type: 'success', text: synced ? 'Zakończone timery zostały usunięte.' : 'Zakończone timery usunięto lokalnie.' })
+  }
+
+  const expiredCount = activeCustomTimers.filter((timer) => timer.target <= now).length
 
   return (
     <div className="page-content">
@@ -250,17 +290,21 @@ export default function TimeryPage() {
 
         <div className="grid gap-6 lg:grid-cols-[.8fr_1.2fr]">
           <section className="panel rounded-[28px] p-5 sm:p-6">
-            <div className="border-b border-white/8 pb-4"><p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Własny alarm</p><h2 className="font-display mt-1 text-xl font-black text-[#fff]">Dodaj wydarzenie</h2><p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Timer zapisze się lokalnie na tym urządzeniu.</p></div>
+            <div className="border-b border-white/8 pb-4"><p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Własny alarm</p><h2 className="font-display mt-1 text-xl font-black text-[#fff]">Dodaj wydarzenie</h2><p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Timer zapisuje się na koncie i zachowuje lokalną kopię na tym urządzeniu.</p></div>
             <form onSubmit={addTimer} className="mt-5 space-y-4">
               <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Nazwa wydarzenia<input type="text" maxLength={80} value={timerName} onChange={(event) => setTimerName(event.target.value)} placeholder="np. Zbiórka pod hideoutem" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" /></label>
               <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Data i godzina<input type="datetime-local" value={timerDate} onChange={(event) => setTimerDate(event.target.value)} className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" /></label>
-              <button type="submit" className="btn btn-primary flex w-full items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em]"><Plus className="h-4 w-4" /> Dodaj timer</button>
+              <button type="submit" disabled={saving || customTimers.length >= MAX_CUSTOM_TIMERS} className="btn btn-primary flex w-full items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-[.12em] disabled:cursor-not-allowed disabled:opacity-45">{saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Dodaj timer</button>
             </form>
-            {notice && <StatusNotice type="success" className="mt-3">{notice}</StatusNotice>}
+            {notice && <StatusNotice type={notice.type} className="mt-3">{notice.text}</StatusNotice>}
+            <div className={`mt-3 flex items-center gap-2 rounded-xl border px-3 py-2 text-[9px] ${syncState === 'synced' ? 'border-emerald-400/15 bg-emerald-400/5 text-emerald-200' : syncState === 'offline' ? 'border-amber-400/15 bg-amber-400/5 text-amber-200' : 'border-white/8 bg-black/15 text-[var(--text-secondary)]'}`} aria-live="polite">
+              {syncState === 'synced' ? <Cloud className="h-3.5 w-3.5" /> : syncState === 'offline' ? <CloudOff className="h-3.5 w-3.5" /> : <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+              {syncState === 'synced' ? 'Konto zsynchronizowane' : syncState === 'offline' ? 'Tryb offline — lokalna kopia jest aktywna' : 'Synchronizacja konta w toku…'}
+            </div>
           </section>
 
           <section className="panel rounded-[28px] p-5 sm:p-6">
-            <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Osobisty harmonogram</p><h2 className="font-display mt-1 text-xl font-black text-[#fff]">Twoje wydarzenia</h2></div><span className="rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-[9px] font-bold text-[var(--text-secondary)]">{activeCustomTimers.length}/20</span></div>
+            <div className="flex flex-col justify-between gap-3 border-b border-white/8 pb-4 sm:flex-row sm:items-end"><div><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Osobisty harmonogram</p><h2 className="font-display mt-1 text-xl font-black text-[#fff]">Twoje wydarzenia</h2></div><div className="flex items-center gap-2">{expiredCount > 0 && <button type="button" disabled={saving} onClick={clearExpiredTimers} className="rounded-lg border border-rose-400/15 bg-rose-400/5 px-2.5 py-1.5 text-[9px] font-black text-rose-200 disabled:opacity-45">Usuń zakończone ({expiredCount})</button>}<span className="rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-[9px] font-bold text-[var(--text-secondary)]">{activeCustomTimers.length}/{MAX_CUSTOM_TIMERS}</span></div></div>
             <div className="mt-4 space-y-2">
               {activeCustomTimers.length === 0 ? (
                 <EmptyState icon={TimerReset} title="Brak własnych timerów" description="Dodaj datę zbiórki, CTA lub transportu." />
@@ -269,7 +313,7 @@ export default function TimeryPage() {
                 return (
                   <article key={timer.id} className={`flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between ${expired ? 'border-white/6 bg-black/10 opacity-55' : 'border-white/8 bg-black/20'}`}>
                     <div className="min-w-0"><p className="truncate text-xs font-bold text-[var(--text-primary)]">{timer.name}</p><p className="mt-1 text-[9px] text-[var(--text-secondary)]">{formatTimerDate(timer.date)}</p></div>
-                    <div className="flex items-center justify-between gap-3 sm:justify-end"><span className={`font-mono text-xs font-bold ${expired ? 'text-[var(--text-secondary)]' : 'text-[var(--amber)]'}`} suppressHydrationWarning>{expired ? 'Zakończony' : timer.countdown.formatted}</span><button type="button" onClick={() => removeTimer(timer.id)} aria-label={`Usuń timer ${timer.name}`} className="rounded-lg border border-rose-400/15 bg-rose-400/5 p-2 text-rose-300 hover:bg-rose-400/10"><Trash2 className="h-3.5 w-3.5" /></button></div>
+                    <div className="flex items-center justify-between gap-3 sm:justify-end"><span className={`font-mono text-xs font-bold ${expired ? 'text-[var(--text-secondary)]' : 'text-[var(--amber)]'}`} suppressHydrationWarning>{expired ? 'Zakończony' : timer.countdown.formatted}</span><button type="button" disabled={saving} onClick={() => removeTimer(timer.id)} aria-label={`Usuń timer ${timer.name}`} className="rounded-lg border border-rose-400/15 bg-rose-400/5 p-2 text-rose-300 hover:bg-rose-400/10 disabled:opacity-45"><Trash2 className="h-3.5 w-3.5" /></button></div>
                   </article>
                 )
               })}
