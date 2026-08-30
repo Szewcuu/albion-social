@@ -287,8 +287,8 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/buildy/create')
 
-    const equipment = page.getByText('Ekwipunek — kliknij slot aby wybrać przedmiot')
-    const doctrine = page.getByRole('heading', { name: 'Doktryna i przeznaczenie' })
+    const equipment = page.getByText('Ekwipunek — kliknij slot aby wybrać przedmiot').filter({ visible: true })
+    const doctrine = page.getByRole('heading', { name: 'Doktryna i przeznaczenie' }).filter({ visible: true })
     await expect(equipment).toBeVisible()
     await expect(doctrine).toBeVisible()
     const [equipmentBox, doctrineBox] = await Promise.all([equipment.boundingBox(), doctrine.boundingBox()])
@@ -852,7 +852,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByText('Brak danych')).toBeVisible()
     await expect(page.getByText('1 uczestnik').first()).toBeVisible()
     await expect(page.getByRole('button', { name: 'Otwórz kronikę: UnknownKnight' })).toBeVisible()
-    await expect(page.getByRole('img', { name: 'Broń główna: T6_MAIN_SWORD' })).toBeVisible()
+    await expect(page.locator('img[src*="T6_MAIN_SWORD"][title^="Broń główna"]')).toBeVisible()
     await page.getByText('Skład wyceny (1/1)').click()
     await expect(page.getByText(/Martlock · oferta sprzedaży/)).toBeVisible()
 
