@@ -10,7 +10,7 @@ import TopBar from './TopBar'
 import MobileBottomNav from './MobileBottomNav'
 import { PortalSessionProvider } from '@/contexts/PortalSessionContext'
 
-const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc'])
+const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc', '/auth/nowe-haslo'])
 
 function ProtectedRouteLoadingShell() {
   return (
@@ -62,10 +62,12 @@ export default function AppShell({ children, initialUser = null }) {
   const pathname = usePathname()
   const router = useRouter()
 
-  const loginWithDiscord = useCallback(async () => {
+  const loginWithOAuth = useCallback(async (provider, next = '/') => {
+    const callback = new URL('/auth/callback', window.location.origin)
+    callback.searchParams.set('next', next.startsWith('/') && !next.startsWith('//') ? next : '/')
     const { error } = await portalAuth.auth.signInWithOAuth({
-      provider: 'discord',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      provider,
+      options: { redirectTo: callback.toString() },
     })
     if (error) throw error
   }, [])
@@ -237,9 +239,9 @@ export default function AppShell({ children, initialUser = null }) {
   const sessionValue = useMemo(() => ({
     user,
     isAdmin,
-    loginWithDiscord,
+    loginWithOAuth,
     logout,
-  }), [isAdmin, loginWithDiscord, logout, user])
+  }), [isAdmin, loginWithOAuth, logout, user])
 
   if (!authReady && !GUEST_PUBLIC_PATHS.has(pathname)) {
     return <ProtectedRouteLoadingShell />
@@ -280,7 +282,6 @@ export default function AppShell({ children, initialUser = null }) {
             markAllAsRead={markAllAsRead}
             markSingleAsRead={markSingleAsRead}
             refreshNotifications={() => user?.id && fetchNotifications()}
-            loginWithDiscord={loginWithDiscord}
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           />
         )}

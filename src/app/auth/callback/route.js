@@ -10,8 +10,11 @@ export async function GET(request) {
     ? requestedNext
     : '/'
 
+  const errorDestination = new URL(next, requestUrl.origin)
+  errorDestination.searchParams.set('auth_error', providerError ? 'provider' : 'callback')
+
   if (providerError) {
-    return NextResponse.redirect(new URL('/?auth_error=provider', requestUrl.origin))
+    return NextResponse.redirect(errorDestination)
   }
 
   if (code) {
@@ -21,7 +24,7 @@ export async function GET(request) {
       if (error) throw error
     } catch (err) {
       console.error('Błąd wymiany kodu OAuth w /auth/callback:', err)
-      return NextResponse.redirect(new URL('/?auth_error=callback', requestUrl.origin))
+      return NextResponse.redirect(errorDestination)
     }
   }
 

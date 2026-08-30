@@ -4,30 +4,32 @@ test.describe('publiczna bramka portalu', () => {
   test('pokazuje wyłącznie ekran powitalny i logowanie', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page.getByRole('button', { name: /Wejdź przez Discord/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /Wejdź do portalu/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Google' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Discord' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Regulamin', exact: true })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Prywatność', exact: true })).toBeVisible()
   })
 
-  test('wyjaśnia nieudane zakończenie logowania Discord', async ({ page }) => {
+  test('wyjaśnia nieudane zakończenie logowania', async ({ page }) => {
     await page.goto('/?auth_error=callback')
 
-    await expect(page.getByText(/Nie udało się zakończyć logowania przez Discord/)).toBeVisible()
-    await expect(page.getByRole('button', { name: /Wejdź przez Discord/i })).toBeEnabled()
+    await expect(page.getByText(/Nie udało się zakończyć logowania/)).toBeVisible()
+    await expect(page.getByRole('button', { name: /Wejdź do portalu/i })).toBeVisible()
   })
 
-  test('wyjaśnia anulowanie logowania po stronie Discorda', async ({ page }) => {
+  test('wyjaśnia anulowanie logowania zewnętrznego', async ({ page }) => {
     await page.goto('/auth/callback?error=access_denied')
 
     await expect(page).toHaveURL(/\/\?auth_error=provider$/)
-    await expect(page.getByText(/Logowanie przez Discord zostało anulowane albo odrzucone/)).toBeVisible()
+    await expect(page.getByText(/Logowanie zewnętrzne zostało anulowane albo odrzucone/)).toBeVisible()
   })
 
   test('na niskim ekranie telefonu pokazuje główną akcję bez przewijania', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 640 })
     await page.goto('/')
 
-    const loginBox = await page.getByRole('button', { name: /Wejdź przez Discord/i }).boundingBox()
+    const loginBox = await page.getByRole('button', { name: /Wejdź do portalu/i }).boundingBox()
     expect(loginBox).not.toBeNull()
     expect(loginBox.y + loginBox.height).toBeLessThanOrEqual(640)
   })
@@ -55,7 +57,7 @@ test.describe('publiczna bramka portalu', () => {
 
     await expect(page).toHaveURL(/\/regulamin$/)
     await expect(page.getByRole('heading', { name: /Wspólny portal wymaga/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /Zaloguj przez Discord/i })).toBeVisible()
+    await expect(page.getByRole('link', { name: /Przejdź do logowania/i })).toBeVisible()
   })
 
   test('udostępnia politykę prywatności bez logowania', async ({ page }) => {
@@ -70,7 +72,7 @@ test.describe('publiczna bramka portalu', () => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/prywatnosc')
 
-    await expect(page.getByRole('button', { name: 'Zaloguj przez Discord' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Przejdź do logowania' })).toBeVisible()
     await expect(page.getByText(/nieoficjalny projekt społecznościowy/i)).toBeVisible()
   })
 
@@ -194,7 +196,7 @@ test.describe('publiczna bramka portalu', () => {
       await page.goto(path)
 
       await expect(page).toHaveURL(/\/$/)
-      await expect(page.getByRole('button', { name: /Wejdź przez Discord/i })).toBeVisible()
+      await expect(page.getByRole('button', { name: /Wejdź do portalu/i })).toBeVisible()
     })
   }
 })

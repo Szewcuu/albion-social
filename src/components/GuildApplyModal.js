@@ -1,9 +1,11 @@
 'use client'
 
 import CustomSelect from '@/components/ui/CustomSelect'
+import Link from 'next/link'
 import { useState, useMemo } from 'react'
-import { Swords, X, Award, User } from 'lucide-react'
+import { Swords, X, Award, User, Link2, MessageCircle } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { hasAuthIdentity } from '@/lib/authFlow'
 
 const ROLE_OPTIONS = [
   { value: 'Tank', label: 'Tank / Inicjator' },
@@ -29,6 +31,7 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
     message: '',
   })
   const [status, setStatus] = useState({ loading: false, success: false, error: null })
+  const hasDiscord = hasAuthIdentity(currentUser, 'discord')
 
   const resetForm = () => {
     setFormData({
@@ -99,7 +102,14 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
               </div>
             </div>
 
-            {status.success ? (
+            {!hasDiscord ? (
+              <div className="rounded-2xl border border-[#7782ff]/30 bg-[#5865f2]/10 p-5 text-center">
+                <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl border border-[#7782ff]/30 bg-[#5865f2]/15 text-[#aeb4ff]"><MessageCircle className="h-6 w-6" /></span>
+                <h4 className="mt-4 font-serif text-lg font-black text-white">Najpierw połącz Discord</h4>
+                <p className="mt-2 text-xs leading-5 text-gray-400">Rekruter musi otrzymać Twoją prawdziwą tożsamość Discord razem z podaniem. Pozostałe funkcje portalu nadal działają bez tego połączenia.</p>
+                <Link href="/profil" onClick={handleClose} className="btn btn-discord mt-5 inline-flex min-h-11 items-center justify-center gap-2 px-5 text-xs font-black"><Link2 className="h-4 w-4" /> Przejdź do łączenia konta</Link>
+              </div>
+            ) : status.success ? (
               <div className="py-8 text-center space-y-2">
                 <span className="text-4xl inline-block">⚔️</span>
                 <p className="text-emerald-400 font-bold text-lg font-serif">Aplikacja została wysłana!</p>

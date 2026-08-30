@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, BookOpen, CalendarDays, Check as CheckCheck, ChevronDown, LogIn, ArrowLeft as LogOut, Compass as Map, ChevronDown as Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound } from 'lucide-react'
+import { Bell, BookOpen, CalendarDays, Check as CheckCheck, ChevronDown, LogIn, ArrowLeft as LogOut, Compass as Map, ChevronDown as Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound, ContactRound } from 'lucide-react'
 
 const PAGE_NAMES = {
   '/': 'Tawerna',
@@ -47,7 +47,6 @@ export default function TopBar({
   markAllAsRead,
   markSingleAsRead,
   refreshNotifications,
-  loginWithDiscord,
   onMenuToggle,
 }) {
   const pathname = usePathname()
@@ -176,6 +175,7 @@ export default function TopBar({
               </button>
               {showUserMenu && (
                 <div className="user-popover">
+                  <Link href={`/profil/${user.id}`} onClick={() => setShowUserMenu(false)}><ContactRound /> Profil publiczny</Link>
                   <Link href="/wiadomosci" onClick={() => setShowUserMenu(false)}><MessageSquare /> Skrzynka handlowa</Link>
                   <button onClick={() => { logout(); setShowUserMenu(false) }}><LogOut /> Wyloguj się</button>
                 </div>
@@ -183,7 +183,7 @@ export default function TopBar({
             </div>
           </>
         ) : (
-          <button onClick={loginWithDiscord} className="btn btn-discord btn-sm" aria-label="Zaloguj przez Discord"><LogIn className="w-4 h-4" /><span className="hidden sm:inline">Zaloguj przez Discord</span><span className="sm:hidden">Zaloguj</span></button>
+          <Link href="/" className="btn btn-primary btn-sm" aria-label="Przejdź do logowania"><LogIn className="w-4 h-4" /><span className="hidden sm:inline">Zaloguj się</span><span className="sm:hidden">Zaloguj</span></Link>
         )}
       </div>
     </header>

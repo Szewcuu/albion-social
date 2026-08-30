@@ -57,7 +57,7 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
 
   const requireLogin = () => {
     if (user) return true
-    setMessage('Zaloguj się przez Discord, aby głosować i zapisywać buildy.')
+    setMessage('Zaloguj się, aby głosować i zapisywać buildy.')
     return false
   }
 

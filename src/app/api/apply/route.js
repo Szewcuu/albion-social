@@ -19,6 +19,14 @@ export async function POST(request) {
     const auth = await requireApiUser(request)
     if (auth.error) return jsonError(auth.error, auth.status)
 
+    const discordIdentity = auth.user.identities?.find((identity) => identity.provider === 'discord')
+    if (!discordIdentity) {
+      return NextResponse.json({
+        error: 'Aby złożyć podanie do gildii, najpierw połącz konto Discord w swoim profilu.',
+        code: 'DISCORD_REQUIRED',
+      }, { status: 409 })
+    }
+
     const rateLimit = await checkRateLimit(`guild-apply:${auth.user.id}`, {
       limit: 3,
       windowMs: 15 * 60 * 1000,
@@ -62,21 +70,29 @@ export async function POST(request) {
       return jsonError('Ta gildia ma obecnie zamkniętą rekrutację.', 409)
     }
 
-    const metadata = auth.user.user_metadata || {}
+    const metadata = discordIdentity.identity_data || {}
     const userDiscord = cleanText(
       metadata.custom_claims?.global_name
+        || metadata.global_name
+        || metadata.user_name
+        || metadata.preferred_username
         || metadata.full_name
         || metadata.name
-        || auth.user.email
         || 'Nieznany użytkownik',
       { min: 1, max: 100 },
     ) || 'Nieznany użytkownik'
 
-    const discordIdentity = auth.user.identities?.find((identity) => identity.provider === 'discord')
     const applicantDiscordId = cleanText(
-      String(discordIdentity?.identity_data?.sub || discordIdentity?.id || auth.user.id),
+      String(discordIdentity.identity_data?.sub || discordIdentity.id),
       { min: 1, max: 100 },
-    ) || auth.user.id
+    )
+
+    if (!applicantDiscordId) {
+      return NextResponse.json({
+        error: 'Połączone konto Discord nie udostępniło prawidłowego identyfikatora. Odłącz je i połącz ponownie.',
+        code: 'DISCORD_IDENTITY_INVALID',
+      }, { status: 409 })
+    }
 
     const { data: application, error: applicationError } = await supabase
       .from('guild_applications')
