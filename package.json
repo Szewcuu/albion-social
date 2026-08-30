@@ -19,6 +19,7 @@
     "test:e2e:visual": "cross-env E2E_REQUIRE_AUTH=1 playwright test visual-public.spec.js visual-authenticated.spec.js"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "1.6.1",
     "@supabase/auth-js": "2.112.3",
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.3",

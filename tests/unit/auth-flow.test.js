@@ -17,4 +17,5 @@ test('nie pozwala przekierować callbacku poza portal', () => {
 
 test('nie ujawnia czy konto istnieje przy błędnym logowaniu', () => {
   assert.equal(friendlyAuthError({ message: 'Invalid login credentials' }), 'Nieprawidłowy e-mail lub hasło.')
+  assert.equal(friendlyAuthError({ message: 'captcha verification process failed' }), 'Nie udało się przejść ochrony przed botami. Odśwież zabezpieczenie i spróbuj ponownie.')
 })

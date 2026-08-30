@@ -39,6 +39,7 @@ export function friendlyAuthError(error, fallback = 'Nie udało się wykonać op
   if (message.includes('manual linking is disabled')) return 'Łączenie kont nie jest jeszcze włączone w konfiguracji portalu.'
   if (message.includes('identity is already linked')) return 'To konto jest już połączone z innym profilem.'
   if (message.includes('same password')) return 'Nowe hasło musi różnić się od obecnego.'
+  if (message.includes('captcha') || message.includes('turnstile')) return 'Nie udało się przejść ochrony przed botami. Odśwież zabezpieczenie i spróbuj ponownie.'
 
   return fallback
 }
