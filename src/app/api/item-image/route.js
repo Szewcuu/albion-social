@@ -1,6 +1,9 @@
 // src/app/api/item-image/route.js
 import { NextResponse } from 'next/server'
 
+const ALLOWED_SIZES = new Set([30, 32, 40, 48, 56, 60, 64, 70, 72, 80, 96, 128])
+const ALLOWED_QUALITIES = new Set([1, 2, 3, 4, 5])
+
 const FALLBACK_SVG = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Brak grafiki przedmiotu">
     <rect width="64" height="64" rx="14" fill="#120d0a"/>
@@ -15,7 +18,7 @@ function fallbackImage() {
     status: 200,
     headers: {
       'Content-Type': 'image/svg+xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+      'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
       'X-Item-Image-Fallback': '1',
     },
   })
@@ -29,41 +32,34 @@ export async function GET(request) {
     return new NextResponse('Missing item id', { status: 400 })
   }
 
-  let sanitizedId = rawId.trim().replace(/\s+/g, '_').toUpperCase()
-
-  // Gwarantowane mapowanie laski klątw na działający asset w bazie renderera Albiona
-  const upper = sanitizedId
-  if (upper.includes('CURSESTAFF') || upper.includes('CURSED')) {
-    if (upper.includes('T8')) sanitizedId = 'T8_2H_CURSESTAFF'
-    else if (upper.includes('T7')) sanitizedId = 'T7_2H_CURSESTAFF'
-    else if (upper.includes('T6')) sanitizedId = 'T6_2H_CURSESTAFF'
-    else if (upper.includes('T5')) sanitizedId = 'T5_2H_CURSESTAFF'
-    else sanitizedId = 'T4_2H_CURSESTAFF'
-  }
-  if (upper.includes('POTION_HEAL')) {
-    sanitizedId = 'T4_POTION_HEAL'
-  }
+  const sanitizedId = rawId.trim().replace(/\s+/g, '_').toUpperCase()
+  const requestedSize = Number.parseInt(searchParams.get('size') || '128', 10)
+  const requestedQuality = Number.parseInt(searchParams.get('quality') || '1', 10)
+  const size = ALLOWED_SIZES.has(requestedSize) ? requestedSize : 128
+  const quality = ALLOWED_QUALITIES.has(requestedQuality) ? requestedQuality : 1
 
   if (!/^T[1-8]_[A-Z0-9_]+(?:@[1-4])?$/.test(sanitizedId)) {
     return fallbackImage()
   }
 
-  const externalUrl = `https://render.albiononline.com/v1/item/${encodeURIComponent(sanitizedId)}.png?size=128`
+  const externalUrl = `https://render.albiononline.com/v1/item/${encodeURIComponent(sanitizedId)}.png?quality=${quality}&size=${size}`
 
   try {
     const res = await fetch(externalUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-      }
+      },
+      next: { revalidate: 604800 },
+      signal: AbortSignal.timeout(5000),
     })
 
-    if (!res.ok) return fallbackImage()
+    if (!res.ok || !res.headers.get('content-type')?.startsWith('image/')) return fallbackImage()
 
     const buffer = await res.arrayBuffer()
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+        'Cache-Control': 'public, max-age=604800, stale-while-revalidate=2592000',
         'X-Item-Image-Fallback': '0',
       },
     })

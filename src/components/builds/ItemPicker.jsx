@@ -1,10 +1,10 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import Image from 'next/image'
 import { Search, X, Plus } from 'lucide-react'
 import { getItemEnchant, getItemTierLabel, itemImageUrl, setItemEnchant } from '@/lib/buildSlots'
 
-export default function ItemPicker({ label, category, value, onChange, disabled = false, compact = false }) {
+export default function ItemPicker({ label, category, value, valueName = '', onChange, disabled = false, compact = false }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [items, setItems] = useState([])
@@ -101,10 +101,11 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
     setSearch(query)
   }
 
-  const handleSelect = (itemId, preserveExplicitEnchant = false) => {
-    onChange(preserveExplicitEnchant && getItemEnchant(itemId) > 0
+  const handleSelect = (itemId, preserveExplicitEnchant = false, itemName = '') => {
+    const selectedId = preserveExplicitEnchant && getItemEnchant(itemId) > 0
       ? itemId
-      : setItemEnchant(itemId, selectedEnchant))
+      : setItemEnchant(itemId, selectedEnchant)
+    onChange(selectedId, itemName || items.find((item) => item.id === String(itemId).replace(/@[1-4]$/, ''))?.name || '')
     setIsOpen(false)
     setSearch('')
   }
@@ -137,8 +138,8 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
         onClick={openPicker}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        aria-label={`${label}: ${value ? value : 'wybierz przedmiot'}`}
-        className={`group w-full bg-[#050204] border border-[#260f16] hover:border-[#f3ba2f]/50 rounded-xl transition text-left ${
+        aria-label={`${label}: ${value ? valueName || value : 'wybierz przedmiot'}`}
+        className={`group w-full bg-[#050204] border hover:border-[#f3ba2f]/70 rounded-xl transition text-left ${value ? 'border-[#f3ba2f]/55 bg-[#f3ba2f]/[.06] shadow-[inset_0_0_22px_rgba(243,186,47,.07),0_0_0_1px_rgba(243,186,47,.05)]' : 'border-[#260f16]'} ${
           compact ? 'p-1.5' : 'p-2.5'
         }`}
       >
@@ -148,15 +149,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
         <div className="flex items-center justify-center">
           {value ? (
             <div className="relative">
-              <Image
-                src={itemImageUrl(value)}
-                alt={`Wybrany przedmiot: ${value}`}
-                width={compact ? 40 : 48}
-                height={compact ? 40 : 48}
-                unoptimized
-                className={`object-contain drop-shadow-lg group-hover:scale-110 transition-transform ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}
-                onError={(e) => { e.target.style.display = 'none' }}
-              />
+              <img src={itemImageUrl(value, 1, compact ? 40 : 48)} alt="" title={valueName || value} width={compact ? 40 : 48} height={compact ? 40 : 48} decoding="async" className="albion-item-image drop-shadow-lg transition-transform group-hover:scale-110" />
               {getItemTierLabel(value) && <span className="absolute -bottom-1 -right-2 rounded border border-amber-300/25 bg-black/85 px-1 py-0.5 font-mono text-[7px] font-black text-amber-100">{getItemTierLabel(value)}</span>}
             </div>
           ) : (
@@ -166,7 +159,7 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
           )}
         </div>
         {value && !compact && (
-          <span className="text-[8px] text-gray-500 font-mono truncate block mt-1 text-center" title={value}>{value}</span>
+          <span className="text-[8px] text-amber-100/70 font-mono truncate block mt-1 text-center" title={valueName || value}>{valueName || value}</span>
         )}
       </button>
 
@@ -245,15 +238,15 @@ export default function ItemPicker({ label, category, value, onChange, disabled 
                     <button
                       key={item.id || 'empty'}
                       type="button"
-                      onClick={() => handleSelect(item.id)}
+                      onClick={() => handleSelect(item.id, false, item.name)}
                       className={`flex items-center gap-2 p-2.5 rounded-xl border transition text-left ${
-                        value === item.id
+                        value.replace(/@[1-4]$/, '') === item.id
                           ? 'bg-[#f3ba2f]/10 border-[#f3ba2f]'
                           : 'bg-[#050204] border-[#200d13] hover:border-[#f3ba2f]/50'
                       }`}
                     >
                       {item.id ? (
-                        <Image src={itemImageUrl(item.id)} alt="" width={32} height={32} unoptimized className="w-8 h-8 object-contain shrink-0" onError={(e) => { e.target.style.display = 'none' }} />
+                        <img src={itemImageUrl(item.id, 1, 32)} alt="" title={item.name} width="32" height="32" loading="lazy" decoding="async" className="albion-item-image shrink-0" />
                       ) : (
                         <div className="w-8 h-8 rounded bg-[#15060b] flex items-center justify-center text-gray-600 text-xs">—</div>
                       )}

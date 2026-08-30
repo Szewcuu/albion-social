@@ -24,10 +24,12 @@ test('sanityzuje publikowany build i zachowuje enchant', () => {
   build.user_id = 'podszyty-uzytkownik'
   build.youtubeVideos = ['https://youtu.be/example', 'https://evil.example/video']
   build.slots.main_hand.alternatives = ['T7_MAIN_SWORD@1', '<script>']
+  build.slots.main_hand.name = 'Miecz Pałasz Starszego'
 
   const sanitized = sanitizeBuildForPublishing(build)
   assert.equal(sanitized.slots.main_hand.main, 'T8_MAIN_SWORD@2')
   assert.deepEqual(sanitized.slots.main_hand.alternatives, ['T7_MAIN_SWORD@1'])
+  assert.equal(sanitized.slots.main_hand.name, 'Miecz Pałasz Starszego')
   assert.deepEqual(sanitized.youtubeVideos, ['https://youtu.be/example'])
   assert.equal('user_id' in sanitized, false)
 })

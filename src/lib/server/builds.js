@@ -3,6 +3,8 @@ import 'server-only'
 import { cache } from 'react'
 
 import { createSupabasePublicServerClient } from '@/lib/server/supabaseAdmin'
+import { buildFromDbRow, getBuildItemIds } from '@/lib/buildSlots'
+import { getAlbionItemNameMap } from '@/lib/server/albionItemCatalog'
 
 export const isBuildId = (value) => (
   typeof value === 'string'
@@ -24,5 +26,8 @@ export const getPublicBuild = cache(async (id) => {
     throw new Error('Nie udało się pobrać publicznego buildu.')
   }
 
-  return data
+  return data ? {
+    ...data,
+    item_names: getAlbionItemNameMap(getBuildItemIds(buildFromDbRow(data))),
+  } : null
 })

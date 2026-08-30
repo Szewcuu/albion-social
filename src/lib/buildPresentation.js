@@ -63,17 +63,20 @@ export function normalizeSquadBuild(row) {
 
 export function restoreSquadFromSearch(search, builds, slotCount = 5) {
   const params = new URLSearchParams(search || '')
-  const ids = (params.get('squad') || '').split(',').slice(0, slotCount)
+  const requestedSize = Number.parseInt(params.get('size') || String(slotCount), 10)
+  const safeSlotCount = [5, 10, 20].includes(requestedSize) ? requestedSize : slotCount
+  const ids = (params.get('squad') || '').split(',').slice(0, safeSlotCount)
   const byId = new Map(builds.map((build) => [String(build.id), build]))
-  const squad = Array.from({ length: slotCount }, (_, index) => byId.get(ids[index]) || null)
+  const squad = Array.from({ length: safeSlotCount }, (_, index) => byId.get(ids[index]) || null)
   const name = (params.get('name') || '').trim().slice(0, 80)
-  return { squad, name }
+  return { squad, name, slotCount: safeSlotCount }
 }
 
-export function buildSquadShareUrl(origin, squad, squadName) {
+export function buildSquadShareUrl(origin, squad, squadName, slotCount = squad.length || 5) {
   const params = new URLSearchParams({
     squad: squad.map((build) => build?.id || '').join(','),
     name: String(squadName || '').trim().slice(0, 80),
   })
+  if (slotCount !== 5) params.set('size', String(slotCount))
   return `${origin}/buildy?${params.toString()}`
 }

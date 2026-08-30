@@ -58,3 +58,14 @@ test('buduje bezpieczny link planera i lokalizuje etykiety buildu', () => {
   assert.equal(getBuildLabel('STATIC_DUNGEON'), 'Statyk')
   assert.equal(getBudgetLabel('medium'), 'Średni budżet (<2M)')
 })
+
+test('odtwarza duży skład i zachowuje rozmiar w linku', () => {
+  const builds = ROWS.map(normalizeSquadBuild)
+  const restored = restoreSquadFromSearch('?size=20&squad=build-1,build-2', builds)
+  assert.equal(restored.slotCount, 20)
+  assert.equal(restored.squad.length, 20)
+  assert.equal(restored.squad[1].id, 'build-2')
+
+  const url = new URL(buildSquadShareUrl('https://albion.example', restored.squad, 'ZvZ', 20))
+  assert.equal(url.searchParams.get('size'), '20')
+})

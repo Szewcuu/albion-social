@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 
 import { sanitizeBuildForPublishing } from '@/lib/buildPublishing'
-import { buildToDbPayload } from '@/lib/buildSlots'
+import { buildFromDbRow, buildToDbPayload, getBuildItemIds } from '@/lib/buildSlots'
+import { getAlbionItemNameMap } from '@/lib/server/albionItemCatalog'
 import { isModerationId } from '@/lib/server/moderation'
 import { applyCreatedAtCursor, decodeCreatedAtCursor, pageFromRows } from '@/lib/server/pagination'
 import { checkRateLimit } from '@/lib/server/rateLimit'
@@ -63,7 +64,11 @@ export async function GET(request) {
     }
 
     return NextResponse.json({
-      builds: page.page.map((build) => ({ ...build, is_favorite: favoriteIds.has(build.id) })),
+      builds: page.page.map((build) => ({
+        ...build,
+        item_names: getAlbionItemNameMap(getBuildItemIds(buildFromDbRow(build))),
+        is_favorite: favoriteIds.has(build.id),
+      })),
       hasMore: page.hasMore,
       nextCursor: page.nextCursor,
       total: cursor ? undefined : (count || 0),
@@ -144,6 +149,7 @@ export async function POST(request) {
     if (!build) return jsonError('Uzupełnij wymagane dane i co najmniej jeden przedmiot.', 400)
 
     const payload = buildToDbPayload(build, context.auth.user.id)
+    payload.build_data.itemNames = getAlbionItemNameMap(getBuildItemIds(build))
     let { data, error } = await context.supabase.from('builds').insert(payload).select('id').single()
 
     if (error?.message?.includes('build_data')) {

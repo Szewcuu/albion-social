@@ -26,6 +26,7 @@ const NAV_SECTIONS = [
     label: 'Społeczność',
     items: [
       { href: '/', label: 'Tawerna', icon: Home, desc: 'Strona główna' },
+      { href: '/aktualnosci', label: 'Goniec Królewski', icon: MessageSquareText, desc: 'Wieści i patch notes' },
       { href: '/gildie', label: 'Gildie', icon: Shield, desc: 'Rejestr formacji' },
       { href: '/wyprawy', label: 'Wyprawy', icon: Users, desc: 'Zbiórki grupowe' },
       { href: '/kalendarz', label: 'Kalendarz', icon: CalendarDays, desc: 'Wydarzenia gildii' },

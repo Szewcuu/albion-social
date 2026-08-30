@@ -12,7 +12,8 @@ function SlotCell({ slot, slotData, onChange, offHandBlocked }) {
         label={slot.label}
         category={slot.category}
         value={slotData?.main || ''}
-        onChange={(id) => onChange({ ...slotData, main: id })}
+        valueName={slotData?.name || ''}
+        onChange={(id, name) => onChange({ ...slotData, main: id, name: name || '' })}
         disabled={disabled}
         compact
       />

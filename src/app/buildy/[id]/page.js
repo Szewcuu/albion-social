@@ -133,7 +133,7 @@ export default async function BuildDetailPage({ params }) {
           </div>
         </header>
 
-        <BuildDetailEquipment slots={build.slots} />
+        <BuildDetailEquipment slots={build.slots} itemNames={build.itemNames} />
 
         <BuildStatsCalculator
           slots={build.slots}

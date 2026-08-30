@@ -1,10 +1,7 @@
-'use client'
-
-import Image from 'next/image'
-
+/* eslint-disable @next/next/no-img-element */
 import { EQUIPMENT_LAYOUT, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
 
-export default function EquipmentPreview({ slots, size = 'md' }) {
+export default function EquipmentPreview({ slots, itemNames = {}, size = 'md' }) {
   const safeSlots = slots && typeof slots === 'object' ? slots : {}
   const isCard = size === 'card'
   const iconSize = size === 'sm' ? 'h-8 w-8' : isCard ? 'h-14 w-14' : 'h-11 w-11'
@@ -20,16 +17,7 @@ export default function EquipmentPreview({ slots, size = 'md' }) {
         return (
           <div key={key} className={`relative grid ${cellSize} place-items-center rounded-md border border-white/8 bg-black/20`}>
             {itemId ? (
-              <Image
-                src={itemImageUrl(itemId)}
-                alt={`Przedmiot w slocie ${key}`}
-                title={itemId}
-                width={imagePixels}
-                height={imagePixels}
-                unoptimized
-                className={`${iconSize} object-contain drop-shadow-md`}
-                onError={(event) => { event.currentTarget.style.display = 'none' }}
-              />
+              <img src={itemImageUrl(itemId, 1, imagePixels)} alt="" title={safeSlots[key]?.name || itemNames[itemId] || itemId} width={imagePixels} height={imagePixels} loading="lazy" decoding="async" className={`albion-item-image ${iconSize} drop-shadow-md`} />
             ) : <span className="h-1 w-1 rotate-45 bg-white/10" />}
             {itemId && getItemTierLabel(itemId) && (
               <span className={`absolute bottom-0.5 right-0.5 rounded bg-black/80 px-1 font-mono font-black text-amber-100 ${isCard ? 'text-[8px]' : 'text-[6px]'}`}>

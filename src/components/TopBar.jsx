@@ -21,6 +21,7 @@ const PAGE_NAMES = {
   '/profil': 'Mój Profil',
   '/obserwowane': 'Obserwowane',
   '/wiadomosci': 'Skrzynka handlowa',
+  '/aktualnosci': 'Goniec Królewski',
   '/regulamin': 'Regulamin',
   '/prywatnosc': 'Polityka Prywatności',
 }

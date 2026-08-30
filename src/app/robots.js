@@ -8,7 +8,7 @@ export default function robots() {
       disallow: [
         '/admin', '/api/', '/auth/', '/buildy', '/gildie', '/kalendarz',
         '/kalkulator-craftingu', '/killboard', '/loot-split', '/obserwowane',
-        '/profil', '/rynek', '/timery', '/wiadomosci', '/wyprawy',
+        '/profil', '/rynek', '/timery', '/wiadomosci', '/wyprawy', '/aktualnosci',
       ],
     },
     sitemap: absoluteUrl('/sitemap.xml'),

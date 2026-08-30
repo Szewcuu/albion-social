@@ -159,7 +159,7 @@ export default function BuildyPage() {
           }`}
         >
           <Shield className="w-4 h-4 text-sky-400" />
-          <span>Planer Składu (5v5)</span>
+          <span>Planer Składu</span>
         </button>
       </div>
 
@@ -281,7 +281,7 @@ export default function BuildyPage() {
 
                 <div className="pointer-events-none relative z-0 mx-5 mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
                   <div className="mb-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Ekwipunek</div>
-                  <EquipmentPreview slots={parsed.slots} size="card" />
+                  <EquipmentPreview slots={parsed.slots} itemNames={parsed.itemNames} size="card" />
                 </div>
 
                 <div className="relative z-20 flex items-center justify-between px-5 pb-4 pt-3 border-t border-[var(--border)]">

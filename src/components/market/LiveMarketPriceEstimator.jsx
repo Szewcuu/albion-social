@@ -1,9 +1,10 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { TrendingDown, TrendingUp, LoaderCircle, AlertCircle, Coins, CheckCircle2, Zap } from 'lucide-react'
 import ItemPriceHistoryChart from './ItemPriceHistoryChart'
+import { itemImageUrl } from '@/lib/buildSlots'
 
 export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, server = 'Europa', onSelectPrice }) {
   const [loading, setLoading] = useState(false)
@@ -87,16 +88,7 @@ export default function LiveMarketPriceEstimator({ itemId = '', userPrice = 0, s
       <div className="flex items-center justify-between border-b border-[#220e14] pb-2">
         <div className="flex items-center gap-2 text-amber-400 font-bold uppercase text-[11px]">
           <div className="w-7 h-7 rounded-lg bg-black/60 border border-amber-400/30 flex items-center justify-center shrink-0 overflow-hidden">
-            <Image
-              src={`https://render.albiononline.com/v1/item/${encodeURIComponent(formattedId)}.png?quality=1&size=40`}
-              alt={formattedId}
-              width={28}
-              height={28}
-              unoptimized
-              onError={(e) => { e.currentTarget.style.display = 'none' }}
-              className="object-contain"
-            />
-            <Coins className="w-4 h-4 text-amber-400 absolute" style={{ display: 'none' }} />
+            { }<img src={itemImageUrl(formattedId, 1, 40)} alt="" title={itemId} width="28" height="28" decoding="async" className="object-contain" />
           </div>
           <span>Live Wycena Rynkowa</span>
         </div>

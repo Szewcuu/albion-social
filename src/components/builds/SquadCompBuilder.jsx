@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AlertTriangle, Check, Download, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react'
-import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { buildSquadShareUrl, normalizeSquadBuild, restoreSquadFromSearch } from '@/lib/buildPresentation'
 
@@ -13,17 +12,29 @@ const ROLE_COLORS = {
   Support: 'border-purple-400/40 bg-purple-500/10 text-purple-300',
 }
 
-const SLOT_LABELS = [
-  { label: 'Slot 1 — Tank / Initiator', role: 'Tank' },
-  { label: 'Slot 2 — DPS #1', role: 'DPS' },
-  { label: 'Slot 3 — DPS #2', role: 'DPS' },
-  { label: 'Slot 4 — Healer', role: 'Healer' },
-  { label: 'Slot 5 — Support / Utility', role: 'Support' },
+const PARTY_SLOTS = [
+  { label: 'Tank / inicjator', role: 'Tank' },
+  { label: 'DPS #1', role: 'DPS' },
+  { label: 'DPS #2', role: 'DPS' },
+  { label: 'Healer', role: 'Healer' },
+  { label: 'Support / utility', role: 'Support' },
 ]
+const FORMATION_PRESETS = [
+  { size: 5, label: '5 osób', hint: 'Jedna grupa' },
+  { size: 10, label: '10 osób', hint: 'Dwie grupy' },
+  { size: 20, label: '20 osób', hint: 'Małe ZvZ' },
+]
+
+function getSlotDefinition(index) {
+  const party = Math.floor(index / PARTY_SLOTS.length) + 1
+  const slot = PARTY_SLOTS[index % PARTY_SLOTS.length]
+  return { ...slot, party, label: `Grupa ${party} · ${slot.label}` }
+}
 
 export default function SquadCompBuilder() {
   const [builds, setBuilds] = useState([])
   const [squad, setSquad] = useState(Array(5).fill(null))
+  const [formationSize, setFormationSize] = useState(5)
   const [squadName, setSquadName] = useState('Mój Skład Drużynowy')
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -59,6 +70,7 @@ export default function SquadCompBuilder() {
       restoredRef.current = true
       const restored = restoreSquadFromSearch(window.location.search, builds)
       if (restored.name) setSquadName(restored.name)
+      setFormationSize(restored.slotCount)
       if (restored.squad.some(Boolean)) {
         setSquad(restored.squad)
         setMessage('Przywrócono udostępniony skład.')
@@ -85,12 +97,11 @@ export default function SquadCompBuilder() {
   }, [])
 
   const exportSquad = () => {
-    const filled = squad.filter(Boolean)
     const text = [
       `=== ${squadName} ===`,
       '',
       ...squad.map((b, i) => {
-        const label = SLOT_LABELS[i].label
+        const label = getSlotDefinition(i).label
         return b ? `${label}: ${b.title} (${b.role || 'Brak roli'})` : `${label}: — (pusty)`
       }),
       '',
@@ -108,7 +119,7 @@ export default function SquadCompBuilder() {
 
   const copySquadLink = async () => {
     try {
-      await navigator.clipboard.writeText(buildSquadShareUrl(window.location.origin, squad, squadName))
+      await navigator.clipboard.writeText(buildSquadShareUrl(window.location.origin, squad, squadName, formationSize))
       setCopied(true)
       setMessage('Link do składu skopiowany.')
       setTimeout(() => setCopied(false), 2500)
@@ -122,6 +133,13 @@ export default function SquadCompBuilder() {
     (b.title || '').toLowerCase().includes(search.toLowerCase()) ||
     (b.role || '').toLowerCase().includes(search.toLowerCase())
   )
+
+  const changeFormationSize = (nextSize) => {
+    setFormationSize(nextSize)
+    setSquad((current) => Array.from({ length: nextSize }, (_, index) => current[index] || null))
+    setActiveSlot(null)
+    setMessage(`Ustawiono formację dla ${nextSize} osób.`)
+  }
 
   return (
     <div className="panel p-5 sm:p-6 space-y-5 border-violet-500/30 bg-violet-950/10">
@@ -166,9 +184,24 @@ export default function SquadCompBuilder() {
         />
       </div>
 
-      {/* 5 SLOTS */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-        {SLOT_LABELS.map((slotDef, i) => {
+      <div className="grid gap-2 sm:grid-cols-3" aria-label="Rozmiar formacji">
+        {FORMATION_PRESETS.map((preset) => (
+          <button key={preset.size} type="button" aria-pressed={formationSize === preset.size} onClick={() => changeFormationSize(preset.size)} className={`rounded-xl border p-3 text-left transition ${formationSize === preset.size ? 'border-violet-300/55 bg-violet-400/15 text-violet-100' : 'border-white/10 bg-black/20 text-gray-400 hover:border-violet-300/30'}`}>
+            <strong className="block text-xs">{preset.label}</strong>
+            <span className="mt-1 block font-mono text-[9px]">{preset.hint}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* FORMATION SLOTS */}
+      <div className={formationSize === 5 ? 'grid grid-cols-1 gap-3 md:grid-cols-5' : 'grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4'}>
+        {Array.from({ length: formationSize / 5 }, (_, partyIndex) => (
+          <section key={partyIndex} className={formationSize === 5 ? 'contents' : 'rounded-2xl border border-white/10 bg-black/20 p-3'}>
+            {formationSize > 5 && <h4 className="mb-3 flex items-center justify-between border-b border-white/8 pb-2 text-[10px] font-black uppercase tracking-[.14em] text-violet-200"><span>Grupa {partyIndex + 1}</span><span className="font-mono text-[8px] text-gray-500">5 miejsc</span></h4>}
+            <div className={formationSize === 5 ? 'contents' : 'grid gap-2'}>
+        {PARTY_SLOTS.map((partySlot, partySlotIndex) => {
+          const i = partyIndex * 5 + partySlotIndex
+          const slotDef = getSlotDefinition(i)
           const build = squad[i]
           const roleColor = ROLE_COLORS[slotDef.role] || 'border-white/20 bg-white/5 text-gray-300'
 
@@ -177,11 +210,10 @@ export default function SquadCompBuilder() {
               key={i}
               className={`rounded-2xl border-2 p-3 space-y-2 transition ${roleColor} ${activeSlot === i ? 'ring-2 ring-violet-400/60' : ''}`}
             >
-              <p className="text-[9px] font-black uppercase tracking-wider font-mono opacity-70">{slotDef.label}</p>
+              <p className="text-[9px] font-black uppercase tracking-wider font-mono opacity-70">{formationSize === 5 ? slotDef.label : partySlot.label}</p>
 
               {build ? (
                 <div className="space-y-2">
-                  <EquipmentPreview slots={build.slots} size="sm" />
                   <p className="text-xs font-bold text-white truncate">{build.title}</p>
                   <div className="flex gap-1.5">
                     <button
@@ -210,6 +242,9 @@ export default function SquadCompBuilder() {
             </div>
           )
         })}
+            </div>
+          </section>
+        ))}
       </div>
 
       {/* BUILD PICKER (shown when slot is active) */}
@@ -217,7 +252,7 @@ export default function SquadCompBuilder() {
         <div className="panel p-4 space-y-3 border-violet-400/30 !bg-violet-950/20">
           <div className="flex items-center justify-between">
             <p className="text-xs font-bold text-violet-300">
-              Wybierz build dla: <strong>{SLOT_LABELS[activeSlot].label}</strong>
+              Wybierz build dla: <strong>{getSlotDefinition(activeSlot).label}</strong>
             </p>
             <button type="button" onClick={() => setActiveSlot(null)} aria-label="Zamknij wybór buildu" className="text-gray-500 hover:text-white transition text-xs cursor-pointer">
               ✕ Zamknij
@@ -260,7 +295,7 @@ export default function SquadCompBuilder() {
       )}
 
       <p className="text-[10px] text-gray-500 font-mono text-center">
-        Skład {squad.filter(Boolean).length}/5 slotów wypełniony
+        Skład {squad.filter(Boolean).length}/{formationSize} miejsc wypełniony · {formationSize / 5} {formationSize === 5 ? 'grupa' : 'grupy'} bojowe
       </p>
       {message && <p role="status" aria-live="polite" className="text-center text-[10px] font-mono text-violet-200">{message}</p>}
     </div>

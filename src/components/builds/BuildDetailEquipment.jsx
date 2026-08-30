@@ -1,8 +1,7 @@
-import Image from 'next/image'
-
+/* eslint-disable @next/next/no-img-element */
 import { EQUIPMENT_LAYOUT, EQUIPMENT_SLOTS, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
 
-function ItemTile({ itemId, label, amount, muted = false }) {
+function ItemTile({ itemId, itemName, label, amount, muted = false }) {
   return (
     <div className={`relative flex min-h-28 flex-col items-center justify-center overflow-hidden rounded-2xl border p-3 text-center ${muted
       ? 'border-white/8 bg-black/20'
@@ -11,14 +10,7 @@ function ItemTile({ itemId, label, amount, muted = false }) {
       <span className="absolute left-2.5 top-2 text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">{label}</span>
       {itemId ? (
         <>
-          <Image
-            src={itemImageUrl(itemId)}
-            alt={`${label}: ${itemId}`}
-            width={72}
-            height={72}
-            unoptimized
-            className="mt-2 h-16 w-16 object-contain drop-shadow-[0_7px_10px_rgba(0,0,0,.8)] sm:h-[72px] sm:w-[72px]"
-          />
+          <img src={itemImageUrl(itemId, 1, 72)} alt="" title={itemName || itemId} width="72" height="72" loading="lazy" decoding="async" className="albion-item-image mt-2 drop-shadow-[0_7px_10px_rgba(0,0,0,.8)]" />
           {amount > 1 && (
             <span className="absolute bottom-2 right-2 rounded-md border border-white/10 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-orange-100">×{amount}</span>
           )}
@@ -33,7 +25,7 @@ function ItemTile({ itemId, label, amount, muted = false }) {
   )
 }
 
-export default function BuildDetailEquipment({ slots }) {
+export default function BuildDetailEquipment({ slots, itemNames = {} }) {
   return (
     <section className="aopp-panel p-4 sm:p-6" aria-labelledby="build-equipment-title">
       <div className="mb-5 flex items-end justify-between gap-4">
@@ -52,6 +44,7 @@ export default function BuildDetailEquipment({ slots }) {
             <ItemTile
               key={key}
               itemId={slots[key]?.main}
+              itemName={slots[key]?.name || itemNames[slots[key]?.main]}
               label={slot.label}
               amount={slots[key]?.amount}
             />
@@ -65,7 +58,7 @@ export default function BuildDetailEquipment({ slots }) {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
             {EQUIPMENT_SLOTS.flatMap((slot) => (
               (slots[slot.key]?.alternatives || []).filter(Boolean).map((itemId, index) => (
-                <ItemTile key={`${slot.key}-${itemId}-${index}`} itemId={itemId} label={`${slot.label} • alt ${index + 1}`} muted />
+                <ItemTile key={`${slot.key}-${itemId}-${index}`} itemId={itemId} itemName={itemNames[itemId]} label={`${slot.label} • alt ${index + 1}`} muted />
               ))
             ))}
           </div>
