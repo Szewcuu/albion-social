@@ -171,6 +171,7 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 - **Domknięty zapas wydajności (F1.3):** produkcyjny build mieści się poniżej nowych progów CI: `1650 KB` całego JavaScript i `880 KB` najcięższej trasy. Usunięto bibliotekę animacji używaną przez jeden modal, zachowano animację w lekkim CSS, telemetrykę Vercel i rejestrację PWA uruchamia prosty runtime po bezczynności, a Turbopack tworzy mniejsze, częściej współdzielone chunki.
 - **Domknięty porządek operacyjny (F1.4):** powtarzające się zdarzenia są agregowane już przy zapisie, a dzienne zadanie utrzymuje 30 dni zdarzeń i logów cron, 90 dni pomiarów integracji oraz 400 dni anonimowych liczników użycia. Panel pokazuje 30-dniową dostępność i opóźnienie Gameinfo osobno dla Europy, Ameryki i Azji. Własne archiwum walk pozostaje wyłączone do zebrania pełnej 30-dniowej próby, co najmniej 1000 wyszukań oraz 100 zapytań do regionu o dostępności poniżej 95%.
 - **Pomiar bazowy F1.4:** przed zmianą było `1106` zdarzeń systemowych, z czego `1059` stanowił jeden powtarzalny błąd renderowania. W 18 regionalnych próbach Europa i Azja miały `100%` dostępności, a Ameryka `27,8%` (`5/18`) i średnie opóźnienie `5663 ms`. Ruch portalu jest nadal zbyt mały, by finansować własne archiwum walk; decyzja będzie oparta na anonimowych dziennych licznikach, nie na nickach ani profilach użytkowników.
+- **Uruchomiony test kierunku (F1.5):** zalogowana Tawerna pyta graczy, czy najczęściej wracaliby do funkcji społecznościowych, rynku czy narzędzi gildyjnych. Każde konto ma jeden edytowalny wybór; portal pokazuje wyłącznie agregaty, surowa tabela nie ma dostępu `anon` ani `authenticated`, a rekord jest usuwany razem z kontem. Pierwszy przegląd nastąpi po co najmniej ośmiu odpowiedziach — samo wdrożenie ankiety nie jest jeszcze decyzją produktową.
 - **Pozostały dług organizacyjny:** przed ewentualną komercjalizacją trzeba podać pełne dane administratora i dedykowany kontakt prywatności.
 
 #### Rekomendowana kolejna faza — F1 „Final Polish”
@@ -180,6 +181,9 @@ Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, 
 3. [x] **Zapas wydajności:** zejść poniżej `1650 KB` całego JavaScript i `880 KB` najcięższej trasy; ostateczny wynik F1.3 to `1647,5 KB` całego builda i `789,2 KB` dla `/gildie/[id]`.
 4. [x] **Porządek operacyjny:** 30/90/400-dniowa retencja, regionalna historia Gameinfo i jawna bramka kosztowa dla własnego archiwum walk; przy obecnym ruchu archiwum pozostaje wyłączone.
 5. [ ] **Decyzja produktowa:** po F1 wykonać krótki test z kilkoma graczami Albion Online i na podstawie ich zachowania wybrać rozwój społeczności, rynku albo narzędzi gildyjnych zamiast dodawać kolejny szeroki moduł.
+   - [x] uruchomić niepubliczny wybór kierunku w Tawernie, jeden edytowalny głos na konto, z agregatami i progiem minimum ośmiu odpowiedzi
+   - [ ] zebrać co najmniej osiem odpowiedzi i przejść z kilkoma graczami po najważniejszych zadaniach wybranego obszaru
+   - [ ] zestawić deklaracje z obserwacją zachowania, wybrać jeden kierunek i dopiero wtedy rozpisać kolejną fazę
 
 ### P46 — stabilna mobilna Zbrojownia buildów i Rynek
 
