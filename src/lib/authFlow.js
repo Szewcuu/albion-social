@@ -16,7 +16,8 @@ export function validatePortalPassword(password) {
   const value = String(password || '')
   const checks = {
     length: value.length >= 10,
-    letter: /[A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż]/.test(value),
+    lowercase: /[a-ząćęłńóśźż]/.test(value),
+    uppercase: /[A-ZĄĆĘŁŃÓŚŹŻ]/.test(value),
     number: /\d/.test(value),
     special: /[^A-Za-zĄĆĘŁŃÓŚŹŻąćęłńóśźż\d]/.test(value),
   }
@@ -36,6 +37,7 @@ export function friendlyAuthError(error, fallback = 'Nie udało się wykonać op
   if (message.includes('password should be')) return 'Hasło nie spełnia wymagań bezpieczeństwa.'
   if (message.includes('rate limit') || message.includes('over_email_send_rate_limit')) return 'Wysłano zbyt wiele próśb. Odczekaj chwilę i spróbuj ponownie.'
   if (message.includes('provider is not enabled') || message.includes('unsupported provider')) return 'Ta metoda logowania nie została jeszcze włączona przez administratora.'
+  if (message.includes('email signups are disabled') || error?.code === 'email_provider_disabled') return 'Rejestracja przez e-mail jest chwilowo wyłączona w konfiguracji portalu.'
   if (message.includes('manual linking is disabled')) return 'Łączenie kont nie jest jeszcze włączone w konfiguracji portalu.'
   if (message.includes('identity is already linked')) return 'To konto jest już połączone z innym profilem.'
   if (message.includes('same password')) return 'Nowe hasło musi różnić się od obecnego.'

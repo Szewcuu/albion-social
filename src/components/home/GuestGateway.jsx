@@ -19,7 +19,7 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
 
 function PasswordRequirements({ password }) {
   const { checks } = validatePortalPassword(password)
-  const rows = [['length', 'co najmniej 10 znaków'], ['letter', 'litera'], ['number', 'cyfra'], ['special', 'znak specjalny']]
+  const rows = [['length', 'co najmniej 10 znaków'], ['lowercase', 'mała litera'], ['uppercase', 'wielka litera'], ['number', 'cyfra'], ['special', 'znak specjalny']]
   return <div className="auth-password-rules" aria-label="Wymagania hasła">{rows.map(([key, label]) => <span key={key} className={checks[key] ? 'valid' : ''}><Check aria-hidden="true" /> {label}</span>)}</div>
 }
 
@@ -127,7 +127,7 @@ export default function GuestGateway() {
     setAuthError('')
     const { error } = await portalAuth.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authCallbackUrl('/'), captchaToken: captchaToken || undefined } })
     if (error) setAuthError(friendlyAuthError(error, 'Nie udało się ponownie wysłać wiadomości.'))
-    else setSuccess(`Ponownie wysłaliśmy wiadomość aktywacyjną na ${email}.`)
+    else setSuccess('Jeżeli konto istnieje i nadal wymaga aktywacji, wysłaliśmy nową wiadomość potwierdzającą.')
     setBusy('')
     if (captchaEnabled) {
       setCaptchaToken('')
