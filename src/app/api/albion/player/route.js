@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server'
+import { after, NextResponse } from 'next/server'
 import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerOverview, searchAlbionPlayers, searchAlbionPlayersAllRegionsDetailed } from '@/lib/server/albionApi'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { cleanAlbionId, cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
 import { getKillboardCommunityUrl } from '@/lib/killboardCommunity'
+import { recordFeatureUsage } from '@/lib/server/monitoring'
 
 const CACHE_SECONDS = {
   search: 45,
@@ -59,6 +60,11 @@ export async function GET(request) {
   if (!mode) return apiError('Nieobsługiwany tryb zapytania.', { code: 'INVALID_MODE', status: 400 })
   if (!region) return apiError('Nieobsługiwany region Albionu.', { code: 'INVALID_REGION', status: 400 })
 
+  const recordSearch = (success) => {
+    if (mode !== 'search') return
+    after(() => recordFeatureUsage({ feature: 'killboard_search', region, success }))
+  }
+
   try {
     if (mode === 'search') {
       const query = cleanText(searchParams.get('query') || searchParams.get('nick'), { min: 2, max: 30 })
@@ -95,6 +101,7 @@ export async function GET(request) {
             .map((item) => ALBION_REGIONS[item.region]?.label)
             .filter(Boolean)
 
+          recordSearch(false)
           return apiError(
             `Nie można potwierdzić, czy gracz „${query}” istnieje. Gameinfo chwilowo nie odpowiada dla: ${labels.join(', ')}. Spróbuj ponownie później.`,
             {
@@ -109,6 +116,7 @@ export async function GET(request) {
           )
         }
 
+        recordSearch(true)
         return apiError(`Nie znaleziono gracza „${query}” na żadnym serwerze (Europa, Ameryka, Azja).`, { code: 'PLAYER_NOT_FOUND', status: 404 })
       }
 
@@ -117,6 +125,7 @@ export async function GET(request) {
         .map((item) => ALBION_REGIONS[item.region]?.label)
         .filter(Boolean)
 
+      recordSearch(!unavailableRegions.some((item) => item.region === region))
       return apiResponse({ players }, {
         region: activeRegion,
         mode,
@@ -142,6 +151,7 @@ export async function GET(request) {
     const activeRegion = overview.marketPricing?.region || region
     return apiResponse(overview, { region: activeRegion, mode, warnings: overview.warnings })
   } catch (error) {
+    recordSearch(false)
     if (error instanceof AlbionApiError) {
       return apiError(error.message, { code: error.code, status: error.status })
     }

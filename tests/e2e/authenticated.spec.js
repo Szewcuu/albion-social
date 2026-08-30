@@ -60,6 +60,14 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       body: JSON.stringify({
         generatedAt: '2026-08-29T12:00:00.000Z',
         checks: [{ service: 'supabase', status: 'operational', latency_ms: 120, message: 'Baza odpowiada.', metadata: {}, checked_at: '2026-08-29T12:00:00.000Z' }],
+        operations: {
+          regions: [
+            { key: 'europe', label: 'Europa', probes: 18, availability: 1, averageLatencyMs: 335, lookups: 7 },
+            { key: 'america', label: 'Ameryka', probes: 18, availability: 0.28, averageLatencyMs: 5663, lookups: 2 },
+            { key: 'asia', label: 'Azja', probes: 18, availability: 1, averageLatencyMs: 287, lookups: 0 },
+          ],
+          archiveReadiness: { ready: false, reason: 'Zbieranie próby: 1/30 dni.' },
+        },
         events: [],
       }),
     }))
@@ -94,6 +102,8 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.getByRole('tab', { name: 'Stan usług' }).click()
     await expect(page.getByText('Baza odpowiada.')).toBeVisible()
     await expect(page.getByText('Brak pomiarów')).toHaveCount(0)
+    await expect(page.getByText('Gameinfo · ostatnie 30 dni')).toBeVisible()
+    await expect(page.getByText('Zbieranie próby: 1/30 dni.')).toBeVisible()
   })
 
   test('otwiera czat społeczności', async ({ page }) => {

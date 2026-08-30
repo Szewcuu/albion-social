@@ -32,18 +32,34 @@ export async function recordSystemEvent({ source, level = 'error', eventType, me
   try {
     const supabase = createSupabaseAdminClient()
     const cleanMessage = safeMessage(message)
-    const { error } = await supabase.from('system_events').insert({
-      source,
-      level,
-      event_type: String(eventType || 'unknown').slice(0, 120),
-      message: cleanMessage,
-      fingerprint: fingerprintFor(source, eventType, cleanMessage),
-      context,
+    const { error } = await supabase.rpc('service_record_system_event', {
+      p_source: source,
+      p_level: level,
+      p_event_type: String(eventType || 'unknown').slice(0, 120),
+      p_message: cleanMessage,
+      p_fingerprint: fingerprintFor(source, eventType, cleanMessage),
+      p_context: context,
     })
     if (error) throw error
     return true
   } catch (error) {
     console.warn('Nie udało się zapisać zdarzenia monitoringu:', error?.message)
+    return false
+  }
+}
+
+export async function recordFeatureUsage({ feature, region, success = true }) {
+  try {
+    const supabase = createSupabaseAdminClient()
+    const { error } = await supabase.rpc('service_record_feature_usage', {
+      p_feature: feature,
+      p_region: region,
+      p_success: success,
+    })
+    if (error) throw error
+    return true
+  } catch (error) {
+    console.warn('Nie udało się zapisać zagregowanej metryki użycia:', error?.message)
     return false
   }
 }

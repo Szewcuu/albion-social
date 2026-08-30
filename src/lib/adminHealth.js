@@ -14,11 +14,11 @@ export function collapseSystemEvents(events = []) {
     const key = event.fingerprint || `${event.source}:${event.event_type}:${event.message}`
     const existing = grouped.get(key)
     if (existing) {
-      existing.occurrence_count += 1
+      existing.occurrence_count += Number(event.occurrence_count) || 1
       continue
     }
 
-    grouped.set(key, { ...event, occurrence_count: 1 })
+    grouped.set(key, { ...event, occurrence_count: Number(event.occurrence_count) || 1 })
   }
 
   return [...grouped.values()]

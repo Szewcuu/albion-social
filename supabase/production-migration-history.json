@@ -40,6 +40,8 @@
     { "version": "20260829150000", "name": "review_09_loot_timer_permissions" },
     { "version": "20260829150100", "name": "review_10_profile_permissions" },
     { "version": "20260829150403", "name": "review_11_admin_permissions" },
-    { "version": "20260829152124", "name": "review_11_monitoring_signal" }
+    { "version": "20260829152124", "name": "review_11_monitoring_signal" },
+    { "version": "20260830130320", "name": "f1_4_operational_hygiene" },
+    { "version": "20260830130604", "name": "f1_4_usage_rls_policy" }
   ]
 }

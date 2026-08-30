@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { collapseSystemEvents } from '@/lib/adminHealth'
+import { buildOperationalSummary } from '@/lib/operationalHealth'
 import {
   createSupabaseAdminClient,
   createSupabaseRequestClient,
@@ -24,20 +25,34 @@ async function authorizeStaff(request) {
 }
 
 async function readHealthData(supabase) {
-  const [checksResult, eventsResult] = await Promise.all([
+  const since = new Date(Date.now() - 30 * 86_400_000).toISOString()
+  const [checksResult, historyResult, usageResult, eventsResult] = await Promise.all([
     supabase
       .from('integration_checks')
       .select('service, status, latency_ms, message, metadata, checked_at')
       .order('checked_at', { ascending: false })
       .limit(100),
     supabase
+      .from('integration_checks')
+      .select('metadata, checked_at')
+      .eq('service', 'albion_api')
+      .gte('checked_at', since)
+      .order('checked_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('feature_usage_daily')
+      .select('usage_day, feature, region, request_count, success_count')
+      .eq('feature', 'killboard_search')
+      .gte('usage_day', since.slice(0, 10))
+      .order('usage_day', { ascending: false }),
+    supabase
       .from('system_events')
-      .select('id, level, source, event_type, message, fingerprint, created_at')
-      .order('created_at', { ascending: false })
+      .select('id, level, source, event_type, message, fingerprint, occurrence_count, created_at, last_seen_at')
+      .order('last_seen_at', { ascending: false })
       .limit(50),
   ])
-  if (checksResult.error || eventsResult.error) {
-    throw checksResult.error || eventsResult.error
+  if (checksResult.error || historyResult.error || usageResult.error || eventsResult.error) {
+    throw checksResult.error || historyResult.error || usageResult.error || eventsResult.error
   }
 
   const latestByService = new Map()
@@ -47,7 +62,11 @@ async function readHealthData(supabase) {
 
   return {
     checks: [...latestByService.values()],
-    events: collapseSystemEvents(eventsResult.data || []),
+    events: collapseSystemEvents((eventsResult.data || []).map((event) => ({
+      ...event,
+      created_at: event.last_seen_at || event.created_at,
+    }))),
+    operations: buildOperationalSummary(historyResult.data || [], usageResult.data || []),
     generatedAt: new Date().toISOString(),
   }
 }

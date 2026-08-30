@@ -114,7 +114,7 @@ export default function AdminPage() {
   const [reportsPagination, setReportsPagination] = useState({ hasMore: false, nextCursor: null })
   const [auditEntries, setAuditEntries] = useState([])
   const [roleUsers, setRoleUsers] = useState([])
-  const [health, setHealth] = useState({ checks: [], events: [], generatedAt: null })
+  const [health, setHealth] = useState({ checks: [], events: [], operations: null, generatedAt: null })
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState(null)
@@ -216,7 +216,12 @@ export default function AdminPage() {
       const response = await authenticatedFetch('/api/admin/health', { cache: 'no-store' })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Nie udało się pobrać monitoringu.')
-      setHealth({ checks: payload.checks || [], events: payload.events || [], generatedAt: payload.generatedAt || new Date().toISOString() })
+      setHealth({
+        checks: payload.checks || [],
+        events: payload.events || [],
+        operations: payload.operations || null,
+        generatedAt: payload.generatedAt || new Date().toISOString(),
+      })
       setNotice(runChecks ? { type: 'success', text: 'Kontrola integracji została zakończona.' } : null)
     } catch (error) {
       setNotice({ type: 'error', text: error.message })
@@ -440,6 +445,11 @@ function HealthPanel({ health, busy, onRefresh, onRun }) {
             return <article key={check.service} className={`rounded-2xl border p-4 ${tone}`}><div className="flex items-center justify-between gap-3"><strong className="text-sm text-white">{INTEGRATION_NAMES[check.service] || check.service}</strong><span className={`status-dot ${healthy ? 'online' : ''}`} /></div><p className="mt-3 text-[10px] font-black uppercase tracking-[.12em] text-[var(--text-secondary)]">{INTEGRATION_STATUSES[check.status] || check.status}</p><p className="mt-2 min-h-10 text-xs leading-5 text-[var(--text-secondary)]">{check.message}</p>{regions.length > 0 && <div className="mt-3 space-y-1 border-t border-white/8 pt-3">{regions.map((region) => <div key={region.region} className="flex items-center justify-between gap-2 text-[9px]"><span className={region.status === 'operational' ? 'text-emerald-300' : region.status === 'degraded' ? 'text-amber-300' : 'text-rose-300'}>{region.region}</span><span className="text-[var(--text-muted)]">{region.latencyMs ?? '—'} ms{region.httpStatus ? ` · HTTP ${region.httpStatus}` : ''}</span></div>)}</div>}<div className="mt-3 flex items-center justify-between text-[9px] text-[var(--text-muted)]"><span>Łącznie {check.latency_ms ?? '—'} ms</span><time>{new Date(check.checked_at).toLocaleString('pl-PL')}</time></div></article>
           })}
         </div>
+        {health.operations && <div className="border-t border-[var(--border)] p-4">
+          <p className="text-[10px] font-black uppercase tracking-[.16em] text-[var(--amber)]">Gameinfo · ostatnie 30 dni</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-3">{health.operations.regions.map((region) => <p key={region.key} className="rounded-xl border border-white/8 p-3 text-xs"><strong className="text-white">{region.label}</strong><span className="mt-1 block text-[var(--text-muted)]">{region.availability === null ? 'Brak próby' : `${Math.round(region.availability * 100)}% dostępności`} · {region.averageLatencyMs ?? '—'} ms · {region.lookups} wyszukań</span></p>)}</div>
+          <p className="mt-3 text-xs text-[var(--text-secondary)]"><strong className="text-white">Własne archiwum walk:</strong> {health.operations.archiveReadiness.reason}</p>
+        </div>}
       </section>
 
       <section className="panel overflow-hidden">
