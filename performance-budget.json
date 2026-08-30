@@ -1,5 +1,5 @@
 {
-  "maxTotalJavaScriptBytes": 1843200,
+  "maxTotalJavaScriptBytes": 1689600,
   "maxSingleChunkBytes": 245760,
-  "maxRouteJavaScriptBytes": 983040
+  "maxRouteJavaScriptBytes": 901120
 }

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
-import { BarChart3, Coins, Gauge, Sparkles } from 'lucide-react'
+import { BarChart3, Coins, BarChart3 as Gauge, Sparkles } from 'lucide-react'
 
 const MarketIntelligence = dynamic(() => import('./MarketIntelligence'), {
   loading: () => <ToolSkeleton label="Ładowanie wywiadu rynkowego" />,

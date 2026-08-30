@@ -2,8 +2,7 @@
 
 import CustomSelect from '@/components/ui/CustomSelect'
 import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Swords, X, Send, Award, User } from 'lucide-react'
+import { Swords, X, Award, User } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const ROLE_OPTIONS = [
@@ -74,17 +73,11 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
     }
   }
 
+  if (!isOpen) return null
+
   return (
-    <AnimatePresence>
-      {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: 0.12 }}
-            className="w-full max-w-lg bg-[#140c0e] border-2 border-[#c59b27] p-6 shadow-[0_0_40px_rgba(197,155,39,0.2)] relative text-gray-200 rounded-2xl my-8"
-          >
+          <div className="guild-apply-modal-enter w-full max-w-lg bg-[#140c0e] border-2 border-[#c59b27] p-6 shadow-[0_0_40px_rgba(197,155,39,0.2)] relative text-gray-200 rounded-2xl my-8">
             {/* Przycisk Zamknięcia */}
             <button 
               type="button"
@@ -184,9 +177,7 @@ export default function GuildApplyModal({ isOpen, onClose, guild, currentUser })
                 </button>
               </form>
             )}
-          </motion.div>
+          </div>
         </div>
-      )}
-    </AnimatePresence>
   )
 }

@@ -6,23 +6,23 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import {
   Activity,
-  BookOpenCheck,
+  BookOpen as BookOpenCheck,
   CheckCircle2,
   Clock3,
   EyeOff,
-  FileWarning,
-  Layers3,
+  AlertTriangle as FileWarning,
+  BookOpen as Layers3,
   MessageSquareText,
   RefreshCw,
   RotateCcw,
   Save,
   Search,
-  ServerCog,
+  Activity as ServerCog,
   ShieldCheck,
   Swords,
   Trash2,
   UserCog,
-  XCircle,
+  X as XCircle,
 } from 'lucide-react'
 
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'

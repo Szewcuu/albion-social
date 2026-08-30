@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BellRing, CalendarCheck2, CalendarDays, Clock3, LoaderCircle, MapPin, Shield, Sparkles, Users } from 'lucide-react'
+import { BellRing, CalendarDays as CalendarCheck2, CalendarDays, Clock3, LoaderCircle, MapPin, Shield, Sparkles, Users } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
 import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'

@@ -12,7 +12,7 @@ import {
   ChevronRight,
   CircleUserRound,
   ExternalLink,
-  Gamepad2,
+  Swords as Gamepad2,
   Globe2,
   LoaderCircle,
   Lock,

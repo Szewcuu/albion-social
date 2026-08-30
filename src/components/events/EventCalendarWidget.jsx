@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar as CalendarIcon, Clock, Users, Swords, Shield, Sparkles, Filter, ChevronLeft, ChevronRight, BellCheck } from 'lucide-react'
+import { CalendarDays as CalendarIcon, Clock, Users, Swords, Shield, Sparkles, Search as Filter, ArrowLeft as ChevronLeft, ChevronRight, BellRing as BellCheck } from 'lucide-react'
 import {
   getLocalPreference,
   PREFERENCES_SYNCED_EVENT,

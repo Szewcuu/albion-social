@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, BarChart3, CheckCircle2, Coins, Hammer, LoaderCircle, RefreshCw, Route, ShieldCheck, Sparkles, Zap } from 'lucide-react'
+import { AlertCircle, BarChart3, CheckCircle2, Coins, Hammer, LoaderCircle, RefreshCw, ArrowRightLeft as Route, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
 import {

@@ -1,31 +1,23 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { scheduleIdleTask } from '@/lib/clientIdle'
 
-const PwaRegister = dynamic(() => import('./PwaRegister'), { ssr: false })
-const WebVitalsReporter = dynamic(() => import('./WebVitalsReporter'), { ssr: false })
-const SpeedInsights = dynamic(
-  () => import('@vercel/speed-insights/next').then((module) => module.SpeedInsights),
-  { ssr: false },
-)
-
 export default function DeferredRuntimeServices() {
-  const [ready, setReady] = useState(false)
+  useEffect(() => scheduleIdleTask(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(() => {})
+    }
 
-  useEffect(() => scheduleIdleTask(
-    () => setReady(true),
-    { minimumDelay: 7_000, timeout: 2_000 },
-  ), [])
+    if (!document.querySelector('script[data-aopp-speed-insights]')) {
+      const script = document.createElement('script')
+      script.src = '/_vercel/speed-insights/script.js'
+      script.defer = true
+      script.dataset.aoppSpeedInsights = 'true'
+      script.dataset.sdkn = '@vercel/speed-insights/next'
+      document.head.appendChild(script)
+    }
+  }, { minimumDelay: 7_000, timeout: 2_000 }), [])
 
-  if (!ready) return null
-
-  return (
-    <>
-      <WebVitalsReporter />
-      <PwaRegister />
-      <SpeedInsights />
-    </>
-  )
+  return null
 }

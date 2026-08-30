@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, BookOpen, CalendarDays, CheckCheck, ChevronDown, LogIn, LogOut, Map, Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound } from 'lucide-react'
+import { Bell, BookOpen, CalendarDays, Check as CheckCheck, ChevronDown, LogIn, ArrowLeft as LogOut, Compass as Map, ChevronDown as Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound } from 'lucide-react'
 
 const PAGE_NAMES = {
   '/': 'Tawerna',

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { CalendarPlus, Check, LoaderCircle, Save, ShieldCheck, UserCog, UserMinus, X } from 'lucide-react'
+import { CalendarDays as CalendarPlus, Check, LoaderCircle, Save, ShieldCheck, UserCog, UserRound as UserMinus, X } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
 import { StatusNotice } from '@/components/ui/FeedbackState'
