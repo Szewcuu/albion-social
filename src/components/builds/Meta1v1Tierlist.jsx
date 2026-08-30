@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Swords, Shield, Search, Flame, Award, TrendingUp, ChevronRight, Zap, RefreshCw, AlertCircle, Sparkles } from 'lucide-react'
 import { itemImageUrl } from '@/lib/buildSlots'
+import ItemTooltip from '@/components/ui/ItemTooltip'
 
 const TIER_COLORS = {
   'S+': { badge: 'border-amber-400/50 bg-amber-500/15 text-amber-300', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)] border-amber-400/30' },
@@ -15,7 +16,7 @@ const TIER_COLORS = {
 }
 
 function MetaItemIcon({ itemId, name, size }) {
-  return <img src={itemImageUrl(itemId, 1, size)} alt="" title={name || itemId} width={size} height={size} loading="lazy" decoding="async" className="albion-item-image" />
+  return <ItemTooltip label={name || itemId}><img src={itemImageUrl(itemId, 1, size)} alt="" width={size} height={size} loading="lazy" decoding="async" className="albion-item-image" /></ItemTooltip>
 }
 
 export default function Meta1v1Tierlist() {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { getWatchEventIds } from '@/lib/playerWatch'
+import { marketOfferCutoff } from '@/lib/marketOffers'
 import { ALBION_REGIONS, AlbionApiError, getAlbionPlayerWatchSnapshot } from '@/lib/server/albionApi'
 import { runPlayerWatchSync } from '@/lib/server/playerWatchSync'
 import { checkRateLimit } from '@/lib/server/rateLimit'
@@ -59,14 +60,33 @@ export async function GET(request) {
     if (auth.error) return jsonError(auth.error, auth.status)
 
     const admin = createSupabaseAdminClient()
-    const { data, error } = await admin
-      .from('entity_follows')
-      .select('entity_type, entity_id, label, region, last_event_at, last_checked_at, last_summary, last_error, created_at')
-      .eq('user_id', auth.user.id)
-      .order('created_at', { ascending: false })
-      .limit(500)
+    const [followsResult, buildsResult, guildsResult, marketResult, profilesResult, favoritesResult] = await Promise.all([
+      admin
+        .from('entity_follows')
+        .select('entity_type, entity_id, label, region, last_event_at, last_checked_at, last_summary, last_error, created_at')
+        .eq('user_id', auth.user.id)
+        .order('created_at', { ascending: false })
+        .limit(500),
+      admin.from('builds').select('id', { count: 'exact', head: true }).eq('status', 'visible'),
+      admin.from('guilds').select('id', { count: 'exact', head: true }).eq('status', 'visible'),
+      admin.from('market_items').select('id', { count: 'exact', head: true }).eq('status', 'visible').gt('created_at', marketOfferCutoff()),
+      admin.from('profiles').select('id', { count: 'exact', head: true }),
+      admin.from('build_favorites').select('build_id', { count: 'exact', head: true }).eq('user_id', auth.user.id),
+    ])
+    const { data, error } = followsResult
     if (error) throw error
-    return NextResponse.json({ follows: data || [] })
+    const countError = [buildsResult, guildsResult, marketResult, profilesResult, favoritesResult].find((result) => result.error)?.error
+    if (countError) throw countError
+    return NextResponse.json({
+      follows: data || [],
+      catalogCounts: {
+        build: buildsResult.count || 0,
+        guild: guildsResult.count || 0,
+        market: marketResult.count || 0,
+        player: profilesResult.count || 0,
+      },
+      savedCounts: { build: favoritesResult.count || 0 },
+    })
   } catch (error) {
     console.error('Błąd odczytu obserwowanych:', error)
     return jsonError('Nie udało się pobrać obserwowanych elementów.', 500)

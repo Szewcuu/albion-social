@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { EQUIPMENT_LAYOUT, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
+import ItemTooltip from '@/components/ui/ItemTooltip'
 
 export default function EquipmentPreview({ slots, itemNames = {}, size = 'md' }) {
   const safeSlots = slots && typeof slots === 'object' ? slots : {}
@@ -17,7 +18,9 @@ export default function EquipmentPreview({ slots, itemNames = {}, size = 'md' })
         return (
           <div key={key} className={`relative grid ${cellSize} place-items-center rounded-md border border-white/8 bg-black/20`}>
             {itemId ? (
-              <img src={itemImageUrl(itemId, 1, imagePixels)} alt="" title={safeSlots[key]?.name || itemNames[itemId] || itemId} width={imagePixels} height={imagePixels} loading="lazy" decoding="async" className={`albion-item-image ${iconSize} drop-shadow-md`} />
+              <ItemTooltip label={safeSlots[key]?.name || itemNames[itemId] || itemId}>
+                <img src={itemImageUrl(itemId, 1, imagePixels)} alt="" width={imagePixels} height={imagePixels} loading="lazy" decoding="async" className={`albion-item-image ${iconSize} drop-shadow-md`} />
+              </ItemTooltip>
             ) : <span className="h-1 w-1 rotate-45 bg-white/10" />}
             {itemId && getItemTierLabel(itemId) && (
               <span className={`absolute bottom-0.5 right-0.5 rounded bg-black/80 px-1 font-mono font-black text-amber-100 ${isCard ? 'text-[8px]' : 'text-[6px]'}`}>

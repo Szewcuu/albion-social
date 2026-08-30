@@ -1,16 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
 import { EQUIPMENT_LAYOUT, EQUIPMENT_SLOTS, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
+import ItemTooltip from '@/components/ui/ItemTooltip'
 
 function ItemTile({ itemId, itemName, label, amount, muted = false }) {
   return (
-    <div className={`relative flex min-h-28 flex-col items-center justify-center overflow-hidden rounded-2xl border p-3 text-center ${muted
+    <div className={`relative flex min-h-28 flex-col items-center justify-center rounded-2xl border p-3 text-center ${muted
       ? 'border-white/8 bg-black/20'
       : 'border-orange-200/15 bg-[radial-gradient(circle_at_50%_35%,rgba(210,112,39,.16),rgba(0,0,0,.35)_72%)] shadow-inner'
     }`}>
       <span className="absolute left-2.5 top-2 text-[8px] font-black uppercase tracking-[.14em] text-[#918b82]">{label}</span>
       {itemId ? (
         <>
-          <img src={itemImageUrl(itemId, 1, 72)} alt="" title={itemName || itemId} width="72" height="72" loading="lazy" decoding="async" className="albion-item-image mt-2 drop-shadow-[0_7px_10px_rgba(0,0,0,.8)]" />
+          <ItemTooltip label={itemName || itemId} className="mt-2">
+            <img src={itemImageUrl(itemId, 1, 72)} alt="" width="72" height="72" loading="lazy" decoding="async" className="albion-item-image drop-shadow-[0_7px_10px_rgba(0,0,0,.8)]" />
+          </ItemTooltip>
           {amount > 1 && (
             <span className="absolute bottom-2 right-2 rounded-md border border-white/10 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-orange-100">×{amount}</span>
           )}
