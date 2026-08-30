@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import Link from 'next/link'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
@@ -189,21 +190,7 @@ export default function MarketOfferBoard({
                 <div className="flex items-start gap-4 min-w-0 flex-1">
                   <div className="h-16 w-16 rounded-2xl bg-black/40 border border-white/10 p-2 flex items-center justify-center shrink-0 relative overflow-hidden">
                     {cleanItemName.length >= 3 ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={`/api/item-image?id=${encodeURIComponent(cleanItemName)}`}
-                        alt={offer.title}
-                        width="48"
-                        height="48"
-                        loading="lazy"
-                        decoding="async"
-                        fetchPriority="low"
-                        className="h-12 w-12 object-contain"
-                        onError={(event) => {
-                          event.currentTarget.style.display = 'none'
-                          if (event.currentTarget.nextElementSibling) event.currentTarget.nextElementSibling.style.display = 'flex'
-                        }}
-                      />
+                      <img src={`/api/item-image?id=${encodeURIComponent(cleanItemName)}&size=48`} alt="" title={offer.item_name || offer.title} width="48" height="48" loading="lazy" decoding="async" fetchPriority="low" className="h-12 w-12 object-contain" />
                     ) : null}
                     <div className="h-full w-full flex items-center justify-center text-amber-400" style={{ display: cleanItemName.length >= 3 ? 'none' : 'flex' }}>
                       <ShoppingBag className="h-6 w-6" />

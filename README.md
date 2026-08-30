@@ -42,6 +42,17 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
+### F1.6 — Informacja i przygotowanie drużyny
+
+- [x] przywrócić automatyczny „Goniec Królewski” z osobnymi wieściami i patch notes
+- [x] skierować ikony przedmiotów przez jeden cache’owany proxy z timeoutem i bezpiecznym fallbackiem
+- [x] dodać wizualny stan ładowania ikon oraz usunąć zepsute obrazki i techniczne teksty alternatywne
+- [x] podświetlać wybrane przedmioty w Kuźni i pokazywać polską nazwę po najechaniu
+- [x] rozbudować Planer Składu z 5 miejsc do formacji 5/10/20 z grupami bojowymi, eksportem i linkami
+- [x] skorygować globalny budżet JS z 1650 do 1660 KB dla rozbudowanego planera; limity pojedynczego chunka i trasy pozostają bez zmian
+- [ ] zweryfikować produkcyjny feed, render ikon i duży skład po publikacji
+- **Decyzja produktowa:** tymczasowy widget ankiety F1.5 na Tawernie został zastąpiony bezpośrednim wejściem do Gońca, ponieważ właściciel wskazał już kolejny kierunek rozwoju; zapisane głosy pozostają w bazie.
+
 > **Przegląd jakości portalu — podstrona po podstronie**
 
 Każdy widok przechodzi ten sam, krótki cykl: sprawdzenie desktopu i telefonu, przepływów użytkownika, stanów pustych/błędów, treści, dostępności i wydajności; następnie zapisujemy decyzje `zostawić / zmienić / dodać / usunąć`, wdrażamy zaakceptowany zakres i dopiero przechodzimy dalej.

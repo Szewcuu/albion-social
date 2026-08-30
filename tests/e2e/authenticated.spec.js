@@ -373,7 +373,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     })
 
     await page.goto(`/buildy?squad=${buildId},,,,&name=Front%205v5`)
-    await page.getByRole('button', { name: 'Planer Składu (5v5)' }).click()
+    await page.getByRole('button', { name: 'Planer Składu' }).click()
 
     await expect(page.getByPlaceholder('np. Nasza taktyka na ZvZ...')).toHaveValue('Front 5v5')
     await expect(page.getByText('Młot frontowy')).toBeVisible()

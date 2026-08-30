@@ -1,9 +1,10 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useMemo } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { Swords, Shield, Search, Flame, Award, TrendingUp, ChevronRight, Zap, RefreshCw, AlertCircle, Sparkles } from 'lucide-react'
+import { itemImageUrl } from '@/lib/buildSlots'
 
 const TIER_COLORS = {
   'S+': { badge: 'border-amber-400/50 bg-amber-500/15 text-amber-300', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)] border-amber-400/30' },
@@ -11,6 +12,10 @@ const TIER_COLORS = {
   'A': { badge: 'border-sky-400/50 bg-sky-500/15 text-sky-300', glow: 'border-sky-400/30' },
   'B': { badge: 'border-violet-400/50 bg-violet-500/15 text-violet-300', glow: 'border-violet-400/30' },
   'C': { badge: 'border-gray-500/50 bg-gray-500/15 text-gray-300', glow: 'border-gray-500/30' },
+}
+
+function MetaItemIcon({ itemId, name, size }) {
+  return <img src={itemImageUrl(itemId, 1, size)} alt="" title={name || itemId} width={size} height={size} loading="lazy" decoding="async" className="albion-item-image" />
 }
 
 export default function Meta1v1Tierlist() {
@@ -179,14 +184,7 @@ export default function Meta1v1Tierlist() {
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3.5">
                           <div className="w-14 h-14 rounded-2xl bg-black/60 border border-amber-400/30 p-1 flex items-center justify-center shrink-0 overflow-hidden relative">
-                            <Image
-                              src={`https://render.albiononline.com/v1/item/${encodeURIComponent(weapon.weaponId)}.png?quality=1&size=60`}
-                              alt={weapon.name}
-                              width={52}
-                              height={52}
-                              unoptimized
-                              className="object-contain"
-                            />
+                            <MetaItemIcon itemId={weapon.weaponId} name={weapon.name} size={52} />
                           </div>
 
                           <div>
@@ -217,15 +215,8 @@ export default function Meta1v1Tierlist() {
                               {[weapon.bestBuild.head, weapon.bestBuild.armor, weapon.bestBuild.shoes, weapon.bestBuild.cape]
                                 .filter(Boolean)
                                 .map((itemCode, i) => (
-                                  <div key={i} className="w-6 h-6 rounded-md bg-black/50 border border-white/10 p-0.5 overflow-hidden">
-                                    <Image
-                                      src={`https://render.albiononline.com/v1/item/${encodeURIComponent(itemCode)}.png?quality=1&size=30`}
-                                      alt="Item"
-                                      width={20}
-                                      height={20}
-                                      unoptimized
-                                      className="object-contain"
-                                    />
+                                  <div key={i} className="w-6 h-6 rounded-md bg-black/50 border border-white/10 p-0.5 overflow-visible">
+                                    <MetaItemIcon itemId={itemCode} size={20} />
                                   </div>
                                 ))}
                             </div>
@@ -252,14 +243,7 @@ export default function Meta1v1Tierlist() {
             <div className="flex items-start justify-between border-b border-white/10 pb-4">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-2xl bg-black/70 border border-amber-400/40 p-1 flex items-center justify-center shrink-0">
-                  <Image
-                    src={`https://render.albiononline.com/v1/item/${encodeURIComponent(activeDetailWeapon.weaponId)}.png?quality=1&size=70`}
-                    alt={activeDetailWeapon.name}
-                    width={60}
-                    height={60}
-                    unoptimized
-                    className="object-contain"
-                  />
+                  <MetaItemIcon itemId={activeDetailWeapon.weaponId} name={activeDetailWeapon.name} size={60} />
                 </div>
                 <div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${TIER_COLORS[activeDetailWeapon.tier]?.badge}`}>
@@ -308,19 +292,19 @@ export default function Meta1v1Tierlist() {
                 <h4 className="text-xs font-bold text-amber-400 uppercase">Najczęstszy zwycięski zestaw:</h4>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="p-2.5 rounded-xl bg-black/40 border border-white/8 flex items-center gap-2.5">
-                    <Image src={`https://render.albiononline.com/v1/item/${encodeURIComponent(activeDetailWeapon.bestBuild.head)}.png?quality=1&size=40`} alt="Head" width={32} height={32} unoptimized />
+                    <MetaItemIcon itemId={activeDetailWeapon.bestBuild.head} name={activeDetailWeapon.bestBuild.headName} size={32} />
                     <div><span className="text-[9px] text-gray-400 block uppercase">Głowa</span><span className="text-xs font-bold text-white">{activeDetailWeapon.bestBuild.headName}</span></div>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/40 border border-white/8 flex items-center gap-2.5">
-                    <Image src={`https://render.albiononline.com/v1/item/${encodeURIComponent(activeDetailWeapon.bestBuild.armor)}.png?quality=1&size=40`} alt="Armor" width={32} height={32} unoptimized />
+                    <MetaItemIcon itemId={activeDetailWeapon.bestBuild.armor} name={activeDetailWeapon.bestBuild.armorName} size={32} />
                     <div><span className="text-[9px] text-gray-400 block uppercase">Klatka</span><span className="text-xs font-bold text-white">{activeDetailWeapon.bestBuild.armorName}</span></div>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/40 border border-white/8 flex items-center gap-2.5">
-                    <Image src={`https://render.albiononline.com/v1/item/${encodeURIComponent(activeDetailWeapon.bestBuild.shoes)}.png?quality=1&size=40`} alt="Shoes" width={32} height={32} unoptimized />
+                    <MetaItemIcon itemId={activeDetailWeapon.bestBuild.shoes} name={activeDetailWeapon.bestBuild.shoesName} size={32} />
                     <div><span className="text-[9px] text-gray-400 block uppercase">Buty</span><span className="text-xs font-bold text-white">{activeDetailWeapon.bestBuild.shoesName}</span></div>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/40 border border-white/8 flex items-center gap-2.5">
-                    <Image src={`https://render.albiononline.com/v1/item/${encodeURIComponent(activeDetailWeapon.bestBuild.cape)}.png?quality=1&size=40`} alt="Cape" width={32} height={32} unoptimized />
+                    <MetaItemIcon itemId={activeDetailWeapon.bestBuild.cape} name={activeDetailWeapon.bestBuild.capeName} size={32} />
                     <div><span className="text-[9px] text-gray-400 block uppercase">Peleryna</span><span className="text-xs font-bold text-white">{activeDetailWeapon.bestBuild.capeName}</span></div>
                   </div>
                 </div>

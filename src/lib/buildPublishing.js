@@ -35,6 +35,7 @@ export function sanitizeBuildForPublishing(value) {
     const source = value.slots?.[slot.key] || {}
     return [slot.key, {
       main: cleanItemId(source.main),
+      name: cleanText(source.name, 120),
       alternatives: Array.isArray(source.alternatives)
         ? source.alternatives.slice(0, 2).map(cleanItemId).filter(Boolean)
         : [],

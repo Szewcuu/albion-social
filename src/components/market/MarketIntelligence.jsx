@@ -1,9 +1,9 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import CustomSelect from '@/components/ui/CustomSelect'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
 import {
   AlertTriangle,
   ArrowRight,
@@ -510,7 +510,7 @@ export default function MarketIntelligence() {
                     <div className="flex items-center justify-center gap-2 px-3 py-8 text-xs text-[#8f8a81]"><LoaderCircle className="h-4 w-4 animate-spin" /> Przeszukuję katalog...</div>
                   ) : searchResults.length ? searchResults.map((item) => (
                     <button key={item.id} type="button" onClick={() => selectItem(item)} className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition hover:bg-white/5">
-                      <Image src={itemImageUrl(item.id)} alt="" width={40} height={40} unoptimized className="h-10 w-10 object-contain" />
+                      { }<img src={itemImageUrl(item.id, 1, 40)} alt="" title={item.name} width="40" height="40" loading="lazy" decoding="async" className="h-10 w-10 object-contain" />
                       <span className="min-w-0">
                         <span className="block truncate text-xs font-bold text-[#eee7d9]">{item.name}</span>
                         <span className="block truncate font-mono text-[9px] text-[#918b82]">{item.id}</span>
@@ -527,7 +527,7 @@ export default function MarketIntelligence() {
           </div>
 
           <div className="flex items-center gap-3 rounded-2xl border border-[#d8ad4a]/15 bg-[#d8ad4a]/5 p-3">
-            <Image src={itemImageUrl(selectedItem.id, quality)} alt="" width={56} height={56} unoptimized className="h-14 w-14 object-contain drop-shadow-xl" />
+            { }<img src={itemImageUrl(selectedItem.id, quality, 56)} alt="" title={selectedItem.name} width="56" height="56" decoding="async" className="h-14 w-14 object-contain drop-shadow-xl" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-[#fff8e8]">{selectedItem.name}</p>
               <p className="mt-1 truncate font-mono text-[9px] text-[#918b82]">{selectedItem.id}</p>

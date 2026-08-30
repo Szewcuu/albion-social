@@ -63,9 +63,17 @@ export function getItemTierLabel(itemId) {
   return `T${match[1]}.${enchant}`
 }
 
-export function itemImageUrl(itemId, quality = 1) {
+export function itemImageUrl(itemId, quality = 1, size = 128) {
   if (!itemId) return null
-  return `https://render.albiononline.com/v1/item/${itemId}.png?count=1&quality=${quality}&size=128`
+  return `/api/item-image?id=${encodeURIComponent(itemId)}&quality=${quality}&size=${size}`
+}
+
+export function getBuildItemIds(build) {
+  const slots = build?.slots && typeof build.slots === 'object' ? build.slots : {}
+  return [...new Set(Object.values(slots).flatMap((slot) => [
+    slot?.main,
+    ...(Array.isArray(slot?.alternatives) ? slot.alternatives : []),
+  ]).filter(Boolean))]
 }
 
 export function encodeBuildToUrl(build) {
@@ -154,6 +162,7 @@ export function buildFromDbRow(row) {
       potion: { main: row.potion || '', alternatives: [], amount: 10 },
       food: { main: row.food || '', alternatives: [], amount: 10 },
     },
+    itemNames: row.item_names || data.itemNames || {},
     inventory: data.inventory || [],
     skillCombos: data.skillCombos || [],
     youtubeVideos: data.youtubeVideos || [],

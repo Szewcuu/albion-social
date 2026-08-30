@@ -1,13 +1,9 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
-import Image from 'next/image'
 import { AlertTriangle, Clock3, Coins, MapPin, Skull, Swords, Users } from 'lucide-react'
 import { VALUATION_EQUIPMENT_ORDER, VALUATION_SLOT_LABELS } from '@/lib/marketValuation'
-
-function itemImageUrl(item) {
-  if (!item?.type) return null
-  return `https://render.albiononline.com/v1/item/${encodeURIComponent(item.type)}.png?quality=${item.quality || 1}&size=80`
-}
+import { itemImageUrl } from '@/lib/buildSlots'
 
 function formatSilverValue(amount) {
   const value = Number(amount)
@@ -56,7 +52,7 @@ function EquipmentStrip({ equipment }) {
         return (
           <div key={key} className="relative flex h-11 w-11 items-center justify-center rounded-lg border border-white/8 bg-black/35 sm:h-10 sm:w-10">
             {item?.type ? (
-              <Image src={itemImageUrl(item)} alt={`${VALUATION_SLOT_LABELS[key]}: ${item.type}`} title={`${item.type} · jakość ${item.quality || 1}`} width={40} height={40} unoptimized className="h-10 w-10 object-contain sm:h-9 sm:w-9" />
+              <img src={itemImageUrl(item.type, item.quality || 1, 80)} alt="" title={`${VALUATION_SLOT_LABELS[key]} · jakość ${item.quality || 1}`} width="40" height="40" loading="lazy" decoding="async" className="h-10 w-10 object-contain sm:h-9 sm:w-9" />
             ) : (
               <span className="text-[9px] text-[#3e3b36]">—</span>
             )}
