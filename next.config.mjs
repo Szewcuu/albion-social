@@ -16,6 +16,13 @@ const contentSecurityPolicy = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    turbopackChunking: {
+      minChunkSize: 30_000,
+      maxChunkCountPerGroup: 50,
+      maxMergeChunkSize: 120_000,
+    },
+  },
   images: {
     remotePatterns: [
       {

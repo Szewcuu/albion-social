@@ -2,7 +2,7 @@
 
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Archive, ArrowLeft, HandCoins, Inbox, LockKeyhole, MessageSquareText, RefreshCw, Search, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
+import { Lock as Archive, ArrowLeft, HandCoins, MessageSquareText as Inbox, Lock, MessageSquareText, RefreshCw, Search, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
 
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
@@ -155,7 +155,7 @@ export default function TradeInboxPage() {
       <div className="relative z-10 mx-auto w-full max-w-[1400px] p-4 sm:p-6 lg:p-8">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-xs text-emerald-100">
           <span className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-emerald-300" /> Tylko uczestnicy rozmowy mogą zobaczyć jej treść.</span>
-          <span className="flex items-center gap-2 text-[var(--text-secondary)]"><LockKeyhole className="h-3.5 w-3.5" /> Finalizuj wymianę w grze i nigdy nie podawaj hasła.</span>
+          <span className="flex items-center gap-2 text-[var(--text-secondary)]"><Lock className="h-3.5 w-3.5" /> Finalizuj wymianę w grze i nigdy nie podawaj hasła.</span>
         </div>
 
         {error && <div className="mb-4 rounded-xl border border-rose-400/25 bg-rose-400/8 p-3 text-xs text-rose-200">{error}</div>}

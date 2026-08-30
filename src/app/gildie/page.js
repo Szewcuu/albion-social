@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ExternalLink, Globe, HelpCircle, MapPin, Plus, RotateCcw, Search, Shield, Swords, X } from 'lucide-react'
+import { ExternalLink, Globe, AlertCircle as HelpCircle, MapPin, Plus, RotateCcw, Search, Shield, Swords, X } from 'lucide-react'
 
 import GuildApplyModal from '@/components/GuildApplyModal'
 import GuildZvZInspectorModal from '@/components/guilds/GuildZvZInspectorModal'

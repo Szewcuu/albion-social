@@ -4,7 +4,7 @@ import CustomSelect from '@/components/ui/CustomSelect'
 
 import { useState } from 'react'
 import { calculateBuildStats, QUALITY_OPTIONS } from '@/lib/statCalculator'
-import { Shield, Heart, Zap, Swords, Award, Sliders } from 'lucide-react'
+import { Shield, Heart, Zap, Swords, Award, Settings2 as Sliders } from 'lucide-react'
 
 export default function BuildStatsCalculator({ slots, quality = 1, specBonus = 0, onQualityChange, onSpecChange, readOnly = false }) {
   const [localQuality, setLocalQuality] = useState(quality)

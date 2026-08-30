@@ -14,7 +14,7 @@ import {
   ChevronDown,
   Clock3,
   LoaderCircle,
-  MapPinned,
+  MapPin as MapPinned,
   RefreshCw,
   Search,
   ShieldCheck,

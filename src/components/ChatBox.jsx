@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import {
-  CornerUpLeft,
-  MessageSquareReply,
+  ArrowLeft as CornerUpLeft,
+  MessageSquareText as MessageSquareReply,
   RefreshCw,
   Send,
   Sparkles,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { TrendingUp, TrendingDown, Clock, MapPin, RefreshCw, BarChart2, AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Clock, MapPin, RefreshCw, BarChart3 as BarChart2, AlertCircle } from 'lucide-react'
 import CustomSelect from '@/components/ui/CustomSelect'
 
 const CITIES = ['Caerleon', 'Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford', 'Brecilien']

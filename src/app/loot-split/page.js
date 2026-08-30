@@ -5,16 +5,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AlertTriangle,
   Calculator,
-  ClipboardCopy,
+  Check as ClipboardCopy,
   Cloud,
   Coins,
   Download,
-  FileCheck2,
-  History,
+  CheckCircle2 as FileCheck2,
+  Clock3 as History,
   HandCoins,
   LoaderCircle,
   Plus,
-  ReceiptText,
+  Coins as ReceiptText,
   RotateCcw,
   Save,
   Share2,
@@ -23,7 +23,7 @@ import {
   Trash2,
   UserRoundCheck,
   Users,
-  WalletCards,
+  Coins as WalletCards,
 } from 'lucide-react'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'

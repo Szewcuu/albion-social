@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Shield, Swords, Plus, ThumbsUp, Trash2, Anvil, Flame, ArrowRightLeft } from 'lucide-react'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Hammer as Anvil, Flame, ArrowRightLeft } from 'lucide-react'
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import BuildFavoriteButton from '@/components/builds/BuildFavoriteButton'
 import { buildFromDbRow } from '@/lib/buildSlots'

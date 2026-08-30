@@ -4,16 +4,16 @@ import CustomSelect from '@/components/ui/CustomSelect'
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import {
-  Flag,
+  ShieldCheck as Flag,
   MessageSquareText,
   Send,
   ShieldCheck,
   Trash2,
   UserRound,
   X,
-  Pencil,
-  Reply,
-  ArrowUpDown,
+  Save as Pencil,
+  ArrowLeft as Reply,
+  ArrowRightLeft as ArrowUpDown,
   Check,
 } from 'lucide-react'
 

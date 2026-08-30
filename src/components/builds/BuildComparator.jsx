@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, ArrowRightLeft, BarChart3, CheckCircle2, Coins, ExternalLink, LoaderCircle, Scale, Sparkles, Zap } from 'lucide-react'
+import { AlertTriangle, ArrowRightLeft, BarChart3, CheckCircle2, Coins, ExternalLink, LoaderCircle, Coins as Scale, Sparkles, Zap } from 'lucide-react'
 
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import CustomSelect from '@/components/ui/CustomSelect'

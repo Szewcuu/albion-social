@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import {
   ArrowLeft, Save, Share2, Plus, Trash2, Check, AlertCircle,
-  Swords, Video, Package, Zap, ThumbsUp, ThumbsDown,
+  Swords, BookOpen as Video, ShoppingBag as Package, Zap, ThumbsUp, ThumbsDown,
 } from 'lucide-react'
 import EquipmentGrid from '@/components/builds/EquipmentGrid'
 import BuildStatsCalculator from '@/components/builds/BuildStatsCalculator'
