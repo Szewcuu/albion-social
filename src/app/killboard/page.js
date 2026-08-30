@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
-import { startTransition, Suspense, useEffect, useState } from 'react'
+import { startTransition, Suspense, useEffect, useRef, useState } from 'react'
 import { AlertTriangle, ExternalLink, RefreshCw, Search, Swords, Users } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
@@ -36,12 +36,29 @@ function KillboardContent() {
   const [errorMsg, setErrorMsg] = useState('')
   const [recoveryUrl, setRecoveryUrl] = useState('')
   const [activeHistory, setActiveHistory] = useState('kills')
+  const internalNavigationRef = useRef(false)
 
   useEffect(() => {
-    if (!initialNick) return undefined
+    if (internalNavigationRef.current) {
+      internalNavigationRef.current = false
+      return undefined
+    }
+    const targetRegion = initialRegion || 'europe'
+    startTransition(() => {
+      setSearchNick(initialNick || '')
+      setRegion(targetRegion)
+      setOverview(null)
+      setSearchResults([])
+      setErrorMsg('')
+      setRecoveryUrl('')
+    })
+    if (!initialNick) {
+      startTransition(() => setSearching(false))
+      return undefined
+    }
 
     let active = true
-    const targetRegion = initialRegion || 'europe'
+    startTransition(() => setSearching(true))
     fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(initialNick)}&region=${targetRegion}`)
       .then(async (response) => ({ response, payload: await response.json() }))
       .then(({ response, payload }) => {
@@ -120,18 +137,49 @@ function KillboardContent() {
   }
 
   const loadPlayer = async (player) => {
+    const playerName = String(player?.name || '').trim()
+    const playerRegion = player?.region || region
+    if (!player?.id && !playerName) return
+
     setLoadingPlayer(true)
     setErrorMsg('')
+    setRecoveryUrl('')
     setActiveHistory('kills')
-    const playerRegion = player.region || region
+    setSearchNick(playerName)
+    setRegion(playerRegion)
+    setSearchResults([])
+
+    const nextParams = new URLSearchParams()
+    if (playerName) nextParams.set('nick', playerName)
+    nextParams.set('region', playerRegion)
+    internalNavigationRef.current = true
+    window.history.replaceState(null, '', `/killboard?${nextParams.toString()}`)
 
     try {
-      const response = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(player.id)}&region=${playerRegion}&limit=6`)
-      const payload = await response.json()
-      if (!response.ok) throw new Error(getErrorMessage(payload, 'Nie udało się pobrać profilu gracza.'))
+      let resolvedPlayer = player
+      let response = player.id
+        ? await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(player.id)}&region=${playerRegion}&limit=6`)
+        : null
+      let payload = response ? await response.json() : null
+
+      // Identyfikatory z historii starć potrafią być niepełne lub chwilowo niespójne.
+      // Wtedy odszukujemy dokładny nick i ponawiamy odczyt z kanonicznym ID.
+      if ((!response?.ok || !payload?.data?.player) && playerName) {
+        const searchResponse = await fetch(`/api/albion/player?mode=search&query=${encodeURIComponent(playerName)}&region=${playerRegion}`)
+        const searchPayload = await searchResponse.json()
+        const exact = (searchPayload.data?.players || []).find((candidate) => candidate.name?.toLowerCase() === playerName.toLowerCase())
+        if (searchResponse.ok && exact?.id) {
+          resolvedPlayer = exact
+          response = await fetch(`/api/albion/player?mode=overview&id=${encodeURIComponent(exact.id)}&region=${exact.region || playerRegion}&limit=6`)
+          payload = await response.json()
+        }
+      }
+
+      if (!response?.ok || !payload?.data?.player) throw new Error(getErrorMessage(payload, 'Nie udało się pobrać profilu gracza.'))
 
       startTransition(() => {
-        setRegion(playerRegion)
+        setSearchNick(payload.data.player.name || resolvedPlayer.name || playerName)
+        setRegion(resolvedPlayer.region || playerRegion)
         setOverview(payload.data)
         setMeta(payload.meta)
         setSearchResults([])

@@ -101,6 +101,8 @@ function EntityCard({ follow }) {
 
 export default function FollowedEntitiesPage() {
   const [follows, setFollows] = useState([])
+  const [catalogCounts, setCatalogCounts] = useState({})
+  const [savedCounts, setSavedCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [error, setError] = useState('')
@@ -110,6 +112,8 @@ export default function FollowedEntitiesPage() {
     try {
       const payload = await readJson(await authenticatedFetch('/api/follows'))
       setFollows(payload.follows || [])
+      setCatalogCounts(payload.catalogCounts || {})
+      setSavedCounts(payload.savedCounts || {})
       setError('')
     } catch (loadError) {
       setError(loadError.message)
@@ -130,6 +134,13 @@ export default function FollowedEntitiesPage() {
   const counts = useMemo(() => Object.fromEntries(
     Object.keys(META).map((type) => [type, follows.filter((follow) => follow.entity_type === type).length]),
   ), [follows])
+  const summaryStats = [
+    ['albion_player', Swords, 'Postacie Albionu', counts.albion_player || 0, 'Obserwowane'],
+    ['build', BookOpen, 'Buildy', savedCounts.build || 0, 'Zapisane'],
+    ['guild', Shield, 'Gildie', catalogCounts.guild || 0, 'W katalogu'],
+    ['market', ShoppingBag, 'Oferty', catalogCounts.market || 0, 'Aktywne'],
+    ['player', UserRound, 'Profile', catalogCounts.player || 0, 'W portalu'],
+  ]
 
   async function syncPlayers() {
     setSyncing(true)
@@ -164,19 +175,14 @@ export default function FollowedEntitiesPage() {
       {error && <StatusNotice type="error">{error}</StatusNotice>}
       {message && <StatusNotice type="success">{message}</StatusNotice>}
 
-      {!loading && follows.length > 0 && (
-        <section className="grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Podsumowanie obserwowanych">
-          {[
-            ['albion_player', Swords, 'Postacie Albionu'],
-            ['build', BookOpen, 'Buildy'],
-            ['guild', Shield, 'Gildie'],
-            ['market', ShoppingBag, 'Oferty'],
-            ['player', UserRound, 'Profile'],
-          ].map(([type, Icon, label]) => (
+      {!loading && (
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-5" aria-label="Podsumowanie wartowni i katalogu portalu">
+          {summaryStats.map(([type, Icon, label, value, context]) => (
             <div key={type} className="panel rounded-[18px] p-4">
               <Icon className="h-4 w-4 text-amber-300" />
-              <strong className="font-display mt-3 block text-2xl text-white">{counts[type] || 0}</strong>
+              <strong className="font-display mt-3 block text-2xl text-white">{value}</strong>
               <span className="mt-1 block text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-muted)]">{label}</span>
+              <span className="mt-1 block text-[7px] uppercase tracking-[.1em] text-[var(--text-faded)]">{context}</span>
             </div>
           ))}
         </section>
@@ -195,7 +201,7 @@ export default function FollowedEntitiesPage() {
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {COMMUNITY_SECTIONS.map(({ type, label, icon: Icon, href, empty }) => (
                 <Link key={type} href={href} className="panel panel-interactive rounded-[20px] p-4">
-                  <div className="flex items-center justify-between"><span className="rounded-xl border border-white/8 bg-black/20 p-2.5 text-amber-200"><Icon className="h-4 w-4" /></span><strong className="font-display text-xl text-white">{counts[type] || 0}</strong></div>
+                  <div className="flex items-center justify-between"><span className="rounded-xl border border-white/8 bg-black/20 p-2.5 text-amber-200"><Icon className="h-4 w-4" /></span><span className="text-right"><strong className="font-display block text-xl text-white">{catalogCounts[type] || 0}</strong><small className="text-[7px] uppercase tracking-[.1em] text-[var(--text-faded)]">dostępne</small></span></div>
                   <h3 className="mt-3 text-xs font-black text-white">{label}</h3>
                   <p className="mt-1.5 text-[9px] leading-4 text-[var(--text-secondary)]">{counts[type] ? 'Otwórz moduł, aby znaleźć kolejne elementy warte obserwowania.' : empty}</p>
                 </Link>

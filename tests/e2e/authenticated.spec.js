@@ -423,7 +423,7 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await page.getByRole('button', { name: 'Meta 1v1 & Tierlisty' }).click()
 
     await expect(page.getByText('Dane obserwacyjne')).toBeVisible()
-    await expect(page.getByText('Miecz Broadsword')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Miecz Broadsword' })).toBeVisible()
     await expect(page.getByText('54.5% wynik ważony')).toBeVisible()
     await expect(page.getByText(/Ranking jest częściowy/)).toBeVisible()
     await expect(page.getByText(/Model demonstracyjny/)).toHaveCount(0)

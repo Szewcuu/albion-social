@@ -471,7 +471,8 @@ export default function ProfilePage() {
                     />
                   </div>
                   <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Nazwa gildii
-                    <input type="text" maxLength={100} value={formData.guild_name} disabled={Boolean(verifiedState?.is_verified)} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none font-mono disabled:cursor-not-allowed disabled:opacity-50" />
+                    <input type="text" maxLength={100} value={formData.guild_name} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none font-mono" />
+                    {verifiedState?.is_verified && <span className="mt-1.5 block text-[8px] font-normal normal-case leading-4 tracking-normal text-[var(--text-muted)]">Możesz poprawić ją ręcznie. Ponowna weryfikacja postaci zsynchronizuje nazwę z API Albionu.</span>}
                   </label>
                   <div>
                     <CustomSelect
@@ -509,7 +510,7 @@ export default function ProfilePage() {
                     type="checkbox"
                     checked={formData.favorite_builds_public}
                     onChange={(event) => setFormData({ ...formData, favorite_builds_public: event.target.checked })}
-                    className="mt-0.5 h-4 w-4 accent-[var(--amber)]"
+                    className="aopp-checkbox mt-0.5"
                   />
                   <span>
                     <span className="block text-xs font-bold text-[var(--text-primary)]">Pokaż zapisane buildy na profilu</span>

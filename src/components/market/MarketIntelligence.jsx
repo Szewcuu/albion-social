@@ -553,7 +553,7 @@ export default function MarketIntelligence() {
               <p className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[.16em] text-[#8f8a81]"><BellRing className="h-3.5 w-3.5 text-[#e5bb55]" /> Obserwowana cena · {historyCity}</p>
               {activeWatch && <span className="text-[8px] font-bold uppercase text-emerald-300">Zapisana</span>}
             </div>
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-[130px_150px_1fr_auto] items-center">
+            <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
                 <CustomSelect
                   value={watchDirection}
@@ -571,10 +571,10 @@ export default function MarketIntelligence() {
                   options={CITIES.map((city) => ({ value: city, label: city }))}
                 />
               </div>
-              <label><span className="sr-only">Próg ceny w silver</span><input type="number" min="0" value={watchTarget} onChange={(event) => setWatchTarget(event.target.value)} placeholder="Cena" className="min-h-11 w-full min-w-0 rounded-lg border border-white/10 bg-[#080605] px-2 py-2 font-mono text-[10px] text-[#eee7d9] outline-none focus:border-[#e5bb55]/40" /></label>
-              <div className="flex gap-1.5">
-                <button type="button" onClick={savePriceWatch} disabled={watchSaving} className="min-h-11 rounded-lg border border-[#e5bb55]/20 bg-[#e5bb55]/8 px-3 text-[9px] font-black uppercase text-[#e5bb55] hover:bg-[#e5bb55]/12 disabled:opacity-50">{watchSaving ? 'Zapisuję' : 'Zapisz'}</button>
-                {activeWatch && <button type="button" onClick={deletePriceWatch} disabled={watchSaving} className="min-h-11 rounded-lg border border-rose-400/20 bg-rose-400/8 px-3 text-[9px] font-black uppercase text-rose-300 hover:bg-rose-400/12 disabled:opacity-50">Usuń</button>}
+              <label className="min-w-0 text-[8px] font-black uppercase tracking-[.12em] text-[#8f8a81]">Próg ceny (Silver)<input type="number" min="0" value={watchTarget} onChange={(event) => setWatchTarget(event.target.value)} placeholder="np. 125000" className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-white/10 bg-[#080605] px-3 py-2 font-mono text-[10px] font-normal normal-case tracking-normal text-[#eee7d9] outline-none focus:border-[#e5bb55]/40" /></label>
+              <div className="flex min-w-0 items-end gap-1.5">
+                <button type="button" onClick={savePriceWatch} disabled={watchSaving} className="min-h-11 min-w-0 flex-1 rounded-lg border border-[#e5bb55]/20 bg-[#e5bb55]/8 px-3 text-[9px] font-black uppercase text-[#e5bb55] hover:bg-[#e5bb55]/12 disabled:opacity-50">{watchSaving ? 'Zapisuję' : 'Zapisz'}</button>
+                {activeWatch && <button type="button" onClick={deletePriceWatch} disabled={watchSaving} className="min-h-11 min-w-0 flex-1 rounded-lg border border-rose-400/20 bg-rose-400/8 px-3 text-[9px] font-black uppercase text-rose-300 hover:bg-rose-400/12 disabled:opacity-50">Usuń</button>}
               </div>
             </div>
             <p className="mt-2 text-[9px] leading-4 text-[#9b958b]">Alert jest zapisany na koncie dla wybranego miasta i jakości. Portal sprawdza go w tle i wysyła powiadomienie po przekroczeniu progu.</p>
@@ -712,12 +712,12 @@ export default function MarketIntelligence() {
 
               <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
                 <div className="rounded-2xl border border-white/8 bg-black/10 p-4 sm:p-5">
-                  <div className="mb-4 flex items-end justify-between gap-3">
+                  <div className="mb-4 grid min-w-0 gap-3">
                     <div>
                       <p className="text-[9px] font-black uppercase tracking-[.18em] text-[#e5bb55]">Średnia cena transakcji</p>
                       <h3 className="font-display mt-1 text-lg font-black text-[#fff8e8]">Historia przedmiotu</h3>
                     </div>
-                    <div className="min-w-36">
+                    <div className="min-w-0 w-full">
                       <CustomSelect
                         value={historyCity}
                         onChange={(val) => setHistoryCity(val)}

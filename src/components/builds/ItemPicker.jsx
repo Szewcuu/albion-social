@@ -1,8 +1,10 @@
 'use client'
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, X, Plus } from 'lucide-react'
 import { getItemEnchant, getItemTierLabel, itemImageUrl, setItemEnchant } from '@/lib/buildSlots'
+import ItemTooltip from '@/components/ui/ItemTooltip'
 
 export default function ItemPicker({ label, category, value, valueName = '', onChange, disabled = false, compact = false }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -19,6 +21,8 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
   useEffect(() => {
     if (!isOpen) return undefined
     const trigger = triggerRef.current
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
 
     function handleKeyDown(event) {
       if (event.key === 'Escape') {
@@ -44,6 +48,7 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
     document.addEventListener('keydown', handleKeyDown)
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = previousOverflow
       trigger?.focus()
     }
   }, [isOpen])
@@ -148,10 +153,10 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
         )}
         <div className="flex items-center justify-center">
           {value ? (
-            <div className="relative">
-              <img src={itemImageUrl(value, 1, compact ? 40 : 48)} alt="" title={valueName || value} width={compact ? 40 : 48} height={compact ? 40 : 48} decoding="async" className="albion-item-image drop-shadow-lg transition-transform group-hover:scale-110" />
+            <ItemTooltip label={valueName || value} className="relative">
+              <img src={itemImageUrl(value, 1, compact ? 40 : 48)} alt="" width={compact ? 40 : 48} height={compact ? 40 : 48} decoding="async" className="albion-item-image drop-shadow-lg transition-transform group-hover:scale-110" />
               {getItemTierLabel(value) && <span className="absolute -bottom-1 -right-2 rounded border border-amber-300/25 bg-black/85 px-1 py-0.5 font-mono text-[7px] font-black text-amber-100">{getItemTierLabel(value)}</span>}
-            </div>
+            </ItemTooltip>
           ) : (
             <div className={`rounded-lg bg-[#15060b] border border-dashed border-[#3b131f] flex items-center justify-center text-gray-600 ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
               <Plus className="w-4 h-4" />
@@ -159,12 +164,12 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
           )}
         </div>
         {value && !compact && (
-          <span className="text-[8px] text-amber-100/70 font-mono truncate block mt-1 text-center" title={valueName || value}>{valueName || value}</span>
+          <span className="text-[8px] text-amber-100/70 font-mono truncate block mt-1 text-center">{valueName || value}</span>
         )}
       </button>
 
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setIsOpen(false)}>
+      {isOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[1000] flex min-h-dvh items-center justify-center overflow-y-auto bg-black/90 p-4 backdrop-blur-md" onClick={() => setIsOpen(false)}>
           <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={dialogTitleId} className="bg-[#0c0407] border border-[#3b131f] rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-5 border-b border-[#200d13] shrink-0">
               <h3 id={dialogTitleId} className="text-sm font-mono font-bold text-[#f3ba2f] uppercase tracking-wider flex items-center gap-2">
@@ -246,7 +251,7 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
                       }`}
                     >
                       {item.id ? (
-                        <img src={itemImageUrl(item.id, 1, 32)} alt="" title={item.name} width="32" height="32" loading="lazy" decoding="async" className="albion-item-image shrink-0" />
+                        <img src={itemImageUrl(item.id, 1, 32)} alt="" width="32" height="32" loading="lazy" decoding="async" className="albion-item-image shrink-0" />
                       ) : (
                         <div className="w-8 h-8 rounded bg-[#15060b] flex items-center justify-center text-gray-600 text-xs">—</div>
                       )}
@@ -267,7 +272,8 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )

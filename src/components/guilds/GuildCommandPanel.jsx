@@ -124,7 +124,7 @@ export default function GuildCommandPanel({ guild, onChanged }) {
           <p className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">Stan rekrutacji</p>
           <h3 className="font-display mt-1 text-xl font-black text-white">Brama gildii</h3>
           <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border border-white/8 bg-black/20 p-3">
-            <input type="checkbox" checked={recruitment.open} onChange={(event) => setRecruitment((current) => ({ ...current, open: event.target.checked }))} className="h-4 w-4 accent-amber-400" />
+            <input type="checkbox" checked={recruitment.open} onChange={(event) => setRecruitment((current) => ({ ...current, open: event.target.checked }))} className="aopp-checkbox" />
             <span className="text-xs font-bold text-[var(--text-primary)]">Rekrutacja otwarta</span>
           </label>
           <label className="mt-4 block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Krótki komunikat
