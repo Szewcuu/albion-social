@@ -46,7 +46,7 @@ test.describe('wizualna responsywność portalu po zalogowaniu', () => {
       await installVisualNetworkFixtures(page)
       for (const route of AUTHENTICATED_ROUTES) {
         await captureResponsiveView(page, testInfo, route, viewport)
-        await expect(page.getByRole('button', { name: /Wejdź przez Discord/i })).toBeHidden()
+        await expect(page.getByRole('button', { name: /Wejdź do portalu/i })).toBeHidden()
       }
     })
   }

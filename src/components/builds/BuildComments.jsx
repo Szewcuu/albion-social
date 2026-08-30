@@ -370,7 +370,7 @@ export default function BuildComments({ buildId }) {
 
   const requireLogin = () => {
     if (user) return true
-    setNotice({ type: 'info', text: 'Zaloguj się przez Discord, aby komentować lub zgłaszać treści.' })
+    setNotice({ type: 'info', text: 'Zaloguj się, aby komentować lub zgłaszać treści.' })
     return false
   }
 

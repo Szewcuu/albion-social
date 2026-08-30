@@ -50,6 +50,7 @@ Gotowe i wdrożone:
 - [x] podświetlać wybrane przedmioty w Kuźni i pokazywać polską nazwę po najechaniu
 - [x] rozbudować Planer Składu z 5 miejsc do formacji 5/10/20 z grupami bojowymi, eksportem i linkami
 - [x] skorygować globalny budżet JS z 1650 do 1660 KB dla rozbudowanego planera; limity pojedynczego chunka i trasy pozostają bez zmian
+- [x] skorygować globalny budżet JS z 1660 do 1700 KB dla kompletnego modułu Auth (e-mail, odzyskiwanie i łączenie tożsamości); limity pojedynczego chunka i trasy pozostają bez zmian
 - [ ] zweryfikować produkcyjny feed, render ikon i duży skład po publikacji
 - **Decyzja produktowa:** tymczasowy widget ankiety F1.5 na Tawernie został zastąpiony bezpośrednim wejściem do Gońca, ponieważ właściciel wskazał już kolejny kierunek rozwoju; zapisane głosy pozostają w bazie.
 

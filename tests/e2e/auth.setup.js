@@ -13,7 +13,7 @@ setup('authenticate test user', async ({ page }) => {
     { storageKey: `sb-${projectRef}-auth-token`, session },
   )
   await page.reload()
-  await expect(page.getByRole('button', { name: /Wejdź przez Discord/i })).toBeHidden()
+  await expect(page.getByRole('button', { name: /Wejdź do portalu/i })).toBeHidden()
 
   const cookies = await page.context().cookies()
   expect(cookies.some(({ name }) => name.startsWith(`sb-${projectRef}-auth-token`))).toBe(true)

@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import AccountDeletionModal from '@/components/profile/AccountDeletionModal'
+import ConnectedAccountsPanel from '@/components/profile/ConnectedAccountsPanel'
 import {
   Activity,
   Award,
@@ -30,6 +31,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { portalAuth } from '@/lib/supabaseAuth'
+import { hasAuthIdentity } from '@/lib/authFlow'
 import CharacterVerificationModal from '@/components/CharacterVerificationModal'
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -295,7 +297,7 @@ export default function ProfilePage() {
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--amber)]/25 bg-[var(--amber)]/10 text-[var(--amber)]"><CircleUserRound className="h-8 w-8" /></div>
             <p className="mt-6 text-[9px] font-black uppercase tracking-[.22em] text-[var(--amber)]">Karta bohatera</p>
             <h1 className="font-display mt-2 text-3xl font-black text-[#fff]">Zaloguj się, aby otworzyć profil.</h1>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">Profil łączy Twoją tożsamość Discord z postacią Albionu, wyprawami i ofertami handlowymi.</p>
+            <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">Profil łączy konto portalu z postacią Albionu, wyprawami, ofertami handlowymi i opcjonalnymi integracjami.</p>
             <Link href="/" className="btn btn-primary mt-7 inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-[.12em]">Przejdź do logowania <ChevronRight className="h-4 w-4" /></Link>
           </section>
         </div>
@@ -324,8 +326,8 @@ export default function ProfilePage() {
                     <div className="flex h-full w-full items-center justify-center text-[var(--amber)]"><CircleUserRound className="h-10 w-10" /></div>
                   )}
                 </div>
-                <div className="mt-4 flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-[.15em] text-emerald-300">
-                  <UserRoundCheck className="h-3.5 w-3.5" /> Discord połączony
+                <div className={`mt-4 flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-[.15em] ${hasAuthIdentity(user, 'discord') ? 'text-emerald-300' : 'text-amber-300'}`}>
+                  <UserRoundCheck className="h-3.5 w-3.5" /> {hasAuthIdentity(user, 'discord') ? 'Discord połączony' : 'Discord niepołączony'}
                 </div>
                 {verifiedState?.is_verified && (
                   <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[9px] font-mono font-bold uppercase text-amber-300 bg-amber-950/40 border border-amber-500/40 px-2.5 py-1 rounded-full">
@@ -393,6 +395,7 @@ export default function ProfilePage() {
           </aside>
 
           <div className="space-y-6">
+            <ConnectedAccountsPanel />
             <section className="panel rounded-[28px] p-5 sm:p-7">
               <div className="flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
                 <div>

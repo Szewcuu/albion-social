@@ -205,7 +205,7 @@ export default function CreateBuildPage() {
             <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-mono font-bold text-amber-400 uppercase">Logowanie wymagane do publikacji</p>
-              <p className="text-[11px] text-gray-400 mt-1">Możesz tworzyć i udostępniać linki bez konta. Aby opublikować build w zbrojowni, zaloguj się przez Discord na stronie głównej.</p>
+              <p className="text-[11px] text-gray-400 mt-1">Możesz tworzyć i udostępniać linki bez konta. Aby opublikować build w zbrojowni, zaloguj się na stronie głównej.</p>
             </div>
           </div>
         )}
