@@ -6,11 +6,12 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  `script-src 'self' 'unsafe-inline'${developmentScriptPolicy} https://va.vercel-scripts.com`,
+  `script-src 'self' 'unsafe-inline'${developmentScriptPolicy} https://va.vercel-scripts.com https://challenges.cloudflare.com`,
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
   "img-src 'self' data: blob: https://cdn.discordapp.com https://render.albiononline.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.albiononline.com https://*.albion-online-data.com https://va.vercel-scripts.com https://*.vercel-insights.com",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.albiononline.com https://*.albion-online-data.com https://va.vercel-scripts.com https://*.vercel-insights.com https://challenges.cloudflare.com",
+  "frame-src https://challenges.cloudflare.com",
   "upgrade-insecure-requests",
 ].join('; ')
 

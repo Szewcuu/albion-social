@@ -375,6 +375,8 @@ a { color: inherit; text-decoration: none; }
 .auth-password-rules .valid { color: #38602d; }
 .auth-password-rules .valid svg { opacity: 1; }
 .auth-text-action { justify-self: end; margin-top: -2px; border: 0; background: transparent; color: #702c27; cursor: pointer; font: 800 9px/1 var(--font-ui); text-decoration: underline; text-underline-offset: 3px; }
+.auth-turnstile { display: grid; min-height: 0; place-items: center; overflow: hidden; border-radius: 5px; }
+.auth-turnstile > div { max-width: 100%; }
 .auth-submit { min-height: 46px; margin-top: 2px; }
 .auth-submit svg { width: 16px; height: 16px; }
 .auth-form-notice { display: flex; align-items: flex-start; gap: 8px; margin-top: 13px; padding: 10px 11px; border: 1px solid; border-radius: 5px; text-align: left; font: 700 10px/1.5 var(--font-ui); }

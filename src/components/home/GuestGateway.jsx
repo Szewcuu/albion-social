@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Turnstile } from '@marsidev/react-turnstile'
 import { AtSign, Check, Compass, Eye, EyeOff, Flame, KeyRound, LoaderCircle, MailCheck, Shield, UserRoundPlus } from 'lucide-react'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authCallbackUrl, friendlyAuthError, validatePortalPassword } from '@/lib/authFlow'
@@ -13,6 +14,8 @@ const AUTH_MODES = {
   register: { eyebrow: 'Nowy zapis w kronice', title: 'Załóż konto', description: 'Utwórz konto portalu. Discord możesz bezpiecznie połączyć później.' },
   recovery: { eyebrow: 'Odzyskanie dostępu', title: 'Przywróć hasło', description: 'Wyślemy bezpieczny link do ustawienia nowego hasła.' },
 }
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
 
 function PasswordRequirements({ password }) {
   const { checks } = validatePortalPassword(password)
@@ -28,7 +31,10 @@ export default function GuestGateway() {
   const [authError, setAuthError] = useState('')
   const [success, setSuccess] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState('')
+  const turnstileRef = useRef(null)
   const config = AUTH_MODES[mode]
+  const captchaEnabled = Boolean(TURNSTILE_SITE_KEY)
 
   useEffect(() => {
     const errorCode = new URLSearchParams(window.location.search).get('auth_error')
@@ -42,17 +48,20 @@ export default function GuestGateway() {
 
   const canSubmit = useMemo(() => {
     if (!form.email.trim()) return false
+    if (captchaEnabled && !captchaToken) return false
     if (mode === 'recovery') return true
     if (!form.password) return false
     if (mode === 'register') return form.name.trim().length >= 2 && form.password === form.confirmation && validatePortalPassword(form.password).valid
     return true
-  }, [form, mode])
+  }, [captchaEnabled, captchaToken, form, mode])
 
   const changeMode = (nextMode) => {
     setMode(nextMode)
     setAuthError('')
     setSuccess('')
     setBusy('')
+    setCaptchaToken('')
+    turnstileRef.current?.reset()
   }
 
   const handleCredentials = async (event) => {
@@ -65,7 +74,7 @@ export default function GuestGateway() {
     try {
       const email = form.email.trim().toLowerCase()
       if (mode === 'login') {
-        const { error } = await portalAuth.auth.signInWithPassword({ email, password: form.password })
+        const { error } = await portalAuth.auth.signInWithPassword({ email, password: form.password, options: { captchaToken: captchaToken || undefined } })
         if (error) throw error
         return
       }
@@ -77,6 +86,7 @@ export default function GuestGateway() {
           options: {
             emailRedirectTo: authCallbackUrl('/'),
             data: { name: form.name.trim(), full_name: form.name.trim() },
+            captchaToken: captchaToken || undefined,
           },
         })
         if (error) throw error
@@ -84,13 +94,17 @@ export default function GuestGateway() {
         return
       }
 
-      const { error } = await portalAuth.auth.resetPasswordForEmail(email, { redirectTo: authCallbackUrl('/auth/nowe-haslo') })
+      const { error } = await portalAuth.auth.resetPasswordForEmail(email, { redirectTo: authCallbackUrl('/auth/nowe-haslo'), captchaToken: captchaToken || undefined })
       if (error) throw error
       setSuccess('Jeżeli konto z tym adresem istnieje, wysłaliśmy link do ustawienia nowego hasła.')
     } catch (error) {
       setAuthError(friendlyAuthError(error))
     } finally {
       setBusy('')
+      if (captchaEnabled) {
+        setCaptchaToken('')
+        turnstileRef.current?.reset()
+      }
     }
   }
 
@@ -111,10 +125,14 @@ export default function GuestGateway() {
     if (!email || busy) return
     setBusy('resend')
     setAuthError('')
-    const { error } = await portalAuth.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authCallbackUrl('/') } })
+    const { error } = await portalAuth.auth.resend({ type: 'signup', email, options: { emailRedirectTo: authCallbackUrl('/'), captchaToken: captchaToken || undefined } })
     if (error) setAuthError(friendlyAuthError(error, 'Nie udało się ponownie wysłać wiadomości.'))
     else setSuccess(`Ponownie wysłaliśmy wiadomość aktywacyjną na ${email}.`)
     setBusy('')
+    if (captchaEnabled) {
+      setCaptchaToken('')
+      turnstileRef.current?.reset()
+    }
   }
 
   return (
@@ -145,10 +163,11 @@ export default function GuestGateway() {
 
             {mode === 'login' && <button type="button" className="auth-text-action" onClick={() => changeMode('recovery')}>Nie pamiętam hasła</button>}
             {mode === 'recovery' && <button type="button" className="auth-text-action" onClick={() => changeMode('login')}>Wróć do logowania</button>}
+            {captchaEnabled && <div className="auth-turnstile" aria-label="Ochrona formularza przed botami"><Turnstile ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} onSuccess={setCaptchaToken} onExpire={() => setCaptchaToken('')} onError={() => { setCaptchaToken(''); setAuthError('Nie udało się potwierdzić, że nie jesteś botem. Odśwież zabezpieczenie i spróbuj ponownie.') }} options={{ action: 'portal-auth', appearance: 'interaction-only', language: 'pl', size: 'flexible', theme: 'light' }} /></div>}
             <button type="submit" disabled={!canSubmit || Boolean(busy)} className="btn btn-primary auth-submit">{busy === mode ? <LoaderCircle className="spin" aria-hidden="true" /> : mode === 'register' ? <UserRoundPlus aria-hidden="true" /> : mode === 'recovery' ? <MailCheck aria-hidden="true" /> : <KeyRound aria-hidden="true" />}{mode === 'login' ? 'Wejdź do portalu' : mode === 'register' ? 'Utwórz konto' : 'Wyślij link resetujący'}</button>
           </form>
 
-          {success && <div role="status" className="auth-form-notice success"><MailCheck aria-hidden="true" /><span>{success}</span>{mode === 'register' && <button type="button" disabled={Boolean(busy)} onClick={resendConfirmation}>{busy === 'resend' ? 'Wysyłanie…' : 'Wyślij ponownie'}</button>}</div>}
+          {success && <div role="status" className="auth-form-notice success"><MailCheck aria-hidden="true" /><span>{success}</span>{mode === 'register' && <button type="button" disabled={Boolean(busy) || (captchaEnabled && !captchaToken)} onClick={resendConfirmation}>{busy === 'resend' ? 'Wysyłanie…' : 'Wyślij ponownie'}</button>}</div>}
           {authError && <p role="alert" className="welcome-error auth-form-notice error">{authError}</p>}
 
           {mode !== 'recovery' && <><div className="auth-divider"><span>lub użyj</span></div><div className="auth-oauth-grid"><button type="button" className="auth-oauth-button google" onClick={() => startOAuth('google')} disabled={Boolean(busy)}><Image className="oauth-brand-mark google" src="/brands/google-g.svg" width={20} height={20} alt="" aria-hidden="true" unoptimized />{busy === 'google' ? 'Łączenie…' : 'Google'}</button><button type="button" className="auth-oauth-button discord" onClick={() => startOAuth('discord')} disabled={Boolean(busy)}><Image className="oauth-brand-mark discord" src="/brands/discord-mark.svg" width={23} height={18} alt="" aria-hidden="true" unoptimized />{busy === 'discord' ? 'Łączenie…' : 'Discord'}</button></div><p className="auth-discord-hint">Discord pozostaje wymagany tylko przy funkcjach komunikujących się z serwerami społeczności. Połączysz go również później w profilu.</p></>}
