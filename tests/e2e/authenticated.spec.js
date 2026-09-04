@@ -452,6 +452,44 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     expect(polishResponse.headers()['x-item-catalog-version']).toBe(polish.meta.version.slice(0, 16))
   })
 
+  test('wyszukuje i sortuje cały katalog buildów', async ({ page }) => {
+    const requests = []
+    await page.route('**/api/builds?**', async (route) => {
+      const url = new URL(route.request().url())
+      requests.push({ search: url.searchParams.get('search'), sort: url.searchParams.get('sort'), limit: url.searchParams.get('limit') })
+      const searching = url.searchParams.get('search') === 'Kaptur Łowcy'
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          builds: searching ? [{
+            id: '11111111-1111-4111-8111-111111111111',
+            created_at: '2026-09-01T12:00:00.000Z',
+            user_id: '22222222-2222-4222-8222-222222222222',
+            title: 'Łowca Mgły',
+            description: 'Build testowy',
+            activity_type: 'pvp',
+            status: 'visible',
+            profiles: { username: 'Rycerz' },
+            build_votes: [{ id: '33333333-3333-4333-8333-333333333333', vote_type: 'up' }],
+            build_data: { slots: {}, itemNames: { T5_HEAD_LEATHER_SET2: 'Kaptur Łowcy' }, tags: { activities: ['PVP'] } },
+          }] : [],
+          hasMore: false,
+          nextCursor: null,
+          nextOffset: null,
+          total: searching ? 1 : 0,
+        }),
+      })
+    })
+
+    await page.goto('/buildy')
+    await page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…').fill('Kaptur Łowcy')
+    await page.getByRole('combobox', { name: 'Sortuj buildy' }).click()
+    await page.getByRole('option', { name: 'Najwięcej polubień' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Łowca Mgły' })).toBeVisible()
+    await expect.poll(() => requests.some((entry) => entry.search === 'Kaptur Łowcy' && entry.sort === 'likes' && entry.limit === '12')).toBe(true)
+  })
+
   test('zapisuje, odczytuje i usuwa serwerowy alert cenowy', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await getCookieAccessToken(page)

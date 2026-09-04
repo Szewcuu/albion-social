@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { sanitizeBuildForPublishing } from '@/lib/buildPublishing'
 import { buildFromDbRow, buildToDbPayload, getBuildItemIds } from '@/lib/buildSlots'
+import { getBuildLabel } from '@/lib/buildPresentation'
 import { getAlbionItemNameMap } from '@/lib/server/albionItemCatalog'
 import { isModerationId } from '@/lib/server/moderation'
 import { applyCreatedAtCursor, decodeCreatedAtCursor, pageFromRows } from '@/lib/server/pagination'
@@ -12,11 +13,36 @@ const MAX_BUILD_BODY_BYTES = 64 * 1024
 const BUILD_PAGE_SIZES = new Set([6, 12])
 const BUILD_FIELDS = 'id, created_at, user_id, title, activity_type, description, status, weapon, offhand, armor, head, shoes, cape, bag, potion, food, build_data, profiles!builds_user_id_fkey(username, avatar_url), build_votes(id, vote_type)'
 const BUILD_CATEGORIES = new Set(['all', 'pvp', 'pve', 'ganking'])
+const BUILD_SORTS = new Set(['latest', 'popular', 'likes'])
+const MAX_SEARCHABLE_BUILDS = 500
 const NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store, max-age=0' }
 
 const jsonError = (message, status, headers) => (
   NextResponse.json({ error: message }, { status, headers: { ...NO_STORE_HEADERS, ...headers } })
 )
+
+const normalizeSearch = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+const voteCount = (build) => (build.build_votes || []).filter((vote) => vote.vote_type === 'up').length
+
+function searchableBuild(build) {
+  const parsed = buildFromDbRow(build)
+  const itemIds = getBuildItemIds(parsed)
+  const catalogNames = getAlbionItemNameMap(itemIds)
+  const itemNames = { ...catalogNames, ...(parsed.itemNames || {}), ...(build.item_names || {}) }
+  return normalizeSearch([
+    build.title,
+    build.description,
+    build.activity_type,
+    build.profiles?.username,
+    parsed.authorName,
+    ...itemIds,
+    ...Object.values(itemNames),
+    ...(parsed.tags?.activities || []).flatMap((tag) => [tag, getBuildLabel(tag)]),
+    ...(parsed.tags?.locations || []),
+    ...(parsed.tags?.zones || []),
+    ...(parsed.tags?.roles || []),
+  ].join(' '))
+}
 
 async function authorize(request) {
   const auth = await requireApiUser(request)
@@ -36,21 +62,41 @@ export async function GET(request) {
     const requestedPageSize = Number(searchParams.get('limit') || 6)
     if (!BUILD_PAGE_SIZES.has(requestedPageSize)) return jsonError('Nieprawidłowy rozmiar strony.', 400)
 
-    const cursor = decodeCreatedAtCursor(searchParams.get('cursor'), isModerationId)
+    const search = normalizeSearch(searchParams.get('search')).slice(0, 80)
+    const sort = searchParams.get('sort') || 'latest'
+    if (!BUILD_SORTS.has(sort)) return jsonError('Nieprawidłowe sortowanie buildów.', 400)
+    const advanced = Boolean(search) || sort !== 'latest'
+    const offset = Number(searchParams.get('offset') || 0)
+    if (!Number.isInteger(offset) || offset < 0 || offset > MAX_SEARCHABLE_BUILDS || offset % requestedPageSize !== 0) {
+      return jsonError('Nieprawidłowa strona wyników.', 400)
+    }
+    const cursor = advanced ? null : decodeCreatedAtCursor(searchParams.get('cursor'), isModerationId)
     if (cursor === undefined) return jsonError('Nieprawidłowy kursor buildów.', 400)
 
     let query = context.supabase
       .from('builds')
-      .select(BUILD_FIELDS, { count: cursor ? undefined : 'exact' })
+      .select(BUILD_FIELDS, { count: cursor || advanced ? undefined : 'exact' })
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
-      .limit(requestedPageSize + 1)
+      .limit(advanced ? MAX_SEARCHABLE_BUILDS + 1 : requestedPageSize + 1)
 
     if (category !== 'all') query = query.ilike('activity_type', `%${category}%`)
-    const { data, error, count } = await applyCreatedAtCursor(query, cursor)
+    const { data, error, count } = advanced ? await query : await applyCreatedAtCursor(query, cursor)
     if (error) throw error
 
-    const page = pageFromRows(data || [], requestedPageSize)
+    let candidateRows = data || []
+    const searchTruncated = advanced && candidateRows.length > MAX_SEARCHABLE_BUILDS
+    if (advanced) candidateRows = candidateRows.slice(0, MAX_SEARCHABLE_BUILDS)
+    if (search) candidateRows = candidateRows.filter((build) => searchableBuild(build).includes(search))
+    if (sort === 'likes') candidateRows.sort((a, b) => voteCount(b) - voteCount(a) || Date.parse(b.created_at) - Date.parse(a.created_at))
+    if (sort === 'popular') candidateRows.sort((a, b) => {
+      const ageA = Math.max(0, (Date.now() - Date.parse(a.created_at)) / 86_400_000)
+      const ageB = Math.max(0, (Date.now() - Date.parse(b.created_at)) / 86_400_000)
+      return (voteCount(b) * 10 + 30 / (ageB + 2)) - (voteCount(a) * 10 + 30 / (ageA + 2))
+    })
+    const page = advanced
+      ? { page: candidateRows.slice(offset, offset + requestedPageSize), hasMore: offset + requestedPageSize < candidateRows.length, nextCursor: null }
+      : pageFromRows(candidateRows, requestedPageSize)
     const buildIds = page.page.map((build) => build.id)
     let favoriteIds = new Set()
     if (buildIds.length > 0) {
@@ -71,7 +117,9 @@ export async function GET(request) {
       })),
       hasMore: page.hasMore,
       nextCursor: page.nextCursor,
-      total: cursor ? undefined : (count || 0),
+      nextOffset: advanced && page.hasMore ? offset + requestedPageSize : null,
+      total: advanced ? candidateRows.length : (cursor ? undefined : (count || 0)),
+      searchTruncated,
     }, { headers: NO_STORE_HEADERS })
   } catch (error) {
     console.error('Błąd pobierania buildów:', error)
