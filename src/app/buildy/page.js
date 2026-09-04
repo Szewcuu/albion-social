@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { Shield, Swords, Plus, ThumbsUp, Trash2, Hammer as Anvil, Flame, ArrowRightLeft } from 'lucide-react'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Hammer as Anvil, Flame, ArrowRightLeft, Search, ArrowUpDown, X } from 'lucide-react'
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import BuildFavoriteButton from '@/components/builds/BuildFavoriteButton'
 import { buildFromDbRow } from '@/lib/buildSlots'
@@ -10,6 +10,7 @@ import { getBuildLabel } from '@/lib/buildPresentation'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 const BuildComparator = dynamic(() => import('@/components/builds/BuildComparator'), {
   loading: () => <div className="panel mb-6 min-h-32 animate-pulse" aria-label="Ładowanie porównywarki buildów" />,
@@ -27,7 +28,7 @@ const ALBION_CATEGORIES = [
   { id: 'pve', name: 'PvE & Statyki', icon: Swords },
   { id: 'ganking', name: 'Ganking & Mists', icon: Plus },
 ]
-const BUILDS_PAGE_SIZE = 6
+const BUILDS_PAGE_SIZE = 12
 
 export default function BuildyPage() {
   const { user } = usePortalSession()
@@ -36,27 +37,41 @@ export default function BuildyPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
+  const [searchDraft, setSearchDraft] = useState('')
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('latest')
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [totalBuilds, setTotalBuilds] = useState(0)
+  const [searchTruncated, setSearchTruncated] = useState(false)
   const [comparatorReady, setComparatorReady] = useState(false)
   const cursorRef = useRef(null)
+  const offsetRef = useRef(0)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearch(searchDraft.trim()), 300)
+    return () => window.clearTimeout(timer)
+  }, [searchDraft])
 
   const fetchBuilds = useCallback(async ({ append = false } = {}) => {
     if (append) setLoadingMore(true)
     else setLoading(true)
     setLoadError('')
     try {
-      const params = new URLSearchParams({ category: activeCategory, limit: String(BUILDS_PAGE_SIZE) })
-      if (append && cursorRef.current) params.set('cursor', cursorRef.current)
+      const params = new URLSearchParams({ category: activeCategory, limit: String(BUILDS_PAGE_SIZE), sort })
+      if (search) params.set('search', search)
+      if (append && (search || sort !== 'latest')) params.set('offset', String(offsetRef.current))
+      else if (append && cursorRef.current) params.set('cursor', cursorRef.current)
       const response = await authenticatedFetch(`/api/builds?${params}`, { cache: 'no-store' })
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Nie udało się pobrać buildów.')
 
       const page = result.builds || []
       cursorRef.current = result.nextCursor || null
+      offsetRef.current = result.nextOffset || 0
       setHasMore(result.hasMore === true)
       if (!append) setTotalBuilds(result.total || 0)
+      if (!append) setSearchTruncated(result.searchTruncated === true)
       setBuilds((current) => append ? [...current, ...page.filter((row) => !current.some((item) => item.id === row.id))] : page)
     } catch (err) {
       console.error('Błąd pobierania buildów:', err)
@@ -66,7 +81,7 @@ export default function BuildyPage() {
       if (append) setLoadingMore(false)
       else setLoading(false)
     }
-  }, [activeCategory])
+  }, [activeCategory, search, sort])
 
   useEffect(() => {
     void Promise.resolve().then(fetchBuilds)
@@ -171,7 +186,20 @@ export default function BuildyPage() {
         <>
           {/* Filters + Create */}
           <div className="panel mb-6">
-            <div className="panel-body flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="panel-body grid gap-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                <label className="relative min-w-0 flex-1">
+                  <span className="sr-only">Szukaj buildów</span>
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gold-dim)]" />
+                  <input value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} className="input w-full pl-10 pr-10" placeholder="Szukaj po nazwie, przedmiocie, autorze lub tagu…" />
+                  {searchDraft && <button type="button" onClick={() => setSearchDraft('')} aria-label="Wyczyść wyszukiwanie" className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded text-[var(--text-muted)] hover:text-white"><X className="h-4 w-4" /></button>}
+                </label>
+                <div className="flex min-w-[220px] items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 shrink-0 text-[var(--gold-dim)]" />
+                  <CustomSelect value={sort} onChange={setSort} label="Sortuj buildy" className="flex-1" options={[{ value: 'latest', label: 'Najnowsze' }, { value: 'popular', label: 'Popularne teraz' }, { value: 'likes', label: 'Najwięcej polubień' }]} />
+                </div>
+                <Link href="/buildy/create" className="btn btn-primary btn-sm shrink-0"><Flame className="h-4 w-4" /> Stwórz Build</Link>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {ALBION_CATEGORIES.map((cat) => {
                   const IconComponent = cat.icon
@@ -188,9 +216,6 @@ export default function BuildyPage() {
                   )
                 })}
               </div>
-              <Link href="/buildy/create" className="btn btn-primary btn-sm">
-                <Flame className="h-4 w-4" /> Stwórz Build
-              </Link>
             </div>
           </div>
 
@@ -218,6 +243,8 @@ export default function BuildyPage() {
             )
           )}
 
+          {searchTruncated && <p role="status" className="mb-4 text-xs text-amber-200">Katalog przekracza 500 buildów. Wyniki obejmują najnowsze 500 wpisów — zawęź wyszukiwanie, aby szybciej znaleźć zestaw.</p>}
+
           {/* Builds Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
         {loading ? (
@@ -235,7 +262,7 @@ export default function BuildyPage() {
           <div className="panel col-span-full text-center py-16">
             <div className="panel-body space-y-4">
               <Anvil className="mx-auto h-9 w-9 text-[var(--amber)]" />
-              <p className="text-lg font-bold text-white">Zbrojownia jest pusta.</p>
+              <p className="text-lg font-bold text-white">{search ? 'Nie znaleziono pasujących buildów.' : 'Zbrojownia jest pusta.'}</p>
               <Link href="/buildy/create" className="btn btn-ghost btn-sm inline-flex">
                 <Plus className="w-4 h-4" /> Stwórz pierwszy build
               </Link>
