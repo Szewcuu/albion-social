@@ -107,9 +107,11 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
   })
 
   test('otwiera czat społeczności', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
     await page.goto('/')
     await expect(page.getByRole('heading', { name: 'Główna sala Tawerny' })).toBeVisible()
     await expect(page.getByLabel('Napisz wiadomość w tawernie')).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(901)
   })
 
   test('obsługuje kronikę Tawerny jak rozmowę forumową', async ({ page }) => {

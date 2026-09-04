@@ -18,7 +18,8 @@
 .slots > :not([aria-hidden='true']):hover { background-color: #fbe2b84d; border-color: #91602c; }
 .slots :global(.inventory-tile) { position: relative; display: grid; place-items: center; padding: 8px; }
 .slots :global(.inventory-tile img) { width: 88px; height: 88px; max-width: 100%; object-fit: contain; }
-.slots :global(.inventory-label) { position: absolute; left: 5px; top: 3px; color: #6f482b; font: 700 8px/1.2 var(--font-ui); }
+.slots :global(.inventory-label) { position: absolute; z-index: 2; left: 5px; right: 5px; top: 3px; overflow: hidden; padding: 2px 4px; border-radius: 2px; background: linear-gradient(90deg,#ecd0a3e8,#ecd0a300); color: #56351f; font: 800 9px/1.25 var(--font-ui); text-overflow: ellipsis; white-space: nowrap; }
+.detail .slots :global(.inventory-tile) { padding-top: 19px; }
 .slots :global(.inventory-tier) { position: absolute; bottom: 4px; left: 4px; border-radius: 3px; padding: 1px 4px; background: #422b1e; color: #ffe4a6; font: 700 9px/1.4 var(--font-ui); pointer-events: none; }
 .slots :global(.inventory-amount) { position: absolute; right: 5px; bottom: 4px; color: #49311f; font: 800 10px/1.4 var(--font-ui); pointer-events: none; }
 .empty { display: grid; place-items: center; width: 100%; height: 100%; color: #91633b; opacity: .42; }
@@ -32,6 +33,13 @@
 .card .slots { gap: 9px; }
 .card .slots :global(.inventory-tile img) { width: 68px; height: 68px; }
 .card .footer { font-size: 8px; margin-top: 10px; padding-top: 8px; }
+.catalog { max-width: 230px; padding: 11px; border-width: 2px; }
+.catalog .heading, .catalog .footer { display: none; }
+.catalog .slots { gap: 6px; }
+.catalog .slots :global(.inventory-tile) { padding: 4px; }
+.catalog .slots :global(.inventory-tile img) { width: 48px; height: 48px; }
+.catalog .slots :global(.inventory-tier) { bottom: 1px; left: 1px; font-size: 7px; }
+.catalog .slots :global(.inventory-amount) { right: 2px; bottom: 1px; font-size: 8px; }
 .sm { max-width: 200px; padding: 10px; border-width: 2px; }
 .sm .heading, .sm .footer { display: none; }
 .sm .slots { gap: 5px; }

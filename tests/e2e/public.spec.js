@@ -20,6 +20,15 @@ test.describe('publiczna bramka portalu', () => {
     await expect(page.getByRole('link', { name: 'Prywatność', exact: true })).toBeVisible()
   })
 
+  test('mieści logowanie i stopkę na typowym ekranie desktopowym', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/')
+
+    await expect(page.getByRole('button', { name: /Wejdź do portalu/i })).toBeVisible()
+    await expect(page.locator('footer.guest-footer')).toBeVisible()
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(901)
+  })
+
   test('wyjaśnia nieudane zakończenie logowania', async ({ page }) => {
     await page.goto('/?auth_error=callback')
 

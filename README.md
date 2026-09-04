@@ -860,6 +860,31 @@ GET https://render.albiononline.com/v1/destiny/{identifier}.png
 
 Obsługuje m.in. parametry `quality`, `size` i `locale`. Ikony zawsze powinny mieć lokalny fallback, ponieważ nie każdy historyczny lub nowy identyfikator musi być dostępny.
 
+## Kolejny plan rozwoju — pomysły po przeglądzie UI
+
+Lista jest ułożona według wartości dla gracza, nie według łatwości implementacji.
+
+### Priorytet A — szybsze odnajdywanie treści
+
+- [ ] Dodać wyszukiwarkę buildów po nazwie, przedmiocie, autorze i tagu oraz sortowanie po popularności, aktualności i polubieniach.
+- [ ] Zapisać filtry Kuźni w adresie URL, aby można było udostępnić gotowy widok wyników.
+- [ ] Dodać kompaktowy tryb listy obok kafelków dla dużej liczby buildów.
+- [ ] Ujednolicić puste stany, szkielety ładowania i komunikaty ponowienia na wszystkich podstronach.
+
+### Priorytet B — rozwój społeczności
+
+- [ ] Wprowadzić wyróżniony „Build tygodnia” głosowany przez społeczność.
+- [ ] Dodać w Tawernie przypięte wątki i krótkie ogłoszenia moderatorów bez powielania głównej nawigacji.
+- [ ] Rozbudować publiczny profil o ostatnią aktywność, ulubione role i najczęściej używane zestawy.
+- [ ] Przygotować centrum aktywności łączące odpowiedzi, polubienia, zaproszenia do wypraw i wiadomości handlowe.
+
+### Priorytet C — jakość i wydajność
+
+- [ ] Dodać automatyczne testy wizualne ekranu logowania, Tawerny i Kuźni dla wysokości 768, 900 i 1080 px.
+- [ ] Zmierzyć Web Vitals na produkcji osobno dla użytkownika wylogowanego i zalogowanego.
+- [ ] Dodać paginację lub wirtualizację katalogu buildów po przekroczeniu 50 wyników.
+- [ ] Przeprowadzić pełny audyt dostępności klawiatury, kontrastu oraz komunikatów czytnika ekranu.
+
 ## Architektura
 
 - Next.js 16 / React 19
@@ -892,7 +917,7 @@ E2E_USER_EMAIL
 
 `SUPABASE_SERVICE_ROLE_KEY` i webhook Discorda są sekretami serwerowymi — nie wolno nadawać im prefiksu `NEXT_PUBLIC_` ani umieszczać ich w repozytorium.
 
-`E2E_USER_EMAIL` wskazuje dedykowane konto członkowskie bez roli personelu. Setup CI używa `SUPABASE_SERVICE_ROLE_KEY` tylko w procesie Node do utworzenia i natychmiastowej wymiany jednorazowego tokenu; odrzuca profile moderatorów i administratorów, a klucz serwisowy ani token jednorazowy nie trafiają do przeglądarki, artefaktów ani logów. Fixture nie zmienia produkcyjnej metody logowania — użytkownicy nadal wchodzą wyłącznie przez Discord OAuth.
+`E2E_USER_EMAIL` wskazuje dedykowane konto członkowskie bez roli personelu. Setup CI używa `SUPABASE_SERVICE_ROLE_KEY` tylko w procesie Node do utworzenia i natychmiastowej wymiany jednorazowego tokenu; odrzuca profile moderatorów i administratorów, a klucz serwisowy ani token jednorazowy nie trafiają do przeglądarki, artefaktów ani logów. Fixture nie zmienia produkcyjnych metod logowania: e-mail i hasło pozostają metodą główną, Google opcjonalną, a Discord można połączyć dla funkcji społecznościowych.
 
 ## Kontrola jakości
 
