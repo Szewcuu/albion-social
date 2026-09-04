@@ -1,7 +1,8 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Shield, Swords, Plus, ThumbsUp, Trash2, Hammer as Anvil, Flame, ArrowRightLeft, Search, ArrowUpDown, X } from 'lucide-react'
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import BuildFavoriteButton from '@/components/builds/BuildFavoriteButton'
@@ -29,17 +30,48 @@ const ALBION_CATEGORIES = [
   { id: 'ganking', name: 'Ganking & Mists', icon: Plus },
 ]
 const BUILDS_PAGE_SIZE = 12
+const BUILD_SORT_OPTIONS = ['latest', 'popular', 'likes']
 
-export default function BuildyPage() {
+function BuildSearchInput({ value, onSearch }) {
+  const [draft, setDraft] = useState(value)
+
+  useEffect(() => {
+    const nextSearch = draft.trim()
+    if (nextSearch === value) return undefined
+    const timer = window.setTimeout(() => onSearch(nextSearch), 300)
+    return () => window.clearTimeout(timer)
+  }, [draft, onSearch, value])
+
+  const clearSearch = () => {
+    setDraft('')
+    onSearch('')
+  }
+
+  return (
+    <label className="relative min-w-0 flex-1">
+      <span className="sr-only">Szukaj buildów</span>
+      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gold-dim)]" />
+      <input value={draft} onChange={(event) => setDraft(event.target.value)} className="input w-full pl-10 pr-10" placeholder="Szukaj po nazwie, przedmiocie, autorze lub tagu…" />
+      {draft && <button type="button" onClick={clearSearch} aria-label="Wyczyść wyszukiwanie" className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded text-[var(--text-muted)] hover:text-white"><X className="h-4 w-4" /></button>}
+    </label>
+  )
+}
+
+function BuildyPageContent() {
   const { user } = usePortalSession()
   const { requestConfirmation, confirmationDialog } = useConfirmDialog()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentQuery = searchParams.toString()
+  const categoryParam = searchParams.get('category')
+  const activeCategory = ALBION_CATEGORIES.some((category) => category.id === categoryParam) ? categoryParam : 'all'
+  const sortParam = searchParams.get('sort')
+  const sort = BUILD_SORT_OPTIONS.includes(sortParam) ? sortParam : 'latest'
+  const search = (searchParams.get('q') || '').slice(0, 80)
   const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
-  const [activeCategory, setActiveCategory] = useState('all')
-  const [searchDraft, setSearchDraft] = useState('')
-  const [search, setSearch] = useState('')
-  const [sort, setSort] = useState('latest')
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(false)
   const [totalBuilds, setTotalBuilds] = useState(0)
@@ -48,10 +80,20 @@ export default function BuildyPage() {
   const cursorRef = useRef(null)
   const offsetRef = useRef(0)
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setSearch(searchDraft.trim()), 300)
-    return () => window.clearTimeout(timer)
-  }, [searchDraft])
+  const updateFilters = useCallback((changes) => {
+    const params = new URLSearchParams(currentQuery)
+    Object.entries(changes).forEach(([key, value]) => {
+      const isDefault = (key === 'category' && value === 'all') || (key === 'sort' && value === 'latest')
+      if (!value || isDefault) params.delete(key)
+      else params.set(key, value)
+    })
+    params.delete('cursor')
+    params.delete('offset')
+    const query = params.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }, [currentQuery, pathname, router])
+
+  const handleSearch = useCallback((value) => updateFilters({ q: value }), [updateFilters])
 
   const fetchBuilds = useCallback(async ({ append = false } = {}) => {
     if (append) setLoadingMore(true)
@@ -188,15 +230,10 @@ export default function BuildyPage() {
           <div className="panel mb-6">
             <div className="panel-body grid gap-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                <label className="relative min-w-0 flex-1">
-                  <span className="sr-only">Szukaj buildów</span>
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--gold-dim)]" />
-                  <input value={searchDraft} onChange={(event) => setSearchDraft(event.target.value)} className="input w-full pl-10 pr-10" placeholder="Szukaj po nazwie, przedmiocie, autorze lub tagu…" />
-                  {searchDraft && <button type="button" onClick={() => setSearchDraft('')} aria-label="Wyczyść wyszukiwanie" className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded text-[var(--text-muted)] hover:text-white"><X className="h-4 w-4" /></button>}
-                </label>
+                <BuildSearchInput key={search} value={search} onSearch={handleSearch} />
                 <div className="flex min-w-[220px] items-center gap-2">
                   <ArrowUpDown className="h-4 w-4 shrink-0 text-[var(--gold-dim)]" />
-                  <CustomSelect value={sort} onChange={setSort} label="Sortuj buildy" className="flex-1" options={[{ value: 'latest', label: 'Najnowsze' }, { value: 'popular', label: 'Popularne teraz' }, { value: 'likes', label: 'Najwięcej polubień' }]} />
+                  <CustomSelect value={sort} onChange={(value) => updateFilters({ sort: value })} label="Sortuj buildy" className="flex-1" options={[{ value: 'latest', label: 'Najnowsze' }, { value: 'popular', label: 'Popularne teraz' }, { value: 'likes', label: 'Najwięcej polubień' }]} />
                 </div>
                 <Link href="/buildy/create" className="btn btn-primary btn-sm shrink-0"><Flame className="h-4 w-4" /> Stwórz Build</Link>
               </div>
@@ -207,7 +244,8 @@ export default function BuildyPage() {
                   return (
                     <button
                       key={cat.id}
-                      onClick={() => setActiveCategory(cat.id)}
+                      onClick={() => updateFilters({ category: cat.id })}
+                      aria-pressed={isActive}
                       className={`chip ${isActive ? 'active' : ''}`}
                     >
                       <IconComponent className="w-3.5 h-3.5" />
@@ -352,5 +390,13 @@ export default function BuildyPage() {
         </>
       )}
     </div>
+  )
+}
+
+export default function BuildyPage() {
+  return (
+    <Suspense fallback={<div className="page-content"><div className="panel min-h-72 animate-pulse" aria-label="Ładowanie Kuźni Buildów" /></div>}>
+      <BuildyPageContent />
+    </Suspense>
   )
 }
