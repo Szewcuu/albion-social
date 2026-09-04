@@ -19,7 +19,8 @@ const contentSecurityPolicy = [
 const nextConfig = {
   experimental: {
     turbopackChunking: {
-      minChunkSize: 30_000,
+      // Smaller shared chunks avoid duplicating inventory UI across routes.
+      minChunkSize: 15_000,
       maxChunkCountPerGroup: 50,
       maxMergeChunkSize: 120_000,
     },
