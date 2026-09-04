@@ -1,35 +1,35 @@
 /* eslint-disable @next/next/no-img-element */
-import { EQUIPMENT_LAYOUT, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
+import { EQUIPMENT_LAYOUT, EQUIPMENT_SLOTS, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
 import ItemTooltip from '@/components/ui/ItemTooltip'
+import InventoryFrame, { EmptyEquipmentSlot } from './InventoryFrame'
 
 export default function EquipmentPreview({ slots, itemNames = {}, size = 'md' }) {
   const safeSlots = slots && typeof slots === 'object' ? slots : {}
-  const isCard = size === 'card'
-  const iconSize = size === 'sm' ? 'h-8 w-8' : isCard ? 'h-14 w-14' : 'h-11 w-11'
-  const cellSize = size === 'sm' ? 'min-h-10' : isCard ? 'min-h-16' : 'min-h-14'
-  const layoutWidth = size === 'sm' ? 'max-w-40' : isCard ? 'max-w-64' : 'max-w-56'
-  const imagePixels = size === 'sm' ? 32 : isCard ? 56 : 44
+  const imagePixels = size === 'sm' ? 48 : size === 'card' ? 80 : 128
 
   return (
-    <div className={`mx-auto grid w-full grid-cols-3 gap-2 ${layoutWidth}`}>
+    <InventoryFrame size={size}>
       {EQUIPMENT_LAYOUT.flatMap((row, rowIndex) => row.map((key, columnIndex) => {
         if (!key) return <div key={`empty-${rowIndex}-${columnIndex}`} aria-hidden="true" />
         const itemId = safeSlots[key]?.main
+        const label = EQUIPMENT_SLOTS.find(slot => slot.key === key).label
         return (
-          <div key={key} className={`relative grid ${cellSize} place-items-center rounded-md border border-white/8 bg-black/20`}>
+          <div key={key} className="inventory-tile">
+            {size === 'detail' && <span className="inventory-label">{label}</span>}
             {itemId ? (
               <ItemTooltip label={safeSlots[key]?.name || itemNames[itemId] || itemId}>
-                <img src={itemImageUrl(itemId, 1, imagePixels)} alt="" width={imagePixels} height={imagePixels} loading="lazy" decoding="async" className={`albion-item-image ${iconSize} drop-shadow-md`} />
+                <img src={itemImageUrl(itemId, 1, imagePixels)} alt={safeSlots[key]?.name || itemNames[itemId] || label} width={imagePixels} height={imagePixels} loading="lazy" decoding="async" className="albion-item-image drop-shadow-md" />
               </ItemTooltip>
-            ) : <span className="h-1 w-1 rotate-45 bg-white/10" />}
+            ) : <EmptyEquipmentSlot slotKey={key} label={`${label}: pusty slot`} />}
             {itemId && getItemTierLabel(itemId) && (
-              <span className={`absolute bottom-0.5 right-0.5 rounded bg-black/80 px-1 font-mono font-black text-amber-100 ${isCard ? 'text-[8px]' : 'text-[6px]'}`}>
+              <span className="inventory-tier">
                 {getItemTierLabel(itemId)}
               </span>
             )}
+            {itemId && safeSlots[key]?.amount > 1 && <span className="inventory-amount">×{safeSlots[key].amount}</span>}
           </div>
         )
       }))}
-    </div>
+    </InventoryFrame>
   )
 }

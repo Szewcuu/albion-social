@@ -1,6 +1,15 @@
 import { expect, test } from './browser-health.js'
 
 test.describe('publiczna bramka portalu', () => {
+  test('prezentuje możliwości społeczności bez udostępniania modułów gościom', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    await page.goto('/')
+    for (const name of ['Znajdź swoich ludzi', 'Wykuj swój styl', 'Wyruszcie razem']) {
+      await expect(page.getByRole('heading', { name })).toBeVisible()
+    }
+    await expect(page.getByLabel('Obsługiwane serwery')).toContainText('EuropaAmerykaAzja')
+    await expect(page.getByRole('heading', { name: 'Główna sala Tawerny' })).toHaveCount(0)
+  })
   test('pokazuje wyłącznie ekran powitalny i logowanie', async ({ page }) => {
     await page.goto('/')
 

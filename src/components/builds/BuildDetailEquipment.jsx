@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { EQUIPMENT_LAYOUT, EQUIPMENT_SLOTS, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
+import { EQUIPMENT_SLOTS, getItemTierLabel, itemImageUrl } from '@/lib/buildSlots'
 import ItemTooltip from '@/components/ui/ItemTooltip'
+import EquipmentPreview from './EquipmentPreview'
 
 function ItemTile({ itemId, itemName, label, amount, muted = false }) {
   return (
@@ -28,7 +29,8 @@ function ItemTile({ itemId, itemName, label, amount, muted = false }) {
   )
 }
 
-export default function BuildDetailEquipment({ slots, itemNames = {} }) {
+export default function BuildDetailEquipment({ slots: providedSlots, itemNames = {} }) {
+  const slots = providedSlots && typeof providedSlots === 'object' ? providedSlots : {}
   return (
     <section className="aopp-panel p-4 sm:p-6" aria-labelledby="build-equipment-title">
       <div className="mb-5 flex items-end justify-between gap-4">
@@ -39,21 +41,7 @@ export default function BuildDetailEquipment({ slots, itemNames = {} }) {
         <span className="hidden font-mono text-[9px] uppercase text-[#918b82] sm:block">10 slotów doktryny</span>
       </div>
 
-      <div className="mx-auto grid max-w-3xl grid-cols-3 gap-2 sm:gap-3">
-        {EQUIPMENT_LAYOUT.flatMap((row, rowIndex) => row.map((key, columnIndex) => {
-          if (!key) return <div key={`empty-${rowIndex}-${columnIndex}`} aria-hidden="true" />
-          const slot = EQUIPMENT_SLOTS.find((item) => item.key === key)
-          return (
-            <ItemTile
-              key={key}
-              itemId={slots[key]?.main}
-              itemName={slots[key]?.name || itemNames[slots[key]?.main]}
-              label={slot.label}
-              amount={slots[key]?.amount}
-            />
-          )
-        }))}
-      </div>
+      <EquipmentPreview slots={slots} itemNames={itemNames} size="detail" />
 
       {EQUIPMENT_SLOTS.some((slot) => slots[slot.key]?.alternatives?.some(Boolean)) && (
         <div className="mt-6 border-t border-white/8 pt-5">

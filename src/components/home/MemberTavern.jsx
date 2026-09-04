@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
+import { ArrowRight, Beer, Check, Shield, Swords } from 'lucide-react'
+import styles from './HomeAtmosphere.module.css'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
@@ -14,6 +17,8 @@ const PortalAnalyticsWidget = dynamic(() => import('@/components/stats/PortalAna
 })
 export default function MemberTavern() {
   const { user, isAdmin } = usePortalSession()
+  const [prepared, setPrepared] = useState([])
+  const preparations = ['Ekwipunek naprawiony', 'Jedzenie i mikstury spakowane', 'Miejsce zbiórki ustalone']
   const [overview, setOverview] = useState({
     verifiedPlayers: 0,
     totalPvpFame: 0,
@@ -22,15 +27,19 @@ export default function MemberTavern() {
     guildsCount: 0,
   })
   const [overviewLoading, setOverviewLoading] = useState(true)
+  const [overviewUnavailable, setOverviewUnavailable] = useState(false)
 
   const fetchPortalOverview = useCallback(async () => {
+    setOverviewLoading(true)
     try {
       const response = await authenticatedFetch('/api/portal-overview')
       const body = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(body?.error || 'Nie udało się pobrać podsumowania.')
       setOverview((current) => ({ ...current, ...body.stats }))
+      setOverviewUnavailable(false)
     } catch {
       // Statystyki są dodatkiem; główna Tawerna pozostaje dostępna.
+      setOverviewUnavailable(true)
     } finally {
       setOverviewLoading(false)
     }
@@ -39,14 +48,27 @@ export default function MemberTavern() {
   useEffect(() => scheduleIdleTask(fetchPortalOverview), [fetchPortalOverview])
 
   return (
-    <div className="w-full max-w-[1320px] mx-auto px-4 sm:px-6 pt-5 sm:pt-7 animate-fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        <div className="lg:col-span-7 xl:col-span-8">
+    <div className={styles.tavern}>
+      <header className={styles.tavernHeader}>
+        <div><small>Polska kompania · wszystkie serwery</small><h1>Rozgość się w Tawernie</h1><p>Wymień wieści, znajdź towarzyszy i zaplanuj następny wymarsz.</p></div>
+        <span className={styles.tavernSign} aria-hidden="true"><Beer /></span>
+      </header>
+      <div className={styles.tavernLayout}>
+        <div className={styles.conversation}>
           <ChatBox user={user} isAdmin={isAdmin} />
+          <div className={styles.noticeboard}>
+            <Link href="/buildy" className={styles.notice}><Swords aria-hidden="true" /><div><h2>Ze zbrojowni kompanii</h2><p>{overviewLoading ? 'Sprawdzamy stojaki z ekwipunkiem…' : overviewUnavailable ? '' : `${overview.activeBuilds} zestawów w publicznej kuźni.`} Podejrzyj pomysły innych graczy i dopracuj swój build.</p><small>Przejrzyj zestawy →</small></div></Link>
+            <Link href="/gildie" className={styles.notice}><Shield aria-hidden="true" /><div><h2>Pod wspólnym sztandarem</h2><p>{overviewLoading ? 'Sprawdzamy rejestr chorągwi…' : overviewUnavailable ? '' : `${overview.guildsCount} gildii w rejestrze portalu.`} Poznaj ich styl gry i znajdź kompanię dla siebie.</p><small>Poznaj gildie →</small></div></Link>
+          </div>
         </div>
-        <div className="lg:col-span-5 xl:col-span-4">
-          <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />
-          <a href="/aktualnosci" className="panel panel-interactive mt-5 block p-4"><span className="badge badge-amber">Goniec Królewski</span><h3 className="mt-2 text-xl font-bold text-white">Wieści i patch notes</h3><p className="mt-2 text-xs text-[var(--text-secondary)]">Najnowsze komunikaty Albion Online w jednym miejscu.</p></a>
+        <div className={styles.sidebar}>
+          {overviewUnavailable && !overviewLoading ? <div className="panel p-5"><p className="text-sm text-amber-100">Podsumowanie społeczności jest chwilowo niedostępne.</p><button type="button" className="btn btn-ghost mt-3" onClick={fetchPortalOverview}>Spróbuj ponownie</button></div> : <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />}
+          <Link href="/aktualnosci" className={styles.news}><small>Goniec Królewski</small><h2>Co słychać za murami?</h2><p>Oficjalne wiadomości i patch notes. Sprawdź, co zmieniło się w świecie Albionu przed kolejnym wyjściem w teren.</p><span>Otwórz kronikę wieści <ArrowRight aria-hidden="true" /></span></Link>
+          <section className={styles.checklist} aria-label="Przygotowania do wyprawy">
+            <div className={styles.checklistHeader}><h2>Przed wymarszem</h2><span aria-live="polite">{prepared.length}/3</span></div>
+            <p>Podręczna lista na tę wizytę w Tawernie.</p>
+            {preparations.map((label, index) => <button key={label} type="button" aria-pressed={prepared.includes(index)} onClick={() => setPrepared(current => current.includes(index) ? current.filter(item => item !== index) : [...current, index])}><span aria-hidden="true">{prepared.includes(index) && <Check />}</span>{label}</button>)}
+          </section>
         </div>
       </div>
     </div>

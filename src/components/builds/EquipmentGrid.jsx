@@ -2,12 +2,14 @@
 import ItemPicker from './ItemPicker'
 import { EQUIPMENT_LAYOUT, EQUIPMENT_SLOTS, isTwoHandedWeapon } from '@/lib/buildSlots'
 import { Lock } from 'lucide-react'
+import InventoryFrame, { EmptyEquipmentSlot } from './InventoryFrame'
 
 function SlotCell({ slot, slotData, onChange, offHandBlocked }) {
   const disabled = slot.twoHandBlocked && offHandBlocked
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="inventory-editor-slot">
+      <span className="inventory-label">{slot.label}</span>
       <ItemPicker
         label={slot.label}
         category={slot.category}
@@ -16,6 +18,8 @@ function SlotCell({ slot, slotData, onChange, offHandBlocked }) {
         onChange={(id, name) => onChange({ ...slotData, main: id, name: name || '' })}
         disabled={disabled}
         compact
+        inventory
+        emptySlot={<EmptyEquipmentSlot slotKey={slot.key} label="" />}
       />
       {slot.hasAmount && (
         <input
@@ -46,7 +50,7 @@ export default function EquipmentGrid({ slots, onSlotChange }) {
         Ekwipunek — kliknij slot aby wybrać przedmiot
       </div>
 
-      <div className="mx-auto grid max-w-sm grid-cols-3 items-center gap-3">
+      <InventoryFrame subtitle="Kliknij slot, aby wybrać przedmiot">
         {EQUIPMENT_LAYOUT.flatMap((row, rowIndex) => row.map((key, columnIndex) => (
           key ? (
             <SlotCell
@@ -58,7 +62,7 @@ export default function EquipmentGrid({ slots, onSlotChange }) {
             />
           ) : <div key={`empty-${rowIndex}-${columnIndex}`} aria-hidden="true" />
         )))}
-      </div>
+      </InventoryFrame>
 
       {offHandBlocked && (
         <p className="text-[10px] text-amber-500/70 font-mono text-center mt-3">

@@ -42,6 +42,16 @@ Gotowe i wdrożone:
 
 ## Bieżący etap
 
+### Aktualizacja wyglądu — 4 września 2026
+
+- [x] wspólny pergaminowy panel ekwipunku z sylwetką i slotami w układzie gry: karty buildów, szczegóły oraz kreator
+- [x] większe ikony, etykiety tieru/enchantu, podpowiedzi nazw oraz czytelne pola liczby mikstur i jedzenia
+- [x] wzbogacenie ekranu logowania o prezentację społeczności, buildów i wspólnych wypraw bez otwierania chronionych modułów gościom
+- [x] zagospodarowanie Tawerny: większy obszar rozmowy, tablica buildów i gildii, Goniec oraz podręczna lista przygotowań (na bieżącą wizytę, bez zapisu)
+- [x] jawny stan niedostępności podsumowania zamiast pokazywania zer po błędzie API
+- [x] akceptacja publikacji przez właściciela projektu
+- [ ] ocena wyglądu na rzeczywistym koncie po wdrożeniu
+
 ### F1.6 — Informacja i przygotowanie drużyny
 
 - [x] przywrócić automatyczny „Goniec Królewski” z osobnymi wieściami i patch notes

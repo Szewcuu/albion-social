@@ -1,0 +1,62 @@
+.welcomeFeatures { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 20px; margin-top: 40px; max-width: 690px; padding-top: 25px; border-top: 1px solid #d6af6638; }
+.welcomeFeatures article { min-width: 0; }
+.welcomeFeatures svg { width: 22px; height: 22px; color: #e4bc60; margin-bottom: 12px; }
+.welcomeFeatures h2 { color: #f2e3c6; font: 700 17px/1.25 var(--font-heading); margin: 0 0 7px; }
+.welcomeFeatures p { color: #bfad91; font: 400 12px/1.7 var(--font-ui); margin: 0; }
+.worlds { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; font: 700 10px/1.5 var(--font-ui); letter-spacing: .09em; text-transform: uppercase; color: #d7c39e; }
+.worlds span { display: inline-flex; align-items: center; gap: 7px; }
+.worlds span::before { content: '◆'; font-size: 7px; color: #c89f4d; }
+.invitation { color: #bca789; font: italic 15px/1.65 var(--font-heading); border-left: 2px solid #b67438; padding-left: 16px; margin-top: 27px; }
+.tavern { width: 100%; max-width: 1600px; margin: auto; padding: 24px clamp(16px, 2vw, 32px) 36px; }
+.tavernHeader { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 25px 30px; margin-bottom: 22px; border: 1px solid #9c713842; border-left: 4px solid #b26b40; background: linear-gradient(100deg,#382316ed,#1b120bd9),url('/albion-social-hero.webp') center 60%/cover; }
+.tavernHeader small { color: #d6b36f; font: 800 9px/1.5 var(--font-ui); letter-spacing: .2em; text-transform: uppercase; }
+.tavernHeader h1 { color: #fff0d3; font: 700 clamp(28px,3vw,42px)/1.15 var(--font-heading); margin: 6px 0 8px; }
+.tavernHeader p { color: #c4b193; font-size: 13px; margin: 0; }
+.tavernSign { display: grid; place-items: center; width: 74px; height: 74px; flex-shrink: 0; border: 3px double #aa7a3e; border-radius: 50%; background: #130e0a99; color: #dfb858; box-shadow: 0 0 28px #cc8a1920; }
+.tavernSign svg { width: 32px; height: 32px; }
+.tavernLayout { display: grid; grid-template-columns: minmax(0,1fr) minmax(300px,360px); gap: 22px; align-items: start; }
+.conversation, .sidebar { min-width: 0; }
+.conversation :global(.community-posts) { min-height: 380px; max-height: 560px !important; height: min(53vh,560px); }
+.sidebar { display: grid; gap: 18px; }
+.news { display: block; padding: 23px; border: 1px solid #bd914050; background: linear-gradient(125deg,#44301bcc,#1b110be8); position: relative; transition: border-color .2s; }
+.news:hover { border-color: #dbb36e; }
+.news small { color: #d4ad65; font: 800 9px/1.5 var(--font-ui); letter-spacing: .15em; text-transform: uppercase; }
+.news h2 { color: #f6e7cb; font: 700 23px/1.25 var(--font-heading); margin: 10px 0; }
+.news p { color: #c1af94; font-size: 12px; line-height: 1.7; }
+.news > span { display: flex; align-items: center; gap: 9px; color: #e6bd65; margin-top: 15px; font: 750 10px/1.4 var(--font-ui); }
+.news svg { width: 15px; height: 15px; }
+.checklist { padding: 21px; border: 1px solid #92754540; background: #1b140ee6; }
+.checklistHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.checklist h2 { margin: 0; font: 700 20px/1.3 var(--font-heading); color: #eee1c5; }
+.checklistHeader span { color: #d8b46f; font: 700 11px/1 var(--font-ui); }
+.checklist p { color: #b6a588; font-size: 11px; line-height: 1.6; margin: 7px 0 13px; }
+.checklist button { display: flex; width: 100%; gap: 10px; align-items: center; text-align: left; padding: 12px 0; color: #d1bea0; border-top: 1px solid #93734830; font: 550 12px/1.5 var(--font-ui); }
+.checklist button > span { width: 19px; height: 19px; flex-shrink: 0; display: grid; place-items: center; border: 1px solid #ae8850; border-radius: 3px; }
+.checklist button svg { width: 13px; height: 13px; }
+.checklist button[aria-pressed='true'] { color: #99bd91; }
+.checklist button[aria-pressed='true'] > span { background: #47704040; border-color: #7e9d66; }
+.checklist button:focus-visible, .notice:focus-visible, .news:focus-visible { outline: 2px solid #eac774; outline-offset: 4px; }
+.noticeboard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+.notice { display: flex; align-items: flex-start; gap: 16px; padding: 22px; background: linear-gradient(135deg,#d9bf90,#bfa077); color: #4c351e; border: 3px double #825c38; box-shadow: 0 5px 15px #0003; transition: transform .2s; }
+.notice:hover { transform: translateY(-2px); }
+.notice > svg { width: 26px; height: 26px; flex-shrink: 0; margin-top: 3px; }
+.notice h2 { font: 750 21px/1.2 var(--font-heading); margin: 0 0 9px; }
+.notice p { font: 500 12px/1.6 var(--font-ui); margin: 0; }
+.notice small { display: block; font: 800 9px/1.4 var(--font-ui); text-transform: uppercase; letter-spacing: .08em; margin-top: 14px; }
+@media (max-width: 1100px) {
+  .tavernLayout { grid-template-columns: minmax(0,1fr); }
+  .sidebar { grid-template-columns: 1fr 1fr; }
+  .sidebar > :first-child { grid-row: span 2; }
+}
+@media (max-width: 600px) {
+  .welcomeFeatures { gap: 15px; margin-top: 24px; }
+  .welcomeFeatures h2 { font-size: 14px; }
+  .welcomeFeatures p, .invitation { display: none; }
+  .worlds { font-size: 8px; gap: 10px; }
+  .tavernHeader { padding: 20px; }
+  .tavernSign { width: 46px; height: 46px; }
+  .tavernSign svg { width: 22px; height: 22px; }
+  .sidebar, .noticeboard { grid-template-columns: 1fr; }
+  .conversation :global(.community-posts) { min-height: 280px; height: 45vh; max-height: 420px !important; }
+}
+@media (prefers-reduced-motion: reduce) { .notice, .news { transition: none; } .notice:hover { transform: none; } }
