@@ -452,11 +452,11 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     expect(polishResponse.headers()['x-item-catalog-version']).toBe(polish.meta.version.slice(0, 16))
   })
 
-  test('wyszukuje i sortuje cały katalog buildów', async ({ page }) => {
+  test('wyszukuje i sortuje cały katalog buildów oraz zachowuje filtry w URL', async ({ page }) => {
     const requests = []
     await page.route('**/api/builds?**', async (route) => {
       const url = new URL(route.request().url())
-      requests.push({ search: url.searchParams.get('search'), sort: url.searchParams.get('sort'), limit: url.searchParams.get('limit') })
+      requests.push({ search: url.searchParams.get('search'), sort: url.searchParams.get('sort'), category: url.searchParams.get('category'), limit: url.searchParams.get('limit') })
       const searching = url.searchParams.get('search') === 'Kaptur Łowcy'
       await route.fulfill({
         contentType: 'application/json',
@@ -481,13 +481,19 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       })
     })
 
-    await page.goto('/buildy')
-    await page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…').fill('Kaptur Łowcy')
-    await page.getByRole('combobox', { name: 'Sortuj buildy' }).click()
-    await page.getByRole('option', { name: 'Najwięcej polubień' }).click()
+    await page.goto('/buildy?q=Kaptur%20%C5%81owcy&sort=likes&category=pvp')
 
+    await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…')).toHaveValue('Kaptur Łowcy')
+    await expect(page.getByRole('combobox', { name: 'Sortuj buildy' })).toContainText('Najwięcej polubień')
+    await expect(page.getByRole('button', { name: 'PvP & ZvZ' })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('heading', { name: 'Łowca Mgły' })).toBeVisible()
-    await expect.poll(() => requests.some((entry) => entry.search === 'Kaptur Łowcy' && entry.sort === 'likes' && entry.limit === '12')).toBe(true)
+    await expect.poll(() => requests.some((entry) => entry.search === 'Kaptur Łowcy' && entry.sort === 'likes' && entry.category === 'pvp' && entry.limit === '12')).toBe(true)
+
+    await page.getByRole('button', { name: 'Ganking & Mists' }).click()
+    await expect.poll(() => page.evaluate(() => Object.fromEntries(new URL(window.location.href).searchParams))).toMatchObject({ q: 'Kaptur Łowcy', sort: 'likes', category: 'ganking' })
+    await page.reload()
+    await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…')).toHaveValue('Kaptur Łowcy')
+    await expect(page.getByRole('button', { name: 'Ganking & Mists' })).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('zapisuje, odczytuje i usuwa serwerowy alert cenowy', async ({ page, request }) => {
