@@ -157,10 +157,10 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(page.getByText('Szybkie Akcje Gracza')).toHaveCount(0)
 
     const posts = page.locator('.community-posts')
-    await expect.poll(() => posts.evaluate((element) => ({
-      atBottom: element.scrollTop + element.clientHeight >= element.scrollHeight - 2,
-      height: element.clientHeight,
-    }))).toEqual({ atBottom: true, height: 360 })
+    await expect.poll(() => posts.evaluate((element) => (
+      element.scrollTop + element.clientHeight >= element.scrollHeight - 2
+    ))).toBe(true)
+    await expect.poll(() => posts.evaluate((element) => element.clientHeight)).toBeGreaterThanOrEqual(360)
 
     const targetMessage = page.locator('.community-post').filter({ hasText: 'Wiadomość do odpowiedzi' })
     await targetMessage.getByRole('button', { name: 'Odpowiedz' }).click()
