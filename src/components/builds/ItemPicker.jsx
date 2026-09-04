@@ -6,7 +6,7 @@ import { Search, X, Plus } from 'lucide-react'
 import { getItemEnchant, getItemTierLabel, itemImageUrl, setItemEnchant } from '@/lib/buildSlots'
 import ItemTooltip from '@/components/ui/ItemTooltip'
 
-export default function ItemPicker({ label, category, value, valueName = '', onChange, disabled = false, compact = false }) {
+export default function ItemPicker({ label, category, value, valueName = '', onChange, disabled = false, compact = false, inventory = false, emptySlot = null }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [items, setItems] = useState([])
@@ -154,10 +154,10 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
         <div className="flex items-center justify-center">
           {value ? (
             <ItemTooltip label={valueName || value} className="relative">
-              <img src={itemImageUrl(value, 1, compact ? 40 : 48)} alt="" width={compact ? 40 : 48} height={compact ? 40 : 48} decoding="async" className="albion-item-image drop-shadow-lg transition-transform group-hover:scale-110" />
+              <img src={itemImageUrl(value, 1, inventory ? 80 : compact ? 40 : 48)} alt="" width={inventory ? 80 : compact ? 40 : 48} height={inventory ? 80 : compact ? 40 : 48} decoding="async" className="albion-item-image max-w-full drop-shadow-lg transition-transform group-hover:scale-110" />
               {getItemTierLabel(value) && <span className="absolute -bottom-1 -right-2 rounded border border-amber-300/25 bg-black/85 px-1 py-0.5 font-mono text-[7px] font-black text-amber-100">{getItemTierLabel(value)}</span>}
             </ItemTooltip>
-          ) : (
+          ) : emptySlot || (
             <div className={`rounded-lg bg-[#15060b] border border-dashed border-[#3b131f] flex items-center justify-center text-gray-600 ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
               <Plus className="w-4 h-4" />
             </div>

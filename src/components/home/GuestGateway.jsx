@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Turnstile } from '@marsidev/react-turnstile'
-import { AtSign, Check, Compass, Eye, EyeOff, Flame, KeyRound, LoaderCircle, MailCheck, Shield, UserRoundPlus } from 'lucide-react'
+import { AtSign, Check, Compass, Eye, EyeOff, Flame, KeyRound, LoaderCircle, MailCheck, Shield, UserRoundPlus, Swords, Users, MessagesSquare } from 'lucide-react'
+import styles from './HomeAtmosphere.module.css'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authCallbackUrl, friendlyAuthError, validatePortalPassword } from '@/lib/authFlow'
 import { portalAuth } from '@/lib/supabaseAuth'
@@ -145,6 +146,13 @@ export default function GuestGateway() {
           <div className="welcome-kicker"><Flame aria-hidden="true" /> Polska społeczność · wszystkie serwery Albionu</div>
           <h1 id="welcome-title">Twoja historia<br /><em>zaczyna się tutaj.</em></h1>
           <p>Polskie forum i baza wypadowa dla graczy Albion Online. Jedno konto łączy rozmowy społeczności, gildie, buildy, handel i wspólne wyprawy.</p>
+          <div className={styles.welcomeFeatures}>
+            <article><MessagesSquare aria-hidden="true" /><h2>Znajdź swoich ludzi</h2><p>Rozmowy przy wspólnym stole. Pytania, doświadczenie i nowi towarzysze.</p></article>
+            <article><Swords aria-hidden="true" /><h2>Wykuj swój styl</h2><p>Buduj zestawy ekwipunku i przygotuj się do kolejnego starcia.</p></article>
+            <article><Users aria-hidden="true" /><h2>Wyruszcie razem</h2><p>Gildie i wspólne wyprawy. Od pierwszego lochu po bitwy o terytoria.</p></article>
+          </div>
+          <div className={styles.worlds} aria-label="Obsługiwane serwery"><span>Europa</span><span>Ameryka</span><span>Azja</span></div>
+          <div className={styles.invitation}>Nie musisz przemierzać Albionu samotnie.<br />Przy naszym stole jest miejsce także dla Ciebie.</div>
         </div>
 
         <div className="guest-login-card auth-gateway-card">
