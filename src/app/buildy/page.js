@@ -219,7 +219,7 @@ export default function BuildyPage() {
           )}
 
           {/* Builds Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
         {loading ? (
           <p className="text-[var(--text-muted)] italic col-span-full text-center py-10">Pobieranie buildów...</p>
         ) : loadError ? (
@@ -257,7 +257,7 @@ export default function BuildyPage() {
                   aria-label={`Otwórz build: ${b.title}`}
                   className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--amber)]"
                 />
-                <div className="pointer-events-none relative z-0 p-5">
+                <div className="pointer-events-none relative z-0 p-4 pb-3">
                   <div className="flex justify-between items-start mb-3">
                     <span className="badge badge-amber">{getBuildLabel(b.activity_type)}</span>
                     <div className="flex items-center gap-2 pointer-events-auto">
@@ -279,12 +279,12 @@ export default function BuildyPage() {
                   )}
                 </div>
 
-                <div className="pointer-events-none relative z-0 mx-5 mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-3">
-                  <div className="mb-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Ekwipunek</div>
-                  <EquipmentPreview slots={parsed.slots} itemNames={parsed.itemNames} size="card" />
+                <div className="pointer-events-none relative z-0 mx-4 mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-2">
+                  <div className="mb-1.5 text-center text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Ekwipunek</div>
+                  <EquipmentPreview slots={parsed.slots} itemNames={parsed.itemNames} size="catalog" />
                 </div>
 
-                <div className="relative z-20 flex items-center justify-between px-5 pb-4 pt-3 border-t border-[var(--border)]">
+                <div className="relative z-20 flex items-center justify-between px-4 pb-3 pt-3 border-t border-[var(--border)]">
                   <Link href={`/profil/${b.user_id || b.profiles?.username}`} className="flex items-center gap-2 hover:opacity-80 transition" title="Zobacz publiczny profil gracza">
                     <div className="w-6 h-6 rounded-md bg-[var(--bg-hover)] flex items-center justify-center text-[var(--amber)] text-[10px] font-bold">
                       {(b.profiles?.username || parsed.authorName || 'G').charAt(0).toUpperCase()}

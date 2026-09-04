@@ -48,6 +48,48 @@
   .sidebar { grid-template-columns: 1fr 1fr; }
   .sidebar > :first-child { grid-row: span 2; }
 }
+@media (min-width: 1101px) and (min-height: 700px) {
+  .tavern { height: calc(100dvh - var(--topbar-h)); overflow: hidden; padding-top: 12px; padding-bottom: 14px; }
+  .tavernHeader { min-height: 88px; margin-bottom: 12px; padding: 15px 24px; }
+  .tavernHeader h1 { margin-block: 3px 4px; font-size: clamp(27px,2.3vw,36px); }
+  .tavernSign { width: 58px; height: 58px; }
+  .tavernSign svg { width: 26px; height: 26px; }
+  .tavernLayout { height: calc(100% - 100px); gap: 14px; }
+  .conversation { display: grid; min-height: 0; grid-template-rows: minmax(0,1fr) auto; }
+  .conversation > :first-child { min-height: 0; }
+  .conversation :global(.community-posts) { min-height: 250px; height: clamp(250px,37vh,410px); max-height: 410px !important; }
+  .sidebar { gap: 10px; align-content: start; }
+  .news { padding: 15px 17px; }
+  .news h2 { margin: 5px 0; font-size: 19px; }
+  .news p { margin: 0; line-height: 1.45; }
+  .news > span { margin-top: 8px; }
+  .checklist { padding: 14px 17px; }
+  .checklist h2 { font-size: 18px; }
+  .checklist p { margin: 3px 0 6px; }
+  .checklist button { padding: 7px 0; }
+  .noticeboard { gap: 10px; margin-top: 10px; }
+  .notice { gap: 11px; min-height: 94px; padding: 12px 14px; }
+  .notice > svg { width: 21px; height: 21px; }
+  .notice h2 { margin-bottom: 4px; font-size: 17px; }
+  .notice p { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 1.4; }
+  .notice small { margin-top: 6px; }
+}
+@media (min-width: 1101px) and (min-height: 700px) and (max-height: 820px) {
+  .conversation :global(.community-posts) { min-height: 180px; height: 26vh; max-height: 220px !important; }
+  .news p, .checklist > p { display: none; }
+  .news > span { margin-top: 6px; }
+  .checklist button { padding: 5px 0; }
+  .notice p { display: none; }
+  .notice { min-height: 72px; }
+}
+@media (min-width: 901px) and (min-height: 760px) {
+  .welcomeFeatures { gap: 15px; margin-top: 22px; padding-top: 16px; }
+  .welcomeFeatures svg { width: 18px; height: 18px; margin-bottom: 7px; }
+  .welcomeFeatures h2 { margin-bottom: 4px; font-size: 15px; }
+  .welcomeFeatures p { font-size: 11px; line-height: 1.45; }
+  .worlds { margin-top: 16px; }
+  .invitation { margin-top: 15px; font-size: 13px; line-height: 1.45; }
+}
 @media (max-width: 600px) {
   .welcomeFeatures { gap: 15px; margin-top: 24px; }
   .welcomeFeatures h2 { font-size: 14px; }
