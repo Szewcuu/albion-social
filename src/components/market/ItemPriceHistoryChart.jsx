@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { TrendingUp, TrendingDown, Clock, MapPin, RefreshCw, BarChart3 as BarChart2, AlertCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Clock, MapPin, BarChart3 as BarChart2, AlertCircle } from 'lucide-react'
 import CustomSelect from '@/components/ui/CustomSelect'
+import { LoadingState } from '@/components/ui/FeedbackState'
 
 const CITIES = ['Caerleon', 'Bridgewatch', 'Fort Sterling', 'Lymhurst', 'Martlock', 'Thetford', 'Brecilien']
 const RANGES = [
@@ -218,10 +219,7 @@ export default function ItemPriceHistoryChart({ itemId, defaultCity = 'Caerleon'
       {/* CHART CANVAS */}
       <div className="relative w-full overflow-hidden rounded-xl bg-black/40 border border-white/5 p-2">
         {loading ? (
-          <div className="h-32 flex items-center justify-center text-xs text-gray-500 font-mono gap-2">
-            <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
-            <span>Pobieranie historii transakcji...</span>
-          </div>
+          <LoadingState label="Pobieranie historii transakcji…" compact className="min-h-32 border-0 bg-transparent" />
         ) : error || !historyData.length ? (
           <div className="min-h-32 flex flex-col items-center justify-center text-xs text-gray-400 font-mono gap-1.5 text-center p-4">
             <AlertCircle className="w-5 h-5 text-amber-400/80 mb-0.5" />

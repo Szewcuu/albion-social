@@ -2,6 +2,7 @@ import { BookOpenText, ExternalLink, Newspaper, ScrollText } from 'lucide-react'
 
 import { getAlbionNews } from '@/lib/server/albionNews'
 import { createPageMetadata } from '@/lib/seo'
+import { EmptyState } from '@/components/ui/FeedbackState'
 
 export const revalidate = 1800
 
@@ -46,7 +47,7 @@ export default async function NewsPage() {
       {partial && <p className="mb-5 rounded-xl border border-amber-300/20 bg-amber-300/7 px-4 py-3 text-xs text-amber-100">Jeden z gońców chwilowo nie dotarł. Pokazujemy wszystkie dostępne wiadomości.</p>}
 
       {!items.length ? (
-        <section className="panel p-10 text-center"><BookOpenText className="mx-auto h-8 w-8 text-[var(--amber)]" /><h2 className="font-display mt-4 text-2xl font-black text-white">Kurierzy są jeszcze w drodze</h2><p className="mt-2 text-sm text-[var(--text-secondary)]">Odśwież stronę za chwilę. Reszta portalu działa normalnie.</p></section>
+        <EmptyState icon={BookOpenText} title="Kurierzy są jeszcze w drodze" description="Odśwież stronę za chwilę. Reszta portalu działa normalnie." className="panel" />
       ) : (
         <div className="space-y-8">
           {patchNotes.length > 0 && <section><div className="mb-4 flex items-center gap-3"><ScrollText className="h-5 w-5 text-sky-300" /><h2 className="font-display text-2xl font-black text-white">Patch notes i zmiany gry</h2><div className="h-px flex-1 bg-white/8" /></div><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{patchNotes.map((item) => <NewsCard key={item.id} item={item} />)}</div></section>}

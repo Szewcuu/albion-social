@@ -7,18 +7,19 @@ import { BarChart3, Coins, Store } from 'lucide-react'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { LoadingState } from '@/components/ui/FeedbackState'
 
 const MarketOfferForm = dynamic(() => import('@/components/market/MarketOfferForm'), {
   ssr: false,
-  loading: () => <div className="panel min-h-[620px] animate-pulse lg:col-span-4" aria-label="Ładowanie stoiska" />,
+  loading: () => <LoadingState label="Ładowanie stoiska…" className="panel min-h-[420px] lg:col-span-4" />,
 })
 const MarketOfferBoard = dynamic(() => import('@/components/market/MarketOfferBoard'), {
   ssr: false,
-  loading: () => <div className="panel min-h-72 animate-pulse lg:col-span-8" aria-label="Ładowanie tablicy ofert" />,
+  loading: () => <LoadingState label="Ładowanie tablicy ofert…" className="panel lg:col-span-8" />,
 })
 const ContactSellerModal = dynamic(() => import('@/components/market/ContactSellerModal'))
 const DeferredMarketTools = dynamic(() => import('@/components/market/DeferredMarketTools'), {
-  loading: () => <div className="panel min-h-40 animate-pulse" aria-label="Ładowanie narzędzi rynku" />,
+  loading: () => <LoadingState label="Ładowanie narzędzi rynku…" compact className="panel" />,
 })
 
 const EMPTY_FORM = {

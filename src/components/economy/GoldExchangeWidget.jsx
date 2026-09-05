@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { Coins, ArrowRightLeft, TrendingUp, TrendingDown, RefreshCw, ShieldCheck } from 'lucide-react'
 import CustomSelect from '@/components/ui/CustomSelect'
+import { LoadingState } from '@/components/ui/FeedbackState'
 
 const RANGES = [
   { id: '24h', label: '24h' },
@@ -210,10 +211,7 @@ export default function GoldExchangeWidget() {
       {/* HISTORICAL CHART CANVAS */}
       <div className="relative w-full overflow-hidden rounded-2xl bg-black/50 border border-white/8 p-3">
         {loading ? (
-          <div className="h-28 flex items-center justify-center text-xs text-gray-500 font-mono gap-2">
-            <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
-            <span>Pobieranie wykresu historii kursu złota...</span>
-          </div>
+          <LoadingState label="Pobieranie wykresu kursu złota…" compact className="min-h-28 border-0 bg-transparent" />
         ) : chartSvg ? (
           <div className="relative">
             <svg viewBox={`0 0 ${chartSvg.width} ${chartSvg.height}`} className="w-full h-auto overflow-visible">

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Lock as Archive, ArrowLeft, HandCoins, MessageSquareText as Inbox, Lock, MessageSquareText, RefreshCw, Search, Send, ShieldCheck, ShoppingBag } from 'lucide-react'
 
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { EmptyState, LoadingState, StatusNotice } from '@/components/ui/FeedbackState'
 
 const formatSilver = (value) => `${Number(value || 0).toLocaleString('pl-PL')} Silver`
 const formatDate = (value) => value
@@ -158,7 +159,7 @@ export default function TradeInboxPage() {
           <span className="flex items-center gap-2 text-[var(--text-secondary)]"><Lock className="h-3.5 w-3.5" /> Finalizuj wymianę w grze i nigdy nie podawaj hasła.</span>
         </div>
 
-        {error && <div className="mb-4 rounded-xl border border-rose-400/25 bg-rose-400/8 p-3 text-xs text-rose-200">{error}</div>}
+        {error && <StatusNotice type="error" className="mb-4">{error}</StatusNotice>}
 
         <section className="panel grid min-h-[650px] overflow-hidden p-0 lg:grid-cols-[360px_minmax(0,1fr)]">
           <aside className={`${selectedId ? 'hidden lg:flex' : 'flex'} min-h-[650px] flex-col border-r border-white/8 bg-black/15`}>
@@ -180,20 +181,11 @@ export default function TradeInboxPage() {
 
             <div className="flex-1 overflow-y-auto p-2">
               {loading ? (
-                <div className="flex h-48 items-center justify-center text-xs text-[var(--text-secondary)]"><RefreshCw className="mr-2 h-4 w-4 animate-spin" /> Pobieranie rozmów…</div>
+                <LoadingState label="Pobieranie rozmów…" compact className="m-2" />
               ) : conversations.length === 0 ? (
-                <div className="flex h-full min-h-72 flex-col items-center justify-center px-6 text-center">
-                  <Inbox className="mb-4 h-10 w-10 text-sky-300/60" />
-                  <h3 className="font-display text-lg font-bold text-white">Skrzynka jest pusta</h3>
-                  <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">Otwórz wybraną ofertę na rynku i kliknij „Napisz do sprzedawcy”.</p>
-                  <Link href="/rynek" className="btn btn-primary btn-sm mt-5"><ShoppingBag className="h-4 w-4" /> Przejdź na rynek</Link>
-                </div>
+                <EmptyState icon={Inbox} title="Skrzynka jest pusta" description="Otwórz wybraną ofertę na rynku i kliknij „Napisz do sprzedawcy”." action={<Link href="/rynek" className="btn btn-primary btn-sm"><ShoppingBag className="h-4 w-4" /> Przejdź na rynek</Link>} className="m-2 min-h-72" />
               ) : visibleConversations.length === 0 ? (
-                <div className="flex h-48 flex-col items-center justify-center px-6 text-center">
-                  <Search className="mb-3 h-7 w-7 text-[var(--text-muted)]" />
-                  <h3 className="font-display text-base font-bold text-white">Brak pasujących rozmów</h3>
-                  <button type="button" onClick={() => { setThreadFilter('all'); setThreadSearch('') }} className="btn btn-ghost btn-sm mt-3">Wyczyść filtry</button>
-                </div>
+                <EmptyState icon={Search} title="Brak pasujących rozmów" description="Zmień wyszukiwaną frazę lub stan rozmowy." action={<button type="button" onClick={() => { setThreadFilter('all'); setThreadSearch('') }} className="btn btn-ghost btn-sm">Wyczyść filtry</button>} compact className="m-2" />
               ) : visibleConversations.map((conversation) => (
                 <button
                   key={conversation.id}

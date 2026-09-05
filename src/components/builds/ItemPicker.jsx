@@ -5,12 +5,14 @@ import { createPortal } from 'react-dom'
 import { Search, X, Plus } from 'lucide-react'
 import { getItemEnchant, getItemTierLabel, itemImageUrl, setItemEnchant } from '@/lib/buildSlots'
 import ItemTooltip from '@/components/ui/ItemTooltip'
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 export default function ItemPicker({ label, category, value, valueName = '', onChange, disabled = false, compact = false, inventory = false, emptySlot = null }) {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState('')
   const [customId, setCustomId] = useState(value || '')
   const [selectedEnchant, setSelectedEnchant] = useState(() => getItemEnchant(value))
   const dialogTitleId = useId()
@@ -56,12 +58,14 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
   const fetchItems = useCallback(async (query = '', signal) => {
     const requestId = ++requestIdRef.current
     setLoading(true)
+    setLoadError('')
     try {
       const params = new URLSearchParams()
       if (category) params.set('category', category)
       if (query) params.set('search', query)
       const res = await fetch(`/api/items?${params}`, { signal })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Nie udało się pobrać katalogu przedmiotów.')
       if (requestId !== requestIdRef.current) return
       if (Array.isArray(data.items)) {
         setItems(data.items)
@@ -74,7 +78,10 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
         setItems([])
       }
     } catch (error) {
-      if (error?.name !== 'AbortError' && requestId === requestIdRef.current) setItems([])
+      if (error?.name !== 'AbortError' && requestId === requestIdRef.current) {
+        setItems([])
+        setLoadError(error.message || 'Nie udało się pobrać katalogu przedmiotów.')
+      }
     } finally {
       if (requestId === requestIdRef.current) setLoading(false)
     }
@@ -232,9 +239,11 @@ export default function ItemPicker({ label, category, value, valueName = '', onC
 
             <div className="flex-1 overflow-y-auto p-4">
               {loading && items.length === 0 ? (
-                <p className="text-center text-gray-500 text-xs py-8">Ładowanie przedmiotów...</p>
+                <LoadingState label="Ładowanie przedmiotów…" compact />
+              ) : loadError ? (
+                <ErrorState title="Katalog przedmiotów jest niedostępny" description={loadError} onRetry={() => fetchItems(search.trim())} compact />
               ) : items.length === 0 ? (
-                <p className="text-center text-gray-500 text-xs py-8">Brak wyników. Wpisz ID ręcznie powyżej.</p>
+                <EmptyState icon={Search} title="Brak pasujących przedmiotów" description="Zmień frazę albo wpisz identyfikator przedmiotu ręcznie powyżej." compact />
               ) : (
                 <div className="relative">
                   {loading && <span className="absolute right-1 top-0 z-10 rounded-md bg-black/70 px-2 py-1 text-[9px] text-amber-200">Aktualizuję wyniki…</span>}

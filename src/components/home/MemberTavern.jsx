@@ -8,12 +8,13 @@ import styles from './HomeAtmosphere.module.css'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
+import { ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 const ChatBox = dynamic(() => import('@/components/ChatBox'), {
-  loading: () => <div className="panel min-h-[640px] animate-pulse" aria-label="Ładowanie czatu tawerny" />,
+  loading: () => <LoadingState label="Ładowanie czatu Tawerny…" className="panel min-h-[360px]" />,
 })
 const PortalAnalyticsWidget = dynamic(() => import('@/components/stats/PortalAnalyticsWidget'), {
-  loading: () => <div className="panel min-h-[240px] animate-pulse" aria-label="Ładowanie statystyk portalu" />,
+  loading: () => <LoadingState label="Ładowanie statystyk portalu…" className="panel" />,
 })
 export default function MemberTavern() {
   const { user, isAdmin } = usePortalSession()
@@ -62,7 +63,7 @@ export default function MemberTavern() {
           </div>
         </div>
         <div className={styles.sidebar}>
-          {overviewUnavailable && !overviewLoading ? <div className="panel p-5"><p className="text-sm text-amber-100">Podsumowanie społeczności jest chwilowo niedostępne.</p><button type="button" className="btn btn-ghost mt-3" onClick={fetchPortalOverview}>Spróbuj ponownie</button></div> : <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />}
+          {overviewUnavailable && !overviewLoading ? <ErrorState title="Podsumowanie społeczności jest niedostępne" description="Nie udało się pobrać aktualnych danych Tawerny." onRetry={fetchPortalOverview} className="panel" /> : <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />}
           <Link href="/aktualnosci" className={styles.news}><small>Goniec Królewski</small><h2>Co słychać za murami?</h2><p>Oficjalne wiadomości i patch notes. Sprawdź, co zmieniło się w świecie Albionu przed kolejnym wyjściem w teren.</p><span>Otwórz kronikę wieści <ArrowRight aria-hidden="true" /></span></Link>
           <section className={styles.checklist} aria-label="Przygotowania do wyprawy">
             <div className={styles.checklistHeader}><h2>Przed wymarszem</h2><span aria-live="polite">{prepared.length}/3</span></div>

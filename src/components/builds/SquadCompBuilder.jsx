@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { AlertTriangle, Check, Download, Plus, RefreshCw, Share2, Trash2, Users } from 'lucide-react'
+import { Check, Download, Plus, Share2, Trash2, Users } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { buildSquadShareUrl, normalizeSquadBuild, restoreSquadFromSearch } from '@/lib/buildPresentation'
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 const ROLE_COLORS = {
   Tank: 'border-sky-400/40 bg-sky-500/10 text-sky-300',
@@ -265,15 +266,9 @@ export default function SquadCompBuilder() {
             className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-white text-xs outline-none focus:border-violet-400/60"
           />
           {loading ? (
-            <p className="text-xs text-gray-500 font-mono text-center py-4 animate-pulse">Pobieranie buildów...</p>
+            <LoadingState label="Pobieranie buildów…" compact />
           ) : loadError ? (
-            <div className="rounded-xl border border-rose-400/25 bg-rose-500/8 p-4 text-center" role="alert">
-              <AlertTriangle className="mx-auto h-5 w-5 text-rose-300" aria-hidden="true" />
-              <p className="mt-2 text-xs text-rose-100">{loadError}</p>
-              <button type="button" onClick={loadBuilds} className="btn btn-ghost btn-sm mt-3 inline-flex">
-                <RefreshCw className="h-3.5 w-3.5" /> Spróbuj ponownie
-              </button>
-            </div>
+            <ErrorState title="Nie udało się otworzyć katalogu buildów" description={loadError} onRetry={loadBuilds} compact />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
               {filteredBuilds.map(build => (
@@ -287,7 +282,7 @@ export default function SquadCompBuilder() {
                 </button>
               ))}
               {filteredBuilds.length === 0 && (
-                <p className="text-xs text-gray-500 font-mono col-span-full text-center py-4">Brak wyników</p>
+                <EmptyState title="Brak pasujących buildów" description="Zmień nazwę lub rolę w polu wyszukiwania." compact className="col-span-full" />
               )}
             </div>
           )}
