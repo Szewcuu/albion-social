@@ -48,6 +48,7 @@
     { "version": "20260905105922", "name": "build_weekly_votes" },
     { "version": "20260905110616", "name": "build_weekly_votes_build_index" },
     { "version": "20260905113002", "name": "tavern_pins_announcements" },
-    { "version": "20260905114624", "name": "tavern_pinned_actor_cleanup" }
+    { "version": "20260905114624", "name": "tavern_pinned_actor_cleanup" },
+    { "version": "20260905122330", "name": "public_profile_preferences" }
   ]
 }

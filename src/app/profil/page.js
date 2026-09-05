@@ -32,6 +32,8 @@ import {
 import { supabase } from '@/lib/supabase'
 import { portalAuth } from '@/lib/supabaseAuth'
 import { hasAuthIdentity } from '@/lib/authFlow'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { MAX_FEATURED_BUILDS, PROFILE_ROLES } from '@/lib/profilePreferences'
 import CharacterVerificationModal from '@/components/CharacterVerificationModal'
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -44,11 +46,13 @@ const INITIAL_FORM = {
   avg_ip: 1400,
   bio: '',
   favorite_builds_public: false,
+  favorite_roles: [],
+  featured_build_ids: [],
 }
 
 const PROFILE_FIELDS = [
   'id', 'username', 'avatar_url', 'created_at', 'ingame_nick', 'main_server',
-  'guild_name', 'main_role', 'avg_ip', 'bio', 'favorite_builds_public',
+  'guild_name', 'main_role', 'avg_ip', 'bio', 'favorite_builds_public', 'favorite_roles', 'featured_build_ids',
   'is_verified', 'verified_player_id', 'verified_server', 'verified_region',
   'pvp_fame', 'pve_fame', 'verified_at',
 ].join(', ')
@@ -95,6 +99,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState(INITIAL_FORM)
   const [myExpeditions, setMyExpeditions] = useState([])
   const [myOffers, setMyOffers] = useState([])
+  const [myBuilds, setMyBuilds] = useState([])
   const [notice, setNotice] = useState(null)
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -103,10 +108,11 @@ export default function ProfilePage() {
 
   const fetchProfileData = useCallback(async (userId) => {
     setLoading(true)
-    const [profileResult, expeditionsResult, marketResult] = await Promise.all([
+    const [profileResult, expeditionsResult, marketResult, buildsResult] = await Promise.all([
       supabase.from('profiles').select(PROFILE_FIELDS).eq('id', userId).maybeSingle(),
       supabase.from('expeditions').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
       supabase.from('market_items').select('id, created_at, user_id, title, price, city, category, description, status, item_name, server').eq('user_id', userId).order('created_at', { ascending: false }),
+      supabase.from('builds').select('id, title, activity_type, created_at').eq('user_id', userId).eq('status', 'visible').order('created_at', { ascending: false }).limit(40),
     ])
 
     if (profileResult.data) {
@@ -118,6 +124,8 @@ export default function ProfilePage() {
         avg_ip: profileResult.data.avg_ip || 1400,
         bio: profileResult.data.bio || '',
         favorite_builds_public: Boolean(profileResult.data.favorite_builds_public),
+        favorite_roles: Array.isArray(profileResult.data.favorite_roles) ? profileResult.data.favorite_roles : [],
+        featured_build_ids: Array.isArray(profileResult.data.featured_build_ids) ? profileResult.data.featured_build_ids : [],
       })
       if (profileResult.data.is_verified && profileResult.data.verified_player_id) {
         const pId = profileResult.data.verified_player_id
@@ -156,8 +164,9 @@ export default function ProfilePage() {
 
     setMyExpeditions(expeditionsResult.data || [])
     setMyOffers(marketResult.data || [])
+    setMyBuilds(buildsResult.data || [])
 
-    const firstError = profileResult.error || expeditionsResult.error || marketResult.error
+    const firstError = profileResult.error || expeditionsResult.error || marketResult.error || buildsResult.error
     if (firstError) {
       setNotice({ type: 'error', text: 'Nie udało się pobrać części danych profilu. Spróbuj odświeżyć stronę.' })
     }
@@ -194,23 +203,36 @@ export default function ProfilePage() {
 
     setSaving(true)
     setNotice(null)
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        ingame_nick: nick,
-        main_server: formData.main_server,
-        guild_name: guild,
-        main_role: formData.main_role,
-        avg_ip: avgIp,
-        bio,
-        favorite_builds_public: formData.favorite_builds_public,
+    try {
+      const response = await authenticatedFetch('/api/profile/card', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ingameNick: nick,
+          mainServer: formData.main_server,
+          guildName: guild,
+          mainRole: formData.main_role,
+          avgIp,
+          bio,
+          favoriteBuildsPublic: formData.favorite_builds_public,
+          favoriteRoles: formData.favorite_roles,
+          featuredBuildIds: formData.featured_build_ids,
+        }),
       })
-      .eq('id', user.id)
-
-    setSaving(false)
-    setNotice(error
-      ? { type: 'error', text: 'Nie udało się zapisać karty postaci. Spróbuj ponownie.' }
-      : { type: 'success', text: 'Karta postaci została zapisana.' })
+      const result = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(result?.error || 'Nie udało się zapisać karty postaci.')
+      setFormData((current) => ({
+        ...current,
+        ...result.profile,
+        favorite_roles: result.profile.favorite_roles || [],
+        featured_build_ids: result.profile.featured_build_ids || [],
+      }))
+      setNotice({ type: 'success', text: 'Karta postaci została zapisana.' })
+    } catch (saveError) {
+      setNotice({ type: 'error', text: saveError.message || 'Nie udało się zapisać karty postaci. Spróbuj ponownie.' })
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleVerifySuccess(data) {
@@ -494,6 +516,68 @@ export default function ProfilePage() {
                     <input type="number" min="0" max="3000" value={formData.avg_ip} onChange={(event) => setFormData({ ...formData, avg_ip: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
                   </label>
                 </div>
+
+                <fieldset className="rounded-2xl border border-white/8 bg-black/15 p-4">
+                  <legend className="px-2 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Ulubione role</legend>
+                  <p className="mb-3 text-[10px] leading-5 text-[var(--text-secondary)]">Zaznacz wszystkie role, którymi lubisz grać. Główna rola nadal określa najważniejszą specjalizację.</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PROFILE_ROLES.map((role) => {
+                      const selected = formData.favorite_roles.includes(role)
+                      return (
+                        <button
+                          key={role}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => setFormData((current) => ({
+                            ...current,
+                            favorite_roles: selected
+                              ? current.favorite_roles.filter((item) => item !== role)
+                              : [...current.favorite_roles, role],
+                          }))}
+                          className={`rounded-full border px-3 py-2 text-[9px] font-black uppercase tracking-[.12em] transition ${selected ? ROLE_STYLES[role] : 'border-white/10 bg-black/20 text-[var(--text-secondary)] hover:border-white/20 hover:text-white'}`}
+                        >
+                          {role === 'Support' ? 'Support / Utility' : role}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+
+                <fieldset className="rounded-2xl border border-white/8 bg-black/15 p-4">
+                  <legend className="px-2 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Najczęściej używane zestawy</legend>
+                  <div className="mb-3 flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
+                    <p className="text-[10px] leading-5 text-[var(--text-secondary)]">Wybierz maksymalnie {MAX_FEATURED_BUILDS} własne publiczne buildy, które pojawią się na górze Twojego profilu.</p>
+                    <span className="shrink-0 font-mono text-[9px] text-amber-200">{formData.featured_build_ids.length}/{MAX_FEATURED_BUILDS}</span>
+                  </div>
+                  {myBuilds.length ? (
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {myBuilds.map((build) => {
+                        const selected = formData.featured_build_ids.includes(build.id)
+                        const disabled = !selected && formData.featured_build_ids.length >= MAX_FEATURED_BUILDS
+                        return (
+                          <button
+                            key={build.id}
+                            type="button"
+                            aria-pressed={selected}
+                            disabled={disabled}
+                            onClick={() => setFormData((current) => ({
+                              ...current,
+                              featured_build_ids: selected
+                                ? current.featured_build_ids.filter((id) => id !== build.id)
+                                : [...current.featured_build_ids, build.id],
+                            }))}
+                            className={`min-w-0 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-35 ${selected ? 'border-amber-300/45 bg-amber-300/10 shadow-[inset_0_0_20px_rgba(210,158,50,.08)]' : 'border-white/8 bg-black/20 hover:border-white/18'}`}
+                          >
+                            <span className="block truncate text-xs font-bold text-[var(--text-primary)]">{build.title}</span>
+                            <span className="mt-1 block text-[8px] font-black uppercase tracking-[.12em] text-[var(--text-secondary)]">{build.activity_type || 'Doktryna'}{selected ? ' · wyróżniony' : ''}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-[10px] text-[var(--text-secondary)]">Najpierw opublikuj build w Kuźni, aby móc go wyróżnić.</p>
+                  )}
+                </fieldset>
 
                 <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">
                   O mnie

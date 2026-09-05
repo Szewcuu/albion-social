@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase'
 
 const PROFILE_FIELDS = [
   'id', 'username', 'avatar_url', 'created_at', 'ingame_nick', 'main_server',
-  'guild_name', 'main_role', 'avg_ip', 'bio', 'favorite_builds_public',
+  'guild_name', 'main_role', 'avg_ip', 'bio', 'favorite_builds_public', 'favorite_roles', 'featured_build_ids',
   'is_verified', 'verified_player_id', 'verified_server', 'verified_region', 'pvp_fame', 'pve_fame', 'verified_at',
 ].join(', ')
 
@@ -52,7 +52,7 @@ function ProfileSkeleton() {
   return <div className="page-content space-y-5"><SkeletonBlock className="h-12 w-44 rounded-xl" /><SkeletonBlock className="h-72 rounded-[28px]" /><div className="grid gap-5 lg:grid-cols-2"><SkeletonBlock className="h-72 rounded-[24px]" /><SkeletonBlock className="h-72 rounded-[24px]" /></div></div>
 }
 
-function BuildCard({ build, favorite = false }) {
+function BuildCard({ build, favorite = false, badge = '' }) {
   const parsed = buildFromDbRow(build)
   return (
     <Link href={`/buildy/${build.id}`} className="panel panel-interactive group flex min-w-0 flex-col overflow-hidden rounded-[22px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--amber)]">
@@ -60,7 +60,7 @@ function BuildCard({ build, favorite = false }) {
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-amber-300/25 bg-amber-300/8 px-2.5 py-1 text-[8px] font-black uppercase tracking-[.15em] text-amber-200">{build.activity_type || 'Doktryna'}</span>
-            {favorite && <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-[.13em] text-orange-200"><Bookmark className="h-3 w-3 fill-current" /> polecany</span>}
+            {(favorite || badge) && <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-[.13em] text-orange-200"><Bookmark className="h-3 w-3 fill-current" /> {badge || 'polecany'}</span>}
           </div>
           <h3 className="font-display truncate text-lg font-black text-[var(--text-primary)] transition group-hover:text-[var(--amber)]">{build.title}</h3>
           <p className="mt-1 line-clamp-2 text-[11px] leading-5 text-[var(--text-secondary)]">{build.description || 'Build bez opisu taktycznego.'}</p>
@@ -141,6 +141,12 @@ export default function PublicProfilePage() {
   const characterName = profile.ingame_nick || 'Postać nieprzypięta'
   const verified = Boolean(profile.is_verified && profile.verified_player_id)
   const roleStyle = ROLE_STYLES[profile.main_role] || 'border-amber-300/25 bg-amber-300/8 text-amber-200'
+  const favoriteRoles = Array.isArray(profile.favorite_roles) && profile.favorite_roles.length
+    ? profile.favorite_roles
+    : [profile.main_role].filter(Boolean)
+  const featuredBuilds = (Array.isArray(profile.featured_build_ids) ? profile.featured_build_ids : [])
+    .map((buildId) => builds.find((build) => build.id === buildId))
+    .filter(Boolean)
 
   return (
     <div className="page-content min-w-0 space-y-6 overflow-x-clip">
@@ -153,7 +159,7 @@ export default function PublicProfilePage() {
             <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[22px] border-2 border-amber-300/45 bg-black/30 shadow-[0_18px_50px_rgba(0,0,0,.45)]">
               {profile.avatar_url ? <Image src={profile.avatar_url} alt={`Awatar ${displayName}`} fill sizes="96px" className="object-cover" /> : <CircleUserRound className="absolute inset-0 m-auto h-11 w-11 text-amber-200" />}
             </div>
-            <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.24em] text-amber-300">Karta gracza</p><h1 className="font-display mt-2 truncate text-3xl font-black text-white sm:text-4xl">{displayName}</h1><div className="mt-3 flex flex-wrap items-center gap-2"><span className={`rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] ${roleStyle}`}>{profile.main_role || 'Gracz'}</span>{verified && <span className="flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] text-emerald-200"><ShieldCheck className="h-3.5 w-3.5" /> postać przypięta</span>}<span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><CalendarDays className="h-3.5 w-3.5" /> w portalu od {formatDate(profile.created_at)}</span></div></div>
+            <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.24em] text-amber-300">Karta gracza</p><h1 className="font-display mt-2 truncate text-3xl font-black text-white sm:text-4xl">{displayName}</h1><div className="mt-3 flex flex-wrap items-center gap-2">{favoriteRoles.map((role) => <span key={role} className={`rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] ${ROLE_STYLES[role] || roleStyle}`}>{role}</span>)}{verified && <span className="flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] text-emerald-200"><ShieldCheck className="h-3.5 w-3.5" /> postać przypięta</span>}<span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><CalendarDays className="h-3.5 w-3.5" /> w portalu od {formatDate(profile.created_at)}</span></div></div>
           </div>
           <div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[[Trophy, 'Buildy', builds.length], [Activity, 'Aktywność', timeline.length], [Bookmark, 'Polecane', profile.favorite_builds_public ? favorites.length : '—']].map(([Icon, label, value]) => <div key={label} className="min-w-[84px] rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p></div>)}</div>{user?.id !== profile.id && <FollowButton id={profile.id} name={displayName} type="player" className="mt-3 w-full" />}</div>
         </div>
@@ -170,6 +176,18 @@ export default function PublicProfilePage() {
           <div className="mt-6 grid gap-3 sm:grid-cols-2"><InfoBox label="Gildia" value={profile.guild_name || 'Bez gildii'} icon={Shield} /><InfoBox label="Główny serwer" value={profile.main_server || 'Nieustalony'} icon={Sparkles} /></div>
         </section>
       </div>
+
+      {featuredBuilds.length > 0 && (
+        <section>
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div><p className="text-[8px] font-black uppercase tracking-[.2em] text-amber-300">Zestawy sygnaturowe</p><h2 className="font-display mt-1 text-2xl font-black text-white">Najczęściej używane buildy</h2></div>
+            <span className="font-mono text-[9px] uppercase text-[var(--text-secondary)]">wybrane przez gracza</span>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {featuredBuilds.map((build) => <BuildCard key={build.id} build={build} badge="najczęściej gram" />)}
+          </div>
+        </section>
+      )}
 
       <section>
         <div className="mb-5 flex gap-2 overflow-x-auto border-b border-white/8 pb-3" role="tablist" aria-label="Sekcje profilu">{[['activity', Activity, `Aktywność (${timeline.length})`], ['builds', Swords, `Buildy (${builds.length})`], ['favorites', Bookmark, `Polecane (${profile.favorite_builds_public ? favorites.length : 0})`]].map(([id, Icon, label]) => <button key={id} type="button" role="tab" aria-selected={activeTab === id} onClick={() => setActiveTab(id)} className={`chip shrink-0 ${activeTab === id ? 'active' : ''}`}><Icon className="h-4 w-4" /> {label}</button>)}</div>
