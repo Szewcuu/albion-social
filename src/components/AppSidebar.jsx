@@ -52,6 +52,7 @@ const NAV_SECTIONS = [
     label: 'Gracz',
     items: [
       { href: '/profil', label: 'Mój Profil', icon: User, desc: 'Postać' },
+      { href: '/aktywnosc', label: 'Aktywność', icon: BellRing, desc: 'Odpowiedzi i zaproszenia' },
       { href: '/obserwowane', label: 'Obserwowane', icon: BellRing, desc: 'Wartownia zmian' },
       { href: '/wiadomosci', label: 'Skrzynka handlowa', icon: MessageSquareText, desc: 'Prywatne negocjacje' },
     ],

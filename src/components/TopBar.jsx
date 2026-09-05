@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, BookOpen, CalendarDays, Check as CheckCheck, ChevronDown, LogIn, ArrowLeft as LogOut, Compass as Map, ChevronDown as Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound, ContactRound } from 'lucide-react'
+import { Bell, BookOpen, CalendarDays, Check as CheckCheck, ChevronDown, Heart, LogIn, ArrowLeft as LogOut, Compass as Map, ChevronDown as Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound, ContactRound } from 'lucide-react'
 
 const PAGE_NAMES = {
   '/': 'Tawerna',
@@ -19,6 +19,7 @@ const PAGE_NAMES = {
   '/wyprawy': 'Wyprawy & Party',
   '/kalendarz': 'Kalendarz Wydarzeń',
   '/profil': 'Mój Profil',
+  '/aktywnosc': 'Centrum aktywności',
   '/obserwowane': 'Obserwowane',
   '/wiadomosci': 'Skrzynka handlowa',
   '/aktualnosci': 'Goniec Królewski',
@@ -31,6 +32,7 @@ const getNotificationIcon = (type, title) => {
   if (t.includes('expedition') || t.includes('wypraw') || t.includes('zgłoszeni')) return Swords
   if (t.includes('market') || t.includes('rynek') || t.includes('ofert')) return ShoppingBag
   if (t.includes('comment') || t.includes('komentarz')) return MessageSquare
+  if (t.includes('like') || t.includes('polubi')) return Heart
   if (t.includes('event') || t.includes('wydarzeni')) return CalendarDays
   if (t.includes('build')) return BookOpen
   if (t.includes('guild') || t.includes('gildi')) return Shield
@@ -160,6 +162,9 @@ export default function TopBar({
                       <div className="notification-empty"><Bell /><strong>Cisza w gołębniku</strong><span>Nowe zgłoszenia do gildii i wypraw pojawią się tutaj.</span></div>
                     )}
                   </div>
+                  <Link href="/aktywnosc" className="notification-center-link" onClick={() => setShowNotifs(false)}>
+                    Otwórz centrum aktywności <ChevronDown className="h-4 w-4 -rotate-90" />
+                  </Link>
                 </div>
               )}
             </div>

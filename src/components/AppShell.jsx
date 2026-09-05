@@ -139,6 +139,12 @@ export default function AppShell({ children, initialUser = null }) {
   }, [user])
 
   useEffect(() => {
+    const refresh = () => void fetchNotifications()
+    window.addEventListener('portal:notifications-changed', refresh)
+    return () => window.removeEventListener('portal:notifications-changed', refresh)
+  }, [fetchNotifications])
+
+  useEffect(() => {
     let active = true
     let cancelServices = () => {}
 

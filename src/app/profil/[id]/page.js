@@ -4,12 +4,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Activity, ArrowLeft, Bookmark, CalendarDays, ChevronRight, CircleUserRound, Compass, Crown, Flame, Heart, MessageSquare, Shield, ShieldCheck, ShoppingBag, Sparkles, Swords, Trophy } from 'lucide-react'
+import { Activity, ArrowLeft, Bookmark, CalendarDays, ChevronRight, CircleUserRound, Compass, Crown, Flame, Heart, LoaderCircle, MessageSquare, Send, Shield, ShieldCheck, ShoppingBag, Sparkles, Swords, Trophy, X } from 'lucide-react'
 
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import { EmptyState, SkeletonBlock } from '@/components/ui/FeedbackState'
 import FollowButton from '@/components/ui/FollowButton'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
+import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { buildFromDbRow } from '@/lib/buildSlots'
 import { supabase } from '@/lib/supabase'
 
@@ -161,7 +162,7 @@ export default function PublicProfilePage() {
             </div>
             <div className="min-w-0"><p className="text-[9px] font-black uppercase tracking-[.24em] text-amber-300">Karta gracza</p><h1 className="font-display mt-2 truncate text-3xl font-black text-white sm:text-4xl">{displayName}</h1><div className="mt-3 flex flex-wrap items-center gap-2">{favoriteRoles.map((role) => <span key={role} className={`rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] ${ROLE_STYLES[role] || roleStyle}`}>{role}</span>)}{verified && <span className="flex items-center gap-1.5 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[.13em] text-emerald-200"><ShieldCheck className="h-3.5 w-3.5" /> postać przypięta</span>}<span className="flex items-center gap-1.5 text-[10px] text-[var(--text-secondary)]"><CalendarDays className="h-3.5 w-3.5" /> w portalu od {formatDate(profile.created_at)}</span></div></div>
           </div>
-          <div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[[Trophy, 'Buildy', builds.length], [Activity, 'Aktywność', timeline.length], [Bookmark, 'Polecane', profile.favorite_builds_public ? favorites.length : '—']].map(([Icon, label, value]) => <div key={label} className="min-w-[84px] rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p></div>)}</div>{user?.id !== profile.id && <FollowButton id={profile.id} name={displayName} type="player" className="mt-3 w-full" />}</div>
+          <div><div className="grid grid-cols-3 gap-2 sm:gap-3">{[[Trophy, 'Buildy', builds.length], [Activity, 'Aktywność', timeline.length], [Bookmark, 'Polecane', profile.favorite_builds_public ? favorites.length : '—']].map(([Icon, label, value]) => <div key={label} className="min-w-[84px] rounded-2xl border border-white/8 bg-black/20 p-3 text-center sm:min-w-[105px]"><Icon className="mx-auto h-4 w-4 text-amber-300" /><p className="font-display mt-2 text-xl font-black text-white">{value}</p><p className="mt-1 text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p></div>)}</div>{user?.id !== profile.id && <div className="mt-3 grid gap-2 sm:grid-cols-2"><FollowButton id={profile.id} name={displayName} type="player" className="w-full" /><ExpeditionInviteButton targetUserId={profile.id} targetName={displayName} /></div>}</div>
         </div>
       </header>
 
@@ -202,4 +203,69 @@ export default function PublicProfilePage() {
 
 function InfoBox({ label, value, icon: Icon }) {
   return <div className="rounded-xl border border-white/8 bg-black/15 p-3"><p className="text-[8px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</p><p className="mt-1 flex items-center gap-2 font-bold text-[var(--text-primary)]">{Icon && <Icon className="h-4 w-4 text-emerald-300" />}{value}</p></div>
+}
+
+function ExpeditionInviteButton({ targetUserId, targetName }) {
+  const { user } = usePortalSession()
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [sendingId, setSendingId] = useState('')
+  const [expeditions, setExpeditions] = useState([])
+  const [notice, setNotice] = useState('')
+
+  if (!user || user.id === targetUserId) return null
+
+  async function openPicker() {
+    setOpen(true)
+    setLoading(true)
+    setNotice('')
+    try {
+      const response = await authenticatedFetch('/api/expeditions', { cache: 'no-store' })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się pobrać wypraw.')
+      setExpeditions((payload.expeditions || []).filter((expedition) => expedition.user_id === user.id))
+    } catch (error) {
+      setNotice(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function sendInvite(expeditionId) {
+    setSendingId(expeditionId)
+    setNotice('')
+    try {
+      const response = await authenticatedFetch('/api/expeditions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'invite', expeditionId, targetUserId }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się wysłać zaproszenia.')
+      setNotice(`Zaproszenie dla ${targetName} zostało wysłane.`)
+    } catch (error) {
+      setNotice(error.message)
+    } finally {
+      setSendingId('')
+    }
+  }
+
+  return (
+    <>
+      <button type="button" onClick={openPicker} className="btn btn-primary inline-flex min-h-11 w-full items-center justify-center gap-2 text-[9px] font-black uppercase tracking-[.09em]"><Send className="h-4 w-4" /> Zaproś</button>
+      {open && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="invite-expedition-title" onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false) }}>
+          <div className="panel w-full max-w-lg rounded-[26px] p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4"><div><p className="text-[8px] font-black uppercase tracking-[.18em] text-violet-300">Zaproszenie do drużyny</p><h2 id="invite-expedition-title" className="font-display mt-1 text-2xl font-black text-white">Wybierz wyprawę</h2><p className="mt-2 text-[11px] text-[var(--text-secondary)]">{targetName} otrzyma zaproszenie w centrum aktywności.</p></div><button type="button" onClick={() => setOpen(false)} className="aopp-icon-button" aria-label="Zamknij"><X className="h-4 w-4" /></button></div>
+            {notice && <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/7 px-3 py-2 text-[10px] text-amber-100">{notice}</p>}
+            <div className="mt-4 space-y-2">
+              {loading ? <div className="flex min-h-28 items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-amber-300" /></div> : expeditions.length ? expeditions.map((expedition) => (
+                <button key={expedition.id} type="button" disabled={Boolean(sendingId)} onClick={() => sendInvite(expedition.id)} className="panel panel-interactive flex w-full items-center justify-between gap-4 rounded-2xl p-4 text-left disabled:opacity-55"><span><strong className="block text-sm text-white">{expedition.title}</strong><small className="mt-1 block text-[9px] text-[var(--text-secondary)]">{expedition.start_time} · {expedition.server}</small></span>{sendingId === expedition.id ? <LoaderCircle className="h-4 w-4 animate-spin text-amber-300" /> : <ChevronRight className="h-4 w-4 text-amber-300" />}</button>
+              )) : <EmptyState icon={Compass} title="Brak własnych wypraw" description="Najpierw utwórz aktywną wyprawę, a potem wróć do profilu gracza." actionLabel="Utwórz wyprawę" actionHref="/wyprawy" compact />}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
