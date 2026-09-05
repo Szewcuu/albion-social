@@ -143,6 +143,7 @@ test.describe('publiczna bramka portalu', () => {
     const accountDelete = await request.delete('/api/profile/account', {
       data: { confirmation: 'USUŃ KONTO' },
     })
+    const profileCardUpdate = await request.patch('/api/profile/card', { data: {} })
 
     expect(healthRead.status()).toBe(401)
     expect(healthRun.status()).toBe(401)
@@ -173,6 +174,7 @@ test.describe('publiczna bramka portalu', () => {
     expect(profileVerification.status()).toBe(401)
     expect(profileUnlink.status()).toBe(401)
     expect(accountDelete.status()).toBe(401)
+    expect(profileCardUpdate.status()).toBe(401)
   })
 
   test('zwraca bezpieczny obraz zastępczy dla nieprawidłowego ID przedmiotu', async ({ request }) => {

@@ -875,7 +875,7 @@ Lista jest ułożona według wartości dla gracza, nie według łatwości implem
 
 - [x] Wprowadzić wyróżniony „Build tygodnia” głosowany przez społeczność.
 - [x] Dodać w Tawernie przypięte wątki i krótkie ogłoszenia moderatorów bez powielania głównej nawigacji.
-- [ ] Rozbudować publiczny profil o ostatnią aktywność, ulubione role i najczęściej używane zestawy.
+- [x] Rozbudować publiczny profil o ostatnią aktywność, ulubione role i najczęściej używane zestawy.
 - [ ] Przygotować centrum aktywności łączące odpowiedzi, polubienia, zaproszenia do wypraw i wiadomości handlowe.
 
 ### Priorytet C — jakość i wydajność
