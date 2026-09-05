@@ -5,7 +5,7 @@ import InventoryFrame, { EmptyEquipmentSlot } from './InventoryFrame'
 
 export default function EquipmentPreview({ slots, itemNames = {}, size = 'md' }) {
   const safeSlots = slots && typeof slots === 'object' ? slots : {}
-  const imagePixels = size === 'sm' ? 48 : size === 'catalog' ? 64 : size === 'card' ? 80 : 128
+  const imagePixels = size === 'sm' || size === 'list' ? 48 : size === 'catalog' ? 64 : size === 'card' ? 80 : 128
 
   return (
     <InventoryFrame size={size}>
