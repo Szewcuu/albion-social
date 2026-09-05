@@ -352,6 +352,61 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     }
   })
 
+  test('pozwala oddać i zmienić cotygodniowy głos na build', async ({ page }) => {
+    const buildId = '11111111-1111-4111-8111-111111111111'
+    let selectedBuildId = null
+    let weeklyVotes = 2
+
+    await page.route('**/api/builds/weekly', async (route) => {
+      const method = route.request().method()
+      if (method === 'PUT') {
+        const body = route.request().postDataJSON()
+        selectedBuildId = body.buildId
+        weeklyVotes = 3
+      } else if (method === 'DELETE') {
+        selectedBuildId = null
+        weeklyVotes = 2
+      }
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          week: { weekStart: '2026-08-31', startsAt: '2026-08-31T00:00:00.000Z', endsAt: '2026-09-07T00:00:00.000Z' },
+          candidates: [{
+            id: buildId,
+            created_at: '2026-09-01T12:00:00.000Z',
+            user_id: '22222222-2222-4222-8222-222222222222',
+            title: 'Łowca tygodnia',
+            activity_type: 'pvp',
+            description: 'Kandydat społeczności',
+            status: 'visible',
+            profiles: { username: 'Rycerz' },
+            build_votes: [{ vote_type: 'up' }],
+            build_data: { slots: {}, tags: { activities: ['PVP'] } },
+            weekly_votes_count: weeklyVotes,
+            likes_count: 1,
+            item_names: {},
+          }],
+          leaderId: buildId,
+          totalVotes: weeklyVotes,
+          userVoteBuildId: selectedBuildId,
+        }),
+      })
+    })
+    await page.route('**/api/builds?**', (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ builds: [], total: 0, hasMore: false, nextCursor: null, nextOffset: null }),
+    }))
+
+    await page.goto('/buildy')
+    await expect(page.getByRole('heading', { name: 'Build tygodnia', exact: true })).toBeVisible()
+    await page.getByRole('button', { name: 'Oddaj głos' }).click()
+    await expect(page.getByRole('button', { name: 'Twój głos' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByText('3 głosów')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Twój głos' }).click()
+    await expect(page.getByRole('button', { name: 'Oddaj głos' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
   test('planer pokazuje nazwy i role oraz odtwarza udostępniony skład', async ({ page }) => {
     const buildId = '11111111-1111-4111-8111-111111111111'
     await page.route('**/api/builds?**', async (route) => {
