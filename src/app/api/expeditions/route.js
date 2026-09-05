@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { isModerationId } from '@/lib/server/moderation'
 import { checkRateLimit } from '@/lib/server/rateLimit'
+import { createNotification } from '@/lib/server/notifications'
 import { createSupabaseRequestClient, requireApiUser } from '@/lib/server/supabaseAdmin'
 import { cleanEnum, cleanInteger, cleanText } from '@/lib/server/validation'
 import { getExpeditionExpiry } from '@/lib/expeditionSchedule'
@@ -166,6 +167,50 @@ async function joinExpedition({ auth, supabase, body }) {
   return NextResponse.json({ success: true }, { status: 201 })
 }
 
+async function inviteToExpedition({ auth, supabase, body }) {
+  const expeditionId = isModerationId(body?.expeditionId) ? body.expeditionId : null
+  const targetUserId = isModerationId(body?.targetUserId) ? body.targetUserId : null
+  if (!expeditionId || !targetUserId) return jsonError('Nieprawidłowe dane zaproszenia.', 400)
+  if (targetUserId === auth.user.id) return jsonError('Nie możesz zaprosić samego siebie.', 400)
+
+  const now = new Date().toISOString()
+  const [{ data: expedition, error: expeditionError }, { data: target, error: targetError }] = await Promise.all([
+    supabase
+      .from('expeditions')
+      .select('id, user_id, title, starts_at, expires_at, status')
+      .eq('id', expeditionId)
+      .eq('user_id', auth.user.id)
+      .eq('status', 'visible')
+      .gt('expires_at', now)
+      .maybeSingle(),
+    supabase.from('profiles').select('id').eq('id', targetUserId).maybeSingle(),
+  ])
+  if (expeditionError || targetError) throw expeditionError || targetError
+  if (!expedition) return jsonError('Nie znaleziono Twojej aktywnej wyprawy.', 404)
+  if (!target) return jsonError('Nie znaleziono profilu zapraszanego gracza.', 404)
+
+  const { data: existingSignup, error: signupError } = await supabase
+    .from('expedition_signups')
+    .select('id')
+    .eq('expedition_id', expeditionId)
+    .eq('user_id', targetUserId)
+    .maybeSingle()
+  if (signupError) throw signupError
+  if (existingSignup) return jsonError('Ten gracz jest już zapisany na wyprawę.', 409)
+
+  const notification = await createNotification({
+    userId: targetUserId,
+    title: 'Zaproszenie na wyprawę',
+    message: `Otrzymujesz zaproszenie do drużyny „${expedition.title}”.`,
+    type: 'expedition_invite',
+    link: `/wyprawy?expedition=${expedition.id}`,
+    sourceKey: `expedition-invite:${expedition.id}:${targetUserId}`,
+  })
+  if (!notification) throw new Error('Nie udało się zapisać zaproszenia.')
+
+  return NextResponse.json({ success: true }, { status: 201 })
+}
+
 export async function POST(request) {
   try {
     const context = await requireExpeditionUser(request)
@@ -182,6 +227,7 @@ export async function POST(request) {
     const body = await request.json().catch(() => null)
     if (body?.action === 'create') return createExpedition({ auth, supabase, body })
     if (body?.action === 'join') return joinExpedition({ auth, supabase, body })
+    if (body?.action === 'invite') return inviteToExpedition({ auth, supabase, body })
     return jsonError('Nieobsługiwana operacja wyprawy.', 400)
   } catch (error) {
     console.error('Błąd zapisu wyprawy:', error)

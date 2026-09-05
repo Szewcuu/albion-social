@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 
 import { isModerationId } from '@/lib/server/moderation'
 import { createNotification } from '@/lib/server/notifications'
+import { activityTypesForCategory, parseActivityCategory } from '@/lib/activityCenter'
+import { applyCreatedAtCursor, decodeCreatedAtCursor, pageFromRows } from '@/lib/server/pagination'
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import {
   createSupabaseAdminClient,
@@ -32,6 +34,68 @@ export async function GET(request) {
     if (auth.error) return jsonError(auth.error, auth.status)
 
     const supabase = createSupabaseRequestClient(request)
+    const url = new URL(request.url)
+    const activityView = url.searchParams.get('view') === 'activity'
+
+    if (activityView) {
+      const category = parseActivityCategory(url.searchParams.get('category'))
+      const cursor = decodeCreatedAtCursor(url.searchParams.get('cursor'), isModerationId)
+      if (cursor === undefined) return jsonError('Nieprawidłowy kursor paginacji.', 400)
+
+      const requestedLimit = Number(url.searchParams.get('limit') || 24)
+      const pageSize = Number.isInteger(requestedLimit) && requestedLimit >= 1 && requestedLimit <= 50
+        ? requestedLimit
+        : 24
+      const types = activityTypesForCategory(category)
+      let listQuery = supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', auth.user.id)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(pageSize + 1)
+      if (types) listQuery = listQuery.in('type', types)
+      listQuery = applyCreatedAtCursor(listQuery, cursor)
+
+      const countFor = (categoryId) => {
+        let query = supabase
+          .from('notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', auth.user.id)
+        const categoryTypes = activityTypesForCategory(categoryId)
+        if (categoryTypes) query = query.in('type', categoryTypes)
+        return query
+      }
+
+      const [listResult, allResult, repliesResult, likesResult, expeditionsResult, marketResult, unreadResult] = await Promise.all([
+        listQuery,
+        countFor('all'),
+        countFor('replies'),
+        countFor('likes'),
+        countFor('expeditions'),
+        countFor('market'),
+        supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', auth.user.id).eq('is_read', false),
+      ])
+      const firstError = [listResult, allResult, repliesResult, likesResult, expeditionsResult, marketResult, unreadResult]
+        .find((result) => result.error)?.error
+      if (firstError) throw firstError
+
+      const { page, hasMore, nextCursor } = pageFromRows(listResult.data || [], pageSize)
+      return NextResponse.json({
+        notifications: page,
+        category,
+        counts: {
+          all: allResult.count || 0,
+          replies: repliesResult.count || 0,
+          likes: likesResult.count || 0,
+          expeditions: expeditionsResult.count || 0,
+          market: marketResult.count || 0,
+          unread: unreadResult.count || 0,
+        },
+        pagination: { hasMore, nextCursor },
+      }, { headers: { 'Cache-Control': 'no-store' } })
+    }
+
     const [{ data, error }, role] = await Promise.all([
       supabase
         .from('notifications')
@@ -111,7 +175,7 @@ async function createMarketOfferNotification({ auth, supabase, body }) {
     userId: offer.user_id,
     title: '💬 Nowa oferta zakupu na rynku!',
     message: `${buyerName} proponuje ${offeredPrice.toLocaleString('pl-PL')} Silver za „${offer.title}”. Wiadomość: „${message || 'Chcę dokonać transakcji.'}”`,
-    type: 'info',
+    type: 'market_message',
     link: `/profil/${auth.user.id}`,
   })
   if (!notification) throw new Error('Nie udało się utworzyć powiadomienia rynkowego.')
@@ -158,8 +222,8 @@ async function createExpeditionNotification({ auth, supabase, body }) {
       userId: expedition.user_id,
       title: '⚔️ Nowy gracz w drużynie!',
       message: `${signup.ingame_nick || 'Gracz'} dołączył do wyprawy „${expedition.title}” jako ${signup.role_type} (${signup.player_ip} IP).`,
-      type: 'info',
-      link: '/wyprawy',
+      type: 'expedition_joined',
+      link: `/wyprawy?expedition=${expedition.id}`,
     })
     if (!joined) throw new Error('Nie udało się utworzyć powiadomienia wyprawy.')
     created += 1
@@ -170,8 +234,9 @@ async function createExpeditionNotification({ auth, supabase, body }) {
       userId: expedition.user_id,
       title: '🎉 Skład skompletowany!',
       message: `Twoja wyprawa „${expedition.title}” ma już komplet graczy!`,
-      type: 'success',
-      link: '/wyprawy',
+      type: 'expedition_full',
+      link: `/wyprawy?expedition=${expedition.id}`,
+      sourceKey: `expedition-full:${expedition.id}`,
     })
     if (!fullNotification) throw new Error('Nie udało się utworzyć powiadomienia o pełnym składzie.')
     created += 1

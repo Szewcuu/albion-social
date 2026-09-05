@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 
 import { checkRateLimit } from '@/lib/server/rateLimit'
 import { isBuildId } from '@/lib/server/builds'
+import { createNotification } from '@/lib/server/notifications'
 import {
   createSupabasePublicServerClient,
   createSupabaseRequestClient,
@@ -17,15 +18,15 @@ async function readBuildId(params) {
   return isBuildId(id) ? id : null
 }
 
-async function ensureBuildExists(supabase, buildId) {
+async function readBuild(supabase, buildId) {
   const { data, error } = await supabase
     .from('builds')
-    .select('id')
+    .select('id, user_id, title')
     .eq('id', buildId)
     .maybeSingle()
 
   if (error) throw new Error('Nie udało się sprawdzić buildu.')
-  return Boolean(data)
+  return data || null
 }
 
 async function countVotes(buildId) {
@@ -46,7 +47,7 @@ export async function GET(request, { params }) {
     if (!buildId) return jsonError('Nieprawidłowy identyfikator buildu.', 400)
 
     const publicClient = createSupabasePublicServerClient()
-    if (!(await ensureBuildExists(publicClient, buildId))) {
+    if (!(await readBuild(publicClient, buildId))) {
       return jsonError('Nie znaleziono buildu.', 404)
     }
 
@@ -112,7 +113,8 @@ export async function PUT(request, { params }) {
     }
 
     const supabase = createSupabaseRequestClient(request)
-    if (!(await ensureBuildExists(supabase, buildId))) {
+    const build = await readBuild(supabase, buildId)
+    if (!build) {
       return jsonError('Nie znaleziono buildu.', 404)
     }
 
@@ -138,6 +140,23 @@ export async function PUT(request, { params }) {
 
       if (error && error.code !== '23505') {
         throw new Error('Nie udało się zapisać głosu.')
+      }
+
+      if (!error && build.user_id !== auth.user.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, ingame_nick')
+          .eq('id', auth.user.id)
+          .maybeSingle()
+        const voterName = profile?.ingame_nick || profile?.username || auth.user.user_metadata?.full_name || 'Gracz'
+        await createNotification({
+          userId: build.user_id,
+          title: 'Twój build zdobył polubienie',
+          message: `${voterName} polubił build „${build.title || 'Bez nazwy'}”.`,
+          type: 'build_like',
+          link: `/buildy/${build.id}`,
+          sourceKey: `build-like:${build.id}:${auth.user.id}`,
+        })
       }
     }
 
@@ -170,7 +189,7 @@ export async function POST(request, { params }) {
     }
 
     const supabase = createSupabaseRequestClient(request)
-    if (!(await ensureBuildExists(supabase, buildId))) {
+    if (!(await readBuild(supabase, buildId))) {
       return jsonError('Nie znaleziono buildu.', 404)
     }
 

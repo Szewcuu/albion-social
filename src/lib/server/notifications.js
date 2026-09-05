@@ -9,23 +9,26 @@ export async function createNotification({
   message,
   link = null,
   type = 'info',
+  sourceKey = null,
 }) {
   if (!userId || !message) return null
 
   try {
     const adminSupabase = createSupabaseAdminClient()
-    const { data, error } = await adminSupabase
-      .from('notifications')
-      .insert([
-        {
-          user_id: userId,
-          title,
-          message,
-          type,
-          link,
-          is_read: false,
-        },
-      ])
+    const payload = {
+      user_id: userId,
+      title,
+      message,
+      type,
+      link,
+      is_read: false,
+      source_key: sourceKey,
+      created_at: new Date().toISOString(),
+    }
+    const query = sourceKey
+      ? adminSupabase.from('notifications').upsert(payload, { onConflict: 'user_id,source_key' })
+      : adminSupabase.from('notifications').insert(payload)
+    const { data, error } = await query
       .select()
       .single()
 

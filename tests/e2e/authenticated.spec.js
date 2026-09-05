@@ -271,6 +271,45 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     await expect(trigger).toHaveAttribute('aria-expanded', 'false')
   })
 
+  test('porządkuje odpowiedzi, polubienia, wyprawy i handel w centrum aktywności', async ({ page }) => {
+    const activityNotifications = [
+      { id: '33333333-3333-4333-8333-333333333333', title: 'Twój build zdobył polubienie', message: 'Rycerz polubił build „Mgielny Topór”.', type: 'build_like', link: '/buildy/test', is_read: false, created_at: '2026-09-05T12:00:00.000Z' },
+      { id: '44444444-4444-4444-8444-444444444444', title: 'Zaproszenie na wyprawę', message: 'Otrzymujesz zaproszenie do drużyny „Statyk”.', type: 'expedition_invite', link: '/wyprawy', is_read: false, created_at: '2026-09-05T11:00:00.000Z' },
+    ]
+    let markedId = null
+
+    await page.route('**/api/notifications**', async (route) => {
+      const request = route.request()
+      const url = new URL(request.url())
+      if (request.method() === 'PATCH') {
+        markedId = request.postDataJSON()?.notificationId || 'all'
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ success: true }) })
+        return
+      }
+      if (url.searchParams.get('view') === 'activity') {
+        const category = url.searchParams.get('category') || 'all'
+        const filtered = category === 'all'
+          ? activityNotifications
+          : activityNotifications.filter((item) => category === 'likes' ? item.type === 'build_like' : category === 'expeditions' ? item.type === 'expedition_invite' : false)
+        await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ notifications: filtered, counts: { all: 2, replies: 0, likes: 1, expeditions: 1, market: 0, unread: 2 }, pagination: { hasMore: false, nextCursor: null } }) })
+        return
+      }
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ notifications: activityNotifications, role: 'user' }) })
+    })
+
+    await page.goto('/aktywnosc')
+    await expect(page.getByRole('heading', { name: 'Centrum aktywności' })).toBeVisible()
+    await expect(page.getByText('Twój build zdobył polubienie')).toBeVisible()
+    await expect(page.getByText('Zaproszenie na wyprawę')).toBeVisible()
+
+    await page.getByRole('tab', { name: /Polubienia/ }).click()
+    await expect(page.getByText('Twój build zdobył polubienie')).toBeVisible()
+    await expect(page.getByText('Zaproszenie na wyprawę')).toHaveCount(0)
+
+    await page.getByText('Twój build zdobył polubienie').click()
+    await expect.poll(() => markedId).toBe('33333333-3333-4333-8333-333333333333')
+  })
+
   test('pobiera chronioną kronikę Tawerny przez lekkie API', async ({ page, request }) => {
     await page.goto('/')
     const accessToken = await getCookieAccessToken(page)
