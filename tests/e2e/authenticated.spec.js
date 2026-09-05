@@ -481,19 +481,26 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
       })
     })
 
-    await page.goto('/buildy?q=Kaptur%20%C5%81owcy&sort=likes&category=pvp')
+    await page.goto('/buildy?q=Kaptur%20%C5%81owcy&sort=likes&category=pvp&view=list')
 
     await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…')).toHaveValue('Kaptur Łowcy')
     await expect(page.getByRole('combobox', { name: 'Sortuj buildy' })).toContainText('Najwięcej polubień')
     await expect(page.getByRole('button', { name: 'PvP & ZvZ' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.getByRole('button', { name: 'Widok listy' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('[data-view="list"]')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Łowca Mgły' })).toBeVisible()
     await expect.poll(() => requests.some((entry) => entry.search === 'Kaptur Łowcy' && entry.sort === 'likes' && entry.category === 'pvp' && entry.limit === '12')).toBe(true)
 
     await page.getByRole('button', { name: 'Ganking & Mists' }).click()
-    await expect.poll(() => page.evaluate(() => Object.fromEntries(new URL(window.location.href).searchParams))).toMatchObject({ q: 'Kaptur Łowcy', sort: 'likes', category: 'ganking' })
+    await expect.poll(() => page.evaluate(() => Object.fromEntries(new URL(window.location.href).searchParams))).toMatchObject({ q: 'Kaptur Łowcy', sort: 'likes', category: 'ganking', view: 'list' })
     await page.reload()
     await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…')).toHaveValue('Kaptur Łowcy')
     await expect(page.getByRole('button', { name: 'Ganking & Mists' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(page.locator('[data-view="list"]')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Widok kafelków' }).click()
+    await expect(page.locator('[data-view="grid"]')).toBeVisible()
+    await expect.poll(() => page.evaluate(() => new URL(window.location.href).searchParams.has('view'))).toBe(false)
   })
 
   test('zapisuje, odczytuje i usuwa serwerowy alert cenowy', async ({ page, request }) => {

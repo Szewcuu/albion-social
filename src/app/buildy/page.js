@@ -3,7 +3,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Shield, Swords, Plus, ThumbsUp, Trash2, Hammer as Anvil, Flame, ArrowRightLeft, Search, ArrowUpDown, X } from 'lucide-react'
+import { Shield, Swords, Plus, ThumbsUp, Trash2, Hammer as Anvil, Flame, ArrowRightLeft, Search, ArrowUpDown, X, LayoutGrid, Rows3 } from 'lucide-react'
 import EquipmentPreview from '@/components/builds/EquipmentPreview'
 import BuildFavoriteButton from '@/components/builds/BuildFavoriteButton'
 import { buildFromDbRow } from '@/lib/buildSlots'
@@ -68,6 +68,7 @@ function BuildyPageContent() {
   const activeCategory = ALBION_CATEGORIES.some((category) => category.id === categoryParam) ? categoryParam : 'all'
   const sortParam = searchParams.get('sort')
   const sort = BUILD_SORT_OPTIONS.includes(sortParam) ? sortParam : 'latest'
+  const view = searchParams.get('view') === 'list' ? 'list' : 'grid'
   const search = (searchParams.get('q') || '').slice(0, 80)
   const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
@@ -83,7 +84,7 @@ function BuildyPageContent() {
   const updateFilters = useCallback((changes) => {
     const params = new URLSearchParams(currentQuery)
     Object.entries(changes).forEach(([key, value]) => {
-      const isDefault = (key === 'category' && value === 'all') || (key === 'sort' && value === 'latest')
+      const isDefault = (key === 'category' && value === 'all') || (key === 'sort' && value === 'latest') || (key === 'view' && value === 'grid')
       if (!value || isDefault) params.delete(key)
       else params.set(key, value)
     })
@@ -235,6 +236,14 @@ function BuildyPageContent() {
                   <ArrowUpDown className="h-4 w-4 shrink-0 text-[var(--gold-dim)]" />
                   <CustomSelect value={sort} onChange={(value) => updateFilters({ sort: value })} label="Sortuj buildy" className="flex-1" options={[{ value: 'latest', label: 'Najnowsze' }, { value: 'popular', label: 'Popularne teraz' }, { value: 'likes', label: 'Najwięcej polubień' }]} />
                 </div>
+                <div className="flex shrink-0 rounded-lg border border-[var(--border)] bg-black/20 p-1" role="group" aria-label="Sposób wyświetlania buildów">
+                  <button type="button" onClick={() => updateFilters({ view: 'grid' })} aria-label="Widok kafelków" aria-pressed={view === 'grid'} className={`grid h-8 w-9 place-items-center rounded-md transition ${view === 'grid' ? 'bg-[var(--amber)] text-black shadow-sm' : 'text-[var(--text-muted)] hover:bg-white/5 hover:text-white'}`}>
+                    <LayoutGrid className="h-4 w-4" />
+                  </button>
+                  <button type="button" onClick={() => updateFilters({ view: 'list' })} aria-label="Widok listy" aria-pressed={view === 'list'} className={`grid h-8 w-9 place-items-center rounded-md transition ${view === 'list' ? 'bg-[var(--amber)] text-black shadow-sm' : 'text-[var(--text-muted)] hover:bg-white/5 hover:text-white'}`}>
+                    <Rows3 className="h-4 w-4" />
+                  </button>
+                </div>
                 <Link href="/buildy/create" className="btn btn-primary btn-sm shrink-0"><Flame className="h-4 w-4" /> Stwórz Build</Link>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -283,8 +292,8 @@ function BuildyPageContent() {
 
           {searchTruncated && <p role="status" className="mb-4 text-xs text-amber-200">Katalog przekracza 500 buildów. Wyniki obejmują najnowsze 500 wpisów — zawęź wyszukiwanie, aby szybciej znaleźć zestaw.</p>}
 
-          {/* Builds Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
+          {/* Build results */}
+      <div data-view={view} className={view === 'list' ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'}>
         {loading ? (
           <p className="text-[var(--text-muted)] italic col-span-full text-center py-10">Pobieranie buildów...</p>
         ) : loadError ? (
@@ -316,13 +325,13 @@ function BuildyPageContent() {
             )
 
             return (
-              <article key={b.id} className="panel panel-interactive group relative flex flex-col justify-between overflow-hidden">
+              <article key={b.id} className={`panel panel-interactive group relative overflow-hidden ${view === 'list' ? 'sm:grid sm:grid-cols-[minmax(0,1fr)_170px] lg:grid-cols-[minmax(0,1fr)_180px_250px] lg:items-stretch' : 'flex flex-col justify-between'}`}>
                 <Link
                   href={`/buildy/${b.id}`}
                   aria-label={`Otwórz build: ${b.title}`}
                   className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[var(--amber)]"
                 />
-                <div className="pointer-events-none relative z-0 p-4 pb-3">
+                <div className={`pointer-events-none relative z-0 p-4 ${view === 'list' ? 'self-center' : 'pb-3'}`}>
                   <div className="flex justify-between items-start mb-3">
                     <span className="badge badge-amber">{getBuildLabel(b.activity_type)}</span>
                     <div className="flex items-center gap-2 pointer-events-auto">
@@ -344,12 +353,12 @@ function BuildyPageContent() {
                   )}
                 </div>
 
-                <div className="pointer-events-none relative z-0 mx-4 mb-3 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-2">
+                <div className={`pointer-events-none relative z-0 rounded-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-2 ${view === 'list' ? 'mx-4 mb-3 self-center sm:mx-3 sm:my-3' : 'mx-4 mb-3'}`}>
                   <div className="mb-1.5 text-center text-[8px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Ekwipunek</div>
-                  <EquipmentPreview slots={parsed.slots} itemNames={parsed.itemNames} size="catalog" />
+                  <EquipmentPreview slots={parsed.slots} itemNames={parsed.itemNames} size={view === 'list' ? 'list' : 'catalog'} />
                 </div>
 
-                <div className="relative z-20 flex items-center justify-between px-4 pb-3 pt-3 border-t border-[var(--border)]">
+                <div className={`relative z-20 flex items-center justify-between border-[var(--border)] px-4 pb-3 pt-3 ${view === 'list' ? 'border-t sm:col-span-2 lg:col-span-1 lg:border-l lg:border-t-0 lg:self-stretch' : 'border-t'}`}>
                   <Link href={`/profil/${b.user_id || b.profiles?.username}`} className="flex items-center gap-2 hover:opacity-80 transition" title="Zobacz publiczny profil gracza">
                     <div className="w-6 h-6 rounded-md bg-[var(--bg-hover)] flex items-center justify-center text-[var(--amber)] text-[10px] font-bold">
                       {(b.profiles?.username || parsed.authorName || 'G').charAt(0).toUpperCase()}
