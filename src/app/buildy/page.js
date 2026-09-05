@@ -12,15 +12,16 @@ import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import CustomSelect from '@/components/ui/CustomSelect'
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 const BuildComparator = dynamic(() => import('@/components/builds/BuildComparator'), {
-  loading: () => <div className="panel mb-6 min-h-32 animate-pulse" aria-label="Ładowanie porównywarki buildów" />,
+  loading: () => <LoadingState label="Ładowanie porównywarki buildów…" compact className="panel mb-6" />,
 })
 const SquadCompBuilder = dynamic(() => import('@/components/builds/SquadCompBuilder'), {
-  loading: () => <div className="panel min-h-72 animate-pulse" aria-label="Ładowanie planera składu" />,
+  loading: () => <LoadingState label="Ładowanie planera składu…" className="panel" />,
 })
 const Meta1v1Tierlist = dynamic(() => import('@/components/builds/Meta1v1Tierlist'), {
-  loading: () => <div className="panel min-h-72 animate-pulse" aria-label="Ładowanie tierlisty Meta 1v1" />,
+  loading: () => <LoadingState label="Ładowanie tierlisty Meta 1v1…" className="panel" />,
 })
 
 const ALBION_CATEGORIES = [
@@ -116,8 +117,7 @@ function BuildyPageContent() {
       if (!append) setTotalBuilds(result.total || 0)
       if (!append) setSearchTruncated(result.searchTruncated === true)
       setBuilds((current) => append ? [...current, ...page.filter((row) => !current.some((item) => item.id === row.id))] : page)
-    } catch (err) {
-      console.error('Błąd pobierania buildów:', err)
+    } catch {
       if (!append) setBuilds([])
       setLoadError('Nie udało się wczytać Zbrojowni. Odśwież stronę lub spróbuj ponownie za chwilę.')
     } finally {
@@ -295,26 +295,11 @@ function BuildyPageContent() {
           {/* Build results */}
       <div data-view={view} className={view === 'list' ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'}>
         {loading ? (
-          <p className="text-[var(--text-muted)] italic col-span-full text-center py-10">Pobieranie buildów...</p>
+          <LoadingState label="Pobieranie buildów…" description="Przeszukujemy publiczną Zbrojownię." className="panel col-span-full" />
         ) : loadError ? (
-          <div className="panel col-span-full text-center py-16" role="alert">
-            <div className="panel-body space-y-4">
-              <Anvil className="mx-auto h-9 w-9 text-rose-300" />
-              <p className="text-lg font-bold text-white">Zbrojownia jest chwilowo niedostępna.</p>
-              <p className="text-sm text-[var(--text-secondary)]">{loadError}</p>
-              <button type="button" onClick={() => fetchBuilds()} className="btn btn-ghost btn-sm inline-flex">Spróbuj ponownie</button>
-            </div>
-          </div>
+          <ErrorState icon={Anvil} title="Zbrojownia jest chwilowo niedostępna" description={loadError} onRetry={() => fetchBuilds()} className="panel col-span-full" />
         ) : filteredBuilds.length === 0 ? (
-          <div className="panel col-span-full text-center py-16">
-            <div className="panel-body space-y-4">
-              <Anvil className="mx-auto h-9 w-9 text-[var(--amber)]" />
-              <p className="text-lg font-bold text-white">{search ? 'Nie znaleziono pasujących buildów.' : 'Zbrojownia jest pusta.'}</p>
-              <Link href="/buildy/create" className="btn btn-ghost btn-sm inline-flex">
-                <Plus className="w-4 h-4" /> Stwórz pierwszy build
-              </Link>
-            </div>
-          </div>
+          <EmptyState icon={Anvil} title={search ? 'Nie znaleziono pasujących buildów' : 'Zbrojownia jest pusta'} description={search ? 'Zmień wyszukiwaną frazę lub aktywne filtry.' : 'Opublikuj pierwszy zestaw i rozpocznij katalog doktryn.'} action={<Link href="/buildy/create" className="btn btn-ghost btn-sm inline-flex"><Plus className="h-4 w-4" /> Stwórz build</Link>} className="panel col-span-full" />
         ) : (
           filteredBuilds.map((b) => {
             const parsed = buildFromDbRow(b)
@@ -404,7 +389,7 @@ function BuildyPageContent() {
 
 export default function BuildyPage() {
   return (
-    <Suspense fallback={<div className="page-content"><div className="panel min-h-72 animate-pulse" aria-label="Ładowanie Kuźni Buildów" /></div>}>
+    <Suspense fallback={<div className="page-content"><LoadingState label="Ładowanie Kuźni Buildów…" className="panel" /></div>}>
       <BuildyPageContent />
     </Suspense>
   )

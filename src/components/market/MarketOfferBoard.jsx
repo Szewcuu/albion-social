@@ -19,6 +19,7 @@ import {
 import CustomSelect from '@/components/ui/CustomSelect'
 import FavoriteButton from '@/components/ui/FavoriteButton'
 import FollowButton from '@/components/ui/FollowButton'
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 import { isMarketOfferExpired, marketOfferDaysRemaining } from '@/lib/marketOffers'
 
 export default function MarketOfferBoard({
@@ -158,20 +159,11 @@ export default function MarketOfferBoard({
 
       <div className="space-y-3">
         {loading ? (
-          <p className="text-center py-12 text-gray-500 font-mono animate-pulse">Pobieranie ofert z rynku...</p>
+          <LoadingState label="Pobieranie ofert z rynku…" description="Sprawdzamy aktualną tablicę handlową." className="panel" />
         ) : loadError ? (
-          <div className="panel border-rose-500/25 py-12 text-center">
-            <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-rose-300/70" />
-            <p className="font-display text-lg font-bold text-[var(--text-primary)]">Tablica rynku chwilowo nie odpowiada.</p>
-            <p className="mt-1 text-xs text-[var(--text-secondary)]">{loadError}</p>
-            <button type="button" onClick={onRetry} className="btn btn-secondary btn-sm mt-5"><RefreshCw className="h-3.5 w-3.5" /> Spróbuj ponownie</button>
-          </div>
+          <ErrorState icon={ShoppingBag} title="Tablica rynku chwilowo nie odpowiada" description={loadError} onRetry={onRetry} className="panel" />
         ) : filteredOffers.length === 0 ? (
-          <div className="panel py-14 text-center">
-            <ShoppingBag className="mx-auto mb-4 h-8 w-8 text-sky-300/70" />
-            <p className="font-display text-lg font-bold text-[var(--text-primary)]">{scope === 'mine' ? 'Nie masz jeszcze własnych ogłoszeń.' : 'Brak aktywnych ofert.'}</p>
-            <p className="mt-1 text-xs text-[var(--text-secondary)]">{scope === 'mine' ? 'Wystaw ofertę, aby pojawiła się w tym archiwum.' : 'Zmień filtry albo zajrzyj ponownie później.'}</p>
-          </div>
+          <EmptyState icon={ShoppingBag} title={scope === 'mine' ? 'Nie masz jeszcze własnych ogłoszeń' : 'Brak aktywnych ofert'} description={scope === 'mine' ? 'Wystaw ofertę, aby pojawiła się w tym archiwum.' : 'Zmień filtry albo zajrzyj ponownie później.'} className="panel" />
         ) : (
           filteredOffers.map((offer) => {
             const isOwner = user?.id === offer.user_id

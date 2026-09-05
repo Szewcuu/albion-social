@@ -5,9 +5,10 @@ import { Plus, Store, X } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
 import ItemPicker from '@/components/builds/ItemPicker'
+import { LoadingState } from '@/components/ui/FeedbackState'
 
 const LiveMarketPriceEstimator = dynamic(() => import('./LiveMarketPriceEstimator'), {
-  loading: () => <div className="min-h-24 rounded-xl border border-white/8 bg-black/20 animate-pulse" aria-label="Ładowanie wyceny rynkowej" />,
+  loading: () => <LoadingState label="Ładowanie wyceny rynkowej…" compact />,
 })
 
 export default function MarketOfferForm({ user, formData, formMessage, onChange, onSubmit, onClose }) {

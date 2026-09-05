@@ -3,13 +3,14 @@
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { startTransition, Suspense, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ExternalLink, RefreshCw, Search, Swords, Users } from 'lucide-react'
+import { ExternalLink, RefreshCw, Search, Swords, Users } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
+import { ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 const KillboardResults = dynamic(() => import('@/components/killboard/KillboardResults'), {
   ssr: false,
-  loading: () => <div className="panel min-h-56 animate-pulse" aria-label="Ładowanie kroniki wojownika" />,
+  loading: () => <LoadingState label="Ładowanie kroniki wojownika…" className="panel" />,
 })
 
 const REGIONS = [
@@ -250,21 +251,9 @@ function KillboardContent() {
 
         <div aria-live="polite">
           {errorMsg && (
-            <div className="flex items-start gap-3 rounded-2xl border border-rose-400/25 bg-rose-950/25 p-4 text-xs text-rose-200">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>
-                <p className="font-bold">Nie udało się otworzyć kroniki.</p>
-                <p className="mt-1 text-rose-200/65">{errorMsg}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button type="button" onClick={() => void runSearch()} className="inline-flex items-center gap-2 rounded-lg border border-rose-200/20 bg-black/20 px-3 py-2 text-[9px] font-black uppercase tracking-[.1em] text-rose-100 transition hover:border-rose-200/40 hover:bg-black/35">
-                    <RefreshCw className="h-3.5 w-3.5" /> Spróbuj ponownie
-                  </button>
-                  {recoveryUrl && <a href={recoveryUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-rose-200/20 bg-black/20 px-3 py-2 text-[9px] font-black uppercase tracking-[.1em] text-rose-100 transition hover:border-rose-200/40 hover:bg-black/35">Sprawdź w KillBoard#1 <ExternalLink className="h-3.5 w-3.5" /></a>}
-                </div>
-              </div>
-            </div>
+            <ErrorState title="Nie udało się otworzyć kroniki" description={errorMsg} onRetry={() => void runSearch()} compact action={recoveryUrl ? <a href={recoveryUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm inline-flex">Sprawdź w KillBoard#1 <ExternalLink className="h-3.5 w-3.5" /></a> : null} />
           )}
-          {loadingPlayer && <div className="panel flex items-center justify-center gap-3 py-16 text-xs text-[#8e8980]"><RefreshCw className="h-5 w-5 animate-spin text-[var(--amber)]" /> Pobieram profil, historię starć i dane gildii...</div>}
+          {loadingPlayer && <LoadingState label="Pobieram profil wojownika…" description="Łączymy historię starć, ekwipunek i dane gildii." className="panel" />}
         </div>
 
         {!loadingPlayer && hasResults && (
@@ -299,7 +288,7 @@ function KillboardContent() {
 
 export default function KillboardPage() {
   return (
-    <Suspense fallback={<div className="page-content py-12 text-center text-xs font-mono text-gray-400">Ładowanie Kronik Walk...</div>}>
+    <Suspense fallback={<div className="page-content"><LoadingState label="Ładowanie Kronik Walk…" className="panel" /></div>}>
       <KillboardContent />
     </Suspense>
   )

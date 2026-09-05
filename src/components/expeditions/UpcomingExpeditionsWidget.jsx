@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowRight, Clock, Compass, Users } from 'lucide-react'
+import { EmptyState, SkeletonBlock } from '@/components/ui/FeedbackState'
 
 function formatActivity(activityType) {
   return activityType === 'Statyk T8' ? 'Statyk' : activityType || 'Wyprawa'
@@ -30,18 +31,15 @@ export default function UpcomingExpeditionsWidget({ expeditions = [], loading = 
       </div>
 
       {loading ? (
-        <div className="mt-4 grid grid-flow-col auto-cols-[minmax(16rem,85%)] gap-3 overflow-x-auto pb-1 animate-pulse md:grid-flow-row md:grid-cols-2 md:auto-cols-auto md:overflow-visible md:pb-0 xl:grid-cols-4">
+        <div className="mt-4 grid grid-flow-col auto-cols-[minmax(16rem,85%)] gap-3 overflow-x-auto pb-1 md:grid-flow-row md:grid-cols-2 md:auto-cols-auto md:overflow-visible md:pb-0 xl:grid-cols-4" role="status" aria-label="Ładowanie nadchodzących wypraw">
           {Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className="min-h-40 rounded-2xl border border-white/8 bg-black/25 p-4">
+            <SkeletonBlock key={index} className="min-h-40 p-4">
               <div className="h-4 w-24 rounded bg-white/8" /><div className="mt-4 h-5 w-2/3 rounded bg-white/8" /><div className="mt-3 h-3 w-20 rounded bg-white/5" />
-            </div>
+            </SkeletonBlock>
           ))}
         </div>
       ) : upcoming.length === 0 ? (
-        <div className="py-6 text-center">
-          <p className="font-display text-base font-bold text-white">Brak aktywnych wypraw</p>
-          <p className="mt-1 text-xs text-gray-400">Zwołaj pierwszą drużynę poniżej i rozpocznij mobilizację.</p>
-        </div>
+        <EmptyState icon={Compass} title="Brak aktywnych wypraw" description="Zwołaj pierwszą drużynę poniżej i rozpocznij mobilizację." compact className="mt-4" />
       ) : (
         <div className="mt-4 grid grid-flow-col auto-cols-[minmax(16rem,85%)] gap-3 overflow-x-auto pb-1 md:grid-flow-row md:grid-cols-2 md:auto-cols-auto md:overflow-visible md:pb-0 xl:grid-cols-4">
           {upcoming.map((exp) => {

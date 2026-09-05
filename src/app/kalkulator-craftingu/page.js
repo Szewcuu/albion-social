@@ -2,9 +2,10 @@
 
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, BarChart3, CheckCircle2, Coins, Hammer, LoaderCircle, RefreshCw, ArrowRightLeft as Route, ShieldCheck, Sparkles, Zap } from 'lucide-react'
+import { BarChart3, CheckCircle2, Coins, Hammer, RefreshCw, ArrowRightLeft as Route, ShieldCheck, Sparkles, Zap } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
+import { EmptyState, LoadingState, StatusNotice } from '@/components/ui/FeedbackState'
 import {
   calculateRefiningProfit,
   getPresetReturnRate,
@@ -27,7 +28,7 @@ const REGIONS = [
 ]
 
 function ToolLoading({ label }) {
-  return <div className="panel flex min-h-36 items-center justify-center gap-2 rounded-3xl p-6 font-mono text-xs text-[var(--text-muted)]"><LoaderCircle className="h-4 w-4 animate-spin text-[var(--gold)]" />{label}</div>
+  return <LoadingState label={label} compact className="panel rounded-3xl" />
 }
 
 function formatSilver(value) {
@@ -209,9 +210,9 @@ export default function CraftingCalculatorPage() {
                 <button type="button" onClick={fetchPrices} disabled={loading} className="flex min-h-11 items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/10 px-3 font-mono text-[10px] font-black uppercase text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-60"><RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />Odśwież skany</button>
               </div>
 
-              {error && <div className="flex gap-3 rounded-2xl border border-rose-500/30 bg-rose-950/30 p-4 text-xs text-rose-200"><AlertCircle className="h-5 w-5 shrink-0" /><div><strong className="block">Źródło cen jest niedostępne</strong><span>{error} Wynik pojawi się dopiero po uzupełnieniu wszystkich pól.</span></div></div>}
-              {notice && !error && <div className="flex gap-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4 text-xs text-amber-100"><AlertCircle className="h-5 w-5 shrink-0" /><span>{notice}</span></div>}
-              {staleQuotes.length > 0 && <div className="flex gap-3 rounded-2xl border border-sky-500/20 bg-sky-950/20 p-4 text-xs text-sky-100"><AlertCircle className="h-5 w-5 shrink-0" /><span>{staleQuotes.length === 1 ? 'Jeden skan ma' : `${staleQuotes.length} skany mają`} ponad 12 godzin. Porównaj ceny w grze przed inwestycją.</span></div>}
+              {error && <StatusNotice type="error"><span><strong className="block">Źródło cen jest niedostępne</strong>{error} Wynik pojawi się dopiero po uzupełnieniu wszystkich pól.</span></StatusNotice>}
+              {notice && !error && <StatusNotice>{notice}</StatusNotice>}
+              {staleQuotes.length > 0 && <StatusNotice><span>{staleQuotes.length === 1 ? 'Jeden skan ma' : `${staleQuotes.length} skany mają`} ponad 12 godzin. Porównaj ceny w grze przed inwestycją.</span></StatusNotice>}
 
               <div className="space-y-2">
                 {recipe.ingredients.map((ingredient) => <PriceRow key={ingredient.itemId} item={ingredient} role={`Materiał ×${ingredient.quantity}`} city={buyCity} value={priceInputs[ingredient.itemId]} quote={quotes[quoteKey(ingredient.itemId, buyCity)]} onChange={updatePrice} />)}
@@ -219,7 +220,7 @@ export default function CraftingCalculatorPage() {
                 <PriceRow item={recipe.output} role="Produkt ×1" city={sellCity} value={priceInputs[recipe.output.itemId]} quote={quotes[quoteKey(recipe.output.itemId, sellCity)]} onChange={updatePrice} output />
               </div>
 
-              {loading ? <div className="flex min-h-48 items-center justify-center gap-2 rounded-3xl border border-white/8 bg-black/20 font-mono text-xs text-[var(--text-muted)]"><LoaderCircle className="h-5 w-5 animate-spin text-amber-300" />Pobieranie trzech notowań…</div> : hasCompletePrices ? <ResultPanel result={result} rrr={rrr} /> : <div className="rounded-3xl border border-dashed border-white/15 bg-black/15 p-8 text-center"><Coins className="mx-auto h-7 w-7 text-[var(--text-faded)]" /><p className="mt-3 font-display text-lg font-bold text-[var(--text-primary)]">Uzupełnij brakujące ceny</p><p className="mt-1 text-xs text-[var(--text-muted)]">Nie pokazujemy zysku opartego na zerach ani sztucznych założeniach.</p></div>}
+              {loading ? <LoadingState label="Pobieranie trzech notowań…" compact /> : hasCompletePrices ? <ResultPanel result={result} rrr={rrr} /> : <EmptyState icon={Coins} title="Uzupełnij brakujące ceny" description="Nie pokazujemy zysku opartego na zerach ani sztucznych założeniach." compact />}
             </div>
           </div>
         </section>

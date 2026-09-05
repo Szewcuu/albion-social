@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Shield, Swords, Skull, Trophy, Users, X, LoaderCircle, AlertCircle, Globe2, ChevronRight } from 'lucide-react'
+import { Shield, Swords, Skull, Trophy, Users, X, Globe2, ChevronRight } from 'lucide-react'
+import { ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 function getRegionFromServer(serverStr = '') {
   const s = (serverStr || '').toLowerCase()
@@ -117,18 +118,12 @@ export default function GuildZvZInspectorModal({ isOpen, onClose, guildName = ''
 
         {/* LOADING STATE */}
         {loading && (
-          <div className="py-12 text-center space-y-3 font-mono text-xs text-amber-400">
-            <LoaderCircle className="w-8 h-8 animate-spin mx-auto text-amber-400" />
-            <div>Pobieranie rejestru bitew ZvZ i statystyk gildii z oficjalnego API Albionu...</div>
-          </div>
+          <LoadingState label="Pobieranie rejestru bitew ZvZ…" description="Łączymy statystyki gildii z oficjalnym API Albionu." />
         )}
 
         {/* ERROR STATE */}
         {error && !loading && (
-          <div className="flex items-center gap-2 bg-rose-950/40 border border-rose-800/50 p-4 rounded-2xl text-rose-300 text-xs font-mono">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <span>{error}</span>
-          </div>
+          <ErrorState title="Nie udało się otworzyć statystyk gildii" description={error} onRetry={() => void handleSearch(guildName)} compact />
         )}
 
         {/* SELEKCJA KANDYDATÓW */}

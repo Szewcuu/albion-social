@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import CustomSelect from '@/components/ui/CustomSelect'
 import UpcomingExpeditionsWidget from '@/components/expeditions/UpcomingExpeditionsWidget'
-import { StatusNotice } from '@/components/ui/FeedbackState'
+import { EmptyState, LoadingState, StatusNotice } from '@/components/ui/FeedbackState'
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { 
@@ -535,23 +535,9 @@ export default function Wyprawy() {
               <p role="status" className="rounded-xl border border-amber-400/20 bg-amber-400/8 px-4 py-3 text-xs text-amber-100/80">{deleteMessage}</p>
             )}
             {loading ? (
-              <div
-                className="panel min-h-[672px] animate-pulse rounded-3xl p-6 lg:min-h-[420px]"
-                aria-label="Ładowanie aktywnych wypraw"
-                aria-busy="true"
-              >
-                <div className="h-4 w-28 rounded bg-white/8" />
-                <div className="mt-4 h-8 w-2/3 rounded bg-white/8" />
-                <div className="mt-7 grid grid-cols-2 gap-3">
-                  {Array.from({ length: 4 }, (_, index) => (
-                    <div key={index} className="h-12 rounded-xl bg-white/5" />
-                  ))}
-                </div>
-                <div className="mt-7 h-2 rounded bg-white/5" />
-                <p className="mt-8 text-center font-mono text-xs text-gray-500">Ładowanie aktywnych wypraw...</p>
-              </div>
+              <LoadingState label="Ładowanie aktywnych wypraw…" description="Sprawdzamy wolne role i aktualne zapisy graczy." className="panel min-h-[420px] rounded-3xl" />
             ) : expeditions.length === 0 ? (
-              <div className="panel rounded-3xl py-14 text-center"><Users className="mx-auto h-9 w-9 text-violet-300/35" /><p className="font-display mt-4 text-lg font-bold text-[#c7c1b7]">Tablica jest teraz pusta</p><p className="mt-1 text-xs text-[#817d75]">Zwołaj pierwszą wyprawę i rozpocznij mobilizację.</p></div>
+              <EmptyState icon={Users} title="Tablica jest teraz pusta" description="Zwołaj pierwszą wyprawę i rozpocznij mobilizację." className="panel rounded-3xl" />
             ) : (
               expeditions.map((exp) => {
                 const signups = exp.expedition_signups || []

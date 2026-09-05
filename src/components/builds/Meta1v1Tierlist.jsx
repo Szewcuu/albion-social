@@ -1,11 +1,12 @@
 'use client'
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
-import { Swords, Shield, Search, Flame, Award, TrendingUp, ChevronRight, Zap, RefreshCw, AlertCircle, Sparkles } from 'lucide-react'
+import { Swords, Shield, Search, Flame, Award, TrendingUp, ChevronRight, Zap, Sparkles } from 'lucide-react'
 import { itemImageUrl } from '@/lib/buildSlots'
 import ItemTooltip from '@/components/ui/ItemTooltip'
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 const TIER_COLORS = {
   'S+': { badge: 'border-amber-400/50 bg-amber-500/15 text-amber-300', glow: 'shadow-[0_0_20px_rgba(245,158,11,0.15)] border-amber-400/30' },
@@ -19,6 +20,14 @@ function MetaItemIcon({ itemId, name, size }) {
   return <ItemTooltip label={name || itemId}><img src={itemImageUrl(itemId, 1, size)} alt="" width={size} height={size} loading="lazy" decoding="async" className="albion-item-image" /></ItemTooltip>
 }
 
+async function fetchMetaData(signal) {
+  const res = await fetch('/api/albion/meta', { signal })
+  const payload = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(payload.error || 'Nie udało się pobrać danych 1v1 Meta.')
+  if (!payload.data) throw new Error('Nie udało się pobrać danych 1v1 Meta.')
+  return payload
+}
+
 export default function Meta1v1Tierlist() {
   const [metaWeapons, setMetaWeapons] = useState([])
   const [metadata, setMetadata] = useState(null)
@@ -28,35 +37,39 @@ export default function Meta1v1Tierlist() {
   const [selectedTier, setSelectedTier] = useState('ALL')
   const [activeDetailWeapon, setActiveDetailWeapon] = useState(null)
 
-  useEffect(() => {
-    let isMounted = true
-
-    fetch('/api/albion/meta')
-      .then(async res => {
-        const payload = await res.json()
-        if (!res.ok) throw new Error(payload.error || 'Nie udało się pobrać danych 1v1 Meta.')
-        return payload
-      })
-      .then(resData => {
-        if (!isMounted) return
-        if (resData.data) {
-          setMetaWeapons(resData.data)
-          setMetadata(resData.meta || null)
-        } else {
-          setError('Nie udało się pobrać danych 1v1 Meta.')
-        }
-      })
-      .catch((requestError) => {
-        if (isMounted) setError(requestError.message || 'Błąd połączenia z API 1v1 Meta.')
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false)
-      })
-
-    return () => {
-      isMounted = false
+  const loadMeta = useCallback(async (signal) => {
+    try {
+      const payload = await fetchMetaData(signal)
+      setMetaWeapons(payload.data)
+      setMetadata(payload.meta || null)
+    } catch (requestError) {
+      if (requestError.name !== 'AbortError') setError(requestError.message || 'Błąd połączenia z API 1v1 Meta.')
+    } finally {
+      if (!signal?.aborted) setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchMetaData(controller.signal)
+      .then((payload) => {
+        setMetaWeapons(payload.data)
+        setMetadata(payload.meta || null)
+      })
+      .catch((requestError) => {
+        if (requestError.name !== 'AbortError') setError(requestError.message || 'Błąd połączenia z API 1v1 Meta.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+    return () => controller.abort()
+  }, [])
+
+  const retryLoadMeta = () => {
+    setLoading(true)
+    setError(null)
+    void loadMeta()
+  }
 
   const filteredWeapons = useMemo(() => {
     return metaWeapons.filter(w => {
@@ -141,21 +154,11 @@ export default function Meta1v1Tierlist() {
 
       {/* RENDEROWANIE TIERÓW */}
       {loading ? (
-        <div className="panel p-16 text-center text-xs font-mono text-gray-400 space-y-3">
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto text-amber-400" />
-          <p>Analizowanie najnowszych pojedynków z regionalnego Gameinfo API...</p>
-        </div>
+        <LoadingState label="Analizowanie pojedynków…" description="Pobieramy najnowsze dane z regionalnego Gameinfo API." className="panel" />
       ) : error ? (
-        <div className="panel p-8 text-center text-xs font-mono text-rose-300 space-y-2 border-rose-500/30">
-          <AlertCircle className="w-6 h-6 mx-auto text-rose-400" />
-          <p>{error}</p>
-        </div>
+        <ErrorState title="Nie udało się przygotować tierlisty" description={error} onRetry={retryLoadMeta} className="panel" />
       ) : metaWeapons.length === 0 ? (
-        <div className="panel p-10 text-center text-xs font-mono text-gray-300 space-y-2 border-amber-500/20">
-          <AlertCircle className="w-6 h-6 mx-auto text-amber-400" />
-          <p>Próbka nie zawiera jeszcze wystarczającej liczby pojedynków dla wiarygodnego rankingu.</p>
-          <p className="text-[10px] text-gray-500">Nie pokazujemy danych zastępczych ani ręcznie wpisanych wyników.</p>
-        </div>
+        <EmptyState icon={Award} title="Za mało pojedynków do rankingu" description="Próbka nie jest jeszcze wiarygodna. Nie pokazujemy danych zastępczych ani ręcznie wpisanych wyników." className="panel" />
       ) : (
         <div className="space-y-6">
           {['S+', 'S', 'A', 'B', 'C'].map(tierName => {

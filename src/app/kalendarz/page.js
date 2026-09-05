@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BellRing, CalendarDays as CalendarCheck2, CalendarDays, Clock3, LoaderCircle, MapPin, Shield, Sparkles, Users } from 'lucide-react'
 
 import CustomSelect from '@/components/ui/CustomSelect'
-import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
+import { EmptyState, LoadingState, StatusNotice } from '@/components/ui/FeedbackState'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 
 const SERVER_OPTIONS = ['Wszystkie serwery', 'Europa', 'Ameryka', 'Azja']
@@ -128,7 +128,7 @@ export default function EventCalendarPage() {
         </div>
       </section>
 
-      {loading ? <div className="panel flex min-h-64 items-center justify-center rounded-[24px]"><LoaderCircle className="h-7 w-7 animate-spin text-amber-300" /></div> : grouped.length === 0 ? <EmptyState icon={CalendarDays} title="Brak wydarzeń dla tych filtrów" description="Zmień serwer lub typ wydarzenia. Nowe mobilizacje dodaje dowództwo gildii." /> : (
+      {loading ? <LoadingState label="Pobieranie kalendarza…" description="Łączymy wyprawy graczy i wydarzenia gildii." className="panel rounded-[24px]" /> : grouped.length === 0 ? <EmptyState icon={CalendarDays} title="Brak wydarzeń dla tych filtrów" description="Zmień serwer lub typ wydarzenia. Nowe mobilizacje dodaje dowództwo gildii." className="panel" /> : (
         <div className="space-y-7">
           {grouped.map(([day, dayEvents]) => <section key={day} className="grid gap-4 lg:grid-cols-[180px_1fr]"><div className="lg:sticky lg:top-24 lg:self-start"><p className="text-[9px] font-black uppercase tracking-[.2em] text-violet-300">Dzień operacyjny</p><h2 className="font-display mt-1 text-2xl font-black text-white">{formatDate(dayEvents[0].starts_at, { weekday: 'long', year: 'numeric' })}</h2><p className="mt-2 text-[10px] text-[var(--text-secondary)]">{dayEvents.length} {dayEvents.length === 1 ? 'wydarzenie' : 'wydarzenia'}</p></div><div className="space-y-4">{dayEvents.map((event) => <EventCard key={event.id} event={event} draft={drafts[event.id] || { role: 'flex', reminderMinutes: '' }} setDraft={(patch) => setDrafts((current) => ({ ...current, [event.id]: { ...current[event.id], ...patch } }))} busy={busy === event.id} onJoin={() => updateSignup(event, 'join')} onCancel={() => updateSignup(event, 'cancel')} />)}</div></section>)}
         </div>

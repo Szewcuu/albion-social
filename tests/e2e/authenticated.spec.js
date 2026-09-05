@@ -483,24 +483,43 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
     await page.goto('/buildy?q=Kaptur%20%C5%81owcy&sort=likes&category=pvp&view=list')
 
-    await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…')).toHaveValue('Kaptur Łowcy')
+    await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…').first()).toHaveValue('Kaptur Łowcy')
     await expect(page.getByRole('combobox', { name: 'Sortuj buildy' })).toContainText('Najwięcej polubień')
     await expect(page.getByRole('button', { name: 'PvP & ZvZ' })).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('button', { name: 'Widok listy' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.locator('[data-view="list"]')).toBeVisible()
+    await expect(page.locator('[data-view="list"]').first()).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Łowca Mgły' })).toBeVisible()
     await expect.poll(() => requests.some((entry) => entry.search === 'Kaptur Łowcy' && entry.sort === 'likes' && entry.category === 'pvp' && entry.limit === '12')).toBe(true)
 
     await page.getByRole('button', { name: 'Ganking & Mists' }).click()
     await expect.poll(() => page.evaluate(() => Object.fromEntries(new URL(window.location.href).searchParams))).toMatchObject({ q: 'Kaptur Łowcy', sort: 'likes', category: 'ganking', view: 'list' })
     await page.reload()
-    await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…')).toHaveValue('Kaptur Łowcy')
+    await expect(page.getByPlaceholder('Szukaj po nazwie, przedmiocie, autorze lub tagu…').first()).toHaveValue('Kaptur Łowcy')
     await expect(page.getByRole('button', { name: 'Ganking & Mists' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.locator('[data-view="list"]')).toBeVisible()
+    await expect(page.locator('[data-view="list"]').first()).toBeVisible()
 
     await page.getByRole('button', { name: 'Widok kafelków' }).click()
-    await expect(page.locator('[data-view="grid"]')).toBeVisible()
+    await expect(page.locator('[data-view="grid"]').first()).toBeVisible()
     await expect.poll(() => page.evaluate(() => new URL(window.location.href).searchParams.has('view'))).toBe(false)
+  })
+
+  test('pokazuje spójny błąd Kuźni i pozwala ponowić pobieranie', async ({ page }) => {
+    let attempt = 0
+    await page.route('**/api/builds?**', async (route) => {
+      attempt += 1
+      if (attempt === 1) {
+        await route.fulfill({ status: 503, headers: { 'x-e2e-expected-error': 'true' }, contentType: 'application/json', body: JSON.stringify({ error: 'Próba E2E: usługa chwilowo niedostępna.' }) })
+        return
+      }
+      await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ builds: [], hasMore: false, nextCursor: null, nextOffset: null, total: 0 }) })
+    })
+
+    await page.goto('/buildy')
+    await expect(page.getByRole('heading', { name: 'Zbrojownia jest chwilowo niedostępna' })).toBeVisible()
+    await expect(page.getByText('Nie udało się wczytać Zbrojowni. Odśwież stronę lub spróbuj ponownie za chwilę.')).toBeVisible()
+    await page.getByRole('button', { name: 'Spróbuj ponownie' }).click()
+    await expect(page.getByRole('heading', { name: 'Zbrojownia jest pusta' })).toBeVisible()
+    expect(attempt).toBeGreaterThanOrEqual(2)
   })
 
   test('zapisuje, odczytuje i usuwa serwerowy alert cenowy', async ({ page, request }) => {

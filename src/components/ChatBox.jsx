@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 function normalizeMessage(message) {
   return { ...message, username: message.username || 'Gracz', reply_to: message.reply_to || null }
@@ -259,11 +260,11 @@ export default function ChatBox({ user, isAdmin }) {
 
           <div ref={postsRef} className="community-posts !max-h-[340px] sm:!max-h-[360px] overflow-y-auto" aria-live="polite">
             {loading ? (
-              <div className="community-empty"><RefreshCw className="spin" aria-hidden="true" /><strong>Otwieramy kronikę rozmów…</strong></div>
+              <LoadingState label="Otwieramy kronikę rozmów…" compact className="m-4" />
             ) : loadError ? (
-              <div className="community-empty error"><strong>Brama komunikacyjna nie odpowiada</strong><p>{loadError}</p><button type="button" className="btn btn-ghost btn-sm" onClick={fetchMessages}>Spróbuj ponownie</button></div>
+              <ErrorState title="Brama komunikacyjna nie odpowiada" description={loadError} onRetry={fetchMessages} compact className="m-4" />
             ) : chatMessages.length === 0 ? (
-              <div className="community-empty"><MessageSquareReply aria-hidden="true" /><strong>Rozpal pierwszą rozmowę</strong><p>Tawerna jest jeszcze pusta. Napisz pierwszą wiadomość do kompanii.</p></div>
+              <EmptyState icon={MessageSquareReply} title="Rozpal pierwszą rozmowę" description="Tawerna jest jeszcze pusta. Napisz pierwszą wiadomość do kompanii." compact className="m-4" />
             ) : <>
               {hasOlder && (
                 <div className="flex justify-center border-b border-white/5 p-2">

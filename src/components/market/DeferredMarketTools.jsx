@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
 import { BarChart3, Coins, BarChart3 as Gauge, Sparkles } from 'lucide-react'
+import { LoadingState } from '@/components/ui/FeedbackState'
 
 const MarketIntelligence = dynamic(() => import('./MarketIntelligence'), {
   loading: () => <ToolSkeleton label="Ładowanie wywiadu rynkowego" />,
@@ -12,7 +13,7 @@ const GoldExchangeWidget = dynamic(() => import('@/components/economy/GoldExchan
 })
 
 function ToolSkeleton({ label }) {
-  return <div className="panel min-h-72 animate-pulse" role="status" aria-label={label} />
+  return <LoadingState label={`${label}…`} description="Przygotowujemy aktualne dane rynku." className="panel" />
 }
 
 export default function DeferredMarketTools({ initialTool = '' }) {

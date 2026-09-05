@@ -869,7 +869,7 @@ Lista jest ułożona według wartości dla gracza, nie według łatwości implem
 - [x] Dodać wyszukiwarkę buildów po nazwie, przedmiocie, autorze i tagu oraz sortowanie po popularności, aktualności i polubieniach.
 - [x] Zapisać filtry Kuźni w adresie URL, aby można było udostępnić gotowy widok wyników.
 - [x] Dodać kompaktowy tryb listy obok kafelków dla dużej liczby buildów.
-- [ ] Ujednolicić puste stany, szkielety ładowania i komunikaty ponowienia na wszystkich podstronach.
+- [x] Ujednolicić puste stany, szkielety ładowania i komunikaty ponowienia na wszystkich podstronach.
 
 ### Priorytet B — rozwój społeczności
 
