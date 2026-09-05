@@ -11,9 +11,19 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     const headers = { Authorization: `Bearer ${accessToken}` }
     const moderationQueue = await request.get('/api/admin/content', { headers })
     const roleManagement = await request.get('/api/admin/roles', { headers })
+    const announcementPublish = await request.post('/api/tavern/announcements', {
+      headers,
+      data: { title: 'Test', body: 'Treść testowa', kind: 'info', expiresInDays: 1 },
+    })
+    const pinThread = await request.patch('/api/chat', {
+      headers,
+      data: { id: '00000000-0000-4000-8000-000000000000', pinned: true },
+    })
 
     expect(moderationQueue.status()).toBe(403)
     expect(roleManagement.status()).toBe(403)
+    expect(announcementPublish.status()).toBe(403)
+    expect(pinThread.status()).toBe(403)
   })
 
   test('panel administratora pokazuje czytelne role, monitoring i dziennik', async ({ page }) => {
@@ -127,6 +137,22 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     }))
     let sentPayload = null
 
+    await page.route('**/api/tavern/announcements', async (route) => route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        announcements: [{
+          id: '00000000-0000-4000-8000-777777777777',
+          author_id: '00000000-0000-4000-8000-888888888888',
+          title: 'Zbiórka kompanii',
+          body: 'W sobotę spotykamy się przy moście w Martlock.',
+          kind: 'event',
+          expires_at: '2026-09-12T18:00:00.000Z',
+          created_at: '2026-09-05T12:00:00.000Z',
+          profiles: { username: 'Herold' },
+        }],
+      }),
+    }))
+
     await page.route('**/api/chat**', async (route) => {
       const request = route.request()
       if (request.method() === 'POST') {
@@ -150,12 +176,17 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
 
       await route.fulfill({
         contentType: 'application/json',
-        body: JSON.stringify({ messages, hasOlder: false, cursor: null, supportsReplies: true }),
+        body: JSON.stringify({ messages, pinnedMessages: [messages[15]], hasOlder: false, cursor: null, supportsReplies: true }),
       })
     })
 
     await page.goto('/')
-    await expect(page.getByText('Wiadomość do odpowiedzi', { exact: true })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Tablica heroldów' })).toBeVisible()
+    await expect(page.getByText('Zbiórka kompanii')).toBeVisible()
+    await expect(page.getByText('Przypięte wątki')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Przypnij' })).toHaveCount(0)
+    const targetMessage = page.locator('.community-post').filter({ hasText: 'Wiadomość do odpowiedzi' })
+    await expect(targetMessage.getByText('Wiadomość do odpowiedzi', { exact: true })).toBeVisible()
     await expect(page.getByText('Szybkie Akcje Gracza')).toHaveCount(0)
 
     const posts = page.locator('.community-posts')
@@ -164,7 +195,6 @@ test.describe('kluczowe przepływy zalogowanego użytkownika', () => {
     ))).toBe(true)
     await expect.poll(() => posts.evaluate((element) => element.clientHeight)).toBeGreaterThanOrEqual(180)
 
-    const targetMessage = page.locator('.community-post').filter({ hasText: 'Wiadomość do odpowiedzi' })
     await targetMessage.getByRole('button', { name: 'Odpowiedz' }).click()
     await expect(page.getByText('Odpowiadasz użytkownikowi')).toBeVisible()
 

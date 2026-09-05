@@ -10,7 +10,7 @@ import {
 } from '@/lib/server/supabaseAdmin'
 import { cleanText } from '@/lib/server/validation'
 
-const BASE_FIELDS = 'id, user_id, channel, username, text, created_at'
+const BASE_FIELDS = 'id, user_id, channel, username, text, created_at, is_pinned, pinned_at, pinned_by'
 const REPLY_FIELDS = `${BASE_FIELDS}, reply_to`
 const CHAT_PAGE_SIZE = 40
 const NO_STORE_HEADERS = { 'Cache-Control': 'private, no-store, max-age=0' }
@@ -61,6 +61,18 @@ async function readMessagePage(supabase, createdAt, id) {
   return { ...result, supportsReplies }
 }
 
+async function readPinnedMessages(supabase) {
+  return supabase
+    .from('chat_messages')
+    .select(REPLY_FIELDS)
+    .eq('channel', 'GLOBALNY')
+    .eq('status', 'visible')
+    .eq('is_pinned', true)
+    .is('reply_to', null)
+    .order('pinned_at', { ascending: false })
+    .limit(3)
+}
+
 export async function GET(request) {
   try {
     const access = await authorize(request)
@@ -73,14 +85,19 @@ export async function GET(request) {
       return jsonError('Nieprawidłowy kursor wiadomości.', 400)
     }
 
-    const result = await readMessagePage(access.supabase, createdAt, id)
+    const [result, pinnedResult] = await Promise.all([
+      readMessagePage(access.supabase, createdAt, id),
+      readPinnedMessages(access.supabase),
+    ])
     if (result.error) throw result.error
+    if (pinnedResult.error) throw pinnedResult.error
 
     const rows = result.data || []
     const descendingPage = rows.slice(0, CHAT_PAGE_SIZE)
     const oldest = descendingPage.at(-1)
     return NextResponse.json({
       messages: descendingPage.reverse(),
+      pinnedMessages: pinnedResult.data || [],
       hasOlder: rows.length > CHAT_PAGE_SIZE,
       cursor: oldest ? { created_at: oldest.created_at, id: oldest.id } : null,
       supportsReplies: result.supportsReplies,
@@ -88,6 +105,62 @@ export async function GET(request) {
   } catch (error) {
     console.error('Błąd pobierania wiadomości Tawerny:', error)
     return jsonError('Nie udało się pobrać wiadomości Tawerny.', 500)
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const access = await authorize(request)
+    if (access.error) return access.error
+    if (!(await isPortalStaff(access.supabase, access.auth.user.id))) {
+      return jsonError('Tylko personel może przypinać wątki.', 403)
+    }
+
+    const rateLimit = await checkRateLimit(`chat-pin:${access.auth.user.id}`, { limit: 30, windowMs: 10 * 60_000 })
+    if (!rateLimit.allowed) {
+      return jsonError('Zmieniasz przypięcia zbyt często. Spróbuj ponownie później.', 429, { 'Retry-After': String(rateLimit.retryAfter) })
+    }
+
+    const body = await request.json().catch(() => null)
+    if (!isModerationId(body?.id) || typeof body?.pinned !== 'boolean') {
+      return jsonError('Nieprawidłowe dane przypięcia.', 400)
+    }
+
+    const { data: current, error: readError } = await access.supabase
+      .from('chat_messages')
+      .select('id, reply_to, status, channel')
+      .eq('id', body.id)
+      .maybeSingle()
+    if (readError) throw readError
+    if (!current || current.status !== 'visible' || current.channel !== 'GLOBALNY') return jsonError('Wiadomość nie istnieje.', 404)
+    if (body.pinned && current.reply_to) return jsonError('Można przypiąć wyłącznie początek wątku.', 400)
+
+    if (body.pinned) {
+      const { count, error: countError } = await access.supabase
+        .from('chat_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('channel', 'GLOBALNY')
+        .eq('status', 'visible')
+        .eq('is_pinned', true)
+      if (countError) throw countError
+      if ((count || 0) >= 3) return jsonError('Można przypiąć maksymalnie trzy wątki.', 409)
+    }
+
+    const pinnedState = body.pinned
+      ? { is_pinned: true, pinned_at: new Date().toISOString(), pinned_by: access.auth.user.id }
+      : { is_pinned: false, pinned_at: null, pinned_by: null }
+    const { data, error } = await access.supabase
+      .from('chat_messages')
+      .update(pinnedState)
+      .eq('id', body.id)
+      .select(REPLY_FIELDS)
+      .single()
+    if (error) throw error
+
+    return NextResponse.json({ message: data }, { headers: NO_STORE_HEADERS })
+  } catch (error) {
+    console.error('Błąd przypinania wątku Tawerny:', error)
+    return jsonError('Nie udało się zmienić przypięcia wątku.', 500)
   }
 }
 
