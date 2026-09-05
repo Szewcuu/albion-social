@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { ArrowRight, Beer, Check, Shield, Swords } from 'lucide-react'
+import { ArrowRight, Beer, Check } from 'lucide-react'
 import styles from './HomeAtmosphere.module.css'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { scheduleIdleTask } from '@/lib/clientIdle'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { ErrorState, LoadingState } from '@/components/ui/FeedbackState'
+import TavernAnnouncements from '@/components/home/TavernAnnouncements'
 
 const ChatBox = dynamic(() => import('@/components/ChatBox'), {
   loading: () => <LoadingState label="Ładowanie czatu Tawerny…" className="panel min-h-[360px]" />,
@@ -57,10 +58,7 @@ export default function MemberTavern() {
       <div className={styles.tavernLayout}>
         <div className={styles.conversation}>
           <ChatBox user={user} isAdmin={isAdmin} />
-          <div className={styles.noticeboard}>
-            <Link href="/buildy" className={styles.notice}><Swords aria-hidden="true" /><div><h2>Ze zbrojowni kompanii</h2><p>{overviewLoading ? 'Sprawdzamy stojaki z ekwipunkiem…' : overviewUnavailable ? '' : `${overview.activeBuilds} zestawów w publicznej kuźni.`} Podejrzyj pomysły innych graczy i dopracuj swój build.</p><small>Przejrzyj zestawy →</small></div></Link>
-            <Link href="/gildie" className={styles.notice}><Shield aria-hidden="true" /><div><h2>Pod wspólnym sztandarem</h2><p>{overviewLoading ? 'Sprawdzamy rejestr chorągwi…' : overviewUnavailable ? '' : `${overview.guildsCount} gildii w rejestrze portalu.`} Poznaj ich styl gry i znajdź kompanię dla siebie.</p><small>Poznaj gildie →</small></div></Link>
-          </div>
+          <TavernAnnouncements isStaff={isAdmin} />
         </div>
         <div className={styles.sidebar}>
           {overviewUnavailable && !overviewLoading ? <ErrorState title="Podsumowanie społeczności jest niedostępne" description="Nie udało się pobrać aktualnych danych Tawerny." onRetry={fetchPortalOverview} className="panel" /> : <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />}

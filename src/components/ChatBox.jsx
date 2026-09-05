@@ -5,6 +5,7 @@ import Image from 'next/image'
 import {
   ArrowLeft as CornerUpLeft,
   MessageSquareText as MessageSquareReply,
+  Pin,
   RefreshCw,
   Send,
   Sparkles,
@@ -17,7 +18,7 @@ import { scheduleIdleTask } from '@/lib/clientIdle'
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
 function normalizeMessage(message) {
-  return { ...message, username: message.username || 'Gracz', reply_to: message.reply_to || null }
+  return { ...message, username: message.username || 'Gracz', reply_to: message.reply_to || null, is_pinned: message.is_pinned === true }
 }
 
 function MessageText({ text }) {
@@ -29,10 +30,12 @@ function MessageText({ text }) {
 
 export default function ChatBox({ user, isAdmin }) {
   const [chatMessages, setChatMessages] = useState([])
+  const [pinnedMessages, setPinnedMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
   const [replyingTo, setReplyingTo] = useState(null)
   const [highlightedId, setHighlightedId] = useState(null)
   const [pendingDeleteId, setPendingDeleteId] = useState(null)
+  const [pendingPinId, setPendingPinId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [loadingOlder, setLoadingOlder] = useState(false)
   const [hasOlder, setHasOlder] = useState(false)
@@ -71,6 +74,13 @@ export default function ChatBox({ user, isAdmin }) {
         ? current.map((message) => message.id === normalized.id ? normalized : message)
         : [...current, normalized]
     })
+    setPinnedMessages((current) => {
+      const withoutIncoming = current.filter((message) => message.id !== normalized.id)
+      if (!normalized.is_pinned || normalized.reply_to) return withoutIncoming
+      return [normalized, ...withoutIncoming]
+        .sort((first, second) => Date.parse(second.pinned_at || second.created_at) - Date.parse(first.pinned_at || first.created_at))
+        .slice(0, 3)
+    })
   }, [])
 
   const fetchMessages = useCallback(async ({ older = false } = {}) => {
@@ -98,6 +108,7 @@ export default function ChatBox({ user, isAdmin }) {
 
       oldestCursorRef.current = result.cursor || null
       const chronologicalPage = (result.messages || []).map(normalizeMessage)
+      if (!older) setPinnedMessages((result.pinnedMessages || []).map(normalizeMessage))
       setSupportsReplies(result.supportsReplies !== false)
       setHasOlder(result.hasOlder === true)
       setChatMessages((current) => {
@@ -128,11 +139,13 @@ export default function ChatBox({ user, isAdmin }) {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_messages' }, (payload) => {
           if (payload.eventType === 'UPDATE' && payload.new.status !== 'visible') {
             setChatMessages((current) => current.filter((message) => message.id !== payload.new.id))
+            setPinnedMessages((current) => current.filter((message) => message.id !== payload.new.id))
           } else if ((payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') && payload.new.channel === 'GLOBALNY' && payload.new.status === 'visible') {
             addOrReplaceMessage(payload.new)
           }
           if (payload.eventType === 'DELETE') {
             setChatMessages((current) => current.filter((message) => message.id !== payload.old.id))
+            setPinnedMessages((current) => current.filter((message) => message.id !== payload.old.id))
           }
         })
         .subscribe((status) => {
@@ -228,10 +241,32 @@ export default function ChatBox({ user, isAdmin }) {
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Nie udało się usunąć wiadomości.')
       setChatMessages((current) => current.filter((item) => item.id !== message.id))
+      setPinnedMessages((current) => current.filter((item) => item.id !== message.id))
       setPendingDeleteId(null)
     } catch (error) {
       console.error('Błąd usuwania wiadomości Tawerny:', error)
       setSendError('Nie udało się usunąć wiadomości.')
+    }
+  }
+
+  const togglePinnedMessage = async (message) => {
+    if (!isAdmin || message.reply_to || pendingPinId) return
+    setPendingPinId(message.id)
+    setSendError('')
+    try {
+      const response = await authenticatedFetch('/api/chat', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: message.id, pinned: !message.is_pinned }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || 'Nie udało się zmienić przypięcia.')
+      addOrReplaceMessage(result.message)
+    } catch (error) {
+      console.error('Błąd przypinania wątku Tawerny:', error)
+      setSendError(error.message || 'Nie udało się zmienić przypięcia wątku.')
+    } finally {
+      setPendingPinId(null)
     }
   }
 
@@ -259,6 +294,19 @@ export default function ChatBox({ user, isAdmin }) {
           </div>
 
           <div ref={postsRef} className="community-posts !max-h-[340px] sm:!max-h-[360px] overflow-y-auto" aria-live="polite">
+            {pinnedMessages.length > 0 && (
+              <aside className="border-b border-amber-200/10 bg-amber-200/[0.035] px-3 py-2" aria-labelledby="pinned-threads-title">
+                <div className="mb-1.5 flex items-center gap-1.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[var(--gold)]"><Pin aria-hidden="true" className="h-3 w-3" /><span id="pinned-threads-title">Przypięte wątki</span></div>
+                <div className="grid gap-1.5 sm:grid-cols-3">
+                  {pinnedMessages.map((message) => (
+                    <button key={message.id} type="button" onClick={() => messagesById.has(message.id) ? jumpToMessage(message.id) : startReply(message)} className="group min-w-0 rounded-lg border border-[var(--border-warm)] bg-black/20 px-2.5 py-2 text-left hover:border-[var(--gold-dim)]">
+                      <strong className="block truncate text-[10px] text-[var(--gold-bright)]">{message.username.replace(/#0$/, '')}</strong>
+                      <span className="block truncate text-[10px] text-[var(--text-primary)]">{message.text}</span>
+                    </button>
+                  ))}
+                </div>
+              </aside>
+            )}
             {loading ? (
               <LoadingState label="Otwieramy kronikę rozmów…" compact className="m-4" />
             ) : loadError ? (
@@ -301,6 +349,11 @@ export default function ChatBox({ user, isAdmin }) {
                     {message.channel !== 'SYSTEM' && (
                       <div className="community-post-actions">
                         <button type="button" onClick={() => startReply(message)}><MessageSquareReply aria-hidden="true" /> Odpowiedz</button>
+                        {isAdmin && !message.reply_to && (
+                          <button type="button" disabled={pendingPinId === message.id} onClick={() => togglePinnedMessage(message)}>
+                            <Pin aria-hidden="true" /> {pendingPinId === message.id ? 'Zapisywanie…' : message.is_pinned ? 'Odepnij' : 'Przypnij'}
+                          </button>
+                        )}
                         {(isAdmin || ownMessage) && (
                           <button type="button" className={pendingDeleteId === message.id ? 'confirm-delete' : ''} onClick={() => deleteChatMessage(message)}>
                             <Trash2 aria-hidden="true" /> {pendingDeleteId === message.id ? 'Potwierdź usunięcie' : 'Usuń'}
