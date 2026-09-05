@@ -873,7 +873,7 @@ Lista jest ułożona według wartości dla gracza, nie według łatwości implem
 
 ### Priorytet B — rozwój społeczności
 
-- [ ] Wprowadzić wyróżniony „Build tygodnia” głosowany przez społeczność.
+- [x] Wprowadzić wyróżniony „Build tygodnia” głosowany przez społeczność.
 - [ ] Dodać w Tawernie przypięte wątki i krótkie ogłoszenia moderatorów bez powielania głównej nawigacji.
 - [ ] Rozbudować publiczny profil o ostatnią aktywność, ulubione role i najczęściej używane zestawy.
 - [ ] Przygotować centrum aktywności łączące odpowiedzi, polubienia, zaproszenia do wypraw i wiadomości handlowe.

@@ -171,6 +171,13 @@ export async function installVisualNetworkFixtures(page) {
   await page.route('**/api/builds/*/comments**', (route) => json(route, {
     comments: [], count: 0, pagination: { hasMore: false, nextCursor: null },
   }))
+  await page.route('**/api/builds/weekly', (route) => json(route, {
+    week: { weekStart: '2026-08-31', startsAt: '2026-08-31T00:00:00.000Z', endsAt: '2026-09-07T00:00:00.000Z' },
+    candidates: [{ ...profileBuild, profiles: { username: profile.username }, weekly_votes_count: 9, likes_count: 14, item_names: {} }],
+    leaderId: VISUAL_BUILD_ID,
+    totalVotes: 9,
+    userVoteBuildId: null,
+  }))
   await page.route('**/api/follows**', (route) => json(route, { follows: [], following: false }))
 
   await page.route('**/rest/v1/profiles?**', (route) => json(route, profile))

@@ -44,6 +44,8 @@
     { "version": "20260830130320", "name": "f1_4_operational_hygiene" },
     { "version": "20260830130604", "name": "f1_4_usage_rls_policy" },
     { "version": "20260830135513", "name": "f1_5_product_direction_test" },
-    { "version": "20260830135720", "name": "f1_5_vote_rls_policy" }
+    { "version": "20260830135720", "name": "f1_5_vote_rls_policy" },
+    { "version": "20260905105922", "name": "build_weekly_votes" },
+    { "version": "20260905110616", "name": "build_weekly_votes_build_index" }
   ]
 }

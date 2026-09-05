@@ -14,6 +14,10 @@ import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import CustomSelect from '@/components/ui/CustomSelect'
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 
+const BuildOfWeekSpotlight = dynamic(() => import('@/components/builds/BuildOfWeekSpotlight'), {
+  loading: () => <LoadingState label="Przygotowujemy głosowanie…" compact className="panel mb-6" />,
+})
+
 const BuildComparator = dynamic(() => import('@/components/builds/BuildComparator'), {
   loading: () => <LoadingState label="Ładowanie porównywarki buildów…" compact className="panel mb-6" />,
 })
@@ -227,6 +231,8 @@ function BuildyPageContent() {
 
       {mainTab === 'catalog' && (
         <>
+          <BuildOfWeekSpotlight />
+
           {/* Filters + Create */}
           <div className="panel mb-6">
             <div className="panel-body grid gap-4">
