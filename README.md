@@ -6,6 +6,9 @@ Produkcja: [albion-social.vercel.app](https://albion-social.vercel.app/)
 
 Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 
+### Pomysły
+- funkcja rekrutacji. Osoba podstrona, segment promocyjny na stronie tawerny.
+
 ## Stan projektu
 
 ### Rebuild UI/UX — Albion War Table (sierpień 2026)
