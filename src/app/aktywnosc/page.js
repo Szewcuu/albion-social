@@ -64,7 +64,7 @@ export default function ActivityCenterPage() {
   }, [category])
 
   useEffect(() => {
-    void load()
+    void Promise.resolve().then(() => load())
     return () => requestControllerRef.current?.abort()
   }, [load])
 
