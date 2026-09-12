@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Bell, BookOpen, CalendarDays, Check as CheckCheck, ChevronDown, Heart, LogIn, ArrowLeft as LogOut, Compass as Map, ChevronDown as Menu, RefreshCw, Shield, ShieldCheck, Swords, ShoppingBag, MessageSquare, ShieldAlert, UserRound, ContactRound } from 'lucide-react'
+import { categoryForNotification } from '@/lib/activityCenter'
 
 const PAGE_NAMES = {
   '/': 'Tawerna',
@@ -27,8 +28,13 @@ const PAGE_NAMES = {
   '/prywatnosc': 'Polityka Prywatności',
 }
 
-const getNotificationIcon = (type, title) => {
+const getNotificationIcon = (type, title, message) => {
   const t = (type || title || '').toLowerCase()
+  const category = categoryForNotification({ type, title, message })
+  if (category === 'replies') return MessageSquare
+  if (category === 'likes') return Heart
+  if (category === 'expeditions') return Swords
+  if (category === 'market') return ShoppingBag
   if (t.includes('expedition') || t.includes('wypraw') || t.includes('zgłoszeni')) return Swords
   if (t.includes('market') || t.includes('rynek') || t.includes('ofert')) return ShoppingBag
   if (t.includes('comment') || t.includes('komentarz')) return MessageSquare
@@ -126,7 +132,7 @@ export default function TopBar({
                       <div className="notification-empty error">{notificationState.error}<button type="button" onClick={refreshNotifications}>Spróbuj ponownie</button></div>
                     ) : notifications?.length > 0 ? (
                       notifications.slice(0, 10).map((notification) => {
-                        const IconComponent = getNotificationIcon(notification.type, notification.title)
+                        const IconComponent = getNotificationIcon(notification.type, notification.title, notification.message)
 
                         return (
                           <Link

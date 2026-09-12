@@ -57,40 +57,25 @@ export async function GET(request) {
       if (types) listQuery = listQuery.in('type', types)
       listQuery = applyCreatedAtCursor(listQuery, cursor)
 
-      const countFor = (categoryId) => {
-        let query = supabase
-          .from('notifications')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', auth.user.id)
-        const categoryTypes = activityTypesForCategory(categoryId)
-        if (categoryTypes) query = query.in('type', categoryTypes)
-        return query
-      }
-
-      const [listResult, allResult, repliesResult, likesResult, expeditionsResult, marketResult, unreadResult] = await Promise.all([
+      const [listResult, countsResult] = await Promise.all([
         listQuery,
-        countFor('all'),
-        countFor('replies'),
-        countFor('likes'),
-        countFor('expeditions'),
-        countFor('market'),
-        supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', auth.user.id).eq('is_read', false),
+        supabase.rpc('get_notification_counts', { p_user_id: auth.user.id }),
       ])
-      const firstError = [listResult, allResult, repliesResult, likesResult, expeditionsResult, marketResult, unreadResult]
-        .find((result) => result.error)?.error
+      const firstError = [listResult, countsResult].find((result) => result.error)?.error
       if (firstError) throw firstError
 
       const { page, hasMore, nextCursor } = pageFromRows(listResult.data || [], pageSize)
+      const counts = Array.isArray(countsResult.data) ? countsResult.data[0] || {} : countsResult.data || {}
       return NextResponse.json({
         notifications: page,
         category,
         counts: {
-          all: allResult.count || 0,
-          replies: repliesResult.count || 0,
-          likes: likesResult.count || 0,
-          expeditions: expeditionsResult.count || 0,
-          market: marketResult.count || 0,
-          unread: unreadResult.count || 0,
+          all: Number(counts.all_count || 0),
+          replies: Number(counts.replies_count || 0),
+          likes: Number(counts.likes_count || 0),
+          expeditions: Number(counts.expeditions_count || 0),
+          market: Number(counts.market_count || 0),
+          unread: Number(counts.unread_count || 0),
         },
         pagination: { hasMore, nextCursor },
       }, { headers: { 'Cache-Control': 'no-store' } })

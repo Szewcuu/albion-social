@@ -50,6 +50,7 @@
     { "version": "20260905113002", "name": "tavern_pins_announcements" },
     { "version": "20260905114624", "name": "tavern_pinned_actor_cleanup" },
     { "version": "20260905122330", "name": "public_profile_preferences" },
-    { "version": "20260905131802", "name": "activity_center_notification_types" }
+    { "version": "20260905131802", "name": "activity_center_notification_types" },
+    { "version": "20260912140000", "name": "activity_center_counts" }
   ]
 }
