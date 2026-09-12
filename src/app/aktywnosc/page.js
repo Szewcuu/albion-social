@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { BellRing, BookOpen, Check, CheckCheck, ChevronRight, Compass, Heart, LoaderCircle, MessageSquareText, RefreshCw, ShoppingBag } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { EmptyState, StatusNotice } from '@/components/ui/FeedbackState'
 import { ACTIVITY_CATEGORIES, ACTIVITY_CATEGORY_IDS, categoryForNotification } from '@/lib/activityCenter'
@@ -36,26 +36,37 @@ export default function ActivityCenterPage() {
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
+  const requestControllerRef = useRef(null)
 
   const load = useCallback(async ({ append = false, cursor = null } = {}) => {
+    requestControllerRef.current?.abort()
+    const controller = new AbortController()
+    requestControllerRef.current = controller
     append ? setLoadingMore(true) : setLoading(true)
     try {
       const query = new URLSearchParams({ view: 'activity', category, limit: '24' })
       if (cursor) query.set('cursor', cursor)
-      const payload = await readJson(await authenticatedFetch(`/api/notifications?${query}`, { cache: 'no-store' }))
+      const payload = await readJson(await authenticatedFetch(`/api/notifications?${query}`, { cache: 'no-store', signal: controller.signal }))
+      if (controller.signal.aborted) return
       setNotifications((current) => append ? [...current, ...(payload.notifications || [])] : (payload.notifications || []))
       setCounts(payload.counts || {})
       setPagination(payload.pagination || { hasMore: false, nextCursor: null })
       setError('')
     } catch (loadError) {
+      if (loadError.name === 'AbortError') return
       setError(loadError.message)
     } finally {
-      setLoading(false)
-      setLoadingMore(false)
+      if (!controller.signal.aborted) {
+        setLoading(false)
+        setLoadingMore(false)
+      }
     }
   }, [category])
 
-  useEffect(() => { void Promise.resolve().then(() => load()) }, [load])
+  useEffect(() => {
+    void Promise.resolve().then(() => load())
+    return () => requestControllerRef.current?.abort()
+  }, [load])
 
   function announceChange() {
     window.dispatchEvent(new CustomEvent('portal:notifications-changed'))
