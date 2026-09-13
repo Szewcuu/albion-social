@@ -21,13 +21,16 @@ import {
   ShieldCheck,
   Swords,
   Trash2,
+  UserCheck,
   UserCog,
   X as XCircle,
+  ExternalLink,
 } from 'lucide-react'
 
 import { EmptyState, SkeletonBlock, StatusNotice } from '@/components/ui/FeedbackState'
 import { useConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import { RECRUITMENT_PLATFORMS, RECRUITMENT_STATUSES } from '@/lib/recruitment'
 
 const REASONS = {
   spam: 'Spam',
@@ -114,6 +117,7 @@ export default function AdminPage() {
   const [reportsPagination, setReportsPagination] = useState({ hasMore: false, nextCursor: null })
   const [auditEntries, setAuditEntries] = useState([])
   const [roleUsers, setRoleUsers] = useState([])
+  const [recruitmentApps, setRecruitmentApps] = useState([])
   const [health, setHealth] = useState({ checks: [], events: [], operations: null, generatedAt: null })
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
@@ -205,6 +209,40 @@ export default function AdminPage() {
     }
   }, [])
 
+  const loadRecruitment = useCallback(async () => {
+    setBusy(true)
+    try {
+      const response = await authenticatedFetch('/api/recruitment?all=true', { cache: 'no-store' })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się pobrać podań rekrutacyjnych.')
+      setRecruitmentApps(payload.applications || [])
+      setNotice(null)
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    } finally {
+      setBusy(false)
+    }
+  }, [])
+
+  async function updateRecruitmentStatus(id, newStatus, adminNotes) {
+    setBusy(true)
+    try {
+      const response = await authenticatedFetch('/api/recruitment', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus, adminNotes }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Nie udało się zaktualizować statusu podania.')
+      setRecruitmentApps((prev) => prev.map((app) => (app.id === id ? payload.application : app)))
+      setNotice({ type: 'success', text: `Zaktualizowano status zgłoszenia na: ${RECRUITMENT_STATUSES[newStatus]?.label || newStatus}.` })
+    } catch (error) {
+      setNotice({ type: 'error', text: error.message })
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const loadHealth = useCallback(async (runChecks = false) => {
     setBusy(true)
     try {
@@ -239,13 +277,14 @@ export default function AdminPage() {
     if (state.loading || state.forbidden) return undefined
     const timer = window.setTimeout(() => {
       if (activeTab === 'reports') loadReports()
+      if (activeTab === 'recruitment') loadRecruitment()
       if (activeTab === 'content') loadContent()
       if (activeTab === 'audit') loadAudit()
       if (activeTab === 'health') loadHealth()
       if (activeTab === 'roles' && dashboard.role === 'admin') loadRoles()
     }, 0)
     return () => window.clearTimeout(timer)
-  }, [activeTab, dashboard.role, loadAudit, loadContent, loadHealth, loadReports, loadRoles, state.forbidden, state.loading])
+  }, [activeTab, dashboard.role, loadAudit, loadContent, loadHealth, loadRecruitment, loadReports, loadRoles, state.forbidden, state.loading])
 
   const visibleReports = useMemo(() => (
     reportFilter === 'all' ? dashboard.reports : dashboard.reports.filter((report) => report.status === reportFilter)
@@ -392,6 +431,7 @@ export default function AdminPage() {
 
   const tabs = [
     ['reports', 'Zgłoszenia', FileWarning],
+    ['recruitment', 'Rekrutacja', UserCheck],
     ['content', 'Treści', Layers3],
     ['health', 'Stan usług', ServerCog],
     ['audit', 'Dziennik', BookOpenCheck],
@@ -417,6 +457,7 @@ export default function AdminPage() {
 
       <div id={`admin-panel-${activeTab}`} role="tabpanel" aria-labelledby={`admin-tab-${activeTab}`}>
         {activeTab === 'reports' && <ReportsPanel reports={visibleReports} filter={reportFilter} setFilter={(value) => { setReportFilter(value); setSelectedReportIds([]) }} selectedIds={selectedReportIds} reason={reason} busy={busy} loading={reportsLoading} hasMore={reportsPagination.hasMore} onLoadMore={() => loadReports({ append: true, cursor: reportsPagination.nextCursor })} onSelect={setSelectedReportIds} onReason={setReason} onModerate={moderateReport} onModerateBatch={moderateReportsBatch} />}
+        {activeTab === 'recruitment' && <RecruitmentPanel applications={recruitmentApps} busy={busy} onUpdateStatus={updateRecruitmentStatus} onRefresh={loadRecruitment} />}
         {activeTab === 'content' && <ContentPanel items={contentItems} type={contentType} status={contentStatus} selectedIds={selectedIds} reason={reason} busy={busy} onType={setContentType} onStatus={setContentStatus} onSelect={setSelectedIds} onReason={setReason} onModerate={moderateContent} onRefresh={loadContent} />}
         {activeTab === 'health' && <HealthPanel health={health} busy={busy} onRefresh={() => loadHealth(false)} onRun={() => loadHealth(true)} />}
         {activeTab === 'audit' && <AuditPanel entries={auditEntries} busy={busy} onRefresh={loadAudit} />}
@@ -546,4 +587,200 @@ function FilterButtons({ values, value, onChange }) {
 function AdminMetric({ icon: Icon, label, value, tone }) {
   const tones = { rose: 'text-rose-300 border-rose-400/20 bg-rose-400/6', sky: 'text-sky-300 border-sky-400/20 bg-sky-400/6', emerald: 'text-emerald-300 border-emerald-400/20 bg-emerald-400/6', gold: 'text-[var(--amber)] border-[var(--amber)]/20 bg-[var(--amber)]/6' }
   return <div className={`rounded-2xl border p-4 ${tones[tone]}`}><div className="flex items-center justify-between"><span className="text-[9px] font-black uppercase tracking-[.13em] text-[var(--text-secondary)]">{label}</span><Icon className="h-4 w-4" /></div><strong className="font-display mt-3 block text-3xl font-black text-white">{value}</strong></div>
+}
+
+function RecruitmentPanel({ applications, busy, onUpdateStatus, onRefresh }) {
+  const [platformFilter, setPlatformFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [activeNotes, setActiveNotes] = useState({})
+
+  const filteredApps = useMemo(() => {
+    return applications.filter((app) => {
+      const matchPlatform = platformFilter === 'all' || app.platform === platformFilter
+      const matchStatus = statusFilter === 'all' || app.status === statusFilter
+      return matchPlatform && matchStatus
+    })
+  }, [applications, platformFilter, statusFilter])
+
+  const pendingCount = applications.filter((app) => app.status === 'pending').length
+
+  const handleNoteChange = (id, text) => {
+    setActiveNotes((prev) => ({ ...prev, [id]: text }))
+  }
+
+  return (
+    <section className="panel overflow-hidden">
+      <PanelHeading eyebrow="Nabór do Straży Społeczności" title="Podania do moderacji">
+        <span className="badge badge-amber">{pendingCount} oczekujących</span>
+        <button disabled={busy} onClick={onRefresh} className="btn btn-ghost btn-sm">
+          <RefreshCw className={`h-3.5 w-3.5 ${busy ? 'animate-spin' : ''}`} /> Odśwież
+        </button>
+      </PanelHeading>
+
+      <div className="grid gap-3 border-b border-[var(--border)] p-4 sm:grid-cols-2">
+        <div>
+          <CustomSelect
+            label="Platforma"
+            value={platformFilter}
+            onChange={setPlatformFilter}
+            options={[
+              { value: 'all', label: 'Wszystkie platformy' },
+              { value: 'discord', label: 'Tylko Discord' },
+              { value: 'facebook', label: 'Tylko Facebook' },
+              { value: 'both', label: 'Obie platformy (Discord & FB)' },
+            ]}
+          />
+        </div>
+        <div>
+          <CustomSelect
+            label="Status zgłoszenia"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: 'all', label: 'Wszystkie statusy' },
+              { value: 'pending', label: 'Oczekujące' },
+              { value: 'reviewed', label: 'W trakcie analizy' },
+              { value: 'accepted', label: 'Zaakceptowane' },
+              { value: 'rejected', label: 'Odrzucone' },
+            ]}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3 p-4 sm:p-5">
+        {busy && applications.length === 0 ? (
+          <SkeletonBlock className="h-32" />
+        ) : filteredApps.length === 0 ? (
+          <EmptyState
+            icon={UserCheck}
+            title="Brak podań rekrutacyjnych"
+            description="Nie znaleziono zgłoszeń spełniających wybrane filtry."
+          />
+        ) : (
+          filteredApps.map((app) => {
+            const platformConfig = RECRUITMENT_PLATFORMS[app.platform] || RECRUITMENT_PLATFORMS.both
+            const statusConfig = RECRUITMENT_STATUSES[app.status] || RECRUITMENT_STATUSES.pending
+            const currentNote = activeNotes[app.id] !== undefined ? activeNotes[app.id] : (app.admin_notes || '')
+
+            return (
+              <article key={app.id} className="rounded-2xl border border-[var(--border)] bg-black/25 p-5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/5 pb-3">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[var(--border)] bg-amber-400/10 font-display font-black text-amber-300">
+                      {app.applicant_name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <strong className="text-base text-white">{app.applicant_name}</strong>
+                        {app.age && <span className="text-xs text-[var(--text-muted)]">({app.age} lat)</span>}
+                      </div>
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        Złożono: {new Date(app.created_at).toLocaleString('pl-PL')}
+                        {app.albion_nick && ` · Albion: ${app.albion_nick} (${app.server || 'Europa'})`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="badge badge-amber text-[9px]">{platformConfig.shortLabel}</span>
+                    <span className={`badge ${statusConfig.badgeClass} text-[9px]`}>{statusConfig.label}</span>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 text-xs bg-white/[0.02] p-3 rounded-xl border border-white/5">
+                  <div>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)] block">Discord</span>
+                    <span className="text-white font-mono mt-0.5 block">{app.discord_tag || 'Nie podano'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-[var(--text-muted)] block">Profil Facebook</span>
+                    {app.facebook_url ? (
+                      <a
+                        href={app.facebook_url.startsWith('http') ? app.facebook_url : `https://${app.facebook_url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sky-300 hover:text-sky-200 inline-flex items-center gap-1 mt-0.5"
+                      >
+                        <span className="truncate max-w-[200px]">{app.facebook_url}</span>
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                    ) : (
+                      <span className="text-[var(--text-muted)] mt-0.5 block">Brak</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <div>
+                    <strong className="text-amber-200 text-[11px] block">Doświadczenie moderatorskie:</strong>
+                    <p className="mt-1 text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{app.experience}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5">
+                    <strong className="text-amber-200 text-[11px] block">Dostępność czasowa:</strong>
+                    <p className="mt-1 text-[var(--text-secondary)] leading-relaxed">{app.availability}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5">
+                    <strong className="text-amber-200 text-[11px] block">Motywacja i podejście do trudnych sytuacji:</strong>
+                    <p className="mt-1 text-[var(--text-secondary)] whitespace-pre-wrap leading-relaxed">{app.motivation}</p>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-white/5 flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-3">
+                  <label className="form-label flex-1">
+                    Notatka administratora
+                    <input
+                      type="text"
+                      value={currentNote}
+                      onChange={(e) => handleNoteChange(app.id, e.target.value)}
+                      placeholder="Wpisz notatkę (np. przeprowadzono rozmowę, zweryfikowano na DC)..."
+                      className="mt-1 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-2 text-xs text-white"
+                    />
+                  </label>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onUpdateStatus(app.id, 'reviewed', currentNote)}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-sky-400" /> W analizie
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onUpdateStatus(app.id, 'accepted', currentNote)}
+                      className="btn btn-ghost btn-sm text-emerald-300"
+                    >
+                      <UserCheck className="h-3.5 w-3.5" /> Zaakceptuj
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onUpdateStatus(app.id, 'rejected', currentNote)}
+                      className="btn btn-ghost btn-sm text-rose-300"
+                    >
+                      <XCircle className="h-3.5 w-3.5" /> Odrzuć
+                    </button>
+                    {currentNote !== (app.admin_notes || '') && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => onUpdateStatus(app.id, app.status, currentNote)}
+                        className="btn btn-primary btn-sm"
+                      >
+                        <Save className="h-3.5 w-3.5" /> Zapisz notatkę
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </article>
+            )
+          })
+        )}
+      </div>
+    </section>
+  )
 }

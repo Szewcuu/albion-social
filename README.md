@@ -6,8 +6,8 @@ Produkcja: [albion-social.vercel.app](https://albion-social.vercel.app/)
 
 Repozytorium: [Szewcuu/albion-social](https://github.com/Szewcuu/albion-social)
 
-### Pomysły
-- funkcja rekrutacji. Osoba podstrona, segment promocyjny na stronie tawerny.
+### Pomysły i rozwój
+- [x] **Funkcja rekrutacji do ekipy moderacji (Straż Społeczności)**: Wybór platformy (Moderator Discord, Moderator Grupy Facebook lub Obie Platformy). Dedykowana podstrona `/rekrutacja`, segment promocyjny w Tawernie, backend API (`/api/recruitment`) z integracją Discord Webhook oraz moduł zarządzania podaniami w `/admin`.
 
 ## Stan projektu
 

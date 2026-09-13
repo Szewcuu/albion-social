@@ -10,6 +10,7 @@ import { scheduleIdleTask } from '@/lib/clientIdle'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { ErrorState, LoadingState } from '@/components/ui/FeedbackState'
 import TavernAnnouncements from '@/components/home/TavernAnnouncements'
+import TavernRecruitmentBanner from '@/components/home/TavernRecruitmentBanner'
 
 const ChatBox = dynamic(() => import('@/components/ChatBox'), {
   loading: () => <LoadingState label="Ładowanie czatu Tawerny…" className="panel min-h-[360px]" />,
@@ -63,6 +64,7 @@ export default function MemberTavern() {
         <div className={styles.sidebar}>
           {overviewUnavailable && !overviewLoading ? <ErrorState title="Podsumowanie społeczności jest niedostępne" description="Nie udało się pobrać aktualnych danych Tawerny." onRetry={fetchPortalOverview} className="panel" /> : <PortalAnalyticsWidget stats={overview} loading={overviewLoading} />}
           <Link href="/aktualnosci" className={styles.news}><small>Goniec Królewski</small><h2>Co słychać za murami?</h2><p>Oficjalne wiadomości i patch notes. Sprawdź, co zmieniło się w świecie Albionu przed kolejnym wyjściem w teren.</p><span>Otwórz kronikę wieści <ArrowRight aria-hidden="true" /></span></Link>
+          <TavernRecruitmentBanner />
           <section className={styles.checklist} aria-label="Przygotowania do wyprawy">
             <div className={styles.checklistHeader}><h2>Przed wymarszem</h2><span aria-live="polite">{prepared.length}/3</span></div>
             <p>Podręczna lista na tę wizytę w Tawernie.</p>

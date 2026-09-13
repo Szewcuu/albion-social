@@ -10,7 +10,7 @@ import TopBar from './TopBar'
 import MobileBottomNav from './MobileBottomNav'
 import { PortalSessionProvider } from '@/contexts/PortalSessionContext'
 
-const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc', '/auth/nowe-haslo'])
+const GUEST_PUBLIC_PATHS = new Set(['/', '/regulamin', '/prywatnosc', '/auth/nowe-haslo', '/rekrutacja'])
 
 function ProtectedRouteLoadingShell() {
   return (

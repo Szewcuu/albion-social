@@ -18,6 +18,7 @@ import {
   CalendarDays,
   BellRing,
   MessageSquareText,
+  UserCheck,
   X,
 } from 'lucide-react'
 
@@ -28,6 +29,7 @@ const NAV_SECTIONS = [
       { href: '/', label: 'Tawerna', icon: Home, desc: 'Strona główna' },
       { href: '/aktualnosci', label: 'Goniec Królewski', icon: MessageSquareText, desc: 'Wieści i patch notes' },
       { href: '/gildie', label: 'Gildie', icon: Shield, desc: 'Rejestr formacji' },
+      { href: '/rekrutacja', label: 'Dołącz do Ekipy', icon: UserCheck, desc: 'Rekrutacja moderatorów' },
       { href: '/wyprawy', label: 'Wyprawy', icon: Users, desc: 'Zbiórki grupowe' },
       { href: '/kalendarz', label: 'Kalendarz', icon: CalendarDays, desc: 'Wydarzenia gildii' },
     ],
