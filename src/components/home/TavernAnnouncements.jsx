@@ -109,8 +109,8 @@ export default function TavernAnnouncements({ isStaff = false }) {
   }
 
   return (
-    <section className="mt-2.5 overflow-hidden rounded-xl border border-[var(--border-warm)] bg-[linear-gradient(120deg,rgba(54,36,24,.9),rgba(20,14,10,.96))]" aria-labelledby="herald-board-title">
-      <header className="flex min-h-11 items-center justify-between gap-3 border-b border-white/[0.06] px-4 py-2">
+    <section className="relative mt-2.5 rounded-xl border border-[var(--border-warm)] bg-[linear-gradient(120deg,rgba(54,36,24,.9),rgba(20,14,10,.96))]" aria-labelledby="herald-board-title">
+      <header className="flex min-h-11 items-center justify-between gap-3 rounded-t-xl border-b border-white/[0.06] px-4 py-2">
         <div className="flex min-w-0 items-center gap-2.5">
           <Megaphone aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--gold)]" />
           <div className="min-w-0">
@@ -126,19 +126,60 @@ export default function TavernAnnouncements({ isStaff = false }) {
       </header>
 
       {editorOpen && isStaff && (
-        <form onSubmit={publish} className="grid gap-2 border-b border-white/[0.06] bg-black/15 p-3 sm:grid-cols-2 xl:grid-cols-4">
-          <label className="sm:col-span-2 xl:col-span-1">
-            <span className="mb-1 block font-mono text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Tytuł</span>
-            <input required minLength={3} maxLength={80} value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="h-[42px] w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] px-3 text-xs text-[var(--text-bright)] outline-none focus:border-[var(--gold)]" />
-          </label>
-          <label className="sm:col-span-2 xl:col-span-1">
-            <span className="mb-1 block font-mono text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Treść</span>
-            <input required minLength={3} maxLength={280} value={form.body} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} className="h-[42px] w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] px-3 text-xs text-[var(--text-bright)] outline-none focus:border-[var(--gold)]" />
-          </label>
-          <CustomSelect label="Rodzaj" value={form.kind} onChange={(kind) => setForm((current) => ({ ...current, kind }))} options={KIND_OPTIONS} />
-          <div className="flex items-end gap-2">
-            <CustomSelect label="Widoczne przez" value={form.expiresInDays} onChange={(expiresInDays) => setForm((current) => ({ ...current, expiresInDays }))} options={EXPIRY_OPTIONS} />
-            <button type="submit" className="btn btn-primary mb-0 h-[42px] shrink-0" disabled={saving}>{saving ? '...' : 'Publikuj'}</button>
+        <form onSubmit={publish} className="flex flex-col gap-3 border-b border-white/[0.06] bg-black/20 p-3.5 sm:p-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block min-w-0">
+              <span className="mb-1 block font-mono text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Tytuł</span>
+              <input
+                required
+                minLength={3}
+                maxLength={80}
+                placeholder="Np. Wspólny wymarsz o 20:00"
+                value={form.title}
+                onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                className="h-[42px] w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] px-3 text-xs text-[var(--text-bright)] outline-none focus:border-[var(--gold)]"
+              />
+            </label>
+            <label className="block min-w-0">
+              <span className="mb-1 block font-mono text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Treść</span>
+              <input
+                required
+                minLength={3}
+                maxLength={280}
+                placeholder="Krótki komunikat dla bywalców Tawerny…"
+                value={form.body}
+                onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))}
+                className="h-[42px] w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-stone)] px-3 text-xs text-[var(--text-bright)] outline-none focus:border-[var(--gold)]"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 items-end">
+            <div className="min-w-0">
+              <CustomSelect
+                label="Rodzaj"
+                value={form.kind}
+                onChange={(kind) => setForm((current) => ({ ...current, kind }))}
+                options={KIND_OPTIONS}
+              />
+            </div>
+            <div className="min-w-0">
+              <CustomSelect
+                label="Widoczne przez"
+                value={form.expiresInDays}
+                onChange={(expiresInDays) => setForm((current) => ({ ...current, expiresInDays }))}
+                options={EXPIRY_OPTIONS}
+              />
+            </div>
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
+              <button
+                type="submit"
+                className="btn btn-primary mb-0 h-[42px] w-full justify-center text-xs font-black uppercase tracking-wider"
+                disabled={saving}
+              >
+                {saving ? 'Publikowanie…' : 'Publikuj ogłoszenie'}
+              </button>
+            </div>
           </div>
         </form>
       )}
@@ -155,16 +196,36 @@ export default function TavernAnnouncements({ isStaff = false }) {
             {announcements.map((announcement) => {
               const meta = KIND_META[announcement.kind] || KIND_META.info
               return (
-                <article key={announcement.id} className={`relative min-w-0 rounded-lg border px-3 py-2.5 ${meta.tone}`}>
-                  <div className="mb-1 flex items-center gap-1.5 font-mono text-[8px] font-bold uppercase tracking-wider opacity-80"><Megaphone aria-hidden="true" className="h-3 w-3" />{meta.label}</div>
-                  <h3 className="truncate font-heading text-sm font-bold text-[var(--text-bright)]">{announcement.title}</h3>
-                  <p className="line-clamp-2 text-[10px] leading-4 text-[var(--text-primary)]">{announcement.body}</p>
-                  <footer className="mt-1.5 flex items-center justify-between gap-2 font-mono text-[8px] uppercase tracking-wide opacity-70"><span className="truncate">{authorName(announcement)}</span><span className="shrink-0">{formatExpiry(announcement.expires_at)}</span></footer>
-                  {isStaff && (
-                    <button type="button" title="Zdejmij ogłoszenie" aria-label={pendingArchiveId === announcement.id ? `Potwierdź zdjęcie ogłoszenia ${announcement.title}` : `Zdejmij ogłoszenie ${announcement.title}`} onClick={() => archive(announcement.id)} className={`absolute right-1.5 top-1.5 grid h-7 place-items-center rounded-md px-1.5 text-[9px] font-bold uppercase transition-colors ${pendingArchiveId === announcement.id ? 'bg-rose-500 text-white' : 'bg-black/35 text-current hover:bg-black/60'}`}>
-                      {pendingArchiveId === announcement.id ? 'Potwierdź' : <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />}
-                    </button>
-                  )}
+                <article key={announcement.id} className={`relative min-w-0 rounded-lg border p-3 flex flex-col justify-between ${meta.tone}`}>
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 font-mono text-[8px] font-bold uppercase tracking-wider opacity-85 min-w-0">
+                        <Megaphone aria-hidden="true" className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{meta.label}</span>
+                      </div>
+                      {isStaff && (
+                        <button
+                          type="button"
+                          title="Zdejmij ogłoszenie"
+                          aria-label={pendingArchiveId === announcement.id ? `Potwierdź zdjęcie ogłoszenia ${announcement.title}` : `Zdejmij ogłoszenie ${announcement.title}`}
+                          onClick={() => archive(announcement.id)}
+                          className={`inline-flex h-6 items-center gap-1 rounded-md px-2 text-[9px] font-bold uppercase transition-colors shrink-0 ${
+                            pendingArchiveId === announcement.id
+                              ? 'bg-rose-500 text-white shadow-sm'
+                              : 'bg-black/40 text-current hover:bg-black/70 hover:text-rose-300'
+                          }`}
+                        >
+                          {pendingArchiveId === announcement.id ? 'Potwierdź' : <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />}
+                        </button>
+                      )}
+                    </div>
+                    <h3 className="truncate font-heading text-sm font-bold text-[var(--text-bright)] mb-1">{announcement.title}</h3>
+                    <p className="line-clamp-2 text-[10px] leading-4 text-[var(--text-primary)]">{announcement.body}</p>
+                  </div>
+                  <footer className="mt-2 flex items-center justify-between gap-2 font-mono text-[8px] uppercase tracking-wide opacity-70 border-t border-white/[0.06] pt-1.5">
+                    <span className="truncate">{authorName(announcement)}</span>
+                    <span className="shrink-0">{formatExpiry(announcement.expires_at)}</span>
+                  </footer>
                 </article>
               )
             })}

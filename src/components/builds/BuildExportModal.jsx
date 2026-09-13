@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   Check,
   Copy,
@@ -22,6 +23,7 @@ export default function BuildExportModal({
   author = '',
   url = '',
 }) {
+  const [mounted, setMounted] = useState(false)
   const [tab, setTab] = useState('image') // 'image' | 'discord'
   const [rendering, setRendering] = useState(false)
   const [copiedImage, setCopiedImage] = useState(false)
@@ -67,6 +69,10 @@ export default function BuildExportModal({
   }, [author, build, shareUrl])
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
     if (!isOpen) {
       setPreviewUrl('')
       setCopiedImage(false)
@@ -74,6 +80,9 @@ export default function BuildExportModal({
       setStatusMessage('')
       return
     }
+
+    const originalOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
 
     const timer = setTimeout(() => {
       void generateCanvas()
@@ -85,10 +94,11 @@ export default function BuildExportModal({
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
+      document.body.style.overflow = originalOverflow
       clearTimeout(timer)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isOpen, generateCanvas, onClose])
+  }, [generateCanvas, isOpen, onClose])
 
   const handleCopyImage = async () => {
     if (!canvasRef.current) return
@@ -142,11 +152,11 @@ export default function BuildExportModal({
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen || !mounted || typeof document === 'undefined') return null
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/85 backdrop-blur-md overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-labelledby="export-modal-title"
@@ -298,6 +308,7 @@ export default function BuildExportModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

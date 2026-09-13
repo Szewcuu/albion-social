@@ -103,7 +103,7 @@ export default function CustomSelect({ value, onChange, options = [], placeholde
         <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 text-[var(--gold)] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
-        <div id={listboxId} role="listbox" aria-label={label || placeholder} className="absolute left-0 right-0 top-[calc(100%+6px)] z-[9999] max-h-60 overflow-y-auto rounded-xl border border-[var(--border-warm)] bg-[#120d0a] p-1.5 font-mono text-xs shadow-2xl shadow-black/95 animate-fade-in">
+        <div id={listboxId} role="listbox" aria-label={label || placeholder} className="absolute left-0 top-[calc(100%+6px)] min-w-full w-max max-w-[calc(100vw-32px)] z-[9999] max-h-60 overflow-y-auto rounded-xl border border-[var(--border-warm)] bg-[#120d0a] p-1.5 font-mono text-xs shadow-2xl shadow-black/95 animate-fade-in">
           {normalizedOptions.length === 0 ? <div className="px-3 py-2 text-center italic text-[var(--text-muted)]">Brak opcji</div> : normalizedOptions.map((option, index) => {
             const isSelected = option.value === String(value)
             const isActive = activeIndex === index
@@ -116,9 +116,9 @@ export default function CustomSelect({ value, onChange, options = [], placeholde
                 onPointerMove={() => setActiveIndex(index)}
                 onPointerDown={(event) => event.preventDefault()}
                 onClick={() => selectIndex(index)}
-                className={`flex cursor-pointer items-center justify-between rounded-lg border px-3 py-2.5 transition-colors ${isSelected ? 'border-[var(--border-warm)] bg-[var(--gold-glow)] font-bold text-[var(--gold-bright)]' : isActive ? 'border-white/8 bg-[var(--bg-hover)] text-[var(--text-bright)]' : 'border-transparent text-[var(--text-primary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-bright)]'}`}
+                className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors ${isSelected ? 'border-[var(--border-warm)] bg-[var(--gold-glow)] font-bold text-[var(--gold-bright)]' : isActive ? 'border-white/8 bg-[var(--bg-hover)] text-[var(--text-bright)]' : 'border-transparent text-[var(--text-primary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-bright)]'}`}
               >
-                <span className="truncate">{option.label}</span>
+                <span className="whitespace-nowrap">{option.label}</span>
                 {isSelected && <Check aria-hidden="true" className="ml-2 h-3.5 w-3.5 shrink-0 text-[var(--gold)]" />}
               </div>
             )
