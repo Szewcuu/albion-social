@@ -879,14 +879,14 @@ Lista jest ułożona według wartości dla gracza, nie według łatwości implem
 - [x] Wprowadzić wyróżniony „Build tygodnia” głosowany przez społeczność.
 - [x] Dodać w Tawernie przypięte wątki i krótkie ogłoszenia moderatorów bez powielania głównej nawigacji.
 - [x] Rozbudować publiczny profil o ostatnią aktywność, ulubione role i najczęściej używane zestawy.
-- [ ] Przygotować centrum aktywności łączące odpowiedzi, polubienia, zaproszenia do wypraw i wiadomości handlowe.
+- [x] Przygotować centrum aktywności łączące odpowiedzi, polubienia, zaproszenia do wypraw i wiadomości handlowe.
 
 ### Priorytet C — jakość i wydajność
 
-- [ ] Dodać automatyczne testy wizualne ekranu logowania, Tawerny i Kuźni dla wysokości 768, 900 i 1080 px.
-- [ ] Zmierzyć Web Vitals na produkcji osobno dla użytkownika wylogowanego i zalogowanego.
-- [ ] Dodać paginację lub wirtualizację katalogu buildów po przekroczeniu 50 wyników.
-- [ ] Przeprowadzić pełny audyt dostępności klawiatury, kontrastu oraz komunikatów czytnika ekranu.
+- [x] Dodać automatyczne testy wizualne ekranu logowania, Tawerny i Kuźni dla wysokości 768, 900 i 1080 px.
+- [x] Zmierzyć Web Vitals na produkcji osobno dla użytkownika wylogowanego i zalogowanego.
+- [x] Dodać paginację lub wirtualizację katalogu buildów po przekroczeniu 50 wyników.
+- [x] Przeprowadzić pełny audyt dostępności klawiatury, kontrastu oraz komunikatów czytnika ekranu.
 
 ## Architektura
 

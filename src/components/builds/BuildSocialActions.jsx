@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Bookmark, Check, Share2, ThumbsUp } from 'lucide-react'
+import { Bookmark, Check, Copy, Share2, ThumbsUp } from 'lucide-react'
 
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
 import { portalAuth } from '@/lib/supabaseAuth'
 import FollowButton from '@/components/ui/FollowButton'
+import BuildExportModal from './BuildExportModal'
 
 async function readJson(response) {
   const payload = await response.json().catch(() => ({}))
@@ -13,7 +14,7 @@ async function readJson(response) {
   return payload
 }
 
-export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 }) {
+export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0, build = null, author = '' }) {
   const [user, setUser] = useState(null)
   const [votes, setVotes] = useState(initialVotes)
   const [userVote, setUserVote] = useState(false)
@@ -21,6 +22,7 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
   const [busy, setBusy] = useState(null)
   const [message, setMessage] = useState('')
   const [copied, setCopied] = useState(false)
+  const [exportModalOpen, setExportModalOpen] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -147,11 +149,21 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
 
         <button
           type="button"
-          onClick={share}
-          className="aopp-ghost-button inline-flex min-h-11 items-center gap-2 px-4 py-2.5 text-xs font-black"
+          onClick={() => setExportModalOpen(true)}
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300/35 bg-amber-400/12 px-4 py-2.5 text-xs font-black text-amber-200 transition hover:border-amber-300/60 hover:bg-amber-400/20 shadow-sm"
         >
-          {copied ? <Check className="h-4 w-4 text-emerald-300" aria-hidden="true" /> : <Share2 className="h-4 w-4" aria-hidden="true" />}
-          {copied ? 'Skopiowano' : 'Udostępnij'}
+          <Share2 className="h-4 w-4 text-amber-300" aria-hidden="true" />
+          Karta & Discord
+        </button>
+
+        <button
+          type="button"
+          onClick={share}
+          className="aopp-ghost-button inline-flex min-h-11 items-center gap-2 px-3 py-2.5 text-xs font-black"
+          title="Kopiuj bezpośredni link"
+        >
+          {copied ? <Check className="h-4 w-4 text-emerald-300" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}
+          {copied ? 'Skopiowano' : 'Kopiuj link'}
         </button>
       </div>
 
@@ -160,6 +172,13 @@ export default function BuildSocialActions({ buildId, ownerId, initialVotes = 0 
           {message}
         </p>
       )}
+
+      <BuildExportModal
+        isOpen={exportModalOpen}
+        onClose={() => setExportModalOpen(false)}
+        build={build || { id: buildId }}
+        author={author}
+      />
     </div>
   )
 }

@@ -128,7 +128,7 @@ export default async function BuildDetailPage({ params }) {
             </div>
 
             <div className="mt-6">
-              <BuildSocialActions buildId={row.id} ownerId={row.user_id} initialVotes={votes} />
+              <BuildSocialActions buildId={row.id} ownerId={row.user_id} initialVotes={votes} build={build} author={author} />
             </div>
           </div>
         </header>

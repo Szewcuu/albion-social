@@ -18,6 +18,9 @@ export async function POST(request) {
     const metric = normalizePoorWebVital(body)
     if (!metric) return NextResponse.json({ accepted: false }, { status: 400 })
 
+    const hasAuthCookie = request.cookies.getAll().some((cookie) => cookie.name.includes('-auth-token'))
+    const isAuthenticated = hasAuthCookie || Boolean(request.headers.get('authorization')?.startsWith('Bearer '))
+
     await recordSystemEvent({
       source: 'frontend_performance',
       level: 'warning',
@@ -27,6 +30,7 @@ export async function POST(request) {
         path: metric.path,
         metricId: metric.id,
         navigationType: metric.navigationType,
+        authenticated: isAuthenticated,
         userAgent: String(request.headers.get('user-agent') || '').slice(0, 500),
       },
     })
