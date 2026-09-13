@@ -79,25 +79,58 @@ export default function GoldExchangeWidget() {
   const chartSvg = useMemo(() => {
     if (!goldData.length || goldData.length < 2) return null
 
-    const width = 600
-    const height = 130
-    const padding = 15
+    const width = 680
+    const height = 190
+    const padTop = 20
+    const padBottom = 28
+    const padLeft = 62
+    const padRight = 20
 
     const prices = goldData.map(d => d.price)
     const min = Math.min(...prices)
     const max = Math.max(...prices)
     const rangeVal = max - min || 1
 
+    const chartWidth = width - padLeft - padRight
+    const chartHeight = height - padTop - padBottom
+
     const points = goldData.map((pt, i) => {
-      const x = padding + (i / (goldData.length - 1)) * (width - padding * 2)
-      const y = height - padding - ((pt.price - min) / rangeVal) * (height - padding * 2)
+      const x = padLeft + (i / (goldData.length - 1)) * chartWidth
+      const y = padTop + (1 - (pt.price - min) / rangeVal) * chartHeight
       return { x, y, pt }
     })
 
     const pathD = points.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`, '')
-    const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${height - padding} L ${points[0].x.toFixed(1)} ${height - padding} Z`
+    const areaD = `${pathD} L ${points[points.length - 1].x.toFixed(1)} ${padTop + chartHeight} L ${points[0].x.toFixed(1)} ${padTop + chartHeight} Z`
 
-    return { width, height, points, pathD, areaD }
+    const gridLevels = [0, 0.33, 0.66, 1].map(ratio => ({
+      y: padTop + ratio * chartHeight,
+      price: Math.round(max - ratio * rangeVal),
+    }))
+
+    const firstDate = new Date(goldData[0].timestamp).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+    const midDate = new Date(goldData[Math.floor(goldData.length / 2)].timestamp).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+    const lastDate = new Date(goldData[goldData.length - 1].timestamp).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
+
+    return {
+      width,
+      height,
+      padLeft,
+      padRight,
+      padTop,
+      padBottom,
+      chartWidth,
+      chartHeight,
+      points,
+      pathD,
+      areaD,
+      gridLevels,
+      firstDate,
+      midDate,
+      lastDate,
+      min,
+      max,
+    }
   }, [goldData])
 
   return (
@@ -209,48 +242,147 @@ export default function GoldExchangeWidget() {
       )}
 
       {/* HISTORICAL CHART CANVAS */}
-      <div className="relative w-full overflow-hidden rounded-2xl bg-black/50 border border-white/8 p-3">
+      <div className="relative w-full overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-b from-[#180f0a] via-[#100a06] to-[#080504] p-3.5 sm:p-4 shadow-2xl shadow-black/80">
+        <div className="mb-2 flex items-center justify-between text-[9px] font-mono uppercase tracking-wider text-amber-200/60 border-b border-white/[0.05] pb-2">
+          <span className="flex items-center gap-1.5 font-bold text-amber-300">
+            <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+            Notowania giełdowe złota (Srebro za 1 Złoto)
+          </span>
+          <span className="text-[#8e8579]">
+            Zakres: {chartSvg?.firstDate} — {chartSvg?.lastDate}
+          </span>
+        </div>
+
         {loading ? (
-          <LoadingState label="Pobieranie wykresu kursu złota…" compact className="min-h-28 border-0 bg-transparent" />
+          <LoadingState label="Pobieranie wykresu kursu złota…" compact className="min-h-36 border-0 bg-transparent" />
         ) : chartSvg ? (
           <div className="relative">
-            <svg viewBox={`0 0 ${chartSvg.width} ${chartSvg.height}`} className="w-full h-auto overflow-visible">
+            <svg viewBox={`0 0 ${chartSvg.width} ${chartSvg.height}`} className="w-full h-auto overflow-visible select-none">
               <defs>
-                <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.4" />
+                <linearGradient id="goldAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.32" />
+                  <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.06" />
                   <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
                 </linearGradient>
+                <linearGradient id="goldLineGradient" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#f59e0b" />
+                  <stop offset="50%" stopColor="#fbbf24" />
+                  <stop offset="100%" stopColor="#fef08a" />
+                </linearGradient>
+                <filter id="goldGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#f59e0b" floodOpacity="0.75" />
+                </filter>
               </defs>
 
-              <path d={chartSvg.areaD} fill="url(#goldGradient)" />
-              <path d={chartSvg.pathD} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              {/* Poziome linie siatki i etykiety cenowe po lewej stronie */}
+              {chartSvg.gridLevels.map((lvl, idx) => (
+                <g key={idx}>
+                  <line
+                    x1={chartSvg.padLeft}
+                    y1={lvl.y}
+                    x2={chartSvg.width - chartSvg.padRight}
+                    y2={lvl.y}
+                    stroke="rgba(218, 184, 105, 0.09)"
+                    strokeDasharray="4 4"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={chartSvg.padLeft - 8}
+                    y={lvl.y + 3.5}
+                    textAnchor="end"
+                    className="text-[9px] font-mono fill-amber-200/50"
+                  >
+                    {lvl.price.toLocaleString()}
+                  </text>
+                </g>
+              ))}
 
+              {/* Znaczniki dat na osi X */}
+              <text x={chartSvg.padLeft} y={chartSvg.height - 6} textAnchor="start" className="text-[9px] font-mono fill-[#938b80]">
+                {chartSvg.firstDate}
+              </text>
+              <text x={chartSvg.padLeft + chartSvg.chartWidth / 2} y={chartSvg.height - 6} textAnchor="middle" className="text-[9px] font-mono fill-[#938b80]">
+                {chartSvg.midDate}
+              </text>
+              <text x={chartSvg.width - chartSvg.padRight} y={chartSvg.height - 6} textAnchor="end" className="text-[9px] font-mono fill-[#938b80]">
+                {chartSvg.lastDate}
+              </text>
+
+              {/* Wypełnienie i złota linia z poświatą */}
+              <path d={chartSvg.areaD} fill="url(#goldAreaGradient)" />
+              <path
+                d={chartSvg.pathD}
+                fill="none"
+                stroke="url(#goldLineGradient)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#goldGlowFilter)"
+              />
+
+              {/* Pionowa linia crosshair przy hover */}
+              {hoveredPoint && (
+                <line
+                  x1={hoveredPoint.x}
+                  y1={chartSvg.padTop}
+                  x2={hoveredPoint.x}
+                  y2={chartSvg.padTop + chartSvg.chartHeight}
+                  stroke="rgba(251, 191, 36, 0.45)"
+                  strokeDasharray="3 3"
+                  strokeWidth="1"
+                />
+              )}
+
+              {/* Punkty danych na wykresie */}
               {chartSvg.points.map((ptNode, idx) => (
                 <circle
                   key={idx}
                   cx={ptNode.x}
                   cy={ptNode.y}
                   r="3.5"
-                  className="fill-amber-400 hover:r-6 hover:fill-amber-300 transition-all cursor-pointer"
+                  className="fill-amber-400 hover:r-[6px] hover:fill-amber-200 transition-all cursor-pointer drop-shadow-[0_0_4px_rgba(245,158,11,0.8)]"
                   onMouseEnter={() => setHoveredPoint(ptNode)}
                   onMouseLeave={() => setHoveredPoint(null)}
                 />
               ))}
+
+              {/* Aktywny pierścień wokół zaznaczonego punktu */}
+              {hoveredPoint && (
+                <circle
+                  cx={hoveredPoint.x}
+                  cy={hoveredPoint.y}
+                  r="6.5"
+                  className="fill-amber-200 stroke-[#180f0a] stroke-2 pointer-events-none"
+                />
+              )}
             </svg>
 
-            {/* HOVER TOOLTIP */}
+            {/* Pływający Tooltip z dokładnymi danymi */}
             {hoveredPoint && (
               <div
-                className="absolute z-20 pointer-events-none bg-black/90 border border-amber-400/50 p-2 rounded-xl text-[10px] font-mono text-white shadow-xl -translate-x-1/2 -translate-y-full mb-2"
-                style={{ left: `${(hoveredPoint.x / chartSvg.width) * 100}%`, top: `${(hoveredPoint.y / chartSvg.height) * 100}%` }}
+                className="absolute z-30 pointer-events-none rounded-xl border border-amber-400/50 bg-[#140c08]/95 px-3 py-2 text-[10px] font-mono text-white shadow-2xl backdrop-blur-md -translate-x-1/2 -translate-y-full mb-3 ring-1 ring-amber-400/20"
+                style={{
+                  left: `${(hoveredPoint.x / chartSvg.width) * 100}%`,
+                  top: `${(hoveredPoint.y / chartSvg.height) * 100}%`,
+                }}
               >
-                <div className="text-amber-300 font-bold">{hoveredPoint.pt.price.toLocaleString()} Silver</div>
-                <div className="text-gray-400 text-[9px]">{new Date(hoveredPoint.pt.timestamp).toLocaleString('pl-PL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                <div className="text-[9px] uppercase tracking-wider text-amber-300/70">Cena notowania</div>
+                <div className="text-sm font-bold text-amber-300 leading-tight">
+                  {hoveredPoint.pt.price.toLocaleString()} <span className="text-[10px] font-normal text-gray-300">Silver</span>
+                </div>
+                <div className="text-gray-400 text-[9px] mt-1 border-t border-white/[0.08] pt-1">
+                  {new Date(hoveredPoint.pt.timestamp).toLocaleString('pl-PL', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="h-24 flex items-center justify-center text-xs text-gray-500 font-mono">
+          <div className="h-32 flex items-center justify-center text-xs text-gray-400 font-mono">
             Brak wpisów historii kursu Złota.
           </div>
         )}

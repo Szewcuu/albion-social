@@ -220,7 +220,7 @@ export default function TavernAnnouncements({ isStaff = false }) {
                       )}
                     </div>
                     <h3 className="truncate font-heading text-sm font-bold text-[var(--text-bright)] mb-1">{announcement.title}</h3>
-                    <p className="line-clamp-2 text-[10px] leading-4 text-[var(--text-primary)]">{announcement.body}</p>
+                    <p className="text-xs leading-5 text-[var(--text-primary)] break-words whitespace-pre-line mt-1">{announcement.body}</p>
                   </div>
                   <footer className="mt-2 flex items-center justify-between gap-2 font-mono text-[8px] uppercase tracking-wide opacity-70 border-t border-white/[0.06] pt-1.5">
                     <span className="truncate">{authorName(announcement)}</span>

@@ -739,7 +739,7 @@ export default function MarketIntelligence() {
                           : 'Oczekiwanie na dane źródłowe'}
                     </p>
                   </div>
-                  <LineChart points={goldPoints} tone="sky" emptyText={goldError || 'Brak danych o kursie złota dla tego regionu.'} />
+                  <LineChart points={goldPoints} tone="amber" emptyText={goldError || 'Brak danych o kursie złota dla tego regionu.'} />
                 </div>
                 <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[.025] p-4 sm:p-5 lg:col-span-2 2xl:col-span-1">
                   <div className="mb-4">

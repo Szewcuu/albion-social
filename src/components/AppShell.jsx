@@ -62,6 +62,12 @@ export default function AppShell({ children, initialUser = null }) {
   const pathname = usePathname()
   const router = useRouter()
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
+    }
+  }, [pathname])
+
   const loginWithOAuth = useCallback(async (provider, next = '/') => {
     const callback = new URL('/auth/callback', window.location.origin)
     callback.searchParams.set('next', next.startsWith('/') && !next.startsWith('//') ? next : '/')
