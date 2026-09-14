@@ -24,6 +24,8 @@ const PAGE_NAMES = {
   '/obserwowane': 'Obserwowane',
   '/wiadomosci': 'Skrzynka handlowa',
   '/aktualnosci': 'Goniec Królewski',
+  '/rekrutacja': 'Rekrutacja do Ekipy',
+  '/admin': 'Centrum Moderacji',
   '/regulamin': 'Regulamin',
   '/prywatnosc': 'Polityka Prywatności',
 }

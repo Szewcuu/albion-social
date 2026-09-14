@@ -25,6 +25,7 @@ import {
 
 import { usePortalSession } from '@/contexts/PortalSessionContext'
 import { authenticatedFetch } from '@/lib/authenticatedFetch'
+import CustomSelect from '@/components/ui/CustomSelect'
 import {
   RECRUITMENT_PLATFORMS,
   RECRUITMENT_STATUSES,
@@ -270,18 +271,24 @@ export default function RecruitmentPage() {
                 key={platform.id}
                 type="button"
                 onClick={() => setSelectedPlatform(platform.id)}
-                className={`panel text-left p-5 transition-all relative cursor-pointer ${
+                className={`panel text-left p-5 transition-all duration-200 relative cursor-pointer ${
                   isSelected
-                    ? 'border-amber-400 ring-2 ring-amber-400/30 bg-[#2a1c13]'
-                    : 'border-[#9c713830] hover:border-[#9c713880] bg-[#1a130f]'
+                    ? 'border-[var(--gold)] ring-2 ring-[var(--gold)]/35 bg-gradient-to-b from-[#2d1e14] via-[#22160f] to-[#170e0a] shadow-[0_0_28px_rgba(205,164,65,0.18)]'
+                    : 'border-[var(--border-warm)] hover:border-[var(--gold)]/60 bg-[#17100c] hover:bg-[#1f1510]'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className={`rounded-xl p-3 ${isSelected ? 'bg-amber-400/20 text-amber-300' : 'bg-white/5 text-[var(--text-secondary)]'}`}>
+                  <div className={`rounded-xl p-3 transition-colors ${isSelected ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-white/5 text-[var(--text-secondary)] border border-white/5'}`}>
                     <Icon className="h-6 w-6" />
                   </div>
-                  {isSelected && (
-                    <span className="badge badge-amber text-[9px]">Wybrana</span>
+                  {isSelected ? (
+                    <span className="badge badge-amber text-[9px] flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-amber-400" /> Wybrana
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
+                      Kliknij, by wybrać
+                    </span>
                   )}
                 </div>
 
@@ -345,9 +352,10 @@ export default function RecruitmentPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Podstawowe dane */}
+          {/* Podstawowe dane */}
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="form-label">
-              Twoje Imię / Nick
+              Twoje Imię / Nick <span className="text-amber-300">*</span>
               <input
                 type="text"
                 value={formData.applicantName}
@@ -355,7 +363,7 @@ export default function RecruitmentPage() {
                 placeholder="np. Mikołaj / Szewcu"
                 maxLength={60}
                 required
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 focus:border-amber-400 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 focus:outline-none"
               />
             </label>
 
@@ -368,7 +376,7 @@ export default function RecruitmentPage() {
                 value={formData.age}
                 onChange={(e) => handleChange('age', e.target.value)}
                 placeholder="np. 22"
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 focus:border-amber-400 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 focus:outline-none"
               />
             </label>
           </div>
@@ -384,7 +392,7 @@ export default function RecruitmentPage() {
                 placeholder="np. szewcu lub szewcu#1234"
                 maxLength={60}
                 required={RECRUITMENT_PLATFORMS[selectedPlatform].requiresDiscord}
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 focus:border-amber-400 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 focus:outline-none"
               />
               <span className="mt-1 block text-[10px] text-[var(--text-muted)]">
                 Niezbędny do kontaktu i nadania rangi na serwerze Discord.
@@ -403,10 +411,10 @@ export default function RecruitmentPage() {
                 placeholder="https://facebook.com/twoj.profil"
                 maxLength={250}
                 required={RECRUITMENT_PLATFORMS[selectedPlatform].requiresFacebook}
-                className={`mt-1.5 w-full rounded-xl border p-3 text-xs text-white placeholder-white/30 focus:outline-none ${
+                className={`mt-1.5 w-full rounded-xl border p-3 text-xs text-white placeholder-white/30 transition-colors focus:outline-none ${
                   RECRUITMENT_PLATFORMS[selectedPlatform].requiresFacebook
-                    ? 'border-amber-400/50 bg-[#251b14] focus:border-amber-400'
-                    : 'border-[var(--border)] bg-[var(--bg-elevated)] focus:border-amber-400'
+                    ? 'border-amber-400/60 bg-[#251b14] focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30'
+                    : 'border-[var(--border-warm)] bg-[var(--bg-elevated)] focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30'
                 }`}
               />
               <span className="mt-1 block text-[10px] text-[var(--text-muted)]">
@@ -416,7 +424,7 @@ export default function RecruitmentPage() {
           </div>
 
           {/* Staż w grze */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 items-end">
             <label className="form-label">
               Nick postaci w Albion Online
               <input
@@ -425,24 +433,21 @@ export default function RecruitmentPage() {
                 onChange={(e) => handleChange('albionNick', e.target.value)}
                 placeholder="np. SirSzewcu"
                 maxLength={60}
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 focus:border-amber-400 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 focus:outline-none"
               />
             </label>
 
-            <label className="form-label">
-              Główny Serwer w Albionie
-              <select
+            <div>
+              <CustomSelect
+                label="Główny Serwer w Albionie"
                 value={formData.server}
-                onChange={(e) => handleChange('server', e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white focus:border-amber-400 focus:outline-none"
-              >
-                {SERVERS.map((srv) => (
-                  <option key={srv} value={srv} className="bg-[#1b140e] text-white">
-                    {srv} (Albion {srv})
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={(val) => handleChange('server', val)}
+                options={SERVERS.map((srv) => ({
+                  value: srv,
+                  label: `${srv} (Albion ${srv})`,
+                }))}
+              />
+            </div>
           </div>
 
           {/* Doświadczenie */}
@@ -455,7 +460,7 @@ export default function RecruitmentPage() {
               rows={3}
               maxLength={2000}
               required
-              className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 focus:border-amber-400 focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 focus:outline-none"
             />
           </label>
 
@@ -469,7 +474,7 @@ export default function RecruitmentPage() {
               placeholder="np. Około 2-3 godziny dziennie, głównie popołudniami i wieczorami (17:00 - 23:00)."
               maxLength={1000}
               required
-              className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 focus:border-amber-400 focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 focus:outline-none"
             />
           </label>
 
@@ -483,7 +488,7 @@ export default function RecruitmentPage() {
               rows={4}
               maxLength={2000}
               required
-              className="mt-1.5 w-full rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 focus:border-amber-400 focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3 text-xs text-white placeholder-white/30 transition-colors focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 focus:outline-none"
             />
           </label>
 

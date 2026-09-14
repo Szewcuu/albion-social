@@ -38,20 +38,27 @@
 .checklist button:focus-visible, .news:focus-visible { outline: 2px solid #eac774; outline-offset: 4px; }
 @media (max-width: 1100px) {
   .tavernLayout { grid-template-columns: minmax(0,1fr); }
-  .sidebar { grid-template-columns: 1fr 1fr; }
-  .sidebar > :first-child { grid-row: span 2; }
+  .sidebar { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
 }
 @media (min-width: 1101px) and (min-height: 700px) {
-  .tavern { height: calc(100dvh - var(--topbar-h)); overflow: hidden; padding-top: 12px; padding-bottom: 14px; }
+  .tavern { min-height: calc(100dvh - var(--topbar-h)); overflow-x: hidden; padding-top: 12px; padding-bottom: 14px; }
   .tavernHeader { min-height: 88px; margin-bottom: 12px; padding: 15px 24px; }
   .tavernHeader h1 { margin-block: 3px 4px; font-size: clamp(27px,2.3vw,36px); }
   .tavernSign { width: 58px; height: 58px; }
   .tavernSign svg { width: 26px; height: 26px; }
-  .tavernLayout { height: calc(100% - 100px); gap: 14px; }
+  .tavernLayout { min-height: calc(100% - 100px); gap: 14px; }
   .conversation { display: grid; min-height: 0; grid-template-rows: minmax(0,1fr) auto; }
   .conversation > :first-child { min-height: 0; }
   .conversation :global(.community-posts) { min-height: 250px; height: clamp(250px,37vh,410px); max-height: 410px !important; }
-  .sidebar { gap: 10px; align-content: start; }
+  .sidebar {
+    gap: 10px;
+    align-content: start;
+    overflow-y: auto;
+    max-height: calc(100dvh - var(--topbar-h) - 130px);
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #4b3927 transparent;
+  }
   .news { padding: 15px 17px; }
   .news h2 { margin: 5px 0; font-size: 19px; }
   .news p { margin: 0; line-height: 1.45; }
