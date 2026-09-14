@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import {
   ArrowLeft,
+  ArrowRight,
   BookOpen,
   CalendarDays,
   CheckCircle2,
@@ -18,6 +19,7 @@ import BuildDetailEquipment from '@/components/builds/BuildDetailEquipment'
 import BuildStatsCalculator from '@/components/builds/BuildStatsCalculator'
 import BuildComments from '@/components/builds/BuildComments'
 import BuildSocialActions from '@/components/builds/BuildSocialActions'
+import { parseComboSteps, getStepBadgeStyle } from '@/components/builds/SkillComboBuilder'
 import { EmptyState } from '@/components/ui/FeedbackState'
 import { buildFromDbRow } from '@/lib/buildSlots'
 import { getBudgetLabel, getBuildLabel } from '@/lib/buildPresentation'
@@ -154,12 +156,40 @@ export default async function BuildDetailPage({ params }) {
               <section className="panel p-5 sm:p-6" aria-labelledby="combos-title">
                 <h2 id="combos-title" className="flex items-center gap-2 text-2xl font-black text-[#fff8e8]"><Zap className="h-5 w-5 text-amber-300" aria-hidden="true" /> Sekwencje umiejętności</h2>
                 <div className="mt-5 space-y-3">
-                  {build.skillCombos.map((combo, index) => (
-                    <div key={`${combo.name}-${index}`} className="rounded-2xl border border-white/8 bg-black/20 p-4">
-                      <p className="text-xs font-black uppercase tracking-[.12em] text-orange-100">{combo.name || `Combo ${index + 1}`}</p>
-                      <p className="mt-2 font-mono text-xs leading-6 text-[#aaa49a]">{combo.description || 'Brak opisanej sekwencji.'}</p>
-                    </div>
-                  ))}
+                  {build.skillCombos.map((combo, index) => {
+                    const steps = parseComboSteps(combo.description)
+                    return (
+                      <div key={`${combo.name}-${index}`} className="rounded-2xl border border-white/8 bg-black/20 p-4 space-y-2.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-black uppercase tracking-[.12em] text-orange-100">
+                            {combo.name || `Combo ${index + 1}`}
+                          </p>
+                          <span className="font-mono text-[9px] text-[var(--text-muted)] uppercase">
+                            Sekwencja {index + 1}
+                          </span>
+                        </div>
+
+                        {steps.length > 1 ? (
+                          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                            {steps.map((step, stepIdx) => (
+                              <div key={stepIdx} className="flex items-center gap-2">
+                                <span className={`rounded-lg border px-2.5 py-1 text-xs font-mono font-bold shadow-sm ${getStepBadgeStyle(step)}`}>
+                                  {step}
+                                </span>
+                                {stepIdx < steps.length - 1 && (
+                                  <ArrowRight className="w-3.5 h-3.5 text-amber-400/60 shrink-0" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="font-mono text-xs leading-6 text-[#aaa49a]">
+                            {combo.description || 'Brak opisanej sekwencji.'}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </section>
             )}

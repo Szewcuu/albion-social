@@ -64,6 +64,76 @@ export function getIpRank(avgIp) {
 }
 
 /**
+ * Rozpoznaje profil taktyczny zestawu (archetyp) na podstawie broni, pancerza i offhandu
+ */
+export function detectArchetype(slots = {}, armorType = 'Leather') {
+  const weaponId = (slots.main_hand?.main || '').toUpperCase()
+  const offhandId = (slots.off_hand?.main || '').toUpperCase()
+
+  if (weaponId.includes('HOLY') || weaponId.includes('NATURE')) {
+    return {
+      label: 'Uzdrowiciel (Healer)',
+      tone: 'emerald',
+      description: 'Wysoki sustain, podtrzymywanie sojuszników przy życiu i usuwanie debuffów.',
+    }
+  }
+
+  if (weaponId.includes('ARCANE')) {
+    return {
+      label: 'Wsparcie (Support / Utility)',
+      tone: 'violet',
+      description: 'Tarcze ochronne, czyszczenie wzmocnień wroga (Purge) i buffy obrażeń drużyny.',
+    }
+  }
+
+  if (armorType === 'Plate' || offhandId.includes('SHIELD') || weaponId.includes('MACE') || weaponId.includes('HAMMER') || weaponId.includes('FLAIL')) {
+    return {
+      label: 'Inicjator / Tank',
+      tone: 'sky',
+      description: 'Wysoka redukcja obrażeń, kontrola tłumu (CC) i generowanie zagrożenia (Aggro).',
+    }
+  }
+
+  if (weaponId.includes('DAGGER') || weaponId.includes('CLAW')) {
+    return {
+      label: 'Skrytobójca (Assassin)',
+      tone: 'rose',
+      description: 'Zabójczy burst pojedynczego celu, kamuflaż i natychmiastowa eliminacja.',
+    }
+  }
+
+  if (weaponId.includes('BOW') || weaponId.includes('CROSSBOW')) {
+    return {
+      label: 'Strzelec (Ranger / Marksman)',
+      tone: 'amber',
+      description: 'Stałe obrażenia dystansowe, kiting oraz kontrola strefy na bezpieczną odległość.',
+    }
+  }
+
+  if (weaponId.includes('FIRE') || weaponId.includes('FROST') || weaponId.includes('CURSE')) {
+    return {
+      label: 'Mag Bojowy (Caster / Nuker)',
+      tone: 'orange',
+      description: 'Mocne obrażenia obszarowe, spowolnienia oraz presja efektów periodycznych (DoT).',
+    }
+  }
+
+  if (weaponId.includes('SWORD') || weaponId.includes('AXE') || weaponId.includes('SPEAR') || weaponId.includes('QUARTERSTAFF')) {
+    return {
+      label: 'Wojownik (Bruiser / Brawler)',
+      tone: 'red',
+      description: 'Zbalansowane połączenie przeżywalności z presją w zwarciu (frontline brawling).',
+    }
+  }
+
+  return {
+    label: armorType === 'Cloth' ? 'Mag / Dps' : armorType === 'Plate' ? 'Tank / Obrońca' : 'Awanturnik (All-Rounder)',
+    tone: 'amber',
+    description: 'Wszechstronny zestaw bojowy dostosowany do zróżnicowanych starć w otwartym świecie.',
+  }
+}
+
+/**
  * Główny kalkulator statystyk całego zestawu
  */
 export function calculateBuildStats(slots = {}, quality = 1, specBonus = 0) {
@@ -114,6 +184,42 @@ export function calculateBuildStats(slots = {}, quality = 1, specBonus = 0) {
     }
   }
 
+  // Obliczenia redukcji procentowej (Mitigation %) wg oficjalnego wzoru: R / (100 + R)
+  const physicalMitigation = avgIp > 0 && armorResist > 0
+    ? Math.round((armorResist / (100 + armorResist)) * 1000) / 10
+    : 0
+
+  const magicMitigation = avgIp > 0 && magicResist > 0
+    ? Math.round((magicResist / (100 + magicResist)) * 1000) / 10
+    : 0
+
+  // Odporność na Kontrolę Tłumu (Crowd Control Resistance)
+  let ccResistance = 0
+  if (avgIp > 0) {
+    if (armorType === 'Plate') ccResistance = Math.round(140 + (avgIp * 0.08))
+    else if (armorType === 'Cloth') ccResistance = Math.round(30 + (avgIp * 0.02))
+    else ccResistance = Math.round(75 + (avgIp * 0.04))
+  }
+  const ccDurationReduction = ccResistance > 0
+    ? Math.round((ccResistance / (100 + ccResistance)) * 1000) / 10
+    : 0
+
+  // Współczynnik Zagrożenia (Threat Generation / Aggro)
+  const threatBonusPercent = armorType === 'Plate' ? 300 : armorType === 'Cloth' ? -20 : 0
+
+  // Bonus do Leczenia i Tarcz (%)
+  const healingBonusPercent = avgIp > 0
+    ? (armorType === 'Cloth' ? Math.round(35 + (avgIp * 0.015)) : armorType === 'Leather' ? Math.round(15 + (avgIp * 0.008)) : 0)
+    : 0
+
+  // Regeneracja energii i zdrowia
+  const energyRegenPerSec = avgIp > 0
+    ? (armorType === 'Cloth' ? Math.round((2.4 + avgIp * 0.0008) * 10) / 10 : armorType === 'Plate' ? Math.round((1.2 + avgIp * 0.0004) * 10) / 10 : Math.round((1.8 + avgIp * 0.0006) * 10) / 10)
+    : 0
+
+  const outOfCombatHealthRegen = avgIp > 0 ? Math.round(40 + (avgIp * 0.025)) : 0
+
+  const archetype = detectArchetype(slots, armorType)
   const rank = getIpRank(avgIp)
 
   return {
@@ -126,6 +232,15 @@ export function calculateBuildStats(slots = {}, quality = 1, specBonus = 0) {
     damageBonusPercent,
     armorResist,
     magicResist,
+    physicalMitigation,
+    magicMitigation,
+    ccResistance,
+    ccDurationReduction,
+    threatBonusPercent,
+    healingBonusPercent,
+    energyRegenPerSec,
+    outOfCombatHealthRegen,
+    archetype,
     rank,
   }
 }

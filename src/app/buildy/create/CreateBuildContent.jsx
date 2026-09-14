@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import EquipmentGrid from '@/components/builds/EquipmentGrid'
 import BuildStatsCalculator from '@/components/builds/BuildStatsCalculator'
+import SkillComboBuilder from '@/components/builds/SkillComboBuilder'
 import TagSelector from '@/components/builds/TagSelector'
 import ItemPicker from '@/components/builds/ItemPicker'
 import { usePortalSession } from '@/contexts/PortalSessionContext'
@@ -158,11 +159,6 @@ export default function CreateBuildPage() {
     }
   }
 
-  const addSkillCombo = () => {
-    if (build.skillCombos.length < 5) {
-      updateBuild({ skillCombos: [...build.skillCombos, { name: '', description: '' }] })
-    }
-  }
 
   const addYoutube = () => {
     if (build.youtubeVideos.length < 3) {
@@ -333,49 +329,10 @@ export default function CreateBuildPage() {
               </div>}
             </section>
 
-            <section className="panel space-y-3 p-5 sm:p-6">
-              <h2 className="text-sm font-mono font-bold text-[var(--amber)] uppercase tracking-wider flex items-center gap-2">
-                <Zap className="w-4 h-4" /> Combo skilli ({build.skillCombos.length}/5)
-              </h2>
-              {build.skillCombos.map((combo, idx) => (
-                <div key={idx} className="bg-[var(--bg-elevated)] border border-[var(--border-hover)] rounded-xl p-3 space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      aria-label={`Nazwa combo ${idx + 1}`}
-                      placeholder="Nazwa combo (np. Burst opener)"
-                      value={combo.name}
-                      onChange={(e) => {
-                        const next = [...build.skillCombos]
-                        next[idx] = { ...combo, name: e.target.value }
-                        updateBuild({ skillCombos: next })
-                      }}
-                      className="flex-1 bg-[#0c0407] border border-[#220e14] rounded-lg p-2 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
-                    />
-                    <button type="button" onClick={() => updateBuild({ skillCombos: build.skillCombos.filter((_, i) => i !== idx) })} aria-label={`Usuń combo ${idx + 1}`} className="flex h-10 w-10 items-center justify-center rounded-lg text-rose-300 hover:bg-rose-400/10">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    aria-label={`Sekwencja combo ${idx + 1}`}
-                    placeholder="Q → W → E → R"
-                    value={combo.description}
-                    onChange={(e) => {
-                      const next = [...build.skillCombos]
-                      next[idx] = { ...combo, description: e.target.value }
-                      updateBuild({ skillCombos: next })
-                    }}
-                    className="w-full bg-[#0c0407] border border-[#220e14] rounded-lg p-2 text-xs text-gray-100 outline-none focus:border-[var(--amber)]"
-                  />
-                </div>
-              ))}
-              {build.skillCombos.length < 5 && (
-                <button type="button" onClick={addSkillCombo} className="flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-[10px] font-mono uppercase text-[var(--amber)]">
-                  <Plus className="w-3.5 h-3.5" /> Dodaj combo
-                </button>
-              )}
-            </section>
+            <SkillComboBuilder
+              skillCombos={build.skillCombos}
+              onChange={(skillCombos) => updateBuild({ skillCombos })}
+            />
 
             <section className="panel space-y-3 p-5 sm:p-6">
               <h2 className="text-sm font-mono font-bold text-[var(--amber)] uppercase tracking-wider flex items-center gap-2">
