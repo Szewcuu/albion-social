@@ -1,7 +1,6 @@
 'use client'
 
 import CustomSelect from '@/components/ui/CustomSelect'
-
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -9,25 +8,37 @@ import AccountDeletionModal from '@/components/profile/AccountDeletionModal'
 import ConnectedAccountsPanel from '@/components/profile/ConnectedAccountsPanel'
 import {
   Activity,
+  AlertTriangle,
   Award,
+  BookOpen,
+  CalendarDays,
+  Check,
+  CheckCircle2,
   ChevronRight,
   CircleUserRound,
   ExternalLink,
-  Swords as Gamepad2,
+  Eye,
+  Flame,
   Globe2,
+  Heart,
+  KeyRound,
   LoaderCircle,
   Lock,
+  Plus,
+  RefreshCw,
   Save,
   Shield,
+  ShieldAlert,
   ShieldCheck,
-  CheckCircle2,
   ShoppingBag,
   Sparkles,
   Swords,
+  Trash2,
   Trophy,
+  UserCheck,
+  UserCog,
   UserRoundCheck,
   Zap,
-  Trash2,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { portalAuth } from '@/lib/supabaseAuth'
@@ -57,12 +68,48 @@ const PROFILE_FIELDS = [
   'pvp_fame', 'pve_fame', 'verified_at',
 ].join(', ')
 
-const ROLE_STYLES = {
-  Tank: 'border-sky-400/25 bg-sky-400/8 text-sky-300',
-  Healer: 'border-emerald-400/25 bg-emerald-400/8 text-emerald-300',
-  DPS: 'border-rose-400/25 bg-rose-400/8 text-rose-300',
-  Support: 'border-violet-400/25 bg-violet-400/8 text-violet-300',
+const ROLE_CONFIG = {
+  Tank: {
+    icon: Shield,
+    color: 'text-sky-300',
+    border: 'border-sky-400/35',
+    activeBg: 'bg-sky-400/15',
+    tag: 'border-sky-400/25 bg-sky-400/10 text-sky-300',
+    desc: 'Kontrola tłumu, absorpcja obrażeń i inicjacja',
+  },
+  Healer: {
+    icon: Heart,
+    color: 'text-emerald-300',
+    border: 'border-emerald-400/35',
+    activeBg: 'bg-emerald-400/15',
+    tag: 'border-emerald-400/25 bg-emerald-400/10 text-emerald-300',
+    desc: 'Utrzymanie drużyny przy życiu i usuwanie debuffów',
+  },
+  DPS: {
+    icon: Swords,
+    color: 'text-rose-300',
+    border: 'border-rose-400/35',
+    activeBg: 'bg-rose-400/15',
+    tag: 'border-rose-400/25 bg-rose-400/10 text-rose-300',
+    desc: 'Zadawanie obrażeń punktowych i obszarowych',
+  },
+  Support: {
+    icon: Zap,
+    color: 'text-violet-300',
+    border: 'border-violet-400/35',
+    activeBg: 'bg-violet-400/15',
+    tag: 'border-violet-400/25 bg-violet-400/10 text-violet-300',
+    desc: 'Wzmocnienia sojuszników, utility i osłabianie wrogów',
+  },
 }
+
+const IP_PRESETS = [
+  { label: 'T5 (1000)', value: 1000 },
+  { label: 'T6 (1200)', value: 1200 },
+  { label: 'T7 (1350)', value: 1350 },
+  { label: 'T8 (1500)', value: 1500 },
+  { label: '8.3 (1700+)', value: 1700 },
+]
 
 function formatDate(value) {
   if (!value) return 'Termin nieustalony'
@@ -73,18 +120,24 @@ function formatDate(value) {
 
 function ProfileSkeleton() {
   return (
-    <div className="page-content">
+    <div className="page-content min-w-0 space-y-6">
       <div className="subpage-header">
-        <h1>Twój Profil</h1>
-        <p>Zarządzaj postacią, weryfikacją i ofertami.</p>
+        <h1>
+          <UserCog className="h-6 w-6 text-[var(--gold)]" /> Twój Profil
+        </h1>
+        <p>Zarządzaj postacią, weryfikacją API i ustawieniami konta.</p>
       </div>
 
-<div className="relative z-10 mx-auto w-full max-w-[1380px] space-y-6 p-4 sm:p-6 lg:p-8">
-        <SkeletonBlock className="h-5 w-44 rounded" />
-        <SkeletonBlock className="h-[310px] rounded-[28px]" />
-        <div className="grid gap-5 lg:grid-cols-[340px_1fr]">
-          <SkeletonBlock className="h-96 rounded-[28px]" />
-          <SkeletonBlock className="h-96 rounded-[28px]" />
+      <SkeletonBlock className="h-40 rounded-[26px]" />
+
+      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <div className="space-y-4">
+          <SkeletonBlock className="h-96 rounded-[24px]" />
+          <SkeletonBlock className="h-44 rounded-[24px]" />
+        </div>
+        <div className="space-y-4">
+          <SkeletonBlock className="h-12 w-80 rounded-xl" />
+          <SkeletonBlock className="h-[500px] rounded-[26px]" />
         </div>
       </div>
     </div>
@@ -101,6 +154,7 @@ export default function ProfilePage() {
   const [myOffers, setMyOffers] = useState([])
   const [myBuilds, setMyBuilds] = useState([])
   const [notice, setNotice] = useState(null)
+  const [activeTab, setActiveTab] = useState('card') // 'card' | 'activity' | 'security'
   const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [verifiedState, setVerifiedState] = useState(null)
@@ -182,10 +236,21 @@ export default function ProfilePage() {
     })
   }, [fetchProfileData])
 
-  const completion = useMemo(() => {
-    const fields = [formData.ingame_nick, formData.main_server, formData.guild_name, formData.main_role, Number(formData.avg_ip) > 0]
-    return Math.round((fields.filter(Boolean).length / fields.length) * 100)
+  const completionDetails = useMemo(() => {
+    return [
+      { label: 'Nick w grze', done: Boolean(formData.ingame_nick.trim()) },
+      { label: 'Główny serwer', done: Boolean(formData.main_server) },
+      { label: 'Nazwa gildii', done: Boolean(formData.guild_name.trim()) },
+      { label: 'Główna rola', done: Boolean(formData.main_role) },
+      { label: 'Item Power', done: Number(formData.avg_ip) > 0 },
+      { label: 'Dziennik (O mnie)', done: Boolean(formData.bio.trim()) },
+    ]
   }, [formData])
+
+  const completionPercent = useMemo(() => {
+    const doneCount = completionDetails.filter((item) => item.done).length
+    return Math.round((doneCount / completionDetails.length) * 100)
+  }, [completionDetails])
 
   async function handleSaveProfile(event) {
     event.preventDefault()
@@ -227,7 +292,7 @@ export default function ProfilePage() {
         favorite_roles: result.profile.favorite_roles || [],
         featured_build_ids: result.profile.featured_build_ids || [],
       }))
-      setNotice({ type: 'success', text: 'Karta postaci została zapisana.' })
+      setNotice({ type: 'success', text: 'Karta postaci została pomyślnie zapisana!' })
     } catch (saveError) {
       setNotice({ type: 'error', text: saveError.message || 'Nie udało się zapisać karty postaci. Spróbuj ponownie.' })
     } finally {
@@ -268,7 +333,7 @@ export default function ProfilePage() {
       setVerifiedState(verifiedPayload)
       setNotice({
         type: 'success',
-        text: `Postać „${verifiedPayload.ingame_nick}” została przypięta do profilu.`,
+        text: `Postać „${verifiedPayload.ingame_nick}” została przypięta do profilu!`,
       })
       return true
     } catch (error) {
@@ -280,8 +345,8 @@ export default function ProfilePage() {
   async function handleUnlinkCharacter() {
     if (!user || unlinkingCharacter) return
     const accepted = await requestConfirmation({
-      title: 'Odłączyć postać?',
-      description: 'Połączenie z Albion Online zostanie usunięte, ale pozostałe dane profilu pozostaną bez zmian.',
+      title: 'Odłączyć postać z gry?',
+      description: 'Połączenie z oficjalnym API Albion Online zostanie usunięte. Pozostałe dane profilu (buildy, oferty, biografia) pozostaną bez zmian.',
       confirmLabel: 'Odłącz postać',
     })
     if (!accepted) return
@@ -313,14 +378,30 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="page-content">
-<div className="relative z-10 mx-auto flex min-h-screen w-full max-w-3xl items-center p-4 sm:p-6">
-          <section className="panel w-full rounded-[28px] p-7 text-center sm:p-10">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--amber)]/25 bg-[var(--amber)]/10 text-[var(--amber)]"><CircleUserRound className="h-8 w-8" /></div>
-            <p className="mt-6 text-[9px] font-black uppercase tracking-[.22em] text-[var(--amber)]">Karta bohatera</p>
-            <h1 className="font-display mt-2 text-3xl font-black text-[#fff]">Zaloguj się, aby otworzyć profil.</h1>
-            <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-[var(--text-secondary)]">Profil łączy konto portalu z postacią Albionu, wyprawami, ofertami handlowymi i opcjonalnymi integracjami.</p>
-            <Link href="/" className="btn btn-primary mt-7 inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-[.12em]">Przejdź do logowania <ChevronRight className="h-4 w-4" /></Link>
+      <div className="page-content min-w-0 space-y-6">
+        <div className="subpage-header">
+          <h1>
+            <UserCog className="h-6 w-6 text-[var(--gold)]" /> Twój Profil
+          </h1>
+          <p>Zaloguj się, aby zarządzać swoją postacią w Albionie, wyprawami i ofertami.</p>
+        </div>
+
+        <div className="relative z-10 mx-auto flex min-h-[400px] w-full max-w-2xl items-center justify-center p-4">
+          <section className="panel w-full rounded-[28px] p-8 text-center sm:p-12 border-[var(--border-warm)] shadow-2xl">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-300">
+              <CircleUserRound className="h-8 w-8" />
+            </div>
+            <p className="mt-6 text-[9px] font-black uppercase tracking-[.22em] text-amber-400">Rejestr Bohaterów</p>
+            <h2 className="font-display mt-2 text-2xl sm:text-3xl font-black text-white">Zaloguj się, aby otworzyć profil</h2>
+            <p className="mx-auto mt-3 max-w-md text-xs sm:text-sm leading-6 text-[var(--text-secondary)]">
+              Profil łączy konto portalu ze statystykami postaci w grze, zwołanymi wyprawami, ofertami handlowymi i Kuźnią Buildów.
+            </p>
+            <Link
+              href="/"
+              className="btn btn-primary mt-6 inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-wider"
+            >
+              Przejdź do logowania <ChevronRight className="h-4 w-4" />
+            </Link>
           </section>
         </div>
       </div>
@@ -329,158 +410,353 @@ export default function ProfilePage() {
 
   const displayName = (user.user_metadata?.full_name || user.user_metadata?.name || 'Gracz').replace(/#0$/, '')
   const avatarUrl = user.user_metadata?.avatar_url
+  const currentRoleStyle = ROLE_CONFIG[formData.main_role] || ROLE_CONFIG.DPS
 
   return (
-    <div className="page-content">
+    <div className="page-content min-w-0 space-y-6">
       {confirmationDialog}
-<div className="relative z-10 mx-auto w-full max-w-[1400px] space-y-6 p-4 sm:p-6 lg:p-8 mt-2">
-{notice && <StatusNotice type={notice.type === 'success' ? 'success' : 'error'}>{notice.text}</StatusNotice>}
 
-        <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
-          <aside className="space-y-5">
-            <section className="panel overflow-hidden rounded-[28px]">
-              <div className="relative h-24 border-b border-[var(--amber)]/15 bg-[radial-gradient(circle_at_50%_0%,rgba(216,173,74,.2),transparent_70%)]" />
-              <div className="px-5 pb-6 text-center sm:px-6">
-                <div className="relative mx-auto -mt-12 h-24 w-24 overflow-hidden rounded-2xl border-2 border-[var(--amber)]/60 bg-[var(--bg-surface)] shadow-[0_10px_35px_rgba(0,0,0,.5)]">
-                  {avatarUrl ? (
-                    <Image src={avatarUrl} alt={`Awatar ${displayName}`} fill sizes="96px" className="object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-[var(--amber)]"><CircleUserRound className="h-10 w-10" /></div>
-                  )}
-                </div>
-                <div className={`mt-4 flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-[.15em] ${hasAuthIdentity(user, 'discord') ? 'text-emerald-300' : 'text-amber-300'}`}>
-                  <UserRoundCheck className="h-3.5 w-3.5" /> {hasAuthIdentity(user, 'discord') ? 'Discord połączony' : 'Discord niepołączony'}
-                </div>
-                {verifiedState?.is_verified && (
-                  <div className="mt-1.5 flex items-center justify-center gap-1.5 text-[9px] font-mono font-bold uppercase text-amber-300 bg-amber-950/40 border border-amber-500/40 px-2.5 py-1 rounded-full">
-                    <ShieldCheck className="h-3.5 w-3.5 text-amber-400" /> Postać przypięta przez API
-                  </div>
-                )}
-                <h2 className="font-display mt-2 truncate text-2xl font-black text-[#fff]">{displayName}</h2>
-                <p className="mt-1 truncate text-[10px] text-[var(--text-secondary)]">{user.email}</p>
+      {/* 1. Header Podstrony */}
+      <header className="subpage-header">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1>
+              <UserCog className="h-7 w-7 text-[var(--gold)]" />
+              Karta Bohatera & Zarządzanie Kontem
+            </h1>
+            <p>
+              Zarządzaj tożsamością w Albionie, statystykami z API, ulubionymi doktrynami bojowymi oraz bezpieczeństwem konta.
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={`/profil/${user.id}`}
+              className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] px-4 py-2.5 text-xs font-bold text-amber-200 transition hover:border-[var(--gold)] hover:bg-amber-400/10 shadow-sm"
+              title="Zobacz jak inni gracze widzą Twój profil"
+            >
+              <Eye className="h-4 w-4 text-[var(--gold)]" />
+              <span>Podgląd publiczny</span>
+              <ExternalLink className="h-3 w-3 text-amber-300/70" />
+            </Link>
+          </div>
+        </div>
+      </header>
 
-                <div className="mt-5 grid grid-cols-2 gap-2 text-left">
-                  <div className="rounded-xl border border-white/8 bg-black/20 p-3">
-                    <p className="text-[8px] font-black uppercase tracking-[.15em] text-[var(--text-secondary)]">Postać</p>
-                    <p className="mt-1 truncate text-xs font-bold text-[var(--text-primary)]">{formData.ingame_nick || 'Nieprzypisana'}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/8 bg-black/20 p-3">
-                    <p className="text-[8px] font-black uppercase tracking-[.15em] text-[var(--text-secondary)]">Item Power</p>
-                    <p className="font-display mt-1 text-lg font-black text-[var(--amber)]">{formData.avg_ip || '—'}</p>
-                  </div>
-                </div>
+      {/* Powiadomienia */}
+      {notice && (
+        <StatusNotice type={notice.type === 'success' ? 'success' : 'error'}>
+          {notice.text}
+        </StatusNotice>
+      )}
 
-                {verifiedState?.is_verified && (
-                  <div className="mt-3 bg-[var(--bg-elevated)] border border-amber-500/20 p-3 rounded-xl text-left font-mono text-[10px] space-y-1">
-                    <div className="text-gray-400 uppercase text-[8px]">Dane z publicznego API:</div>
-                    <div className="flex justify-between text-rose-300 font-bold">
-                      <span>PvP Fame:</span>
-                      <span>{Number(verifiedState.pvp_fame || 0).toLocaleString('pl-PL')}</span>
-                    </div>
-                    <div className="flex justify-between text-amber-300 font-bold">
-                      <span>PvE Fame:</span>
-                      <span>{Number(verifiedState.pve_fame || 0).toLocaleString('pl-PL')}</span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-black/35" role="progressbar" aria-valuenow={completion} aria-valuemin={0} aria-valuemax={100} aria-label={`Kompletność profilu ${completion}%`}>
-                  <div className="h-full rounded-full bg-gradient-to-r from-[#b9872c] to-[#f0cf77]" style={{ width: `${completion}%` }} />
-                </div>
-                <p className="mt-2 text-[9px] text-[var(--text-secondary)]">Kompletność karty: {completion}%</p>
+      {/* 2. Hero Baner Postaci (Zweryfikowana vs Nieprzypięta) */}
+      {verifiedState?.is_verified ? (
+        <section className="relative overflow-hidden rounded-[26px] border border-[var(--border-warm)] bg-gradient-to-br from-[#2e1c10] via-[#1a110a] to-[#0f0907] p-5 sm:p-6 shadow-xl">
+          <div className="pointer-events-none absolute -right-8 -top-8 h-44 w-44 rounded-full bg-amber-400/10 blur-2xl" />
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-amber-400/50 bg-amber-400/10 shadow-[0_0_20px_rgba(216,173,74,0.15)] text-amber-300">
+                <ShieldCheck className="h-9 w-9 text-amber-400" />
               </div>
-            </section>
-
-            <nav className="panel rounded-[24px] p-3 space-y-1" aria-label="Skróty profilu">
-              {[
-                ['/killboard', Swords, 'Otwórz Killboard', 'Historia walk i statystyki'],
-                ['/wyprawy', Shield, 'Zarządzaj wyprawami', `${myExpeditions.length} utworzonych`],
-                ['/rynek', ShoppingBag, 'Moje stoisko', `${myOffers.length} ofert P2P`],
-              ].map(([href, Icon, label, detail]) => (
-                <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-white/5">
-                  <span className="rounded-lg border border-white/8 bg-black/20 p-2 text-sky-300"><Icon className="h-4 w-4" /></span>
-                  <span className="min-w-0 flex-1"><span className="block text-xs font-bold text-[var(--text-primary)]">{label}</span><span className="block text-[9px] text-[var(--text-secondary)]">{detail}</span></span>
-                  <ChevronRight className="h-4 w-4 text-[#5f5b55] transition group-hover:translate-x-0.5 group-hover:text-[var(--amber)]" />
-                </Link>
-              ))}
-
-              <div className="pt-2 border-t border-white/8">
-                <button
-                  type="button"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className="w-full py-2.5 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-mono font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Usuń Konto & Dane RODO
-                </button>
-              </div>
-            </nav>
-          </aside>
-
-          <div className="space-y-6">
-            <ConnectedAccountsPanel />
-            <section className="panel rounded-[28px] p-5 sm:p-7">
-              <div className="flex flex-col justify-between gap-3 border-b border-white/8 pb-5 sm:flex-row sm:items-end">
-                <div>
-                  <p className="text-[9px] font-black uppercase tracking-[.22em] text-[var(--amber)]">Tożsamość w Albionie</p>
-                  <h2 className="font-display mt-1 text-2xl font-black text-[#fff]">Karta postaci</h2>
-                  <p className="mt-2 text-xs leading-5 text-[var(--text-secondary)]">
-                    Przypięcie pobiera publiczne statystyki postaci z API Albion Online. Nie potwierdza własności konta w grze.
-                  </p>
-                </div>
-
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsVerifyModalOpen(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-mono font-bold text-xs rounded-xl uppercase tracking-wider flex items-center gap-1.5 shadow-lg shadow-amber-950/50 transition cursor-pointer"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    {verifiedState?.is_verified ? 'Zmień przypiętą postać' : 'Przypnij postać'}
-                  </button>
-                  {verifiedState?.is_verified && (
-                    <button
-                      type="button"
-                      onClick={handleUnlinkCharacter}
-                      disabled={unlinkingCharacter}
-                      className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-50"
-                    >
-                      {unlinkingCharacter ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                      {unlinkingCharacter ? 'Odłączanie…' : 'Odłącz postać'}
-                    </button>
-                  )}
-                  <span className={`rounded-lg border px-3 py-1.5 text-[9px] font-black uppercase tracking-[.14em] ${ROLE_STYLES[formData.main_role] || ROLE_STYLES.DPS}`}>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-emerald-300">
+                    <CheckCircle2 className="h-3 w-3" /> Postać zweryfikowana w API
+                  </span>
+                  <span className="rounded-full border border-amber-400/20 bg-black/40 px-2.5 py-0.5 text-[9px] font-mono font-bold text-amber-300">
+                    {verifiedState.verified_server || formData.main_server || 'Europa'}
+                  </span>
+                </div>
+                <h2 className="font-display mt-1 text-2xl sm:text-3xl font-black text-white truncate">
+                  {formData.ingame_nick}
+                </h2>
+                <p className="text-xs text-amber-200/75">
+                  Gildia: <strong className="text-white font-semibold">{formData.guild_name || 'Brak gildii'}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              {/* PvP Fame */}
+              <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3 text-center min-w-[90px]">
+                <span className="flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider text-rose-300">
+                  <Swords className="h-3 w-3" /> PvP Fame
+                </span>
+                <p className="font-display mt-1 text-base sm:text-lg font-black text-white">
+                  {Number(verifiedState.pvp_fame || 0).toLocaleString('pl-PL')}
+                </p>
+              </div>
+              {/* PvE Fame */}
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-center min-w-[90px]">
+                <span className="flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider text-amber-300">
+                  <Flame className="h-3 w-3" /> PvE Fame
+                </span>
+                <p className="font-display mt-1 text-base sm:text-lg font-black text-white">
+                  {Number(verifiedState.pve_fame || 0).toLocaleString('pl-PL')}
+                </p>
+              </div>
+              {/* Item Power */}
+              <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-3 text-center min-w-[90px]">
+                <span className="flex items-center justify-center gap-1 text-[8px] font-black uppercase tracking-wider text-sky-300">
+                  <Shield className="h-3 w-3" /> Średnie IP
+                </span>
+                <p className="font-display mt-1 text-base sm:text-lg font-black text-white">
+                  {formData.avg_ip || '—'}
+                </p>
+              </div>
+              {/* Rola */}
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3 text-center min-w-[90px] flex flex-col justify-center">
+                <span className="text-[8px] font-black uppercase tracking-wider text-[var(--text-secondary)]">
+                  Rola
+                </span>
+                <p className="mt-1 text-xs font-black uppercase tracking-wider text-amber-300">
+                  {formData.main_role}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 border-t border-white/8 pt-3 lg:border-t-0 lg:pt-0">
+              <Link
+                href={`/killboard?nick=${encodeURIComponent(formData.ingame_nick)}&region=${verifiedState.verified_region || 'europe'}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3.5 py-2 text-xs font-mono font-bold text-amber-200 transition hover:bg-amber-400/20 shadow-sm"
+              >
+                <Swords className="h-3.5 w-3.5 text-amber-400" />
+                <span>Killboard</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setIsVerifyModalOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-black/30 px-3.5 py-2 text-xs font-mono font-bold text-gray-300 transition hover:border-amber-400/40 hover:text-white cursor-pointer"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>Zmień postać</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleUnlinkCharacter}
+                disabled={unlinkingCharacter}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2 text-xs font-mono font-bold text-rose-300 transition hover:bg-rose-500/20 disabled:opacity-50 cursor-pointer"
+              >
+                {unlinkingCharacter ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                <span>{unlinkingCharacter ? 'Odłączanie…' : 'Odłącz'}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="relative overflow-hidden rounded-[26px] border border-dashed border-amber-500/35 bg-gradient-to-r from-amber-950/25 via-black/40 to-black/30 p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-amber-400/30 bg-amber-400/10 text-amber-300">
+                <Shield className="h-7 w-7" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-[.18em] text-amber-400">Oficjalne API Albionu</span>
+                  <span className="rounded-md bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold text-amber-300 uppercase">Zalecane</span>
+                </div>
+                <h2 className="font-display mt-0.5 text-lg sm:text-xl font-bold text-white">Przypnij swoją postać z gry</h2>
+                <p className="mt-1 text-xs text-[var(--text-secondary)] max-w-xl">
+                  Połącz postać z serwera Europa, Ameryka lub Azja, aby pobierać statystyki PvP/PvE, otrzymać zieloną tarczę zaufania i ułatwić innym weryfikację.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsVerifyModalOpen(true)}
+              className="shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 px-5 py-3 text-xs font-mono font-bold uppercase tracking-wider text-black shadow-lg shadow-amber-950/50 hover:from-amber-500 hover:to-amber-400 transition cursor-pointer"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>Przypnij postać z gry</span>
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* 3. Główny Układ Dwukolumnowy */}
+      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        {/* Lewa kolumna: Tożsamość Portalu i Kompletność */}
+        <aside className="space-y-5">
+          <section className="panel overflow-hidden rounded-[26px] border-[var(--border-warm)]">
+            <div className="relative h-24 border-b border-[var(--amber)]/15 bg-[radial-gradient(circle_at_50%_0%,rgba(216,173,74,.25),transparent_70%)]" />
+            <div className="px-5 pb-6 text-center sm:px-6">
+              <div className="relative mx-auto -mt-12 h-24 w-24 overflow-hidden rounded-2xl border-2 border-[var(--amber)]/60 bg-[var(--bg-surface)] shadow-[0_10px_35px_rgba(0,0,0,.5)]">
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt={`Awatar ${displayName}`} fill sizes="96px" className="object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[var(--amber)]">
+                    <CircleUserRound className="h-10 w-10" />
+                  </div>
+                )}
+              </div>
+
+              <h2 className="font-display mt-3 truncate text-xl font-black text-white">{displayName}</h2>
+              <p className="truncate text-[11px] text-[var(--text-secondary)]">{user.email}</p>
+
+              {/* Statusy połączeń */}
+              <div className="mt-4 flex flex-wrap justify-center gap-1.5">
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-wider ${
+                    hasAuthIdentity(user, 'discord')
+                      ? 'border border-indigo-400/30 bg-indigo-500/10 text-indigo-300'
+                      : 'border border-white/10 bg-black/20 text-[var(--text-muted)]'
+                  }`}
+                >
+                  <UserRoundCheck className="h-3 w-3" /> Discord
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[8px] font-black uppercase tracking-wider ${
+                    verifiedState?.is_verified
+                      ? 'border border-emerald-400/30 bg-emerald-500/10 text-emerald-300'
+                      : 'border border-white/10 bg-black/20 text-[var(--text-muted)]'
+                  }`}
+                >
+                  <ShieldCheck className="h-3 w-3" /> Albion API
+                </span>
+              </div>
+
+              {/* Pasek kompletności profilu */}
+              <div className="mt-5 rounded-2xl border border-white/8 bg-black/25 p-3.5 text-left">
+                <div className="flex items-center justify-between text-[10px] font-bold">
+                  <span className="text-[var(--text-secondary)] uppercase tracking-wider">Kompletność karty</span>
+                  <span className="font-mono text-amber-300">{completionPercent}%</span>
+                </div>
+                <div
+                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/40"
+                  role="progressbar"
+                  aria-valuenow={completionPercent}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-300 transition-all duration-500"
+                    style={{ width: `${completionPercent}%` }}
+                  />
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-1.5 text-[9px]">
+                  {completionDetails.map((item) => (
+                    <div key={item.label} className="flex items-center gap-1 text-[var(--text-secondary)]">
+                      {item.done ? (
+                        <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                      ) : (
+                        <span className="h-1.5 w-1.5 rounded-full bg-white/20 ml-0.5 mr-1 shrink-0" />
+                      )}
+                      <span className={item.done ? 'text-white/90' : 'text-white/40'}>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Szybkie Skróty Modułów */}
+          <nav className="panel rounded-[24px] p-3 space-y-1 border-[var(--border-warm)]" aria-label="Skróty profilu">
+            <p className="px-3 py-1 text-[8px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Skróty w portalu</p>
+            {[
+              ['/killboard', Swords, 'Killboard Albionu', 'Historia walk i statystyki'],
+              ['/wyprawy', Shield, 'Twoje wyprawy', `${myExpeditions.length} zorganizowanych`],
+              ['/rynek', ShoppingBag, 'Twoje oferty rynku', `${myOffers.length} aktywnych ogłoszeń`],
+              ['/buildy/nowy', Plus, 'Kuźnia Buildów', 'Stwórz nową doktrynę'],
+            ].map(([href, Icon, label, detail]) => (
+              <Link
+                key={href}
+                href={href}
+                className="group flex items-center gap-3 rounded-xl px-3 py-2.5 transition hover:bg-white/5"
+              >
+                <span className="rounded-lg border border-white/8 bg-black/25 p-2 text-amber-300 group-hover:border-amber-400/30 transition">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-xs font-bold text-[var(--text-primary)] group-hover:text-white">{label}</span>
+                  <span className="block text-[9px] text-[var(--text-secondary)]">{detail}</span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-[#5f5b55] transition group-hover:translate-x-0.5 group-hover:text-[var(--amber)]" />
+              </Link>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Prawa kolumna: Zakładki (Tabs) & Zawartość Robocza */}
+        <main className="space-y-6">
+          {/* Przełącznik Zakładek */}
+          <div className="flex flex-wrap gap-2 border-b border-white/8 pb-3" role="tablist" aria-label="Sekcje zarządzania profilem">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'card'}
+              onClick={() => setActiveTab('card')}
+              className={`chip ${activeTab === 'card' ? 'active' : ''}`}
+            >
+              <Shield className="h-4 w-4" />
+              <span>Karta Postaci (Edycja)</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'activity'}
+              onClick={() => setActiveTab('activity')}
+              className={`chip ${activeTab === 'activity' ? 'active' : ''}`}
+            >
+              <Activity className="h-4 w-4" />
+              <span>Moja Aktywność ({myExpeditions.length + myOffers.length + myBuilds.length})</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === 'security'}
+              onClick={() => setActiveTab('security')}
+              className={`chip ${activeTab === 'security' ? 'active' : ''}`}
+            >
+              <KeyRound className="h-4 w-4" />
+              <span>Konto & Bezpieczeństwo</span>
+            </button>
+          </div>
+
+          {/* TAB 1: Karta Postaci (Edycja) */}
+          {activeTab === 'card' && (
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              {/* Sekcja 1: Identyfikacja w Albionie */}
+              <section className="panel rounded-[26px] p-5 sm:p-7 border-[var(--border-warm)] space-y-5">
+                <div className="flex items-center justify-between border-b border-white/8 pb-4">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Krok 1</p>
+                    <h3 className="font-display mt-0.5 text-xl font-bold text-white">Tożsamość w Albionie</h3>
+                  </div>
+                  <span className={`rounded-lg border px-3 py-1 text-[9px] font-black uppercase tracking-wider ${currentRoleStyle.tag}`}>
                     {formData.main_role}
                   </span>
                 </div>
-              </div>
 
-              <form onSubmit={handleSaveProfile} className="mt-6 space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)] block">
-                    <span className="flex items-center justify-between">
-                      <span>Nick w grze</span>
-                      {verifiedState?.is_verified && (
-                        <span className="text-[8px] text-amber-400/90 font-mono font-normal normal-case flex items-center gap-1">
-                          <Lock className="w-3 h-3 text-amber-400" /> Dane przypiętej postaci
-                        </span>
-                      )}
-                    </span>
-                    <input
-                      type="text"
-                      maxLength={80}
-                      value={formData.ingame_nick}
-                      readOnly={Boolean(verifiedState?.is_verified)}
-                      disabled={Boolean(verifiedState?.is_verified)}
-                      onChange={(event) => setFormData({ ...formData, ingame_nick: event.target.value })}
-                      placeholder="np. SirLancelot"
-                      title={verifiedState?.is_verified ? "Nick pochodzi z przypiętej postaci. Użyj przycisku „Zmień przypiętą postać”, aby go zmienić." : "Nick w grze"}
-                      className={`mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal outline-none ${
-                        verifiedState?.is_verified
-                          ? 'bg-[#080406] border-amber-500/30 text-amber-200/80 cursor-not-allowed select-none'
-                          : 'text-[var(--text-primary)]'
-                      }`}
-                    />
-                  </label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Nick w grze */}
+                  <div>
+                    <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)] block">
+                      <span className="flex items-center justify-between">
+                        <span>Nick w grze</span>
+                        {verifiedState?.is_verified && (
+                          <span className="text-[8px] text-amber-400 font-mono flex items-center gap-1 normal-case font-normal">
+                            <Lock className="w-3 h-3 text-amber-400" /> Zablokowane przez API
+                          </span>
+                        )}
+                      </span>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        value={formData.ingame_nick}
+                        readOnly={Boolean(verifiedState?.is_verified)}
+                        disabled={Boolean(verifiedState?.is_verified)}
+                        onChange={(event) => setFormData({ ...formData, ingame_nick: event.target.value })}
+                        placeholder="np. SirLancelot"
+                        className={`mt-1.5 w-full rounded-xl border px-3.5 py-2.5 text-xs outline-none transition ${
+                          verifiedState?.is_verified
+                            ? 'bg-black/40 border-amber-500/30 text-amber-200/90 cursor-not-allowed select-none'
+                            : 'border-[var(--border-warm)] bg-[var(--bg-elevated)] text-white focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30'
+                        }`}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Serwer główny */}
                   <div>
                     <CustomSelect
                       label="Serwer główny"
@@ -488,164 +764,422 @@ export default function ProfilePage() {
                       onChange={(val) => setFormData({ ...formData, main_server: val })}
                       options={[
                         { value: '', label: 'Nie wybrano' },
-                        'Europa',
-                        'Ameryka',
-                        'Azja',
+                        { value: 'Europa', label: 'Europa (Amsterdam)' },
+                        { value: 'Ameryka', label: 'Ameryka (Waszyngton)' },
+                        { value: 'Azja', label: 'Azja (Singapur)' },
                       ]}
                       disabled={Boolean(verifiedState?.is_verified)}
                     />
                   </div>
-                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Nazwa gildii
-                    <input type="text" maxLength={100} value={formData.guild_name} onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })} placeholder="Opcjonalnie" className="mt-1.5 w-full rounded-xl border px-3 py-3 text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none font-mono" />
-                    {verifiedState?.is_verified && <span className="mt-1.5 block text-[8px] font-normal normal-case leading-4 tracking-normal text-[var(--text-muted)]">Możesz poprawić ją ręcznie. Ponowna weryfikacja postaci zsynchronizuje nazwę z API Albionu.</span>}
-                  </label>
+
+                  {/* Nazwa gildii */}
+                  <div>
+                    <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)] block">
+                      <span>Nazwa gildii</span>
+                      <input
+                        type="text"
+                        maxLength={100}
+                        value={formData.guild_name}
+                        onChange={(event) => setFormData({ ...formData, guild_name: event.target.value })}
+                        placeholder="np. Polish Hussars (opcjonalnie)"
+                        className="mt-1.5 w-full rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] px-3.5 py-2.5 text-xs text-white placeholder-white/30 transition focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 outline-none font-mono"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Główna rola */}
                   <div>
                     <CustomSelect
-                      label="Główna rola"
+                      label="Główna rola w drużynie"
                       value={formData.main_role}
                       onChange={(val) => setFormData({ ...formData, main_role: val })}
                       options={[
-                        'Tank',
-                        'Healer',
-                        'DPS',
+                        { value: 'Tank', label: 'Tank (Kontrola & Inicjacja)' },
+                        { value: 'Healer', label: 'Healer (Leczenie & Wsparcie)' },
+                        { value: 'DPS', label: 'DPS (Obrażenia bojowe)' },
                         { value: 'Support', label: 'Support / Utility' },
                       ]}
                     />
                   </div>
-                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Średnie Item Power
-                    <input type="number" min="0" max="3000" value={formData.avg_ip} onChange={(event) => setFormData({ ...formData, avg_ip: event.target.value })} className="mt-1.5 w-full rounded-xl border px-3 py-3 font-mono text-xs normal-case tracking-normal text-[var(--text-primary)] outline-none" />
-                  </label>
+                </div>
+              </section>
+
+              {/* Sekcja 2: Parametry Bojowe & Role */}
+              <section className="panel rounded-[26px] p-5 sm:p-7 border-[var(--border-warm)] space-y-5">
+                <div className="border-b border-white/8 pb-4">
+                  <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Krok 2</p>
+                  <h3 className="font-display mt-0.5 text-xl font-bold text-white">Parametry Bojowe i Specjalizacja</h3>
                 </div>
 
-                <fieldset className="rounded-2xl border border-white/8 bg-black/15 p-4">
-                  <legend className="px-2 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Ulubione role</legend>
-                  <p className="mb-3 text-[10px] leading-5 text-[var(--text-secondary)]">Zaznacz wszystkie role, którymi lubisz grać. Główna rola nadal określa najważniejszą specjalizację.</p>
-                  <div className="flex flex-wrap gap-2">
+                {/* Średnie Item Power */}
+                <div className="space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">
+                      Średnie Item Power (IP postaci)
+                    </label>
+                    <span className="font-mono text-xs font-bold text-amber-300">
+                      Wartość: {formData.avg_ip} IP
+                    </span>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-[160px_1fr] items-center">
+                    <input
+                      type="number"
+                      min="0"
+                      max="3000"
+                      value={formData.avg_ip}
+                      onChange={(event) => setFormData({ ...formData, avg_ip: event.target.value })}
+                      className="rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] px-3.5 py-2.5 font-mono text-xs text-white transition focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 outline-none"
+                    />
+
+                    {/* Presety IP */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {IP_PRESETS.map((preset) => (
+                        <button
+                          key={preset.value}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, avg_ip: preset.value })}
+                          className={`rounded-lg border px-2.5 py-1.5 text-[10px] font-mono transition ${
+                            Number(formData.avg_ip) === preset.value
+                              ? 'border-amber-400 bg-amber-400/20 text-amber-200 font-bold'
+                              : 'border-white/10 bg-black/20 text-[var(--text-secondary)] hover:border-white/20 hover:text-white'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Ulubione role bojowe */}
+                <div className="pt-2">
+                  <label className="text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)] block mb-2">
+                    Ulubione role bojowe (wybierz wszystkie, którymi grasz)
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
                     {PROFILE_ROLES.map((role) => {
-                      const selected = formData.favorite_roles.includes(role)
+                      const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.DPS
+                      const Icon = cfg.icon
+                      const isSelected = formData.favorite_roles.includes(role)
                       return (
                         <button
                           key={role}
                           type="button"
-                          aria-pressed={selected}
+                          aria-pressed={isSelected}
                           onClick={() => setFormData((current) => ({
                             ...current,
-                            favorite_roles: selected
-                              ? current.favorite_roles.filter((item) => item !== role)
+                            favorite_roles: isSelected
+                              ? current.favorite_roles.filter((r) => r !== role)
                               : [...current.favorite_roles, role],
                           }))}
-                          className={`rounded-full border px-3 py-2 text-[9px] font-black uppercase tracking-[.12em] transition ${selected ? ROLE_STYLES[role] : 'border-white/10 bg-black/20 text-[var(--text-secondary)] hover:border-white/20 hover:text-white'}`}
+                          className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition cursor-pointer ${
+                            isSelected
+                              ? `${cfg.border} ${cfg.activeBg} shadow-[0_0_20px_rgba(216,173,74,0.08)]`
+                              : 'border-white/10 bg-black/20 hover:border-white/20'
+                          }`}
                         >
-                          {role === 'Support' ? 'Support / Utility' : role}
+                          <div className={`rounded-xl border border-white/10 bg-black/30 p-2.5 ${cfg.color} shrink-0`}>
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-gray-300'}`}>
+                                {role === 'Support' ? 'Support / Utility' : role}
+                              </span>
+                              {isSelected && (
+                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-black">
+                                  <Check className="h-3 w-3 stroke-[3]" />
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-[11px] text-[var(--text-secondary)] leading-4">
+                              {cfg.desc}
+                            </p>
+                          </div>
                         </button>
                       )
                     })}
                   </div>
-                </fieldset>
+                </div>
+              </section>
 
-                <fieldset className="rounded-2xl border border-white/8 bg-black/15 p-4">
-                  <legend className="px-2 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">Najczęściej używane zestawy</legend>
-                  <div className="mb-3 flex flex-col justify-between gap-1 sm:flex-row sm:items-center">
-                    <p className="text-[10px] leading-5 text-[var(--text-secondary)]">Wybierz maksymalnie {MAX_FEATURED_BUILDS} własne publiczne buildy, które pojawią się na górze Twojego profilu.</p>
-                    <span className="shrink-0 font-mono text-[9px] text-amber-200">{formData.featured_build_ids.length}/{MAX_FEATURED_BUILDS}</span>
+              {/* Sekcja 3: Zestawy Sygnaturowe (Wyróżnione Buildy) */}
+              <section className="panel rounded-[26px] p-5 sm:p-7 border-[var(--border-warm)] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-white/8 pb-4">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Krok 3</p>
+                    <h3 className="font-display mt-0.5 text-xl font-bold text-white">Najczęściej Używane Zestawy</h3>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                      Wybierz maksymalnie {MAX_FEATURED_BUILDS} własne publiczne buildy, które pojawią się na szczycie Twojej karty.
+                    </p>
                   </div>
-                  {myBuilds.length ? (
-                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                      {myBuilds.map((build) => {
-                        const selected = formData.featured_build_ids.includes(build.id)
-                        const disabled = !selected && formData.featured_build_ids.length >= MAX_FEATURED_BUILDS
-                        return (
-                          <button
-                            key={build.id}
-                            type="button"
-                            aria-pressed={selected}
-                            disabled={disabled}
-                            onClick={() => setFormData((current) => ({
-                              ...current,
-                              featured_build_ids: selected
-                                ? current.featured_build_ids.filter((id) => id !== build.id)
-                                : [...current.featured_build_ids, build.id],
-                            }))}
-                            className={`min-w-0 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-35 ${selected ? 'border-amber-300/45 bg-amber-300/10 shadow-[inset_0_0_20px_rgba(210,158,50,.08)]' : 'border-white/8 bg-black/20 hover:border-white/18'}`}
-                          >
-                            <span className="block truncate text-xs font-bold text-[var(--text-primary)]">{build.title}</span>
-                            <span className="mt-1 block text-[8px] font-black uppercase tracking-[.12em] text-[var(--text-secondary)]">{build.activity_type || 'Doktryna'}{selected ? ' · wyróżniony' : ''}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-[10px] text-[var(--text-secondary)]">Najpierw opublikuj build w Kuźni, aby móc go wyróżnić.</p>
-                  )}
-                </fieldset>
+                  <span className="font-mono text-xs font-bold text-amber-300 shrink-0">
+                    {formData.featured_build_ids.length} / {MAX_FEATURED_BUILDS} wybrane
+                  </span>
+                </div>
 
-                <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">
-                  O mnie
-                  <textarea
-                    rows={4}
-                    maxLength={500}
-                    value={formData.bio}
-                    onChange={(event) => setFormData({ ...formData, bio: event.target.value })}
-                    placeholder="Napisz, czym grasz, jakiej aktywności szukasz i kiedy najczęściej jesteś online."
-                    className="mt-1.5 w-full resize-y rounded-xl border px-3 py-3 text-sm font-normal normal-case leading-6 tracking-normal text-[var(--text-primary)] outline-none"
-                  />
-                  <span className="mt-1 block text-right font-mono text-[9px] font-normal normal-case tracking-normal text-[var(--text-secondary)]">{formData.bio.length}/500</span>
-                </label>
+                {myBuilds.length > 0 ? (
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {myBuilds.map((build) => {
+                      const selected = formData.featured_build_ids.includes(build.id)
+                      const disabled = !selected && formData.featured_build_ids.length >= MAX_FEATURED_BUILDS
+                      return (
+                        <button
+                          key={build.id}
+                          type="button"
+                          aria-pressed={selected}
+                          disabled={disabled}
+                          onClick={() => setFormData((current) => ({
+                            ...current,
+                            featured_build_ids: selected
+                              ? current.featured_build_ids.filter((id) => id !== build.id)
+                              : [...current.featured_build_ids, build.id],
+                          }))}
+                          className={`min-w-0 rounded-2xl border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-35 cursor-pointer ${
+                            selected
+                              ? 'border-amber-400/60 bg-amber-400/10 shadow-[0_0_20px_rgba(216,173,74,0.1)]'
+                              : 'border-white/10 bg-black/20 hover:border-white/20'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[8px] font-black uppercase text-amber-300">
+                              {build.activity_type || 'Doktryna'}
+                            </span>
+                            {selected && (
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-amber-300 uppercase">
+                                <Check className="h-3.5 w-3.5" /> Wyróżniony
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 truncate text-xs font-bold text-white">{build.title}</p>
+                          <p className="mt-1 text-[9px] text-[var(--text-secondary)] font-mono">
+                            {formatDate(build.created_at)}
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-white/12 bg-black/15 p-6 text-center">
+                    <Swords className="mx-auto h-8 w-8 text-amber-400/50" />
+                    <p className="mt-3 text-sm font-bold text-white">Brak opublikowanych buildów</p>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                      Stwórz i opublikuj swój pierwszy build w Kuźni, aby móc go wyróżnić na profilu.
+                    </p>
+                    <Link
+                      href="/buildy/nowy"
+                      className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-xs font-bold text-amber-200 hover:bg-amber-400/20 transition"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Przejdź do Kuźni
+                    </Link>
+                  </div>
+                )}
+              </section>
 
-                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-black/20 p-4 normal-case tracking-normal">
+              {/* Sekcja 4: Biografia ("O mnie") & Prywatność */}
+              <section className="panel rounded-[26px] p-5 sm:p-7 border-[var(--border-warm)] space-y-5">
+                <div className="border-b border-white/8 pb-4">
+                  <p className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--amber)]">Krok 4</p>
+                  <h3 className="font-display mt-0.5 text-xl font-bold text-white">Dziennik Bohatera & Widoczność</h3>
+                </div>
+
+                <div>
+                  <label className="block text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">
+                    <span>Notatka w dzienniku (O mnie)</span>
+                    <textarea
+                      rows={4}
+                      maxLength={500}
+                      value={formData.bio}
+                      onChange={(event) => setFormData({ ...formData, bio: event.target.value })}
+                      placeholder="Opisz swój styl gry, ulubione strefy (Black Zone, Drogi Avalonu, Mists), staż w Albionie lub w jakich godzinach grasz."
+                      className="mt-1.5 w-full resize-y rounded-xl border border-[var(--border-warm)] bg-[var(--bg-elevated)] p-3.5 text-xs text-white placeholder-white/30 transition focus:border-[var(--gold)] focus:ring-1 focus:ring-[var(--gold)]/30 outline-none leading-relaxed"
+                    />
+                  </label>
+                  <div className="mt-1.5 flex justify-end font-mono text-[10px] text-[var(--text-secondary)]">
+                    <span className={formData.bio.length >= 480 ? 'text-rose-400 font-bold' : ''}>
+                      {formData.bio.length} / 500 znaków
+                    </span>
+                  </div>
+                </div>
+
+                {/* Przełącznik widoczności ulubionych */}
+                <label className="flex cursor-pointer items-start gap-3.5 rounded-2xl border border-white/10 bg-black/25 p-4 transition hover:border-amber-400/30">
                   <input
                     type="checkbox"
                     checked={formData.favorite_builds_public}
                     onChange={(event) => setFormData({ ...formData, favorite_builds_public: event.target.checked })}
                     className="aopp-checkbox mt-0.5"
                   />
-                  <span>
-                    <span className="block text-xs font-bold text-[var(--text-primary)]">Pokaż zapisane buildy na profilu</span>
-                    <span className="mt-1 block text-[10px] leading-5 text-[var(--text-secondary)]">Domyślnie ulubione są prywatne. Włącz tę opcję, jeśli chcesz polecać społeczności swoje zapisane doktryny.</span>
-                  </span>
+                  <div>
+                    <span className="block text-xs font-bold text-white">
+                      Pokazuj zapisane ulubione buildy na publicznym profilu
+                    </span>
+                    <span className="mt-0.5 block text-[11px] leading-5 text-[var(--text-secondary)]">
+                      Domyślnie Twoja prywatna lista polubionych doktryn jest ukryta. Zaznacz, jeśli chcesz polecać innym graczom swoje ulubione kompozycje.
+                    </span>
+                  </div>
                 </label>
+              </section>
 
-                <div className="flex flex-col gap-3 border-t border-white/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="flex items-start gap-2 text-[10px] leading-5 text-[var(--text-secondary)]"><Gamepad2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-300" /> {verifiedState?.is_verified ? 'Nick i statystyki przypiętej postaci pochodzą z publicznego API Albion Online.' : 'Dane nieprzypiętej postaci są deklarowane przez użytkownika.'}</p>
-                  <button type="submit" disabled={saving} className="btn btn-primary inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-black uppercase tracking-[.12em] disabled:cursor-wait disabled:opacity-60">
-                    {saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? 'Zapisywanie' : 'Zapisz kartę'}
+              {/* Dolny Pasek Zapisu */}
+              <div className="panel flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[22px] p-5 border-[var(--border-warm)]">
+                <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                  <Sparkles className="h-4 w-4 text-[var(--gold)] shrink-0" />
+                  <span>Zmiany w karcie są widoczne natychmiast po zapisaniu na Twojej publicznej wizytówce.</span>
+                </div>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="btn btn-primary inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-black uppercase tracking-wider shrink-0 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {saving ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  <span>{saving ? 'Zapisywanie…' : 'Zapisz kartę postaci'}</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* TAB 2: Moja Aktywność */}
+          {activeTab === 'activity' && (
+            <div className="space-y-6">
+              {/* Liczniki zawartości */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="panel rounded-2xl p-4 text-center border-[var(--border-warm)]">
+                  <Swords className="mx-auto h-5 w-5 text-amber-300" />
+                  <p className="font-display mt-2 text-2xl font-black text-white">{myBuilds.length}</p>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-[var(--text-secondary)]">Opublikowane Doktryny</p>
+                  <Link href="/buildy/nowy" className="mt-3 inline-block text-[9px] font-bold text-amber-300 hover:underline uppercase">
+                    + Dodaj build
+                  </Link>
+                </div>
+
+                <div className="panel rounded-2xl p-4 text-center border-[var(--border-warm)]">
+                  <Shield className="mx-auto h-5 w-5 text-violet-300" />
+                  <p className="font-display mt-2 text-2xl font-black text-white">{myExpeditions.length}</p>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-[var(--text-secondary)]">Zwołane Wyprawy</p>
+                  <Link href="/wyprawy" className="mt-3 inline-block text-[9px] font-bold text-violet-300 hover:underline uppercase">
+                    + Nowa wyprawa
+                  </Link>
+                </div>
+
+                <div className="panel rounded-2xl p-4 text-center border-[var(--border-warm)]">
+                  <ShoppingBag className="mx-auto h-5 w-5 text-sky-300" />
+                  <p className="font-display mt-2 text-2xl font-black text-white">{myOffers.length}</p>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-[var(--text-secondary)]">Oferty na Rynku</p>
+                  <Link href="/rynek" className="mt-3 inline-block text-[9px] font-bold text-sky-300 hover:underline uppercase">
+                    + Wystaw przedmiot
+                  </Link>
+                </div>
+              </div>
+
+              {/* Twoje Wyprawy */}
+              <section className="panel rounded-[26px] p-5 sm:p-6 border-[var(--border-warm)] space-y-4">
+                <div className="flex items-center justify-between border-b border-white/8 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-violet-300" />
+                    <h3 className="font-display text-lg font-bold text-white">Twoje Wyprawy</h3>
+                  </div>
+                  <Link href="/wyprawy" className="text-[9px] font-black uppercase tracking-wider text-amber-300 hover:underline">
+                    Zobacz wszystkie ({myExpeditions.length})
+                  </Link>
+                </div>
+
+                {myExpeditions.length > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {myExpeditions.slice(0, 6).map((expedition) => (
+                      <div key={expedition.id} className="rounded-xl border border-white/8 bg-black/20 p-3.5 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-bold text-white">{expedition.title}</p>
+                          <p className="mt-1 text-[10px] text-[var(--text-secondary)]">
+                            {expedition.activity_type || 'Wyprawa'} · {formatDate(expedition.start_time)}
+                          </p>
+                        </div>
+                        <span className="rounded-md border border-violet-400/20 bg-violet-400/10 px-2 py-0.5 text-[8px] font-black uppercase text-violet-300 shrink-0">
+                          {expedition.server || 'Europa'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={Shield} title="Brak utworzonych wypraw" description="Nie zorganizowałeś jeszcze żadnej wyprawy drużynowej." compact />
+                )}
+              </section>
+
+              {/* Twoje Oferty Handlowe */}
+              <section className="panel rounded-[26px] p-5 sm:p-6 border-[var(--border-warm)] space-y-4">
+                <div className="flex items-center justify-between border-b border-white/8 pb-3">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="h-5 w-5 text-sky-300" />
+                    <h3 className="font-display text-lg font-bold text-white">Oferty Handlowe (Rynek P2P)</h3>
+                  </div>
+                  <Link href="/rynek" className="text-[9px] font-black uppercase tracking-wider text-amber-300 hover:underline">
+                    Przejdź do rynku ({myOffers.length})
+                  </Link>
+                </div>
+
+                {myOffers.length > 0 ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {myOffers.slice(0, 6).map((offer) => (
+                      <div key={offer.id} className="rounded-xl border border-white/8 bg-black/20 p-3.5 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-bold text-white">{offer.title || offer.item_name || 'Oferta handlowa'}</p>
+                          <p className="mt-1 font-mono text-[10px] text-amber-300">
+                            {Number(offer.price || 0).toLocaleString('pl-PL')} silver
+                          </p>
+                        </div>
+                        <span className="rounded-md border border-sky-400/20 bg-sky-400/10 px-2 py-0.5 text-[8px] font-black uppercase text-sky-300 shrink-0">
+                          {offer.city || 'Rynek'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState icon={ShoppingBag} title="Brak aktywnych ofert" description="Nie wystawiłeś jeszcze żadnego przedmiotu na rynku społeczności." compact />
+                )}
+              </section>
+            </div>
+          )}
+
+          {/* TAB 3: Konto & Bezpieczeństwo */}
+          {activeTab === 'security' && (
+            <div className="space-y-6">
+              {/* Metody Logowania & Hasło Portalowe */}
+              <ConnectedAccountsPanel />
+
+              {/* Strefa Niebezpieczna (Danger Zone) */}
+              <section className="panel rounded-[26px] p-5 sm:p-7 border border-rose-500/30 bg-rose-500/5 space-y-4">
+                <div className="flex items-center gap-3 text-rose-400">
+                  <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-2">
+                    <AlertTriangle className="h-5 w-5 text-rose-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-white">Strefa Niebezpieczna</h3>
+                    <p className="text-xs text-rose-300/80">Trwałe usunięcie konta i danych osobowych (RODO)</p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                  Zgodnie z unijnymi przepisami o ochronie danych osobowych (RODO), masz prawo do całkowitego usunięcia swoich danych z serwerów portalu. Ta operacja jest nieodwracalna i trwale usuwa Twoje konto, przypiętą postać, buildy oraz powiązania OAuth.
+                </p>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-rose-500/40 bg-rose-600/20 px-4 py-2.5 text-xs font-mono font-bold uppercase tracking-wider text-rose-300 transition hover:bg-rose-600 hover:text-white cursor-pointer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Usuń Konto & Dane RODO</span>
                   </button>
                 </div>
-              </form>
-            </section>
-
-            <div className="grid gap-6 xl:grid-cols-2">
-              <ActivityPanel title="Twoje wyprawy" eyebrow="Dowodzenie" icon={Shield} tone="violet" href="/wyprawy" empty="Nie utworzyłeś jeszcze żadnej wyprawy.">
-                {myExpeditions.slice(0, 4).map((expedition) => (
-                  <div key={expedition.id} className="rounded-xl border border-white/8 bg-black/20 p-3">
-                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-[var(--text-primary)]">{expedition.title}</p><p className="mt-1 text-[9px] text-[var(--text-secondary)]">{expedition.activity_type || 'Aktywność'} · {formatDate(expedition.start_time)}</p></div><span className="rounded-md border border-violet-400/20 bg-violet-400/8 px-2 py-1 text-[8px] font-black uppercase text-violet-300">Wyprawa</span></div>
-                  </div>
-                ))}
-              </ActivityPanel>
-
-              <ActivityPanel title="Oferty handlowe" eyebrow="Twoje stoisko" icon={ShoppingBag} tone="sky" href="/rynek" empty="Nie masz aktywnych ofert na rynku P2P.">
-                {myOffers.slice(0, 4).map((offer) => (
-                  <div key={offer.id} className="rounded-xl border border-white/8 bg-black/20 p-3">
-                    <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-xs font-bold text-[var(--text-primary)]">{offer.title || offer.item_name || 'Oferta'}</p><p className="mt-1 font-mono text-[10px] text-[var(--amber)]">{Number(offer.price || 0).toLocaleString('pl-PL')} silver</p></div><span className="rounded-md border border-sky-400/20 bg-sky-400/8 px-2 py-1 text-[8px] font-black uppercase text-sky-300">{offer.city || 'Albion'}</span></div>
-                  </div>
-                ))}
-              </ActivityPanel>
+              </section>
             </div>
+          )}
+        </main>
+      </div>
 
-            <section className="panel grid gap-4 rounded-[24px] p-5 sm:grid-cols-3">
-              {[
-                [Globe2, 'Serwer', formData.main_server || 'Nie wybrano'],
-                [Award, 'Rola', formData.main_role],
-                [Activity, 'Aktywności', myExpeditions.length + myOffers.length],
-              ].map(([Icon, label, value]) => (
-                <div key={label} className="flex items-center gap-3 rounded-xl border border-white/8 bg-black/15 p-3"><Icon className="h-4 w-4 text-[var(--amber)]" /><div><p className="text-[8px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)]">{label}</p><p className="mt-0.5 text-xs font-bold text-[var(--text-primary)]">{value}</p></div></div>
-              ))}
-            </section>
-          </div>
-        </div>
-
-</div>
-
+      {/* Modale weryfikacji i usuwania konta */}
       <CharacterVerificationModal
         key={isVerifyModalOpen ? `verify-${formData.main_server}-${formData.ingame_nick}` : 'closed'}
         isOpen={isVerifyModalOpen}
@@ -660,17 +1194,5 @@ export default function ProfilePage() {
         onClose={() => setIsDeleteModalOpen(false)}
       />
     </div>
-  )
-}
-
-function ActivityPanel({ title, eyebrow, icon: Icon, tone, href, empty, children }) {
-  const count = Array.isArray(children) ? children.length : children ? 1 : 0
-  const toneClass = tone === 'sky' ? 'text-sky-300' : 'text-violet-300'
-  return (
-    <section className="panel rounded-[24px] p-5 sm:p-6">
-      <div className="flex items-end justify-between gap-3 border-b border-white/8 pb-4"><div><p className={`text-[9px] font-black uppercase tracking-[.18em] ${toneClass}`}>{eyebrow}</p><h3 className="font-display mt-1 text-xl font-black text-[#fff]">{title}</h3></div><Icon className={`h-5 w-5 ${toneClass}`} /></div>
-      <div className="mt-4 space-y-2">{count ? children : <EmptyState icon={Icon} title="Jeszcze tu pusto" description={empty} compact />}</div>
-      <Link href={href} className="mt-4 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-[.14em] text-[var(--text-secondary)] hover:text-[var(--amber)]">Zobacz cały moduł <ChevronRight className="h-3.5 w-3.5" /></Link>
-    </section>
   )
 }
